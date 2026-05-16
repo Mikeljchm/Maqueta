@@ -1,0 +1,50 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: uploads
+public_folder: /uploads
+
+locale: en
+
+collections:
+  - name: posts
+    label: Posts
+    label_singular: Post
+    folder: _posts
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    editor:
+      preview: false
+    fields:
+      - label: Title
+        name: title
+        widget: string
+        hint: "Title of the post (only you see this)"
+
+      - label: Photo
+        name: image
+        widget: image
+        hint: "Upload from your phone or paste a URL"
+
+      - label: Category
+        name: category
+        widget: select
+        options:
+          - { label: "Wrestling", value: "wrestling" }
+          - { label: "Bulge Report", value: "bulge" }
+          - { label: "Bad Boys", value: "badboys" }
+          - { label: "Fan Files", value: "fan" }
+          - { label: "Hall of Flame", value: "hall" }
+
+      - label: Description
+        name: description
+        widget: text
+        hint: "Write something hot... use #hashtags"
+
+      - label: Date
+        name: date
+        widget: datetime
+        format: "YYYY-MM-DD"
+        date_format: "YYYY-MM-DD"
+        time_format: false
