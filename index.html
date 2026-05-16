@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HOTT WRESTLING · Blog Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <style>
+    /* === IGNITION BLOG MOCKUP === */
+    @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+
+    :root {
+      --bg:          #080505;
+      --surface:     #100808;
+      --surface-2:   #180a0a;
+      --fire-orange: #FF4500;
+      --fire-yellow: #FFB800;
+      --fire-red:    #CC1100;
+      --text:        #F0EAE0;
+      --text-dim:    #8a7060;
+      --border:      #2a1010;
+      --radius:      10px;
+      --font-d:      'Bebas Neue', Impact, sans-serif;
+      --font-b:      'DM Sans', Arial, sans-serif;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-b); min-height: 100vh;
+      overflow-x: hidden; -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(8,5,5,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      font-family: var(--font-d);
+      font-size: 1.4rem;
+      letter-spacing: 0.05em;
+      color: #fff;
+      text-decoration: none;
+    }
+    .nav-logo span {
+      background: linear-gradient(135deg, var(--fire-yellow), var(--fire-orange));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-actions {
+      display: flex; align-items: center; gap: 0.8rem;
+    }
+    .nav-icon-btn {
+      background: none; border: none;
+      color: var(--text-dim); cursor: pointer;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; transition: all 0.2s ease;
+    }
+    .nav-icon-btn:active { color: var(--fire-orange); background: rgba(255,69,0,0.1); }
+    .nav-icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ── PROFILE HEADER ── */
+    .profile-header {
+      padding: 1.5rem 1.2rem 0;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(to bottom, rgba(20,5,5,0.8), transparent);
+    }
+    .profile-top {
+      display: flex; align-items: center; gap: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .profile-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--fire-red), var(--fire-orange), var(--fire-yellow));
+      padding: 2px; flex-shrink: 0;
+      position: relative;
+    }
+    .profile-avatar::before {
+      content: '';
+      position: absolute; inset: -3px;
+      border-radius: 50%;
+      background: conic-gradient(from var(--angle), transparent 0deg, var(--fire-red) 20deg, var(--fire-orange) 50deg, var(--fire-yellow) 75deg, transparent 100deg, transparent 360deg);
+      animation: borderTrace 2s linear infinite;
+      z-index: -1;
+    }
+    @keyframes borderTrace { to { --angle: 360deg; } }
+    .profile-avatar img {
+      width: 100%; height: 100%;
+      border-radius: 50%; object-fit: cover;
+      border: 2px solid var(--bg);
+    }
+    .profile-stats {
+      display: flex; gap: 1.5rem; flex: 1;
+    }
+    .stat { text-align: center; }
+    .stat-num {
+      font-family: var(--font-d);
+      font-size: 1.2rem; color: #fff;
+      letter-spacing: 0.05em; display: block;
+    }
+    .stat-label {
+      font-size: 0.6rem; color: var(--text-dim);
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .profile-info { margin-bottom: 0.8rem; }
+    .profile-name {
+      font-family: var(--font-d);
+      font-size: 1rem; color: #fff;
+      letter-spacing: 0.08em; margin-bottom: 0.15rem;
+    }
+    .profile-bio {
+      font-size: 0.75rem; color: var(--text-dim);
+      line-height: 1.5; max-width: 320px;
+    }
+    .profile-bio span { color: var(--fire-orange); }
+
+    /* Botón seguir */
+    .btn-follow {
+      width: 100%; padding: 0.55rem;
+      background: rgba(255,69,0,0.1);
+      border: 1px solid var(--fire-orange);
+      border-radius: 6px;
+      color: var(--fire-yellow);
+      font-family: var(--font-d);
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      transition: all 0.25s ease;
+      position: relative; overflow: hidden;
+    }
+    .btn-follow.following {
+      background: rgba(255,69,0,0.05);
+      border-color: var(--border);
+      color: var(--text-dim);
+    }
+
+    /* ── CATEGORY TABS ── */
+    .category-tabs {
+      display: flex; overflow-x: auto;
+      gap: 0; border-bottom: 1px solid var(--border);
+      scrollbar-width: none;
+      background: rgba(8,5,5,0.9);
+      backdrop-filter: blur(10px);
+      position: sticky; top: 57px; z-index: 90;
+    }
+    .category-tabs::-webkit-scrollbar { display: none; }
+    .cat-tab {
+      flex: 0 0 auto;
+      padding: 0.75rem 1rem;
+      font-family: var(--font-b);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      cursor: pointer;
+      border: none; background: none;
+      border-bottom: 2px solid transparent;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .cat-tab.active {
+      color: var(--fire-orange);
+      border-bottom-color: var(--fire-orange);
+    }
+
+    /* ── GRID ── */
+    .grid-wrapper {
+      padding: 2px;
+    }
+    .posts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+
+    /* Primer post ocupa 2 columnas */
+    .post-thumb:first-child {
+      grid-column: span 2;
+      grid-row: span 2;
+    }
+
+    .post-thumb {
+      position: relative;
+      aspect-ratio: 1;
+      overflow: hidden;
+      cursor: pointer;
+      background: var(--surface);
+    }
+    .post-thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), filter 0.3s ease;
+      display: block;
+    }
+    .post-thumb:active img {
+      transform: scale(1.05);
+      filter: brightness(0.7);
+    }
+
+    /* Overlay info al hover */
+    .post-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(5,1,1,0.85) 0%, transparent 50%);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+      display: flex; flex-direction: column;
+      justify-content: flex-end;
+      padding: 0.6rem;
+    }
+    .post-thumb:active .post-overlay { opacity: 1; }
+
+    .post-overlay-stats {
+      display: flex; gap: 0.7rem;
+      font-size: 0.7rem; color: #fff;
+      font-weight: 600;
+    }
+    .post-overlay-stats span { display: flex; align-items: center; gap: 0.2rem; }
+
+    /* Badge de categoría */
+    .post-cat-badge {
+      position: absolute; top: 6px; left: 6px;
+      background: rgba(255,69,0,0.85);
+      backdrop-filter: blur(4px);
+      color: #fff;
+      font-family: var(--font-b);
+      font-size: 0.5rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Multi-foto badge */
+    .post-multi-badge {
+      position: absolute; top: 6px; right: 6px;
+      color: rgba(255,255,255,0.9);
+    }
+    .post-multi-badge svg { width: 18px; height: 18px; fill: currentColor; }
+
+    /* ── POST MODAL (vista individual) ── */
+    .post-modal {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column;
+      background: var(--bg);
+      transform: translateY(100%);
+      transition: transform 0.45s cubic-bezier(0.16,1,0.3,1);
+      overflow-y: auto;
+    }
+    .post-modal.open { transform: translateY(0); }
+
+    .modal-header {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(8,5,5,0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      display: flex; align-items: center; gap: 0.8rem;
+    }
+    .modal-back {
+      background: none; border: none; color: var(--text-dim);
+      cursor: pointer; width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; transition: all 0.2s;
+    }
+    .modal-back:active { color: var(--fire-orange); background: rgba(255,69,0,0.1); }
+    .modal-back svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+    .modal-header-info { flex: 1; }
+    .modal-header-name {
+      font-family: var(--font-d);
+      font-size: 0.95rem; color: #fff;
+      letter-spacing: 0.05em;
+    }
+    .modal-header-cat {
+      font-size: 0.6rem; color: var(--fire-orange);
+      letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .modal-header-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--fire-red), var(--fire-orange));
+      padding: 1.5px;
+    }
+    .modal-header-avatar img {
+      width: 100%; height: 100%;
+      border-radius: 50%; object-fit: cover;
+      border: 1.5px solid var(--bg);
+    }
+
+    /* Imagen del post */
+    .modal-image-wrap {
+      position: relative;
+      background: #050202;
+    }
+    .modal-image-wrap img {
+      width: 100%; display: block;
+      max-height: 70vw; object-fit: cover;
+    }
+
+    /* Acciones — like, comment, share */
+    .modal-actions {
+      display: flex; align-items: center;
+      padding: 0.8rem 1rem;
+      gap: 0.2rem;
+      border-bottom: 1px solid rgba(255,69,0,0.06);
+    }
+    .action-btn {
+      background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; gap: 0.35rem;
+      padding: 0.5rem 0.6rem; border-radius: 8px;
+      color: var(--text-dim); font-size: 0.8rem;
+      font-family: var(--font-b);
+      transition: all 0.2s ease;
+    }
+    .action-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: all 0.2s ease; }
+    .action-btn:active { transform: scale(0.9); }
+    .action-btn.liked { color: #ff3b5c; }
+    .action-btn.liked svg { fill: #ff3b5c; stroke: #ff3b5c; }
+
+    .action-btn.saved { color: var(--fire-yellow); }
+    .action-btn.saved svg { fill: var(--fire-yellow); stroke: var(--fire-yellow); }
+
+    .action-spacer { flex: 1; }
+
+    .likes-count {
+      padding: 0 1rem 0.4rem;
+      font-size: 0.82rem; font-weight: 600; color: #fff;
+    }
+
+    /* Descripción */
+    .modal-desc {
+      padding: 0 1rem 0.8rem;
+      font-size: 0.82rem; color: #ccc;
+      line-height: 1.6;
+    }
+    .modal-desc .author-tag {
+      font-weight: 600; color: #fff; margin-right: 0.4rem;
+    }
+    .modal-desc .hashtag { color: var(--fire-orange); }
+
+    .modal-date {
+      padding: 0 1rem 0.8rem;
+      font-size: 0.65rem; color: var(--text-dim);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      border-bottom: 1px solid rgba(255,69,0,0.06);
+    }
+
+    /* Comentarios */
+    .comments-section { padding: 0.5rem 0; }
+    .comment-item {
+      display: flex; gap: 0.7rem;
+      padding: 0.65rem 1rem;
+      align-items: flex-start;
+    }
+    .comment-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      flex-shrink: 0; overflow: hidden;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+    .comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .comment-body { flex: 1; }
+    .comment-user {
+      font-size: 0.75rem; font-weight: 600;
+      color: #ddd; margin-bottom: 0.15rem;
+    }
+    .comment-text { font-size: 0.78rem; color: #aaa; line-height: 1.4; }
+    .comment-meta {
+      display: flex; gap: 0.8rem;
+      margin-top: 0.3rem;
+      font-size: 0.62rem; color: var(--text-dim);
+    }
+    .comment-like-btn {
+      background: none; border: none;
+      color: var(--text-dim); cursor: pointer;
+      font-size: 0.62rem; font-family: var(--font-b);
+      transition: color 0.2s;
+    }
+    .comment-like-btn:active { color: #ff3b5c; }
+
+    /* Caja de comentario */
+    .comment-input-wrap {
+      position: sticky; bottom: 0;
+      background: rgba(8,5,5,0.97);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      padding: 0.7rem 1rem;
+      display: flex; align-items: center; gap: 0.7rem;
+    }
+    .comment-input-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--fire-red), var(--fire-orange));
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-d); font-size: 0.7rem; color: #fff;
+    }
+    .comment-input {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      color: var(--text);
+      font-family: var(--font-b);
+      font-size: 0.82rem;
+      outline: none;
+    }
+    .comment-input:focus { border-color: rgba(255,69,0,0.4); }
+    .comment-input::placeholder { color: var(--text-dim); }
+    .comment-send {
+      background: none; border: none;
+      color: var(--fire-orange); font-family: var(--font-d);
+      font-size: 0.85rem; letter-spacing: 0.08em;
+      cursor: pointer; padding: 0.3rem 0.2rem;
+      transition: color 0.2s;
+    }
+    .comment-send:active { color: var(--fire-yellow); }
+
+    /* ── FLOAT LABEL (mockup notice) ── */
+    .mockup-notice {
+      position: fixed; bottom: 80px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,69,0,0.12);
+      border: 1px solid rgba(255,69,0,0.3);
+      backdrop-filter: blur(8px);
+      color: var(--fire-orange);
+      font-family: var(--font-b);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      white-space: nowrap;
+      z-index: 200;
+    }
+    .mockup-notice.show { opacity: 1; }
+
+    /* Reveal */
+    .reveal {
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.5s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Heart animation */
+    @keyframes heartPop {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.4); }
+      60%  { transform: scale(0.9); }
+      100% { transform: scale(1); }
+    }
+    .heart-pop { animation: heartPop 0.4s cubic-bezier(0.16,1,0.3,1); }
+  </style>
+</head>
+<body>
+
+  <!-- TOP NAV -->
+  <nav class="top-nav">
+    <a class="nav-logo" href="#">HOTT <span>WRESTLING</span></a>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" title="Search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </button>
+      <button class="nav-icon-btn" title="Notifications">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- PROFILE HEADER -->
+  <div class="profile-header reveal">
+    <div class="profile-top">
+      <div class="profile-avatar">
+        <img src="https://i.postimg.cc/KvXW1VW5/Tumblr-l-1792805306594327.jpg" alt="HW">
+      </div>
+      <div class="profile-stats">
+        <div class="stat">
+          <span class="stat-num" id="post-count">28</span>
+          <span class="stat-label">Posts</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">4.2K</span>
+          <span class="stat-label">Followers</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">211</span>
+          <span class="stat-label">Visits</span>
+        </div>
+      </div>
+    </div>
+    <div class="profile-info">
+      <div class="profile-name">HOTT WRESTLING</div>
+      <div class="profile-bio">
+        Where the heat rises &#9670; Wrestling &amp; more<br>
+        <span>#GrapplingIsntGay</span> &middot; Exclusive content below
+      </div>
+    </div>
+    <button class="btn-follow" id="btn-follow">FOLLOW</button>
+  </div>
+
+  <!-- CATEGORY TABS -->
+  <div class="category-tabs" id="cat-tabs">
+    <button class="cat-tab active" data-cat="all">All</button>
+    <button class="cat-tab" data-cat="wrestling">Wrestling</button>
+    <button class="cat-tab" data-cat="bulge">Bulge Report</button>
+    <button class="cat-tab" data-cat="badboys">Bad Boys</button>
+    <button class="cat-tab" data-cat="fan">Fan Files</button>
+    <button class="cat-tab" data-cat="hall">Hall of Flame</button>
+  </div>
+
+  <!-- GRID -->
+  <div class="grid-wrapper">
+    <div class="posts-grid" id="posts-grid"></div>
+  </div>
+
+  <!-- POST MODAL -->
+  <div class="post-modal" id="post-modal">
+    <div class="modal-header">
+      <button class="modal-back" id="modal-back">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="modal-header-avatar">
+        <img src="https://i.postimg.cc/KvXW1VW5/Tumblr-l-1792805306594327.jpg" alt="HW">
+      </div>
+      <div class="modal-header-info">
+        <div class="modal-header-name">HOTT WRESTLING</div>
+        <div class="modal-header-cat" id="modal-cat-label">Wrestling</div>
+      </div>
+    </div>
+
+    <div class="modal-image-wrap">
+      <img id="modal-img" src="" alt="">
+    </div>
+
+    <div class="modal-actions">
+      <button class="action-btn" id="like-btn">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span id="like-count">0</span>
+      </button>
+      <button class="action-btn" id="comment-focus-btn">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span id="comment-count">0</span>
+      </button>
+      <button class="action-btn">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+      <div class="action-spacer"></div>
+      <button class="action-btn" id="save-btn">
+        <svg viewBox="0 0 24 24"><polygon points="19 21 12 16 5 21 5 3 19 3 19 21"/></svg>
+      </button>
+    </div>
+
+    <div class="likes-count" id="likes-text">0 likes</div>
+    <div class="modal-desc" id="modal-desc"></div>
+    <div class="modal-date" id="modal-date"></div>
+
+    <div class="comments-section" id="comments-section"></div>
+
+    <div class="comment-input-wrap">
+      <div class="comment-input-avatar">HW</div>
+      <input class="comment-input" id="comment-input" type="text" placeholder="Add a comment...">
+      <button class="comment-send" id="comment-send">POST</button>
+    </div>
+  </div>
+
+  <!-- MOCKUP NOTICE -->
+  <div class="mockup-notice" id="mockup-notice">MOCKUP — functionality simulated</div>
+
+  <script>
+  (function () {
+
+    /* ── DATA ── */
+    const categories = ['wrestling','wrestling','bulge','wrestling','hall','badboys','fan','wrestling','bulge','hall','wrestling','badboys','wrestling','fan','bulge','wrestling','hall','wrestling','badboys','bulge','wrestling','fan','wrestling','hall','wrestling','badboys','fan','wrestling'];
+
+    const catLabels = {
+      wrestling: 'Wrestling',
+      bulge:     'Bulge Report',
+      badboys:   'Bad Boys',
+      fan:       'Fan Files',
+      hall:      'Hall of Flame'
+    };
+
+    const descriptions = [
+      'The tension before the match is almost unbearable. Every muscle ready, every breath calculated. This is where legends are made. #Wrestling #HottWrestling #GrapplingIsntGay',
+      'When two bodies collide on the mat, there\'s a primal energy that words can\'t describe. Pure strength, pure heat. #Wrestling #Strength',
+      'Some things are impossible to ignore on the mat. Nature has a way of making itself known at the most intense moments. #BulgeReport #HottWrestling',
+      'The grip never lies. You can tell everything about a wrestler from how they hold their opponent. #Wrestling #Technique',
+      'This week\'s Hall of Flame entry. The jawline, the arms, the intensity — everything perfect. #HallOfFlame #Beautiful',
+      'Bad boys don\'t always stay out of trouble. But they sure look good getting into it. #BadBoys #HottWrestling',
+      'A fan sent this incredible moment captured at a local match. The community sees everything. #FanFiles #Community',
+      'Ground control. When he pins you down and there\'s nowhere to go. That\'s the real heat. #Wrestling #Pinned',
+      'The shorts tell a story of their own during every explosive move. Eyes don\'t lie. #BulgeReport',
+      'This face, this energy — he owns every room he enters. Welcome to the Hall of Flame. #HallOfFlame',
+      'That moment right before the submission. Pure adrenaline, pure heat between two competitors. #Wrestling #Submission',
+      'The bad boy with the good looks and the dangerous attitude. A perfect combination. #BadBoys',
+      'Back on the mat where the real action happens. No cameras, no audience, just two men and the heat between them. #Wrestling',
+      'Fan submission from Puerto Rico. Our community is hotter than ever. #FanFiles #PuertoRico',
+      'Every single match tells a story. This particular chapter is very difficult to ignore. #BulgeReport #Wrestling',
+      'The weight of another body pressing down is something you never forget. #Wrestling #HottWrestling',
+      'Hall of Flame Week 3. He needs no introduction — just appreciation. #HallOfFlame',
+      'Sweat, heat, and that look in his eyes that says he\'s not done yet. #Wrestling #Intense',
+      'When bad boys meet their match. The energy in this capture is electric. #BadBoys #HottWrestling',
+      'The uniform leaves very little to the imagination during competition. We appreciate the designers. #BulgeReport',
+      'Locked in a hold so tight there\'s no escape. This is what passion looks like. #Wrestling #Locked',
+      'Community love. A fan captured this golden moment at a regional tournament. #FanFiles',
+      'The mat is where everything becomes clear. Raw, unfiltered, burning hot. #Wrestling #Raw',
+      'Hall of Flame final entry of the month. Save this one. #HallOfFlame #Beautiful',
+      'When the match goes to the ground and neither man wants to give up. Endurance. #Wrestling',
+      'The look of a bad boy who knows exactly what he\'s doing. Dangerous. #BadBoys',
+      'Fan community growing every day. Thank you for sharing these fire moments. #FanFiles #Community',
+      'Last round. Everything on the line. The heat is at its maximum. #Wrestling #GrapplingIsntGay'
+    ];
+
+    const dates = [
+      '2 hours ago','5 hours ago','Yesterday','2 days ago','3 days ago',
+      '4 days ago','5 days ago','6 days ago','1 week ago','1 week ago',
+      '2 weeks ago','2 weeks ago','2 weeks ago','3 weeks ago','3 weeks ago',
+      '3 weeks ago','1 month ago','1 month ago','1 month ago','1 month ago',
+      '1 month ago','2 months ago','2 months ago','2 months ago','2 months ago',
+      '3 months ago','3 months ago','3 months ago'
+    ];
+
+    const imageUrls = [
+      'https://i.postimg.cc/KvXW1VW5/Tumblr-l-1792805306594327.jpg',
+      'https://i.postimg.cc/dQZXtv5f/Tumblr-l-1792808196196149.jpg',
+      'https://i.postimg.cc/59QGN1sk/Tumblr-l-1792811859715783.jpg',
+      'https://i.postimg.cc/Y2LVqkdD/Tumblr-l-1792814672415886.jpg',
+      'https://i.postimg.cc/Vs0TL1Kg/Tumblr-l-1792828149169318.jpg',
+      'https://i.postimg.cc/WpqKbj5m/Tumblr-l-1792830255130984.jpg',
+      'https://i.postimg.cc/L4g76Rx3/Tumblr-l-1792846813115197.jpg',
+      'https://i.postimg.cc/kMRZX9Tx/Tumblr-l-1792848766114675.jpg',
+      'https://i.postimg.cc/jqn9dKMy/Tumblr-l-1792851822420143.jpg',
+      'https://i.postimg.cc/zDHMX5xK/Tumblr-l-1792859672997171.jpg',
+      'https://i.postimg.cc/ryRbFcf4/Tumblr-l-1792862714632847.jpg',
+      'https://i.postimg.cc/zDHMX5xL/Tumblr-l-1792870888650761.jpg',
+      'https://i.postimg.cc/Df4DyFx8/Tumblr-l-1792924076229751.jpg',
+      'https://i.postimg.cc/Df4DyFxS/Tumblr-l-1792926199619281.jpg',
+      'https://i.postimg.cc/Vs0TL1K5/Tumblr-l-1792928397186780.jpg',
+      'https://i.postimg.cc/WpqKbj53/Tumblr-l-1792972242560201.jpg',
+      'https://i.postimg.cc/BbFwhcjk/Tumblr-l-1792974253854211.jpg',
+      'https://i.postimg.cc/yxRrfXDw/Tumblr-l-1793024902141848.jpg',
+      'https://i.postimg.cc/brnF6HZ7/Tumblr-l-1793097477363070.jpg',
+      'https://i.postimg.cc/cC35DMKy/Tumblr-l-1793099552138902.jpg',
+      'https://i.postimg.cc/d0D6HmXT/FB-IMG-1765660053521.jpg',
+      'https://i.postimg.cc/Gp9K7JN4/FB-IMG-1765660094892.jpg',
+      'https://i.postimg.cc/253GcFJb/FB-IMG-1765772150216.jpg',
+      'https://i.postimg.cc/wjwFQbWL/FB-IMG-1768167252898.jpg',
+      'https://i.postimg.cc/pdyCGY7p/FB-IMG-1768167293986.jpg',
+      'https://i.postimg.cc/dV5njSWC/FB-IMG-1768167326564.jpg',
+      'https://i.postimg.cc/rwfgNYh5/FB-IMG-1773766096767.jpg',
+      'https://i.postimg.cc/pdyCGY7T/FB-IMG-1777061541642.jpg'
+    ];
+
+    /* Likes y comentarios simulados */
+    const baseLikes = [847,623,1204,445,789,334,156,892,567,1103,423,278,945,189,634,521,867,342,756,431,688,234,912,567,389,445,178,723];
+    const mockComments = [
+      { user: 'wrestling_fan92', text: 'This is FIRE 🔥 absolute heat', time: '1h', likes: 24 },
+      { user: 'mat_lover_pr', text: 'The intensity in this one is everything', time: '2h', likes: 18 },
+      { user: 'hottwrestling_fan', text: 'More content like this please!!', time: '3h', likes: 31 },
+      { user: 'grappling_life', text: 'Cannot handle this level of heat 😤', time: '5h', likes: 12 },
+      { user: 'ringside_watcher', text: 'The best page on the internet right now', time: '8h', likes: 45 },
+    ];
+
+    /* State */
+    let currentFilter  = 'all';
+    let currentPostIdx = -1;
+    let likedPosts     = new Set();
+    let savedPosts     = new Set();
+    let postLikes      = [...baseLikes];
+    let userComments   = [];
+    let isFollowing    = false;
+
+    /* ── BUILD GRID ── */
+    const grid = document.getElementById('posts-grid');
+
+    function buildGrid(filter) {
+      grid.innerHTML = '';
+      let shown = 0;
+      imageUrls.forEach((url, i) => {
+        if (filter !== 'all' && categories[i] !== filter) return;
+        const thumb = document.createElement('div');
+        thumb.className = 'post-thumb';
+        thumb.dataset.idx = i;
+
+        const isFirst = shown === 0;
+        const isMulti = i % 5 === 0 && !isFirst;
+
+        thumb.innerHTML = `
+          <img src="${isFirst || shown < 6 ? url : ''}" 
+               data-src="${url}" 
+               alt="Post ${i+1}" 
+               loading="${shown < 6 ? 'eager' : 'lazy'}"
+               decoding="async">
+          <div class="post-cat-badge">${catLabels[categories[i]]}</div>
+          ${isMulti ? `<div class="post-multi-badge"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="15" height="15" rx="2"/><path d="M2 7H6v15h15v4H2z"/></svg></div>` : ''}
+          <div class="post-overlay">
+            <div class="post-overlay-stats">
+              <span>&#9829; ${formatNum(postLikes[i])}</span>
+              <span>&#9997; ${mockComments.length}</span>
+            </div>
+          </div>
+        `;
+
+        thumb.addEventListener('click', () => openPost(i));
+        grid.appendChild(thumb);
+        shown++;
+      });
+
+      /* Lazy load con IntersectionObserver */
+      const imgs = grid.querySelectorAll('img[data-src]');
+      const imgObs = new IntersectionObserver(entries => {
+        entries.forEach(en => {
+          if (en.isIntersecting) {
+            const img = en.target;
+            img.src = img.dataset.src;
+            img.removeAttribute('data-src');
+            imgObs.unobserve(img);
+          }
+        });
+      }, { rootMargin: '100px' });
+      imgs.forEach(img => imgObs.observe(img));
+    }
+
+    function formatNum(n) {
+      return n >= 1000 ? (n/1000).toFixed(1) + 'K' : n;
+    }
+
+    /* ── OPEN POST ── */
+    const modal      = document.getElementById('post-modal');
+    const modalImg   = document.getElementById('modal-img');
+    const modalCat   = document.getElementById('modal-cat-label');
+    const modalDesc  = document.getElementById('modal-desc');
+    const modalDate  = document.getElementById('modal-date');
+    const likeBtn    = document.getElementById('like-btn');
+    const likeCount  = document.getElementById('like-count');
+    const likesText  = document.getElementById('likes-text');
+    const saveBtn    = document.getElementById('save-btn');
+    const commSec    = document.getElementById('comments-section');
+    const commInput  = document.getElementById('comment-input');
+    const commCount  = document.getElementById('comment-count');
+
+    function openPost(idx) {
+      currentPostIdx = idx;
+      modalImg.src = imageUrls[idx];
+      modalCat.textContent = catLabels[categories[idx]];
+
+      /* Descripción */
+      const words = descriptions[idx].split(' #');
+      const mainText = words[0];
+      const tags = words.slice(1).map(t => `<span class="hashtag">#${t}</span>`).join(' ');
+      modalDesc.innerHTML = `<span class="author-tag">hottwrestling</span>${mainText} ${tags}`;
+
+      modalDate.textContent = dates[idx].toUpperCase();
+
+      /* Likes */
+      updateLikeUI(idx);
+
+      /* Save */
+      saveBtn.classList.toggle('saved', savedPosts.has(idx));
+
+      /* Comentarios */
+      renderComments(idx);
+
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePost() {
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+      currentPostIdx = -1;
+      modalImg.src = '';
+    }
+
+    function updateLikeUI(idx) {
+      const liked = likedPosts.has(idx);
+      likeBtn.classList.toggle('liked', liked);
+      const count = postLikes[idx];
+      likeCount.textContent = formatNum(count);
+      likesText.textContent = `${formatNum(count)} likes`;
+    }
+
+    function renderComments(idx) {
+      const allComments = [...mockComments, ...userComments.filter(c => c.postIdx === idx)];
+      commCount.textContent = allComments.length;
+      commSec.innerHTML = allComments.map(c => `
+        <div class="comment-item">
+          <div class="comment-avatar">
+            <img src="https://i.postimg.cc/KvXW1VW5/Tumblr-l-1792805306594327.jpg" alt="">
+          </div>
+          <div class="comment-body">
+            <div class="comment-user">${c.user}</div>
+            <div class="comment-text">${c.text}</div>
+            <div class="comment-meta">
+              <span>${c.time}</span>
+              <button class="comment-like-btn">${c.likes} likes</button>
+              <button class="comment-like-btn">Reply</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    /* ── EVENTS ── */
+
+    /* Back */
+    document.getElementById('modal-back').addEventListener('click', closePost);
+
+    /* Swipe down to close */
+    let touchStartY = 0;
+    modal.addEventListener('touchstart', e => touchStartY = e.touches[0].clientY, { passive: true });
+    modal.addEventListener('touchend', e => {
+      const diff = e.changedTouches[0].clientY - touchStartY;
+      if (diff > 80 && modal.scrollTop === 0) closePost();
+    });
+
+    /* Like */
+    likeBtn.addEventListener('click', () => {
+      if (currentPostIdx < 0) return;
+      const idx = currentPostIdx;
+      if (likedPosts.has(idx)) {
+        likedPosts.delete(idx);
+        postLikes[idx]--;
+      } else {
+        likedPosts.add(idx);
+        postLikes[idx]++;
+        likeBtn.querySelector('svg').classList.add('heart-pop');
+        setTimeout(() => likeBtn.querySelector('svg').classList.remove('heart-pop'), 400);
+      }
+      updateLikeUI(idx);
+      showNotice(likedPosts.has(idx) ? 'Liked!' : 'Unliked');
+    });
+
+    /* Save */
+    saveBtn.addEventListener('click', () => {
+      if (currentPostIdx < 0) return;
+      const idx = currentPostIdx;
+      savedPosts.has(idx) ? savedPosts.delete(idx) : savedPosts.add(idx);
+      saveBtn.classList.toggle('saved', savedPosts.has(idx));
+      showNotice(savedPosts.has(idx) ? 'Saved!' : 'Removed from saved');
+    });
+
+    /* Comment send */
+    document.getElementById('comment-send').addEventListener('click', sendComment);
+    commInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendComment(); });
+
+    function sendComment() {
+      const text = commInput.value.trim();
+      if (!text || currentPostIdx < 0) return;
+      userComments.push({
+        postIdx: currentPostIdx,
+        user: 'you',
+        text,
+        time: 'Just now',
+        likes: 0
+      });
+      commInput.value = '';
+      renderComments(currentPostIdx);
+      showNotice('Comment posted!');
+    }
+
+    /* Focus comment input */
+    document.getElementById('comment-focus-btn').addEventListener('click', () => {
+      commInput.focus();
+    });
+
+    /* Category tabs */
+    document.querySelectorAll('.cat-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.cat;
+        buildGrid(currentFilter);
+      });
+    });
+
+    /* Follow */
+    document.getElementById('btn-follow').addEventListener('click', function() {
+      isFollowing = !isFollowing;
+      this.textContent = isFollowing ? 'FOLLOWING' : 'FOLLOW';
+      this.classList.toggle('following', isFollowing);
+      showNotice(isFollowing ? 'Following HOTT WRESTLING!' : 'Unfollowed');
+    });
+
+    /* Mockup notice */
+    let noticeTimer = null;
+    function showNotice(msg) {
+      const el = document.getElementById('mockup-notice');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(noticeTimer);
+      noticeTimer = setTimeout(() => el.classList.remove('show'), 2000);
+    }
+
+    /* Scroll reveal */
+    const revObs = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (en.isIntersecting) { en.target.classList.add('visible'); revObs.unobserve(en.target); }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+    /* ── INIT ── */
+    buildGrid('all');
+
+  })();
+  </script>
+</body>
+</html>
