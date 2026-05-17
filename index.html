@@ -5,17 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>HOTT WRESTLING · Blog</title>
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <script>
-  if (window.netlifyIdentity) {
-    window.netlifyIdentity.on("init", user => {
-      if (!user) {
-        window.netlifyIdentity.on("login", () => {
-          document.location.href = "/admin/";
-        });
-      }
-    });
-  }
-  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -498,30 +487,31 @@
       {user:'grappling_life',  text:'Cannot handle this level of heat', time:'5h', likes:12},
     ];
 
-    /* ── FETCH POSTS from _posts folder ── */
+    /* ── FETCH POSTS via GitHub API ── */
+    const GITHUB_USER = 'Mikeljchm';
+    const GITHUB_REPO = 'Maqueta';
+    const GITHUB_BRANCH = 'main';
+    const NETLIFY_URL = 'https://candid-quokka-4d1504.netlify.app';
+
     async function fetchPosts() {
       try {
-        /* Netlify sirve los archivos del repo — leemos el directorio via API */
-        const res = await fetch('/_posts/');
-        if (!res.ok) throw new Error('no posts yet');
-        const text = await res.text();
+        /* 1. Obtener lista de archivos en _posts via GitHub API */
+        const listRes = await fetch(
+          `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/_posts?ref=${GITHUB_BRANCH}`
+        );
 
-        /* Parsear links de archivos .md */
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-        const links = [...doc.querySelectorAll('a[href$=".md"]')];
+        if (!listRes.ok) { showEmptyState(); return; }
 
-        if (links.length === 0) {
-          showEmptyState();
-          return;
-        }
+        const files = await listRes.json();
+        const mdFiles = files.filter(f => f.name.endsWith('.md'));
 
-        /* Fetch cada archivo markdown */
-        const posts = await Promise.all(links.map(async link => {
-          const href = link.getAttribute('href');
-          const r = await fetch(href);
+        if (mdFiles.length === 0) { showEmptyState(); return; }
+
+        /* 2. Fetch contenido de cada archivo */
+        const posts = await Promise.all(mdFiles.map(async file => {
+          const r = await fetch(file.download_url);
           const md = await r.text();
-          return parseMarkdown(md, href);
+          return parseMarkdown(md, file.name);
         }));
 
         allPosts = posts.filter(Boolean).sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -532,13 +522,13 @@
         buildGrid();
 
       } catch(e) {
-        /* Si no hay posts todavía, mostrar estado vacío */
+        console.error(e);
         showEmptyState();
       }
     }
 
     /* ── PARSE MARKDOWN FRONTMATTER ── */
-    function parseMarkdown(md, href) {
+    function parseMarkdown(md, filename) {
       try {
         const fmMatch = md.match(/^---\n([\s\S]*?)\n---/);
         if (!fmMatch) return null;
@@ -547,13 +537,20 @@
           const m = fm.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'));
           return m ? m[1].trim().replace(/^["']|["']$/g, '') : '';
         };
+
+        let image = get('image');
+        /* Si la imagen es una ruta local /uploads/ la convertimos a URL de Netlify */
+        if (image && image.startsWith('/')) {
+          image = NETLIFY_URL + image;
+        }
+
         return {
           title:       get('title'),
-          image:       get('image'),
+          image:       image,
           category:    get('category'),
           description: get('description'),
           date:        get('date'),
-          slug:        href
+          slug:        filename
         };
       } catch(e) { return null; }
     }
