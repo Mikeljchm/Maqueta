@@ -1,13 +1,23 @@
+---
+layout: none
+---
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>HOTT WRESTLING · Blog</title>
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#080505">
+  <meta name="description" content="The hottest wrestling content. No filters, no censorship.">
+  <meta property="og:title" content="HOTT WRESTLING">
+  <meta property="og:description" content="Where the heat rises.">
+  <meta property="og:type" content="website">
+  <title>HOTT WRESTLING</title>
+
+  <link rel="manifest" href="/manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital@1&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+
   <style>
     @property --angle { syntax:'<angle>'; initial-value:0deg; inherits:false; }
 
@@ -15,759 +25,693 @@
       --bg:          #080505;
       --surface:     #100808;
       --surface-2:   #180a0a;
+      --surface-3:   #200c0c;
       --fire-orange: #FF4500;
       --fire-yellow: #FFB800;
       --fire-red:    #CC1100;
+      --fire-deep:   #8B1A00;
       --text:        #F0EAE0;
       --text-dim:    #8a7060;
+      --text-muted:  #4a2a2a;
       --border:      #2a1010;
+      --border-hot:  rgba(255,69,0,0.25);
+      --nav-h:       64px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
       --font-d:      'Bebas Neue', Impact, sans-serif;
       --font-b:      'DM Sans', Arial, sans-serif;
+      --ease:        cubic-bezier(0.16,1,0.3,1);
+      --ease-bounce: cubic-bezier(0.34,1.56,0.64,1);
     }
 
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body {
-      background:var(--bg); color:var(--text);
-      font-family:var(--font-b); min-height:100vh;
-      overflow-x:hidden; -webkit-tap-highlight-color:transparent;
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { background:var(--bg); height:100%; }
+    body {
+      font-family: var(--font-b);
+      background: var(--bg);
+      color: var(--text);
+      height: 100%;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── TOP NAV ── */
-    .top-nav {
-      position:sticky; top:0; z-index:100;
-      background:rgba(8,5,5,0.95); backdrop-filter:blur(14px);
-      border-bottom:1px solid var(--border);
-      padding:0.7rem 1.1rem;
-      display:flex; align-items:center; justify-content:space-between;
-    }
-    .nav-logo {
-      font-family:var(--font-d); font-size:1.35rem;
-      letter-spacing:0.05em; color:#fff; text-decoration:none;
-    }
-    .nav-logo span {
-      background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange));
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-    }
-    .nav-right { display:flex; gap:0.5rem; align-items:center; }
-    .admin-btn {
-      background:rgba(255,69,0,0.1);
-      border:1px solid rgba(255,69,0,0.3);
-      border-radius:8px; padding:0.35rem 0.7rem;
-      color:var(--fire-orange); font-family:var(--font-d);
-      font-size:0.75rem; letter-spacing:0.1em;
-      cursor:pointer; transition:all 0.25s;
-      display:none; align-items:center; gap:0.3rem;
-      text-decoration:none;
-    }
-    .admin-btn.visible { display:flex; }
-    .admin-btn:active { background:rgba(255,69,0,0.2); }
+    /* APP SHELL */
+    #app { display:flex; flex-direction:column; height:100%; height:100dvh; overflow:hidden; }
 
-    /* ── PROFILE ── */
-    .profile-wrap {
-      padding:1.4rem 1.1rem 0;
-      background:linear-gradient(to bottom, rgba(20,5,5,0.7), transparent);
+    /* TOP BAR */
+    .top-bar {
+      flex-shrink: 0;
+      height: 52px;
+      background: rgba(8,5,5,0.97);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      z-index: 50;
     }
-    .profile-top { display:flex; align-items:center; gap:1.1rem; margin-bottom:0.9rem; }
-    .profile-avatar-ring {
-      position:relative; width:74px; height:74px; flex-shrink:0;
-    }
-    .profile-avatar-ring::before {
-      content:''; position:absolute; inset:-3px; border-radius:50%;
-      background:conic-gradient(from var(--angle), transparent 0deg, var(--fire-red) 20deg, var(--fire-orange) 55deg, var(--fire-yellow) 80deg, transparent 105deg, transparent 360deg);
-      animation:borderTrace 2s linear infinite; z-index:0;
-    }
-    @keyframes borderTrace { to { --angle:360deg; } }
-    .profile-avatar-ring img {
-      position:relative; z-index:1;
-      width:70px; height:70px; border-radius:50%;
-      object-fit:cover; border:2.5px solid var(--bg);
-      display:block; margin:2px;
-    }
-    .profile-stats { display:flex; gap:1.3rem; flex:1; }
-    .stat { text-align:center; }
-    .stat-num { font-family:var(--font-d); font-size:1.2rem; color:#fff; letter-spacing:0.04em; display:block; }
-    .stat-label { font-size:0.58rem; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
-    .profile-name { font-family:var(--font-d); font-size:0.95rem; color:#fff; letter-spacing:0.08em; margin-bottom:0.2rem; }
-    .profile-bio { font-size:0.74rem; color:var(--text-dim); line-height:1.55; }
-    .profile-bio .tag { color:var(--fire-orange); }
-    .btn-follow {
-      width:100%; margin:0.9rem 0 1rem;
-      padding:0.5rem; border-radius:7px;
-      font-family:var(--font-d); font-size:0.88rem; letter-spacing:0.1em;
-      cursor:pointer; transition:all 0.25s ease;
-      background:rgba(255,69,0,0.08); border:1px solid var(--fire-orange); color:var(--fire-yellow);
-    }
-    .btn-follow.following { background:transparent; border-color:var(--border); color:var(--text-dim); }
+    .top-logo { font-family:var(--font-d); font-size:1.3rem; letter-spacing:0.04em; color:#fff; text-decoration:none; line-height:1; }
+    .top-logo span { background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .top-actions { display:flex; gap:0.2rem; align-items:center; }
+    .top-btn { background:none; border:none; color:var(--text-dim); width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; }
+    .top-btn:active { color:var(--fire-orange); background:rgba(255,69,0,0.1); }
+    .top-btn svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .pwa-btn { background:rgba(255,69,0,0.1); border:1px solid rgba(255,69,0,0.3); border-radius:7px; padding:0.3rem 0.65rem; color:var(--fire-orange); font-family:var(--font-d); font-size:0.7rem; letter-spacing:0.08em; cursor:pointer; display:none; align-items:center; gap:0.3rem; transition:all 0.25s; }
+    .pwa-btn.visible { display:flex; }
 
-    /* ── CATEGORY TABS ── */
-    .cat-tabs {
-      display:flex; overflow-x:auto; scrollbar-width:none;
-      background:rgba(8,5,5,0.92); backdrop-filter:blur(10px);
-      border-bottom:1px solid var(--border);
-      position:sticky; top:57px; z-index:90;
-      border-top:1px solid var(--border);
-    }
-    .cat-tabs::-webkit-scrollbar { display:none; }
-    .cat-tab {
-      flex:0 0 auto; padding:0.7rem 0.9rem;
-      font-size:0.65rem; letter-spacing:0.12em; text-transform:uppercase;
-      color:var(--text-dim); cursor:pointer; background:none;
-      border:none; border-bottom:2px solid transparent;
-      transition:all 0.25s; white-space:nowrap; font-family:var(--font-b);
-    }
-    .cat-tab.active { color:var(--fire-orange); border-bottom-color:var(--fire-orange); }
+    /* PAGES */
+    .pages { flex:1; overflow:hidden; position:relative; }
+    .page { position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; opacity:0; pointer-events:none; transform:translateY(8px); transition:opacity 0.3s var(--ease), transform 0.3s var(--ease); padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 1rem); scrollbar-width:none; }
+    .page::-webkit-scrollbar { display:none; }
+    .page.active { opacity:1; pointer-events:all; transform:translateY(0); }
 
-    /* ── GRID ── */
-    .posts-grid {
-      display:grid; grid-template-columns:repeat(3, 1fr); gap:2px;
-    }
-    .post-thumb {
-      position:relative; aspect-ratio:1;
-      overflow:hidden; cursor:pointer; background:var(--surface);
-    }
-    .post-thumb:first-child { grid-column:span 2; grid-row:span 2; }
-    .post-thumb img {
-      width:100%; height:100%; object-fit:cover; display:block;
-      transition:transform 0.4s cubic-bezier(0.16,1,0.3,1), filter 0.3s ease;
-    }
-    .post-thumb:active img { transform:scale(1.05); filter:brightness(0.65); }
-    .post-overlay {
-      position:absolute; inset:0;
-      background:linear-gradient(to top, rgba(5,1,1,0.88) 0%, transparent 55%);
-      opacity:0; pointer-events:none; transition:opacity 0.3s;
-      display:flex; flex-direction:column; justify-content:flex-end; padding:0.55rem;
-    }
-    .post-thumb:active .post-overlay { opacity:1; }
-    .overlay-stats { display:flex; gap:0.6rem; font-size:0.68rem; color:#fff; font-weight:600; }
-    .cat-badge {
-      position:absolute; top:5px; left:5px;
-      background:rgba(255,69,0,0.88); backdrop-filter:blur(4px);
-      color:#fff; font-size:0.48rem; letter-spacing:0.08em;
-      text-transform:uppercase; padding:0.18rem 0.4rem;
-      border-radius:3px; font-weight:700; font-family:var(--font-b);
-    }
-    .new-badge {
-      position:absolute; top:5px; right:5px;
-      background:rgba(255,184,0,0.9);
-      color:#000; font-size:0.45rem; letter-spacing:0.08em;
-      text-transform:uppercase; padding:0.18rem 0.4rem;
-      border-radius:3px; font-weight:700; font-family:var(--font-b);
-    }
+    /* BOTTOM NAV */
+    .bottom-nav { flex-shrink:0; height:calc(var(--nav-h) + var(--safe-bottom)); padding-bottom:var(--safe-bottom); background:rgba(6,3,3,0.98); backdrop-filter:blur(20px); border-top:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-around; padding-top:0.5rem; position:relative; z-index:50; }
+    .nav-item { display:flex; flex-direction:column; align-items:center; gap:0.2rem; cursor:pointer; padding:0.3rem 0.8rem; border-radius:12px; transition:all 0.25s var(--ease); background:none; border:none; color:var(--text-muted); position:relative; }
+    .nav-item svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; transition:all 0.25s var(--ease); }
+    .nav-item span { font-size:0.58rem; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; transition:all 0.25s var(--ease); line-height:1; }
+    .nav-item.active { color:var(--fire-orange); }
+    .nav-item.active svg { filter:drop-shadow(0 0 6px rgba(255,69,0,0.6)); }
+    .nav-item:active { transform:scale(0.9); background:rgba(255,69,0,0.08); }
+    .nav-dot { position:absolute; top:0.2rem; right:0.5rem; width:6px; height:6px; background:var(--fire-orange); border-radius:50%; animation:pulse-dot 2s ease-in-out infinite; }
+    @keyframes pulse-dot { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.4);opacity:0.7;} }
 
-    /* Empty state */
-    .empty-state {
-      grid-column: span 3;
-      padding: 4rem 2rem;
-      text-align: center;
-    }
-    .empty-state-icon {
-      font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;
-    }
-    .empty-state-title {
-      font-family: var(--font-d);
-      font-size: 1.2rem; color: var(--text-dim);
-      letter-spacing: 0.1em; margin-bottom: 0.5rem;
-    }
-    .empty-state-sub {
-      font-size: 0.75rem; color: #4a2a2a;
-    }
+    /* FEED FILTERS */
+    .feed-filters { display:flex; gap:0.5rem; padding:0.75rem 1rem; overflow-x:auto; scrollbar-width:none; flex-shrink:0; }
+    .feed-filters::-webkit-scrollbar { display:none; }
+    .filter-btn { flex-shrink:0; font-family:var(--font-d); font-size:0.72rem; letter-spacing:0.08em; padding:0.35rem 0.85rem; border-radius:20px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); cursor:pointer; transition:all 0.2s var(--ease); white-space:nowrap; }
+    .filter-btn.active { background:var(--fire-orange); border-color:var(--fire-orange); color:#fff; }
 
-    /* Loading */
-    .loading-grid {
-      display:grid; grid-template-columns:repeat(3, 1fr); gap:2px;
-    }
-    .loading-thumb {
-      aspect-ratio:1; background:var(--surface);
-      animation: shimmer 1.5s ease-in-out infinite;
-    }
-    .loading-thumb:first-child { grid-column:span 2; grid-row:span 2; }
-    @keyframes shimmer {
-      0%,100% { background: var(--surface); }
-      50% { background: var(--surface-2); }
-    }
+    /* POST CARD */
+    .post-card { background:var(--surface); border-bottom:1px solid var(--border); overflow:hidden; opacity:0; transform:translateY(16px); animation:card-in 0.5s var(--ease) forwards; }
+    @keyframes card-in { to { opacity:1; transform:translateY(0); } }
 
-    /* ── POST MODAL ── */
-    .post-modal {
-      position:fixed; inset:0; z-index:9999;
-      display:flex; flex-direction:column;
-      background:var(--bg);
-      transform:translateY(100%);
-      transition:transform 0.42s cubic-bezier(0.16,1,0.3,1);
-      overflow-y:auto;
-    }
-    .post-modal.open { transform:translateY(0); }
+    .card-header { display:flex; align-items:center; gap:0.75rem; padding:0.85rem 1rem 0.75rem; }
+    .card-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--fire-deep),var(--fire-red)); display:flex; align-items:center; justify-content:center; font-family:var(--font-d); font-size:1rem; color:#fff; flex-shrink:0; border:1.5px solid var(--border-hot); }
+    .card-meta { flex:1; display:flex; flex-direction:column; gap:0.1rem; }
+    .card-author { font-size:0.82rem; font-weight:600; color:var(--text); letter-spacing:0.02em; }
+    .card-date { font-size:0.68rem; color:var(--text-muted); }
+    .card-cat { font-family:var(--font-d); font-size:0.65rem; letter-spacing:0.1em; color:var(--fire-orange); background:rgba(255,69,0,0.08); padding:0.2rem 0.5rem; border-radius:4px; border:1px solid rgba(255,69,0,0.2); }
 
-    .modal-header {
-      position:sticky; top:0; z-index:10;
-      background:rgba(8,5,5,0.96); backdrop-filter:blur(12px);
-      border-bottom:1px solid var(--border);
-      padding:0.7rem 1rem;
-      display:flex; align-items:center; gap:0.75rem;
-    }
-    .modal-back {
-      background:none; border:none; color:var(--text-dim);
-      width:36px; height:36px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer; transition:all 0.2s; flex-shrink:0;
-    }
-    .modal-back:active { color:var(--fire-orange); background:rgba(255,69,0,0.1); }
-    .modal-back svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
-    .modal-av { width:36px; height:36px; border-radius:50%; overflow:hidden; flex-shrink:0; border:1.5px solid var(--fire-orange); }
-    .modal-av img { width:100%; height:100%; object-fit:cover; }
-    .modal-info { flex:1; }
-    .modal-uname { font-family:var(--font-d); font-size:0.9rem; color:#fff; letter-spacing:0.05em; }
-    .modal-cat-tag { font-size:0.58rem; color:var(--fire-orange); letter-spacing:0.15em; text-transform:uppercase; }
+    /* CARD MEDIA */
+    .card-media { width:100%; position:relative; background:var(--surface-2); cursor:pointer; overflow:hidden; }
+    .card-media img { width:100%; display:block; aspect-ratio:4/3; object-fit:cover; transition:transform 0.4s var(--ease); }
+    .card-media:active img { transform:scale(0.98); }
 
-    .modal-img-wrap { background:#030101; position:relative; }
-    .modal-img-wrap img { width:100%; display:block; max-height:75vw; object-fit:cover; }
+    /* CARD ACTIONS */
+    .card-actions { display:flex; align-items:center; padding:0.6rem 0.9rem; gap:0.1rem; }
+    .action-btn { background:none; border:none; color:var(--text-dim); display:flex; align-items:center; gap:0.35rem; padding:0.45rem 0.65rem; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:600; transition:all 0.2s var(--ease); }
+    .action-btn svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; transition:all 0.2s var(--ease); }
+    .action-btn:active { transform:scale(0.88); }
+    .like-btn.liked { color:var(--fire-orange); }
+    .like-btn.liked svg { fill:var(--fire-orange); stroke:var(--fire-orange); }
+    .save-btn.saved svg { fill:var(--text); stroke:var(--text); }
+    .share-btn { margin-left:auto; }
 
-    .double-tap-heart {
-      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(0);
-      pointer-events:none; z-index:5; font-size:5rem;
-      transition:transform 0.15s ease, opacity 0.4s ease 0.2s; opacity:0;
-    }
-    .double-tap-heart.pop { transform:translate(-50%,-50%) scale(1.3); opacity:1; }
+    /* CARD BODY */
+    .card-body { padding:0 1rem 0.75rem; }
+    .card-title { font-family:var(--font-d); font-size:1.15rem; letter-spacing:0.02em; margin-bottom:0.4rem; line-height:1.2; color:var(--text); }
+    .card-desc { font-size:0.87rem; line-height:1.65; color:var(--text-dim); }
+    .card-tags { display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.6rem; }
+    .card-tag { font-size:0.72rem; color:var(--fire-orange); opacity:0.8; cursor:pointer; }
+    .card-tag:active { opacity:1; }
 
-    .modal-actions {
-      display:flex; align-items:center;
-      padding:0.75rem 0.9rem 0.4rem; gap:0.1rem;
-    }
-    .act-btn {
-      background:none; border:none; cursor:pointer;
-      display:flex; align-items:center; gap:0.3rem;
-      padding:0.45rem 0.55rem; border-radius:8px;
-      color:var(--text-dim); font-size:0.78rem; font-family:var(--font-b);
-      transition:all 0.2s;
-    }
-    .act-btn svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; transition:all 0.25s; }
-    .act-btn:active { transform:scale(0.88); }
-    .act-btn.liked { color:#ff3b5c; }
-    .act-btn.liked svg { fill:#ff3b5c; stroke:#ff3b5c; }
-    .act-btn.saved svg { fill:var(--fire-yellow); stroke:var(--fire-yellow); }
-    .act-spacer { flex:1; }
+    /* COMMENTS */
+    .card-comments { border-top:1px solid var(--border); padding:0.75rem 1rem; display:none; }
+    .card-comments.open { display:block; }
+    .comments-list { display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.75rem; min-height:0; }
+    .comment-item { display:flex; gap:0.6rem; align-items:flex-start; }
+    .comment-avatar { width:24px; height:24px; border-radius:50%; background:var(--surface-3); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-family:var(--font-d); color:var(--fire-orange); }
+    .comment-text { font-size:0.8rem; color:var(--text-dim); line-height:1.4; padding-top:0.15rem; }
+    .comment-form { display:flex; gap:0.5rem; align-items:center; }
+    .comment-input { flex:1; background:var(--surface-3); border:1px solid var(--border); border-radius:20px; padding:0.5rem 0.9rem; color:var(--text); font-family:var(--font-b); font-size:0.82rem; outline:none; transition:border-color 0.2s; }
+    .comment-input:focus { border-color:var(--border-hot); }
+    .comment-input::placeholder { color:var(--text-muted); }
+    .comment-submit { background:rgba(255,69,0,0.1); border:1px solid rgba(255,69,0,0.3); border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; flex-shrink:0; }
+    .comment-submit svg { width:14px; height:14px; fill:none; stroke:var(--fire-orange); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .comment-submit:active { background:rgba(255,69,0,0.2); transform:scale(0.9); }
 
-    .likes-line { padding:0.3rem 1rem 0.1rem; font-size:0.82rem; font-weight:600; color:#fff; }
-    .modal-desc-wrap { padding:0.2rem 1rem 0.6rem; font-size:0.8rem; color:#bbb; line-height:1.6; }
-    .modal-desc-wrap .uname { font-weight:600; color:#fff; margin-right:0.35rem; }
-    .modal-desc-wrap .htag { color:var(--fire-orange); }
-    .modal-date-line { padding:0 1rem 0.7rem; font-size:0.62rem; color:var(--text-dim); letter-spacing:0.12em; text-transform:uppercase; border-bottom:1px solid rgba(255,69,0,0.05); }
+    /* EMPTY STATE */
+    .empty-feed { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem; gap:1rem; text-align:center; }
+    .empty-feed svg { width:48px; height:48px; opacity:0.2; fill:none; stroke:var(--fire-orange); stroke-width:1.2; }
+    .empty-feed p { color:var(--text-muted); font-size:0.9rem; line-height:1.6; }
 
-    .comments-wrap { padding:0.4rem 0 80px; }
-    .comment-row { display:flex; gap:0.65rem; padding:0.55rem 1rem; align-items:flex-start; }
-    .comm-av { width:28px; height:28px; border-radius:50%; flex-shrink:0; overflow:hidden; background:var(--surface-2); border:1px solid var(--border); }
-    .comm-av img { width:100%; height:100%; object-fit:cover; }
-    .comm-body { flex:1; }
-    .comm-user { font-size:0.74rem; font-weight:600; color:#ddd; }
-    .comm-text { font-size:0.76rem; color:#aaa; line-height:1.4; margin-top:0.1rem; }
-    .comm-meta { display:flex; gap:0.75rem; margin-top:0.25rem; font-size:0.6rem; color:var(--text-dim); }
-    .comm-like-btn { background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:0.6rem; font-family:var(--font-b); }
+    /* PHOTO VIEWER */
+    .photo-viewer { position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s var(--ease); }
+    .photo-viewer.open { opacity:1; pointer-events:all; }
+    .viewer-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.96); }
+    .viewer-ui { position:relative; width:100%; height:100%; display:flex; flex-direction:column; }
+    .viewer-top-bar { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:1rem; padding-top:calc(1rem + env(safe-area-inset-top,0px)); }
+    .viewer-btn { background:rgba(255,255,255,0.1); border:none; border-radius:50%; width:38px; height:38px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; backdrop-filter:blur(4px); }
+    .viewer-btn svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .viewer-counter { font-family:var(--font-d); font-size:1rem; letter-spacing:0.08em; color:#fff; }
+    .viewer-photo-wrap { flex:1; overflow:hidden; position:relative; display:flex; align-items:center; }
+    .viewer-track { display:flex; width:100%; height:100%; transition:transform 0.3s var(--ease); }
+    .viewer-slide { flex-shrink:0; width:100vw; height:100%; display:flex; align-items:center; justify-content:center; }
+    .viewer-slide img { width:100%; height:100%; object-fit:contain; touch-action:none; transform-origin:center; will-change:transform; }
+    .viewer-heart { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(0); font-size:5rem; pointer-events:none; z-index:10; }
+    .viewer-heart.pop { animation:heart-pop 0.7s var(--ease-bounce) forwards; }
+    @keyframes heart-pop { 0%{transform:translate(-50%,-50%) scale(0);opacity:1;} 50%{transform:translate(-50%,-50%) scale(1.3);opacity:1;} 100%{transform:translate(-50%,-50%) scale(0.8);opacity:0;} }
+    .viewer-bottom-bar { flex-shrink:0; display:flex; gap:1rem; padding:1rem 1.5rem; padding-bottom:calc(1rem + var(--safe-bottom)); justify-content:center; }
+    .viewer-action { background:rgba(255,255,255,0.1); border:none; border-radius:12px; display:flex; align-items:center; gap:0.5rem; padding:0.6rem 1.2rem; cursor:pointer; color:#fff; font-size:0.9rem; font-weight:600; transition:all 0.2s var(--ease); backdrop-filter:blur(4px); }
+    .viewer-action svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .viewer-action:active { transform:scale(0.92); }
+    .viewer-action.liked { color:var(--fire-orange); }
+    .viewer-action.liked svg { fill:var(--fire-orange); stroke:var(--fire-orange); }
 
-    .comm-input-bar {
-      position:sticky; bottom:0; z-index:10;
-      background:rgba(8,5,5,0.97); backdrop-filter:blur(14px);
-      border-top:1px solid var(--border);
-      padding:0.65rem 1rem;
-      display:flex; align-items:center; gap:0.65rem;
-    }
-    .comm-input-av {
-      width:28px; height:28px; border-radius:50%; flex-shrink:0;
-      background:linear-gradient(135deg,var(--fire-red),var(--fire-orange));
-      display:flex; align-items:center; justify-content:center;
-      font-family:var(--font-d); font-size:0.6rem; color:#fff;
-    }
-    .comm-input {
-      flex:1; background:rgba(255,255,255,0.04);
-      border:1px solid var(--border); border-radius:20px;
-      padding:0.45rem 0.9rem; color:var(--text);
-      font-family:var(--font-b); font-size:0.8rem; outline:none;
-    }
-    .comm-input:focus { border-color:rgba(255,69,0,0.35); }
-    .comm-input::placeholder { color:var(--text-dim); }
-    .comm-send {
-      background:none; border:none; color:var(--fire-orange);
-      font-family:var(--font-d); font-size:0.82rem; letter-spacing:0.08em;
-      cursor:pointer; transition:color 0.2s;
-    }
-
-    /* Toast */
-    .toast {
-      position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(20px);
-      background:rgba(255,69,0,0.15); border:1px solid rgba(255,69,0,0.4);
-      backdrop-filter:blur(10px); color:var(--fire-yellow);
-      font-family:var(--font-b); font-size:0.75rem; letter-spacing:0.1em;
-      padding:0.55rem 1.2rem; border-radius:20px;
-      opacity:0; transition:all 0.3s ease; z-index:999999;
-      white-space:nowrap; pointer-events:none;
-    }
+    /* TOAST */
+    .toast { position:fixed; bottom:calc(var(--nav-h) + var(--safe-bottom) + 1rem); left:50%; transform:translateX(-50%) translateY(20px); background:rgba(255,69,0,0.92); color:#fff; padding:0.55rem 1.2rem; border-radius:20px; font-size:0.82rem; font-weight:600; letter-spacing:0.04em; opacity:0; transition:all 0.3s var(--ease); pointer-events:none; z-index:300; white-space:nowrap; }
     .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-    @keyframes heartPop { 0%{transform:scale(1);} 30%{transform:scale(1.5);} 70%{transform:scale(0.9);} 100%{transform:scale(1);} }
-    .heart-pop { animation:heartPop 0.35s cubic-bezier(0.16,1,0.3,1); }
+    /* SEARCH PAGE */
+    .search-wrap { padding:1rem; }
+    .search-box { width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:0.75rem 1rem; color:var(--text); font-family:var(--font-b); font-size:0.95rem; outline:none; transition:border-color 0.2s; }
+    .search-box:focus { border-color:var(--border-hot); }
+    .search-box::placeholder { color:var(--text-muted); }
+    .search-tags { display:flex; flex-wrap:wrap; gap:0.5rem; padding:0 1rem 1rem; }
+    .search-tag { font-family:var(--font-d); font-size:0.72rem; letter-spacing:0.06em; padding:0.3rem 0.7rem; border-radius:20px; border:1px solid var(--border); color:var(--text-muted); cursor:pointer; transition:all 0.2s; }
+    .search-tag:active { background:rgba(255,69,0,0.1); color:var(--fire-orange); border-color:rgba(255,69,0,0.3); }
+    .search-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
+    .search-thumb { position:relative; aspect-ratio:1; overflow:hidden; cursor:pointer; background:var(--surface); }
+    .search-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+    .search-thumb-cat { position:absolute; top:4px; left:4px; background:rgba(255,69,0,0.88); color:#fff; font-size:0.42rem; letter-spacing:0.08em; text-transform:uppercase; padding:0.15rem 0.35rem; border-radius:3px; font-weight:700; }
 
-    .footer-bar {
-      text-align:center; padding:2rem 1rem 3rem;
-      color:#3a1818; font-size:0.58rem;
-      letter-spacing:0.3em; text-transform:uppercase;
-      border-top:1px solid rgba(255,69,0,0.07);
-      font-family:var(--font-b);
-    }
+    /* MORE PAGE */
+    .more-list { padding:1rem; display:flex; flex-direction:column; gap:0.75rem; }
+    .more-item { display:flex; align-items:center; gap:1rem; padding:1rem; background:var(--surface); border:1px solid var(--border); border-radius:12px; text-decoration:none; color:var(--text); transition:all 0.2s; }
+    .more-item:active { background:var(--surface-2); border-color:var(--border-hot); }
+    .more-icon { width:40px; height:40px; border-radius:10px; background:rgba(255,69,0,0.1); border:1px solid rgba(255,69,0,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .more-icon svg { width:20px; height:20px; fill:none; stroke:var(--fire-orange); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .more-label { font-size:0.9rem; font-weight:600; }
+    .more-sub { font-size:0.72rem; color:var(--text-muted); margin-top:0.1rem; }
+    .more-arrow { margin-left:auto; color:var(--text-muted); }
+    .more-arrow svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+
+    /* SECTION HEADER */
+    .section-header { padding:1.25rem 1rem 0.5rem; }
+    .section-title { font-family:var(--font-d); font-size:1.4rem; letter-spacing:0.06em; color:var(--text); }
+    .section-sub { font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem; }
   </style>
 </head>
 <body>
+<div id="app">
 
-  <!-- TOP NAV -->
-  <nav class="top-nav">
-    <a class="nav-logo" href="#">HOTT <span>WRESTLING</span></a>
-    <div class="nav-right">
-      <a class="admin-btn" id="admin-btn" href="/admin/">
-        + NEW POST
-      </a>
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
+    <div class="top-actions">
+      <button class="pwa-btn" id="pwa-install-btn">
+        <svg viewBox="0 0 24 24"><path d="M12 2v13m0 0-3-3m3 3 3-3M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2"/></svg>
+        GET APP
+      </button>
+      <button class="top-btn" id="notif-btn">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </button>
     </div>
+  </header>
+
+  <!-- PAGES -->
+  <div class="pages">
+    <!-- HOME FEED -->
+    <section class="page active" id="page-home">
+      <div class="feed-filters" id="feed-filters">
+        <button class="filter-btn active" data-cat="all">🔥 All</button>
+        <button class="filter-btn" data-cat="wrestling">Wrestling</button>
+        <button class="filter-btn" data-cat="bulge">Bulge Report</button>
+        <button class="filter-btn" data-cat="badboys">Bad Boys</button>
+        <button class="filter-btn" data-cat="fan">Fan Files</button>
+        <button class="filter-btn" data-cat="hall">Hall of Flame</button>
+      </div>
+      <div id="feed-container">
+        {% assign posts = site.posts %}
+        {% if posts.size > 0 %}
+          {% for post in posts %}
+          <article class="post-card" data-cat="{{ post.category }}">
+            <div class="card-header">
+              <div class="card-avatar">{{ post.category | slice: 0 | upcase }}</div>
+              <div class="card-meta">
+                <span class="card-author">HOTT WRESTLING</span>
+                <time class="card-date">{{ post.date | date: "%b %d, %Y" }}</time>
+              </div>
+              <span class="card-cat">{{ post.category | upcase }}</span>
+            </div>
+            {% if post.image %}
+            <div class="card-media" data-img="{{ post.image }}">
+              <img src="{{ post.image }}" alt="{{ post.title }}" loading="lazy" decoding="async">
+            </div>
+            {% endif %}
+            <div class="card-actions">
+              <button class="action-btn like-btn" data-id="{{ forloop.index }}">
+                <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                <span class="like-count">0</span>
+              </button>
+              <button class="action-btn comment-btn" data-id="{{ forloop.index }}">
+                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                <span class="comment-count">0</span>
+              </button>
+              <button class="action-btn share-btn" data-url="{{ site.url }}{{ post.url }}">
+                <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              </button>
+              <button class="action-btn save-btn" data-id="{{ forloop.index }}" style="margin-left:auto">
+                <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+              </button>
+            </div>
+            <div class="card-body">
+              {% if post.title %}<div class="card-title">{{ post.title }}</div>{% endif %}
+              {% if post.description %}
+              <div class="card-desc">{{ post.description }}</div>
+              {% assign tags = post.description | split: " " %}
+              <div class="card-tags">
+                {% for word in tags %}
+                  {% if word contains "#" %}
+                  <span class="card-tag">{{ word }}</span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            <div class="card-comments" id="comments-{{ forloop.index }}">
+              <div class="comments-list"></div>
+              <div class="comment-form">
+                <input class="comment-input" type="text" placeholder="Add a comment..." maxlength="280">
+                <button class="comment-submit">
+                  <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+              </div>
+            </div>
+          </article>
+          {% endfor %}
+        {% else %}
+        <div class="empty-feed">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+          <p>No posts yet.<br>Add content from the admin panel.</p>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- SEARCH -->
+    <section class="page" id="page-search">
+      <div class="search-wrap">
+        <input class="search-box" id="search-input" type="search" placeholder="Search wrestlers, categories...">
+      </div>
+      <div class="search-tags">
+        <span class="search-tag">wrestling</span>
+        <span class="search-tag">bulge</span>
+        <span class="search-tag">badboys</span>
+        <span class="search-tag">fan</span>
+        <span class="search-tag">hall</span>
+      </div>
+      <div class="search-grid" id="search-grid"></div>
+    </section>
+
+    <!-- MORE -->
+    <section class="page" id="page-more">
+      <div class="section-header">
+        <div class="section-title">More</div>
+        <div class="section-sub">Links, social & info</div>
+      </div>
+      <nav class="more-list">
+        <a class="more-item" href="https://t.me/hottwrestling" target="_blank">
+          <div class="more-icon"><svg viewBox="0 0 24 24"><path d="M21 5L2 12.5l7 1M21 5l-2.5 15L9 13.5M21 5L9 13.5m0 0v5l3.5-3"/></svg></div>
+          <div><div class="more-label">Telegram</div><div class="more-sub">Join the channel</div></div>
+          <div class="more-arrow"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></div>
+        </a>
+        <a class="more-item" href="#" target="_blank">
+          <div class="more-icon"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></div>
+          <div><div class="more-label">Instagram</div><div class="more-sub">Follow us</div></div>
+          <div class="more-arrow"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></div>
+        </a>
+        <a class="more-item" href="#" target="_blank">
+          <div class="more-icon"><svg viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 001.46 6.42 29 29 0 001 12a29 29 0 00.46 5.58 2.78 2.78 0 001.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.96A29 29 0 0023 12a29 29 0 00-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg></div>
+          <div><div class="more-label">YouTube</div><div class="more-sub">Watch videos</div></div>
+          <div class="more-arrow"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></div>
+        </a>
+        <a class="more-item" href="/legal">
+          <div class="more-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div><div class="more-label">Legal</div><div class="more-sub">Terms & Privacy</div></div>
+          <div class="more-arrow"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></div>
+        </a>
+      </nav>
+    </section>
+
+  </div><!-- /pages -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-page="home">
+      <svg viewBox="0 0 24 24"><path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="nav-item" data-page="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span>Search</span>
+    </button>
+    <button class="nav-item" data-page="more">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      <span>More</span>
+    </button>
   </nav>
 
-  <!-- PROFILE -->
-  <div class="profile-wrap">
-    <div class="profile-top">
-      <div class="profile-avatar-ring">
-        <img src="https://i.postimg.cc/KvXW1VW5/Tumblr-l-1792805306594327.jpg" alt="HW">
-      </div>
-      <div class="profile-stats">
-        <div class="stat">
-          <span class="stat-num" id="total-posts">0</span>
-          <span class="stat-label">Posts</span>
-        </div>
-        <div class="stat">
-          <span class="stat-num">4.2K</span>
-          <span class="stat-label">Followers</span>
-        </div>
-        <div class="stat">
-          <span class="stat-num">211</span>
-          <span class="stat-label">Visits/day</span>
-        </div>
-      </div>
-    </div>
-    <div style="margin-bottom:0.3rem">
-      <div class="profile-name">HOTT WRESTLING</div>
-      <div class="profile-bio">Where the heat rises &#9670; Wrestling &amp; more<br><span class="tag">#GrapplingIsntGay</span> &#183; <span class="tag">hottwrestling.com</span></div>
-    </div>
-    <button class="btn-follow" id="btn-follow">FOLLOW</button>
-  </div>
+</div><!-- /app -->
 
-  <!-- CATEGORY TABS -->
-  <div class="cat-tabs" id="cat-tabs">
-    <button class="cat-tab active" data-cat="all">All</button>
-    <button class="cat-tab" data-cat="wrestling">Wrestling</button>
-    <button class="cat-tab" data-cat="bulge">Bulge Report</button>
-    <button class="cat-tab" data-cat="badboys">Bad Boys</button>
-    <button class="cat-tab" data-cat="fan">Fan Files</button>
-    <button class="cat-tab" data-cat="hall">Hall of Flame</button>
-  </div>
-
-  <!-- LOADING -->
-  <div class="loading-grid" id="loading-grid">
-    <div class="loading-thumb"></div>
-    <div class="loading-thumb"></div>
-    <div class="loading-thumb"></div>
-    <div class="loading-thumb"></div>
-    <div class="loading-thumb"></div>
-    <div class="loading-thumb"></div>
-    <div class="loading-thumb"></div>
-  </div>
-
-  <!-- GRID -->
-  <div class="posts-grid" id="posts-grid" style="display:none"></div>
-
-  <!-- POST MODAL -->
-  <div class="post-modal" id="post-modal">
-    <div class="modal-header">
-      <button class="modal-back" id="modal-back">
-        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+<!-- PHOTO VIEWER -->
+<div class="photo-viewer" id="photo-viewer">
+  <div class="viewer-backdrop"></div>
+  <div class="viewer-ui">
+    <div class="viewer-top-bar">
+      <button class="viewer-btn" id="viewer-back">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
       </button>
-      <div class="modal-av">
-        <img src="https://i.postimg.cc/KvXW1VW5/Tumblr-l-1792805306594327.jpg" alt="">
-      </div>
-      <div class="modal-info">
-        <div class="modal-uname">hottwrestling</div>
-        <div class="modal-cat-tag" id="modal-cat-tag"></div>
-      </div>
-    </div>
-
-    <div class="modal-img-wrap" id="modal-img-wrap">
-      <img id="modal-img" src="" alt="">
-      <div class="double-tap-heart" id="dbl-heart">&#10084;&#65039;</div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="act-btn" id="like-btn">
-        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        <span id="like-count">0</span>
-      </button>
-      <button class="act-btn" id="comm-focus-btn">
-        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        <span id="comm-count">0</span>
-      </button>
-      <button class="act-btn">
-        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      </button>
-      <div class="act-spacer"></div>
-      <button class="act-btn" id="save-btn">
-        <svg viewBox="0 0 24 24"><polygon points="19 21 12 16 5 21 5 3 19 3 19 21"/></svg>
+      <span class="viewer-counter" id="viewer-counter">1 / 1</span>
+      <button class="viewer-btn" id="viewer-save-v">
+        <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
       </button>
     </div>
-
-    <div class="likes-line" id="likes-line">0 likes</div>
-    <div class="modal-desc-wrap" id="modal-desc-wrap">
-      <span class="uname">hottwrestling</span>
-      <span id="modal-desc"></span>
+    <div class="viewer-photo-wrap" id="viewer-photo-wrap">
+      <div class="viewer-track" id="viewer-track"></div>
+      <div class="viewer-heart" id="viewer-heart">❤️</div>
     </div>
-    <div class="modal-date-line" id="modal-date-line"></div>
-
-    <div class="comments-wrap">
-      <div id="comments-list"></div>
-    </div>
-
-    <div class="comm-input-bar">
-      <div class="comm-input-av">HW</div>
-      <input class="comm-input" id="comm-input" type="text" placeholder="Add a comment...">
-      <button class="comm-send" id="comm-send">POST</button>
+    <div class="viewer-bottom-bar">
+      <button class="viewer-action" id="viewer-like">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <span id="viewer-like-count">0</span>
+      </button>
+      <button class="viewer-action" id="viewer-share-v">
+        <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        Share
+      </button>
     </div>
   </div>
+</div>
 
-  <footer class="footer-bar">
-    &copy; 2025 HOTT WRESTLING &middot; GRAPPLING ISN'T GAY
-  </footer>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
-  <!-- TOAST -->
-  <div class="toast" id="toast"></div>
+<script>
+(function() {
+  'use strict';
 
-  <script>
-  (function () {
+  /* UTILS */
+  function $(id) { return document.getElementById(id); }
+  function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
+  let toastTimer;
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
 
-    /* ── NETLIFY IDENTITY ── */
-    if (window.netlifyIdentity) {
-      window.netlifyIdentity.on('init', user => {
-        if (user) showAdminBtn();
-      });
-      window.netlifyIdentity.on('login', () => {
-        showAdminBtn();
-        window.netlifyIdentity.close();
-      });
-      window.netlifyIdentity.on('logout', () => {
-        document.getElementById('admin-btn').classList.remove('visible');
-      });
-      window.netlifyIdentity.init();
-    }
+  /* NAV */
+  document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.page;
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const pg = document.getElementById('page-' + id);
+      if (pg) pg.classList.add('active');
+    });
+  });
 
-    function showAdminBtn() {
-      document.getElementById('admin-btn').classList.add('visible');
-    }
-
-    /* ── CATEGORY LABELS ── */
-    const catLabels = {
-      wrestling: 'Wrestling',
-      bulge:     'Bulge Report',
-      badboys:   'Bad Boys',
-      fan:       'Fan Files',
-      hall:      'Hall of Flame'
-    };
-
-    /* ── STATE ── */
-    let allPosts    = [];
-    let filter      = 'all';
-    let currentIdx  = -1;
-    let likedSet    = new Set();
-    let savedSet    = new Set();
-    let userComms   = [];
-    let isFollowing = false;
-    let postLikes   = {};
-
-    const mockComments = [
-      {user:'wrestling_fan92', text:'This is FIRE absolute heat', time:'1h', likes:24},
-      {user:'mat_lover_pr',    text:'The intensity in this one is everything', time:'2h', likes:18},
-      {user:'grappling_life',  text:'Cannot handle this level of heat', time:'5h', likes:12},
-    ];
-
-    /* ── FETCH POSTS via GitHub API ── */
-    const GITHUB_USER = 'Mikeljchm';
-    const GITHUB_REPO = 'Maqueta';
-    const GITHUB_BRANCH = 'main';
-    const NETLIFY_URL = 'https://candid-quokka-4d1504.netlify.app';
-
-    async function fetchPosts() {
-      try {
-        /* 1. Obtener lista de archivos en _posts via GitHub API */
-        const listRes = await fetch(
-          `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/_posts?ref=${GITHUB_BRANCH}`
-        );
-
-        if (!listRes.ok) { showEmptyState(); return; }
-
-        const files = await listRes.json();
-        const mdFiles = files.filter(f => f.name.endsWith('.md'));
-
-        if (mdFiles.length === 0) { showEmptyState(); return; }
-
-        /* 2. Fetch contenido de cada archivo */
-        const posts = await Promise.all(mdFiles.map(async file => {
-          const r = await fetch(file.download_url);
-          const md = await r.text();
-          return parseMarkdown(md, file.name);
-        }));
-
-        allPosts = posts.filter(Boolean).sort((a,b) => new Date(b.date) - new Date(a.date));
-        allPosts.forEach((p,i) => { if (!postLikes[i]) postLikes[i] = Math.floor(Math.random()*800)+50; });
-
-        document.getElementById('loading-grid').style.display = 'none';
-        document.getElementById('posts-grid').style.display = 'grid';
-        buildGrid();
-
-      } catch(e) {
-        console.error(e);
-        showEmptyState();
-      }
-    }
-
-    /* ── PARSE MARKDOWN FRONTMATTER ── */
-    function parseMarkdown(md, filename) {
-      try {
-        const fmMatch = md.match(/^---\n([\s\S]*?)\n---/);
-        if (!fmMatch) return null;
-        const fm = fmMatch[1];
-        const get = key => {
-          const m = fm.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'));
-          return m ? m[1].trim().replace(/^["']|["']$/g, '') : '';
-        };
-
-        let image = get('image');
-        /* Si la imagen es una ruta local /uploads/ la convertimos a URL de Netlify */
-        if (image && image.startsWith('/')) {
-          image = NETLIFY_URL + image;
+  /* FEED FILTERS */
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.cat;
+      document.querySelectorAll('.post-card').forEach(card => {
+        if (cat === 'all' || card.dataset.cat === cat) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
         }
+      });
+    });
+  });
 
-        return {
-          title:       get('title'),
-          image:       image,
-          category:    get('category'),
-          description: get('description'),
-          date:        get('date'),
-          slug:        filename
-        };
-      } catch(e) { return null; }
+  /* LIKES */
+  const likedKey = 'hw_liked';
+  const likesKey = 'hw_likes';
+  let liked = new Set(JSON.parse(localStorage.getItem(likedKey) || '[]'));
+  let likes = JSON.parse(localStorage.getItem(likesKey) || '{}');
+
+  document.querySelectorAll('.like-btn').forEach(btn => {
+    const id = btn.dataset.id;
+    if (!likes[id]) likes[id] = 0;
+    btn.querySelector('.like-count').textContent = fmt(likes[id]);
+    if (liked.has(id)) btn.classList.add('liked');
+
+    btn.addEventListener('click', () => {
+      if (liked.has(id)) { liked.delete(id); likes[id] = Math.max(0, likes[id] - 1); }
+      else { liked.add(id); likes[id]++; }
+      btn.classList.toggle('liked', liked.has(id));
+      btn.querySelector('.like-count').textContent = fmt(likes[id]);
+      localStorage.setItem(likedKey, JSON.stringify([...liked]));
+      localStorage.setItem(likesKey, JSON.stringify(likes));
+    });
+  });
+
+  /* SAVE */
+  const savedKey = 'hw_saved';
+  let saved = new Set(JSON.parse(localStorage.getItem(savedKey) || '[]'));
+  document.querySelectorAll('.save-btn').forEach(btn => {
+    const id = btn.dataset.id;
+    if (saved.has(id)) btn.classList.add('saved');
+    btn.addEventListener('click', () => {
+      if (saved.has(id)) { saved.delete(id); toast('Removed'); }
+      else { saved.add(id); toast('Saved! 🔥'); }
+      btn.classList.toggle('saved', saved.has(id));
+      localStorage.setItem(savedKey, JSON.stringify([...saved]));
+    });
+  });
+
+  /* SHARE */
+  document.querySelectorAll('.share-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const url = btn.dataset.url || location.href;
+      if (navigator.share) { try { await navigator.share({ url, title: 'HOTT WRESTLING' }); } catch(e){} }
+      else { await navigator.clipboard.writeText(url).catch(()=>{}); toast('Link copied!'); }
+    });
+  });
+
+  /* COMMENTS */
+  document.querySelectorAll('.comment-btn').forEach(btn => {
+    const id = btn.dataset.id;
+    const section = $('comments-' + id);
+    if (!section) return;
+    const key = 'hw_comments_' + id;
+    const list = section.querySelector('.comments-list');
+
+    JSON.parse(localStorage.getItem(key) || '[]').forEach(text => addComment(list, text, false));
+    btn.querySelector('.comment-count').textContent = JSON.parse(localStorage.getItem(key) || '[]').length || 0;
+
+    btn.addEventListener('click', () => section.classList.toggle('open'));
+
+    const input = section.querySelector('.comment-input');
+    const submit = section.querySelector('.comment-submit');
+    submit.addEventListener('click', post);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') post(); });
+
+    function post() {
+      const text = input.value.trim();
+      if (!text) return;
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      arr.push(text);
+      localStorage.setItem(key, JSON.stringify(arr));
+      addComment(list, text, true);
+      btn.querySelector('.comment-count').textContent = arr.length;
+      input.value = '';
+      toast('Posted 🔥');
     }
 
-    function showEmptyState() {
-      document.getElementById('loading-grid').style.display = 'none';
-      document.getElementById('posts-grid').style.display = 'grid';
-      const grid = document.getElementById('posts-grid');
-      grid.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">&#128247;</div>
-          <div class="empty-state-title">No posts yet</div>
-          <div class="empty-state-sub">Tap NEW POST to publish your first photo</div>
-        </div>
-      `;
-      document.getElementById('total-posts').textContent = '0';
+    function addComment(list, text, animate) {
+      const div = document.createElement('div');
+      div.className = 'comment-item';
+      div.innerHTML = '<div class="comment-avatar">U</div><div class="comment-text">' + text + '</div>';
+      if (animate) { div.style.cssText = 'opacity:0;transform:translateY(6px);transition:all 0.3s'; requestAnimationFrame(() => { div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
+      list.appendChild(div);
     }
+  });
 
-    /* ── BUILD GRID ── */
-    function buildGrid() {
-      const grid = document.getElementById('posts-grid');
-      grid.innerHTML = '';
+  /* SEARCH */
+  const allPosts = [];
+  document.querySelectorAll('.post-card').forEach(card => {
+    const img = card.querySelector('.card-media img');
+    const desc = card.querySelector('.card-desc');
+    const cat = card.dataset.cat;
+    if (img) allPosts.push({ img: img.src, desc: desc ? desc.textContent : '', cat });
+  });
 
-      const filtered = filter === 'all'
-        ? allPosts
-        : allPosts.filter(p => p.category === filter);
-
-      if (filtered.length === 0) {
-        grid.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">&#128247;</div>
-            <div class="empty-state-title">No posts in this category</div>
-            <div class="empty-state-sub">Publish something in ${catLabels[filter] || filter}</div>
-          </div>
-        `;
-        return;
-      }
-
-      document.getElementById('total-posts').textContent = allPosts.length;
-
-      filtered.forEach((p, i) => {
-        const realIdx = allPosts.indexOf(p);
+  $('search-input').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase().trim();
+    const grid = $('search-grid');
+    grid.innerHTML = '';
+    if (!q) return;
+    allPosts.filter(p => p.desc.toLowerCase().includes(q) || p.cat.toLowerCase().includes(q))
+      .slice(0, 9).forEach(p => {
         const div = document.createElement('div');
-        div.className = 'post-thumb';
-        if (i === 0) { div.style.gridColumn = 'span 2'; div.style.gridRow = 'span 2'; }
-
-        const isNew = i < 2;
-        div.innerHTML = `
-          <img src="" data-src="${p.image}" alt="" loading="${i < 6 ? 'eager' : 'lazy'}" decoding="async">
-          <div class="cat-badge">${catLabels[p.category] || p.category}</div>
-          ${isNew ? '<div class="new-badge">NEW</div>' : ''}
-          <div class="post-overlay">
-            <div class="overlay-stats">
-              <span>&#9829; ${fmt(postLikes[realIdx] || 0)}</span>
-              <span>&#9997; ${mockComments.length}</span>
-            </div>
-          </div>
-        `;
-
-        /* Lazy load */
-        const img = div.querySelector('img');
-        new IntersectionObserver(([en], obs) => {
-          if (en.isIntersecting) { img.src = img.dataset.src; img.removeAttribute('data-src'); obs.disconnect(); }
-        }, { rootMargin:'80px' }).observe(img);
-
-        div.addEventListener('click', () => openPost(realIdx));
+        div.className = 'search-thumb';
+        div.innerHTML = '<img src="' + p.img + '" loading="lazy"><span class="search-thumb-cat">' + p.cat + '</span>';
+        div.addEventListener('click', () => openViewer([p.img], 0, p.desc));
         grid.appendChild(div);
       });
-    }
+  });
 
-    const fmt = n => n >= 1000 ? (n/1000).toFixed(1)+'K' : n;
-
-    /* ── OPEN POST ── */
-    function openPost(idx) {
-      currentIdx = idx;
-      const p = allPosts[idx];
-      document.getElementById('modal-img').src = p.image;
-      document.getElementById('modal-cat-tag').textContent = catLabels[p.category] || p.category;
-
-      /* Desc con hashtags */
-      const html = (p.description || '').split(/(#\w+)/g)
-        .map(pt => pt.startsWith('#') ? `<span class="htag">${pt}</span>` : pt).join('');
-      document.getElementById('modal-desc').innerHTML = html;
-
-      /* Date */
-      const d = new Date(p.date);
-      const dateStr = isNaN(d) ? p.date : d.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
-      document.getElementById('modal-date-line').textContent = dateStr.toUpperCase();
-
-      if (!postLikes[idx]) postLikes[idx] = Math.floor(Math.random()*800)+50;
-      updateLikeUI(idx);
-      document.getElementById('save-btn').classList.toggle('saved', savedSet.has(idx));
-      renderComments(idx);
-
-      document.getElementById('post-modal').classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closePost() {
-      document.getElementById('post-modal').classList.remove('open');
-      document.body.style.overflow = '';
-      currentIdx = -1;
-    }
-
-    function updateLikeUI(idx) {
-      const liked = likedSet.has(idx);
-      document.getElementById('like-btn').classList.toggle('liked', liked);
-      document.getElementById('like-count').textContent = fmt(postLikes[idx] || 0);
-      document.getElementById('likes-line').textContent = `${fmt(postLikes[idx] || 0)} likes`;
-    }
-
-    function renderComments(idx) {
-      const all = [...mockComments, ...userComms.filter(c => c.postIdx === idx)];
-      document.getElementById('comm-count').textContent = all.length;
-      document.getElementById('comments-list').innerHTML = all.map(c => `
-        <div class="comment-row">
-          <div class="comm-av"><img src="https://i.postimg.cc/KvXW1VW5/Tumblr-l-1792805306594327.jpg" alt="" loading="lazy"></div>
-          <div class="comm-body">
-            <span class="comm-user">${c.user}</span>
-            <div class="comm-text">${c.text}</div>
-            <div class="comm-meta">
-              <span>${c.time}</span>
-              <button class="comm-like-btn">${c.likes} likes</button>
-              <button class="comm-like-btn">Reply</button>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    /* ── EVENTS ── */
-    document.getElementById('modal-back').addEventListener('click', closePost);
-
-    let tStartY = 0;
-    const modal = document.getElementById('post-modal');
-    modal.addEventListener('touchstart', e => { tStartY = e.touches[0].clientY; }, {passive:true});
-    modal.addEventListener('touchend', e => {
-      if (e.changedTouches[0].clientY - tStartY > 90 && modal.scrollTop === 0) closePost();
+  document.querySelectorAll('.search-tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      $('search-input').value = tag.textContent;
+      $('search-input').dispatchEvent(new Event('input'));
     });
+  });
 
-    document.getElementById('like-btn').addEventListener('click', () => {
-      if (currentIdx < 0) return;
-      if (likedSet.has(currentIdx)) { likedSet.delete(currentIdx); postLikes[currentIdx]--; }
-      else {
-        likedSet.add(currentIdx); postLikes[currentIdx]++;
-        const svg = document.querySelector('#like-btn svg');
-        svg.classList.add('heart-pop');
-        setTimeout(() => svg.classList.remove('heart-pop'), 350);
+  /* PHOTO VIEWER */
+  let viewerImgs = [], viewerIdx = 0, viewerPostDesc = '';
+  let scale = 1, pinchDist = 0, pinchScale = 1, swipeSx = 0;
+
+  function openViewer(imgs, idx, desc) {
+    viewerImgs = imgs;
+    viewerIdx  = idx || 0;
+    viewerPostDesc = desc || '';
+    const track = $('viewer-track');
+    track.innerHTML = '';
+    imgs.forEach(src => {
+      const slide = document.createElement('div');
+      slide.className = 'viewer-slide';
+      const img = document.createElement('img');
+      img.src = src; img.alt = '';
+      slide.appendChild(img);
+      track.appendChild(slide);
+    });
+    updateViewerSlide(false);
+    $('photo-viewer').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function updateViewerSlide(animate) {
+    const track = $('viewer-track');
+    track.style.transition = animate ? 'transform 0.32s cubic-bezier(0.16,1,0.3,1)' : 'none';
+    track.style.transform = 'translateX(-' + (viewerIdx * 100) + 'vw)';
+    $('viewer-counter').textContent = (viewerIdx + 1) + ' / ' + viewerImgs.length;
+    scale = 1;
+    track.querySelectorAll('img').forEach(i => { i.style.transition=''; i.style.transform='scale(1)'; });
+  }
+
+  function closeViewer() {
+    $('photo-viewer').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  $('viewer-back').addEventListener('click', closeViewer);
+
+  /* Open viewer from card tap */
+  document.querySelectorAll('.card-media').forEach(media => {
+    const img = media.querySelector('img');
+    if (!img) return;
+    media.addEventListener('click', () => openViewer([img.src], 0, ''));
+  });
+
+  /* Viewer like */
+  $('viewer-like').addEventListener('click', () => {
+    $('viewer-like').classList.toggle('liked');
+    toast($('viewer-like').classList.contains('liked') ? '🔥 Liked!' : 'Unliked');
+  });
+
+  /* Viewer share */
+  $('viewer-share-v').addEventListener('click', async () => {
+    if (navigator.share) { try { await navigator.share({ url: location.href }); } catch(e){} }
+    else { await navigator.clipboard.writeText(location.href).catch(()=>{}); toast('Link copied!'); }
+  });
+
+  /* Double tap to like */
+  let lastTap = 0;
+  $('viewer-photo-wrap').addEventListener('touchend', e => {
+    if (e.touches.length > 0) return;
+    const now = Date.now();
+    if (now - lastTap < 320) {
+      $('viewer-like').classList.add('liked');
+      const h = $('viewer-heart');
+      h.classList.remove('pop');
+      void h.offsetWidth;
+      h.classList.add('pop');
+      setTimeout(() => h.classList.remove('pop'), 700);
+      e.preventDefault();
+    }
+    lastTap = now;
+  });
+
+  /* Swipe down to close */
+  let vsy = 0;
+  $('photo-viewer').addEventListener('touchstart', e => { if(e.touches.length===1) vsy=e.touches[0].clientY; }, {passive:true});
+  $('photo-viewer').addEventListener('touchend', e => { if(e.changedTouches[0].clientY - vsy > 110) closeViewer(); });
+
+  /* Pinch zoom + swipe photos */
+  const wrap = $('viewer-photo-wrap');
+  wrap.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      pinchDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      pinchScale = scale; e.preventDefault();
+    } else { swipeSx = e.touches[0].clientX; }
+  }, {passive:false});
+
+  wrap.addEventListener('touchmove', e => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      scale = Math.max(1, Math.min(4, pinchScale*(d/pinchDist)));
+      const img = $('viewer-track').querySelectorAll('img')[viewerIdx];
+      if (img) img.style.transform = 'scale('+scale+')';
+    }
+  }, {passive:false});
+
+  wrap.addEventListener('touchend', e => {
+    if (scale <= 1.1) {
+      scale = 1;
+      const img = $('viewer-track').querySelectorAll('img')[viewerIdx];
+      if (img) { img.style.transition='transform 0.3s'; img.style.transform='scale(1)'; setTimeout(()=>img.style.transition='',300); }
+      const dx = e.changedTouches[0].clientX - swipeSx;
+      if (Math.abs(dx) > 50) {
+        if (dx < 0 && viewerIdx < viewerImgs.length-1) viewerIdx++;
+        else if (dx > 0 && viewerIdx > 0) viewerIdx--;
+        updateViewerSlide(true);
       }
-      updateLikeUI(currentIdx);
-    });
+    }
+  });
 
-    let lastTap = 0;
-    document.getElementById('modal-img-wrap').addEventListener('touchend', e => {
-      const now = Date.now();
-      if (now - lastTap < 350) {
-        if (currentIdx >= 0 && !likedSet.has(currentIdx)) {
-          likedSet.add(currentIdx); postLikes[currentIdx]++;
-          updateLikeUI(currentIdx);
-        }
-        const heart = document.getElementById('dbl-heart');
-        heart.classList.add('pop');
-        setTimeout(() => heart.classList.remove('pop'), 700);
-        e.preventDefault();
+  /* CARD ENTRANCE ANIMATION */
+  const cardObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.animationPlayState = 'running';
+        cardObs.unobserve(e.target);
       }
-      lastTap = now;
     });
+  }, { threshold: 0.05 });
 
-    document.getElementById('save-btn').addEventListener('click', () => {
-      if (currentIdx < 0) return;
-      savedSet.has(currentIdx) ? savedSet.delete(currentIdx) : savedSet.add(currentIdx);
-      document.getElementById('save-btn').classList.toggle('saved', savedSet.has(currentIdx));
-      toast(savedSet.has(currentIdx) ? 'Saved!' : 'Removed from saved');
-    });
+  document.querySelectorAll('.post-card').forEach((card, i) => {
+    card.style.animationDelay = (i * 0.07) + 's';
+    card.style.animationPlayState = 'paused';
+    cardObs.observe(card);
+  });
 
-    document.getElementById('comm-focus-btn').addEventListener('click', () => document.getElementById('comm-input').focus());
+  /* PWA */
+  let deferredPWA;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); deferredPWA = e;
+    $('pwa-install-btn').classList.add('visible');
+  });
+  $('pwa-install-btn').addEventListener('click', async () => {
+    if (!deferredPWA) return;
+    deferredPWA.prompt();
+    const { outcome } = await deferredPWA.userChoice;
+    if (outcome === 'accepted') toast('App installed! 🔥');
+    deferredPWA = null; $('pwa-install-btn').classList.remove('visible');
+  });
 
-    function sendComment() {
-      const txt = document.getElementById('comm-input').value.trim();
-      if (!txt || currentIdx < 0) return;
-      userComms.push({ postIdx:currentIdx, user:'you', text:txt, time:'Just now', likes:0 });
-      document.getElementById('comm-input').value = '';
-      renderComments(currentIdx);
-      toast('Comment posted!');
-    }
-    document.getElementById('comm-send').addEventListener('click', sendComment);
-    document.getElementById('comm-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendComment(); });
-
-    document.querySelectorAll('.cat-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        filter = btn.dataset.cat;
-        buildGrid();
-      });
-    });
-
-    document.getElementById('btn-follow').addEventListener('click', function() {
-      isFollowing = !isFollowing;
-      this.textContent = isFollowing ? 'FOLLOWING' : 'FOLLOW';
-      this.classList.toggle('following', isFollowing);
-      toast(isFollowing ? 'Following!' : 'Unfollowed');
-    });
-
-    let toastTimer;
-    function toast(msg) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
-    }
-
-    /* ── INIT ── */
-    fetchPosts();
-
-  })();
-  </script>
+})();
+</script>
 </body>
 </html>
