@@ -749,28 +749,66 @@ layout: none
         });
       });
 
-      /* LIKES */
+      /* ── SUPABASE CONFIG ── */
+      const SB_URL = 'https://wxyvielyommbsgbwhcbu.supabase.co';
+      const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
+
+      async function sbFetch(path, method, body) {
+        const opts = { method: method || 'GET', headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(SB_URL + '/rest/v1/' + path, opts);
+        if (!res.ok) return null;
+        const text = await res.text();
+        return text ? JSON.parse(text) : null;
+      }
+
+      /* LIKES — localStorage para estado personal + Supabase para conteos reales */
       const likedKey = 'hw_liked';
-      const likesKey = 'hw_likes';
       let liked = new Set(JSON.parse(localStorage.getItem(likedKey) || '[]'));
-      let likes = JSON.parse(localStorage.getItem(likesKey) || '{}');
+      let likes = {};
+
+      async function loadAllLikes() {
+        const data = await sbFetch('likes?select=post_id,count');
+        if (data) data.forEach(row => { likes[row.post_id] = row.count; });
+        document.querySelectorAll('.like-btn').forEach(btn => {
+          const id = btn.dataset.id;
+          btn.querySelector('.like-count').textContent = fmt(likes[id] || 0);
+          btn.classList.toggle('liked', liked.has(id));
+        });
+      }
+
+      async function toggleLike(postId) {
+        const id = String(postId);
+        const wasLiked = liked.has(id);
+        if (wasLiked) { liked.delete(id); } else { liked.add(id); }
+        localStorage.setItem(likedKey, JSON.stringify([...liked]));
+        const delta = wasLiked ? -1 : 1;
+        const current = likes[id] || 0;
+        const newCount = Math.max(0, current + delta);
+        likes[id] = newCount;
+
+        /* Update UI instantly */
+        document.querySelectorAll('.like-btn[data-id="'+id+'"]').forEach(btn => {
+          btn.classList.toggle('liked', !wasLiked);
+          btn.querySelector('.like-count').textContent = fmt(newCount);
+        });
+
+        /* Upsert to Supabase */
+        const existing = await sbFetch('likes?post_id=eq.' + encodeURIComponent(id) + '&select=id,count');
+        if (existing && existing.length > 0) {
+          await sbFetch('likes?post_id=eq.' + encodeURIComponent(id), 'PATCH', { count: newCount });
+        } else {
+          await sbFetch('likes', 'POST', { post_id: id, count: newCount });
+        }
+      }
 
       document.querySelectorAll('.like-btn').forEach(btn => {
-        const id = btn.dataset.id;
-        if (!likes[id]) likes[id] = 0;
-        btn.querySelector('.like-count').textContent = fmt(likes[id]);
-        if (liked.has(id)) btn.classList.add('liked');
-        btn.addEventListener('click', () => {
-          if (liked.has(id)) { liked.delete(id); likes[id] = Math.max(0, likes[id]-1); }
-          else { liked.add(id); likes[id]++; }
-          btn.classList.toggle('liked', liked.has(id));
-          btn.querySelector('.like-count').textContent = fmt(likes[id]);
-          localStorage.setItem(likedKey, JSON.stringify([...liked]));
-          localStorage.setItem(likesKey, JSON.stringify(likes));
-        });
+        btn.addEventListener('click', () => toggleLike(btn.dataset.id));
       });
 
-      /* SAVE */
+      loadAllLikes();
+
+      /* SAVE — sigue en localStorage (es preferencia personal) */
       const savedKey = 'hw_saved';
       let saved = new Set(JSON.parse(localStorage.getItem(savedKey) || '[]'));
       document.querySelectorAll('.save-btn').forEach(btn => {
@@ -793,39 +831,45 @@ layout: none
         });
       });
 
-      /* COMMENTS */
+      /* COMMENTS — Supabase reales */
+      async function loadComments(postId, listEl, countBtn) {
+        const data = await sbFetch('comments?post_id=eq.' + encodeURIComponent(postId) + '&order=created_at.asc&select=text');
+        if (data) {
+          listEl.innerHTML = '';
+          data.forEach(row => addComment(listEl, row.text, false));
+          if (countBtn) countBtn.querySelector('.comment-count').textContent = data.length || 0;
+        }
+      }
+
+      function addComment(list, text, animate) {
+        const div = document.createElement('div');
+        div.className = 'preview-comment';
+        div.innerHTML = '<strong style="color:var(--fire-orange);margin-right:0.3rem">HW</strong>' + text;
+        if (animate) { div.style.cssText='opacity:0;transform:translateY(6px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
+        list.appendChild(div);
+      }
+
       document.querySelectorAll('.comment-toggle-btn').forEach(btn => {
         const id = btn.dataset.id;
         const section = $('comments-' + id);
         if (!section) return;
-        const key = 'hw_comments_' + id;
         const listEl = section.querySelector('.comments-list-' + id);
-        const arr = JSON.parse(localStorage.getItem(key) || '[]');
-        arr.forEach(text => addComment(listEl, text, false));
-        btn.querySelector('.comment-count').textContent = arr.length || 0;
+
+        loadComments(id, listEl, btn);
 
         const input = section.querySelector('.comment-field[data-id="'+id+'"]');
         const send  = section.querySelector('.comment-send[data-id="'+id+'"]');
-        send.addEventListener('click', post);
-        input.addEventListener('keydown', e => { if(e.key==='Enter') post(); });
+        send.addEventListener('click', postComment);
+        input.addEventListener('keydown', e => { if(e.key==='Enter') postComment(); });
 
-        function post() {
+        async function postComment() {
           const text = input.value.trim(); if(!text) return;
-          const arr2 = JSON.parse(localStorage.getItem(key) || '[]');
-          arr2.push(text);
-          localStorage.setItem(key, JSON.stringify(arr2));
-          addComment(listEl, text, true);
-          btn.querySelector('.comment-count').textContent = arr2.length;
           input.value = '';
+          addComment(listEl, text, true);
+          await sbFetch('comments', 'POST', { post_id: id, text });
+          const data = await sbFetch('comments?post_id=eq.' + encodeURIComponent(id) + '&select=id');
+          if (data) btn.querySelector('.comment-count').textContent = data.length;
           toast('Posted 🔥');
-        }
-
-        function addComment(list, text, animate) {
-          const div = document.createElement('div');
-          div.className = 'preview-comment';
-          div.innerHTML = '<strong style="color:var(--fire-orange);margin-right:0.3rem">HW</strong>' + text;
-          if (animate) { div.style.cssText='opacity:0;transform:translateY(6px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
-          list.appendChild(div);
         }
       });
 
@@ -847,9 +891,9 @@ layout: none
         $('viewer-desc').innerHTML = desc.replace(/#(\w+)/g,'<span class="htag">#$1</span>');
         $('photo-viewer').classList.add('open');
         document.body.style.overflow = 'hidden';
-        const isLiked = liked.has(String(postId));
-        $('viewer-like').classList.toggle('liked', isLiked);
-        $('viewer-like-count').textContent = fmt(likes[postId] || 0);
+        const id = String(postId);
+        $('viewer-like').classList.toggle('liked', liked.has(id));
+        $('viewer-like-count').textContent = fmt(likes[id] || 0);
       }
 
       function updateSlide(animate) {
@@ -879,15 +923,11 @@ layout: none
 
       $('viewer-like').addEventListener('click', () => {
         if (!viewerPostId) return;
-        const id = String(viewerPostId);
-        if (liked.has(id)) { liked.delete(id); likes[id] = Math.max(0,(likes[id]||0)-1); }
-        else { liked.add(id); likes[id] = (likes[id]||0)+1; }
-        $('viewer-like').classList.toggle('liked', liked.has(id));
-        $('viewer-like-count').textContent = fmt(likes[id]||0);
-        localStorage.setItem(likedKey, JSON.stringify([...liked]));
-        localStorage.setItem(likesKey, JSON.stringify(likes));
-        const cardBtn = document.querySelector('.like-btn[data-id="'+id+'"]');
-        if (cardBtn) { cardBtn.classList.toggle('liked', liked.has(id)); cardBtn.querySelector('.like-count').textContent = fmt(likes[id]||0); }
+        toggleLike(viewerPostId).then(() => {
+          const id = String(viewerPostId);
+          $('viewer-like').classList.toggle('liked', liked.has(id));
+          $('viewer-like-count').textContent = fmt(likes[id]||0);
+        });
       });
 
       $('viewer-save').addEventListener('click', () => {
