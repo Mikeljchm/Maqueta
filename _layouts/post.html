@@ -1,0 +1,289 @@
+---
+layout: none
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#080505">
+  <title>{{ page.title }} — HOTT WRESTLING</title>
+  <meta name="description" content="{{ page.description | truncate: 155 }}">
+  <meta property="og:title" content="{{ page.title }} — HOTT WRESTLING">
+  <meta property="og:description" content="{{ page.description | truncate: 155 }}">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="{{ site.url }}{{ page.url }}">
+  {% if page.image %}
+  <meta property="og:image" content="{{ page.image }}">
+  <meta name="twitter:image" content="{{ page.image }}">
+  {% endif %}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ page.title }} — HOTT WRESTLING">
+  <meta name="twitter:description" content="{{ page.description | truncate: 155 }}">
+  <link rel="canonical" href="{{ site.url }}{{ page.url }}">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <style>
+    :root {
+      --bg:#080505; --surface:#100808; --surface-2:#180a0a;
+      --fire-orange:#FF4500; --fire-yellow:#FFB800; --fire-red:#CC1100;
+      --text:#F0EAE0; --text-dim:#8a7060; --text-muted:#4a2a2a;
+      --border:#2a1010; --border-hot:rgba(255,69,0,0.25);
+      --font-d:'Bebas Neue',Impact,sans-serif;
+      --font-b:'DM Sans',Arial,sans-serif;
+      --ease:cubic-bezier(0.16,1,0.3,1);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    html{background:var(--bg);}
+    body{font-family:var(--font-b);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+
+    /* TOP BAR */
+    .top-bar{height:52px;background:rgba(8,5,5,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;padding:0 1rem;position:sticky;top:0;z-index:50;}
+    .back-btn{background:none;border:none;color:var(--text-dim);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+    .back-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .back-btn:active{color:var(--fire-orange);}
+    .top-logo{font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.04em;color:#fff;text-decoration:none;}
+    .top-logo span{background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+    /* POST */
+    .post-wrap{max-width:680px;margin:0 auto;padding-bottom:3rem;}
+
+    .post-header{padding:1.25rem 1rem 0.75rem;}
+    .post-cat{font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.15em;color:var(--fire-orange);text-transform:uppercase;margin-bottom:0.5rem;}
+    .post-title{font-family:var(--font-d);font-size:clamp(1.6rem,6vw,2.4rem);color:#fff;letter-spacing:0.03em;line-height:1.1;margin-bottom:0.5rem;}
+    .post-date{font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;}
+
+    /* IMAGE */
+    .post-image{width:100%;display:block;max-height:90vw;object-fit:cover;}
+
+    /* ACTIONS */
+    .post-actions{display:flex;align-items:center;padding:0.75rem 0.9rem;border-bottom:1px solid var(--border);gap:0.2rem;}
+    .act-btn{background:none;border:none;color:var(--text-dim);display:flex;align-items:center;gap:0.35rem;padding:0.45rem 0.65rem;border-radius:8px;cursor:pointer;font-size:0.8rem;font-weight:600;transition:all 0.2s;}
+    .act-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:all 0.2s;}
+    .act-btn:active{transform:scale(0.88);}
+    .act-btn.liked{color:#ff3b5c;}
+    .act-btn.liked svg{fill:#ff3b5c;stroke:#ff3b5c;}
+    .act-btn.saved svg{fill:var(--fire-yellow);stroke:var(--fire-yellow);}
+    .act-spacer{flex:1;}
+
+    /* DESCRIPTION */
+    .post-desc{padding:1rem;font-size:0.9rem;line-height:1.75;color:var(--text-dim);}
+    .post-desc .htag{color:var(--fire-orange);}
+
+    /* COMMENTS */
+    .comments-section{padding:1rem;border-top:1px solid var(--border);}
+    .comments-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.75rem;}
+    .comment-item{display:flex;gap:0.6rem;margin-bottom:0.75rem;align-items:flex-start;}
+    .comment-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#8B1A00,#CC1100);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.6rem;color:#fff;}
+    .comment-text{font-size:0.82rem;color:var(--text-dim);line-height:1.5;padding-top:0.2rem;}
+    .comment-form{display:flex;gap:0.5rem;align-items:center;margin-top:1rem;}
+    .comment-input{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:0.5rem 0.9rem;color:var(--text);font-family:var(--font-b);font-size:0.82rem;outline:none;}
+    .comment-input:focus{border-color:var(--border-hot);}
+    .comment-input::placeholder{color:var(--text-muted);}
+    .comment-send{background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+    .comment-send svg{width:14px;height:14px;fill:none;stroke:var(--fire-orange);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .comment-send:active{background:rgba(255,69,0,0.2);}
+
+    /* RELATED */
+    .related-section{padding:1rem;}
+    .related-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.75rem;text-transform:uppercase;}
+    .related-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}
+    .related-card{position:relative;aspect-ratio:1;overflow:hidden;display:block;background:var(--surface);}
+    .related-card img{width:100%;height:100%;object-fit:cover;display:block;}
+    .related-card-cat{position:absolute;bottom:4px;left:4px;background:rgba(255,69,0,0.88);color:#fff;font-size:0.42rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.15rem 0.35rem;border-radius:3px;font-weight:700;}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(255,69,0,0.92);color:#fff;padding:0.55rem 1.2rem;border-radius:20px;font-size:0.82rem;font-weight:600;opacity:0;transition:all 0.3s var(--ease);pointer-events:none;z-index:300;white-space:nowrap;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+    /* BACK TO FEED */
+    .back-to-feed{display:flex;align-items:center;gap:0.5rem;padding:1rem;color:var(--fire-orange);font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;text-decoration:none;border-top:1px solid var(--border);}
+    .back-to-feed svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  </style>
+</head>
+<body>
+
+  <header class="top-bar">
+    <button class="back-btn" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+    </button>
+    <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
+  </header>
+
+  <article class="post-wrap" itemscope itemtype="https://schema.org/Article">
+
+    <div class="post-header">
+      <div class="post-cat">{{ page.category | upcase }}</div>
+      <h1 class="post-title" itemprop="headline">{{ page.title }}</h1>
+      <time class="post-date" itemprop="datePublished" datetime="{{ page.date | date_to_xmlschema }}">
+        {{ page.date | date: "%B %d, %Y" }}
+      </time>
+    </div>
+
+    {% if page.image %}
+    <img class="post-image" src="{{ page.image }}" alt="{{ page.title }}" itemprop="image">
+    {% endif %}
+
+    <div class="post-actions">
+      <button class="act-btn like-btn" id="like-btn">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <span id="like-count">0</span>
+      </button>
+      <button class="act-btn" id="comment-btn">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <span id="comment-count">0</span>
+      </button>
+      <button class="act-btn share-btn">
+        <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      </button>
+      <div class="act-spacer"></div>
+      <button class="act-btn save-btn" id="save-btn">
+        <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+      </button>
+    </div>
+
+    {% if page.description %}
+    <div class="post-desc" itemprop="description">
+      {{ page.description | replace: '#', '<span class="htag">#' | replace: ' ', '</span> ' }}
+    </div>
+    {% endif %}
+
+    <section class="comments-section">
+      <div class="comments-title">Comments</div>
+      <div id="comments-list"></div>
+      <div class="comment-form">
+        <input class="comment-input" id="comment-input" type="text" placeholder="Add a comment..." maxlength="280">
+        <button class="comment-send" id="comment-send">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </section>
+
+    {% assign related = site.posts | where_exp: "p", "p.url != page.url" | slice: 0, 6 %}
+    {% if related.size > 0 %}
+    <section class="related-section">
+      <div class="related-title">More Heat</div>
+      <div class="related-grid">
+        {% for rp in related %}
+        <a class="related-card" href="{{ rp.url }}">
+          {% if rp.image %}
+          <img src="{{ rp.image }}" alt="{{ rp.title }}" loading="lazy">
+          {% endif %}
+          <span class="related-card-cat">{{ rp.category }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <a class="back-to-feed" href="/">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+      Back to Feed
+    </a>
+
+  </article>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  (function() {
+    const POST_ID = '{{ page.url | slugify }}';
+    const SB_URL  = 'https://wxyvielyommbsgbwhcbu.supabase.co';
+    const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
+
+    function $(id) { return document.getElementById(id); }
+    let toastTimer;
+    function toast(msg) {
+      const t = $('toast'); t.textContent = msg; t.classList.add('show');
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    async function sbFetch(path, method, body) {
+      const opts = { method: method || 'GET', headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(SB_URL + '/rest/v1/' + path, opts);
+      if (!res.ok) return null;
+      const text = await res.text();
+      return text ? JSON.parse(text) : null;
+    }
+
+    /* LIKES */
+    const likedKey = 'hw_liked';
+    let liked = new Set(JSON.parse(localStorage.getItem(likedKey) || '[]'));
+    let likeCount = 0;
+
+    async function loadLikes() {
+      const data = await sbFetch('likes?post_id=eq.' + encodeURIComponent(POST_ID) + '&select=count');
+      if (data && data.length > 0) { likeCount = data[0].count; $('like-count').textContent = likeCount; }
+      if (liked.has(POST_ID)) $('like-btn').classList.add('liked');
+    }
+
+    $('like-btn').addEventListener('click', async () => {
+      const wasLiked = liked.has(POST_ID);
+      if (wasLiked) { liked.delete(POST_ID); likeCount = Math.max(0, likeCount - 1); }
+      else { liked.add(POST_ID); likeCount++; }
+      localStorage.setItem(likedKey, JSON.stringify([...liked]));
+      $('like-btn').classList.toggle('liked', !wasLiked);
+      $('like-count').textContent = likeCount;
+      const existing = await sbFetch('likes?post_id=eq.' + encodeURIComponent(POST_ID) + '&select=id');
+      if (existing && existing.length > 0) { await sbFetch('likes?post_id=eq.' + encodeURIComponent(POST_ID), 'PATCH', { count: likeCount }); }
+      else { await sbFetch('likes', 'POST', { post_id: POST_ID, count: likeCount }); }
+    });
+
+    /* SAVE */
+    const savedKey = 'hw_saved';
+    let saved = new Set(JSON.parse(localStorage.getItem(savedKey) || '[]'));
+    if (saved.has(POST_ID)) $('save-btn').classList.add('saved');
+    $('save-btn').addEventListener('click', () => {
+      if (saved.has(POST_ID)) { saved.delete(POST_ID); toast('Removed'); }
+      else { saved.add(POST_ID); toast('Saved! 🔥'); }
+      saved.has(POST_ID) ? $('save-btn').classList.add('saved') : $('save-btn').classList.remove('saved');
+      localStorage.setItem(savedKey, JSON.stringify([...saved]));
+    });
+
+    /* SHARE */
+    document.querySelector('.share-btn').addEventListener('click', async () => {
+      if (navigator.share) { try { await navigator.share({ url: location.href, title: '{{ page.title }}' }); } catch(e){} }
+      else { await navigator.clipboard.writeText(location.href).catch(()=>{}); toast('Link copied! 🔥'); }
+    });
+
+    /* COMMENTS */
+    async function loadComments() {
+      const data = await sbFetch('comments?post_id=eq.' + encodeURIComponent(POST_ID) + '&order=created_at.asc&select=text');
+      if (data) {
+        $('comments-list').innerHTML = '';
+        data.forEach(row => addComment(row.text, false));
+        $('comment-count').textContent = data.length;
+      }
+    }
+
+    function addComment(text, animate) {
+      const div = document.createElement('div'); div.className = 'comment-item';
+      div.innerHTML = '<div class="comment-av">HW</div><div class="comment-text">' + text + '</div>';
+      if (animate) { div.style.cssText = 'opacity:0;transform:translateY(6px);transition:all 0.3s'; requestAnimationFrame(() => { div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
+      $('comments-list').appendChild(div);
+    }
+
+    async function postComment() {
+      const input = $('comment-input');
+      const text = input.value.trim(); if (!text) return;
+      input.value = '';
+      addComment(text, true);
+      await sbFetch('comments', 'POST', { post_id: POST_ID, text });
+      const data = await sbFetch('comments?post_id=eq.' + encodeURIComponent(POST_ID) + '&select=id');
+      if (data) $('comment-count').textContent = data.length;
+      toast('Posted 🔥');
+    }
+
+    $('comment-send').addEventListener('click', postComment);
+    $('comment-input').addEventListener('keydown', e => { if (e.key === 'Enter') postComment(); });
+    $('comment-btn').addEventListener('click', () => $('comment-input').focus());
+
+    loadLikes();
+    loadComments();
+  })();
+  </script>
+</body>
+</html>
