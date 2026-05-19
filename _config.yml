@@ -12,3 +12,8 @@ defaults:
       type: "posts"
     values:
       layout: "post"
+collections:
+  wrestlers:
+    output: false
+  badboys:
+    output: false
