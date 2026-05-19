@@ -20,12 +20,15 @@ collections:
       - label: Title
         name: title
         widget: string
-        hint: "Title of the post (only you see this)"
 
-      - label: Photo
-        name: image
-        widget: image
-        hint: "Upload from your phone or paste a URL"
+      - label: Photos
+        name: images
+        widget: list
+        field:
+          label: Photo URL
+          name: url
+          widget: string
+          hint: "Paste Imgbox link here"
 
       - label: Category
         name: category
@@ -36,6 +39,8 @@ collections:
           - { label: "Bad Boys", value: "badboys" }
           - { label: "Fan Files", value: "fan" }
           - { label: "Hall of Flame", value: "hall" }
+          - { label: "AI Gallery", value: "ai" }
+          - { label: "Audio", value: "audio" }
 
       - label: Description
         name: description
@@ -48,3 +53,28 @@ collections:
         format: "YYYY-MM-DD"
         date_format: "YYYY-MM-DD"
         time_format: false
+
+  - name: wrestlers
+    label: The Ring — Wrestlers
+    folder: _wrestlers
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Name", name: "title", widget: "string" }
+      - { label: "Tag", name: "tag", widget: "string", hint: "Ex: Heavyweight Champion" }
+      - { label: "Photo URL", name: "photo", widget: "string", hint: "Paste Imgbox link" }
+      - { label: "Bio", name: "bio", widget: "text" }
+
+  - name: badboys
+    label: Bad Boys
+    folder: _badboys
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Name", name: "title", widget: "string" }
+      - { label: "Mugshot URL", name: "mugshot", widget: "string", hint: "Paste Imgbox link" }
+      - { label: "Description", name: "description", widget: "text" }
+      - label: Tags
+        name: tags
+        widget: list
+        field: { label: "Tag", name: "tag", widget: "string" }
