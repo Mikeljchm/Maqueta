@@ -20,6 +20,7 @@ collections:
       - label: Title
         name: title
         widget: string
+        hint: "Title of the post (only you see this)"
 
       - label: Photos
         name: images
@@ -28,19 +29,12 @@ collections:
           label: Photo URL
           name: url
           widget: string
-          hint: "Paste Imgbox link here"
+          hint: "Paste Imgbox direct link (https://images2.imgbox.com/...)"
 
       - label: Category
         name: category
-        widget: select
-        options:
-          - { label: "Wrestling", value: "wrestling" }
-          - { label: "Bulge Report", value: "bulge" }
-          - { label: "Bad Boys", value: "badboys" }
-          - { label: "Fan Files", value: "fan" }
-          - { label: "Hall of Flame", value: "hall" }
-          - { label: "AI Gallery", value: "ai" }
-          - { label: "Audio", value: "audio" }
+        widget: string
+        hint: "wrestling, bulge, badboys, fan, hall, ai, audio..."
 
       - label: Description
         name: description
@@ -54,15 +48,91 @@ collections:
         date_format: "YYYY-MM-DD"
         time_format: false
 
+  - name: stories
+    label: Locker Room — Stories
+    label_singular: Story
+    folder: _stories
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    editor:
+      preview: false
+    fields:
+      - label: Title
+        name: title
+        widget: string
+
+      - label: Cover Image URL
+        name: cover
+        widget: string
+        required: false
+        hint: "Paste Imgbox link (optional)"
+
+      - label: Category
+        name: category
+        widget: string
+        hint: "wrestling, locker-room, college, coach, rivals, romance, fantasy, thriller..."
+
+      - label: Read Time
+        name: read_time
+        widget: string
+        default: "5 min read"
+
+      - label: Date
+        name: date
+        widget: datetime
+        format: "YYYY-MM-DD"
+        date_format: "YYYY-MM-DD"
+        time_format: false
+
+      - label: Languages
+        name: languages
+        widget: list
+        hint: "Add one entry per language"
+        fields:
+          - label: Language Code
+            name: code
+            widget: select
+            options:
+              - { label: "ES — Español", value: "es" }
+              - { label: "EN — English", value: "en" }
+              - { label: "PT — Português", value: "pt" }
+              - { label: "FR — Français", value: "fr" }
+              - { label: "IT — Italiano", value: "it" }
+              - { label: "DE — Deutsch", value: "de" }
+              - { label: "AR — العربية", value: "ar" }
+              - { label: "ZH — 中文", value: "zh" }
+              - { label: "JA — 日本語", value: "ja" }
+              - { label: "KO — 한국어", value: "ko" }
+              - { label: "RU — Русский", value: "ru" }
+              - { label: "HI — हिन्दी", value: "hi" }
+              - { label: "NL — Nederlands", value: "nl" }
+              - { label: "PL — Polski", value: "pl" }
+              - { label: "TR — Türkçe", value: "tr" }
+              - { label: "SV — Svenska", value: "sv" }
+              - { label: "TL — Filipino", value: "tl" }
+              - { label: "TH — ภาษาไทย", value: "th" }
+          - label: Chapters
+            name: chapters
+            widget: list
+            fields:
+              - label: Chapter Title
+                name: title
+                widget: string
+                hint: "e.g. Chapter 1 — The Beginning"
+              - label: Content
+                name: content
+                widget: text
+                hint: "Full chapter text — no character limit"
+
   - name: wrestlers
-    label: The Ring — Wrestlers
+    label: The Mat — Wrestlers
     folder: _wrestlers
     create: true
     slug: "{{slug}}"
     fields:
       - { label: "Name", name: "title", widget: "string" }
-      - { label: "Tag", name: "tag", widget: "string", hint: "Ex: Heavyweight Champion" }
-      - { label: "Photo URL", name: "photo", widget: "string", hint: "Paste Imgbox link" }
+      - { label: "Tag", name: "tag", widget: "string" }
+      - { label: "Photo URL", name: "photo", widget: "string" }
       - { label: "Bio", name: "bio", widget: "text" }
 
   - name: badboys
@@ -72,7 +142,7 @@ collections:
     slug: "{{slug}}"
     fields:
       - { label: "Name", name: "title", widget: "string" }
-      - { label: "Mugshot URL", name: "mugshot", widget: "string", hint: "Paste Imgbox link" }
+      - { label: "Mugshot URL", name: "mugshot", widget: "string" }
       - { label: "Description", name: "description", widget: "text" }
       - label: Tags
         name: tags
