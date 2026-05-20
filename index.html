@@ -21,10 +21,10 @@ layout: none
     @property --angle { syntax:'<angle>'; initial-value:0deg; inherits:false; }
 
     :root {
-      --bg:          #080505;
-      --surface:     #100808;
-      --surface-2:   #180a0a;
-      --surface-3:   #200c0c;
+      --bg:          #000000;
+      --surface:     #0a0505;
+      --surface-2:   #110606;
+      --surface-3:   #160707;
       --fire-orange: #FF4500;
       --fire-yellow: #FFB800;
       --fire-red:    #CC1100;
@@ -32,7 +32,7 @@ layout: none
       --text:        #F0EAE0;
       --text-dim:    #8a7060;
       --text-muted:  #4a2a2a;
-      --border:      #2a1010;
+      --border:      #1a0808;
       --border-hot:  rgba(255,69,0,0.25);
       --nav-h:       64px;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -135,21 +135,21 @@ layout: none
     .post-card:active { border-color:rgba(255,69,0,0.2); }
 
     .card-header { display:flex; align-items:center; gap:0.65rem; padding:0.75rem 0.9rem 0.6rem; }
-    .card-avatar { width:34px; height:34px; border-radius:50%; overflow:hidden; flex-shrink:0; border:1.5px solid var(--fire-orange); background:linear-gradient(135deg,var(--fire-deep),var(--fire-red)); display:flex; align-items:center; justify-content:center; font-family:var(--font-d); font-size:1rem; color:#fff; }
+    .card-avatar { width:36px; height:36px; border-radius:50%; overflow:hidden; flex-shrink:0; border:1.5px solid var(--fire-orange); background:linear-gradient(135deg,var(--fire-deep),var(--fire-red)); display:flex; align-items:center; justify-content:center; font-family:var(--font-d); font-size:0.65rem; letter-spacing:0.05em; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.5); }
     .card-meta { flex:1; }
     .card-author { font-family:var(--font-b); font-size:0.82rem; font-weight:600; color:var(--text); }
     .card-cat-label { font-size:0.55rem; color:var(--fire-orange); letter-spacing:0.15em; text-transform:uppercase; margin-top:0.05rem; }
     .card-date { font-size:0.6rem; color:var(--text-muted); }
 
-    /* CARD PHOTOS */
-    .card-photos { position:relative; overflow:hidden; cursor:pointer; background:#050101; }
-    .card-photo-single { width:100%; display:block; max-height:85vw; object-fit:cover; transition:filter 0.3s ease; }
-    .card-photo-single:active { filter:brightness(0.85); }
+    /* CARD PHOTOS — real size like Tumblr, no forced crop */
+    .card-photos { position:relative; overflow:hidden; cursor:pointer; background:#000; width:100%; }
+    .card-photo-single { width:100%; display:block; height:auto; object-fit:contain; max-height:100vw; }
+    .card-photo-single:active { opacity:0.9; }
     .card-photo-slider { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
     .card-photo-slider::-webkit-scrollbar { display:none; }
     .card-photo-slide { flex:0 0 100%; scroll-snap-align:start; }
-    .card-photo-slide img { width:100%; max-height:85vw; object-fit:cover; display:block; }
-    .multi-badge { position:absolute; top:8px; right:8px; background:rgba(8,5,5,0.75); backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:0.25rem 0.5rem; display:flex; align-items:center; gap:0.25rem; pointer-events:none; }
+    .card-photo-slide img { width:100%; height:auto; object-fit:contain; display:block; max-height:100vw; }
+    .multi-badge { position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:0.25rem 0.5rem; display:flex; align-items:center; gap:0.25rem; pointer-events:none; }
     .multi-badge svg { width:12px; height:12px; fill:none; stroke:#fff; stroke-width:2; }
     .multi-badge span { font-size:0.6rem; color:#fff; font-family:var(--font-b); font-weight:600; }
     .photo-dots { display:flex; justify-content:center; gap:0.3rem; padding:0.4rem 0 0; background:var(--surface); }
@@ -333,9 +333,40 @@ layout: none
     .toast { position:fixed; bottom:calc(var(--nav-h) + var(--safe-bottom) + 20px); left:50%; transform:translateX(-50%) translateY(10px); background:rgba(255,69,0,0.12); border:1px solid rgba(255,69,0,0.35); backdrop-filter:blur(10px); color:var(--fire-yellow); font-family:var(--font-b); font-size:0.72rem; letter-spacing:0.08em; padding:0.5rem 1.1rem; border-radius:20px; opacity:0; transition:all 0.3s var(--ease); z-index:300; white-space:nowrap; pointer-events:none; }
     .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-    /* SCROLL REVEAL */
-    .reveal { opacity:0; transform:translateY(14px); transition:opacity 0.5s var(--ease),transform 0.5s var(--ease); }
+    /* MULTI-PHOTO SLIDER */
+    .card-slider { position:relative; overflow:hidden; width:100%; }
+    .slider-track { display:flex; width:100%; transition:transform 0.35s var(--ease); will-change:transform; }
+    .slider-slide { flex:0 0 100%; width:100%; min-width:100%; }
+    .slider-slide img { width:100%; display:block; max-height:85vw; object-fit:cover; }
+    .slider-dots { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:5px; z-index:5; }
+    .photo-dot { width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,0.4); transition:all 0.25s var(--ease); }
+    .photo-dot.active { width:16px; border-radius:3px; background:var(--fire-orange); }
+    .multi-badge { position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.7); color:#fff; font-size:0.65rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:20px; display:flex; align-items:center; gap:0.25rem; backdrop-filter:blur(4px); z-index:5; }
+    .multi-badge svg { width:10px; height:10px; fill:none; stroke:currentColor; stroke-width:1.8; }
+
+    /* SCROLL REVEAL ANIMATIONS */
+    .post-card {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.55s var(--ease), transform 0.55s var(--ease);
+    }
+    .post-card.visible { opacity:1; transform:translateY(0); }
+    .reveal { opacity:0; transform:translateY(16px); transition:opacity 0.5s var(--ease),transform 0.5s var(--ease); }
     .reveal.visible { opacity:1; transform:translateY(0); }
+
+    /* CARD HOVER — subtle glow on active */
+    .post-card:active { border-color:rgba(255,69,0,0.25); }
+    .card-photo-single { transition: transform 0.4s var(--ease); }
+    .card-photos:active .card-photo-single { transform:scale(0.98); }
+
+    /* LIKE ANIMATION */
+    @keyframes likePopAnim {
+      0% { transform:scale(1); }
+      30% { transform:scale(1.35); }
+      60% { transform:scale(0.9); }
+      100% { transform:scale(1); }
+    }
+    .like-pop svg { animation:likePopAnim 0.4s var(--ease-bounce); }
   </style>
 </head>
 <body>
@@ -387,15 +418,41 @@ layout: none
             {% for post in all_posts %}
             <article class="post-card" data-cat="{{ post.category }}" data-idx="{{ forloop.index0 }}">
               <div class="card-header">
-                <div class="card-avatar">{{ post.category | slice: 0 | upcase }}</div>
+                <div class="card-avatar">HW</div>
                 <div class="card-meta">
-                  <div class="card-author">HOTT WRESTLING</div>
+                  <a class="card-author" href="{{ post.url }}">HOTT WRESTLING</a>
                   <div class="card-cat-label">{{ post.category | upcase }}</div>
                 </div>
                 <div class="card-date">{{ post.date | date: "%b %d, %Y" }}</div>
               </div>
-              {% if post.image %}
-              <div class="card-photos" data-img="{{ post.image }}" data-desc="{{ post.description | escape }}">
+              {% if post.images %}
+                {% assign img_count = post.images | size %}
+                {% if img_count > 1 %}
+                <div class="card-photos" data-imgs='{{ post.images | jsonify }}' data-desc="{{ post.description | escape }}">
+                  <div class="card-slider" data-slider>
+                    <div class="slider-track">
+                      {% for img in post.images %}
+                      <div class="slider-slide">
+                        <img class="card-photo-single" src="{{ img }}" alt="{{ post.title }}" loading="lazy" decoding="async">
+                      </div>
+                      {% endfor %}
+                    </div>
+                    <div class="slider-dots">
+                      {% for img in post.images %}<span class="photo-dot {% if forloop.first %}active{% endif %}"></span>{% endfor %}
+                    </div>
+                    <div class="multi-badge">
+                      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                      <span>{{ img_count }}</span>
+                    </div>
+                  </div>
+                </div>
+                {% else %}
+                <div class="card-photos" data-imgs='{{ post.images | jsonify }}' data-desc="{{ post.description | escape }}">
+                  <img class="card-photo-single" src="{{ post.images[0] }}" alt="{{ post.title }}" loading="lazy" decoding="async">
+                </div>
+                {% endif %}
+              {% elsif post.image %}
+              <div class="card-photos" data-imgs='["{{ post.image }}"]' data-desc="{{ post.description | escape }}">
                 <img class="card-photo-single" src="{{ post.image }}" alt="{{ post.title }}" loading="lazy" decoding="async">
               </div>
               {% endif %}
@@ -445,13 +502,41 @@ layout: none
       <!-- THE RING -->
       <div class="page" id="page-wrestlers">
         <div class="page-title-bar">
-          <div class="page-title">THE <span>RING</span></div>
+          <div class="page-title">THE <span>MAT</span></div>
           <div class="page-subtitle">Wrestler profiles &middot; Updated weekly</div>
         </div>
-        <div class="ring-empty">
-          🔥 Wrestler profiles coming soon.<br>
-          Check back for the heat.
+        {% assign wrestlers = site.wrestlers %}
+        {% if wrestlers.size > 0 %}
+        <div class="wrestlers-grid">
+          {% for w in wrestlers %}
+          <div class="wrestler-card reveal">
+            <div class="wrestler-thumb">
+              {% if w.photo %}
+              <img src="{{ w.photo }}" alt="{{ w.title }}" loading="lazy">
+              {% else %}
+              <div style="width:100%;height:100%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="rgba(255,69,0,0.3)" stroke-width="1.2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>
+              </div>
+              {% endif %}
+              <div class="wrestler-thumb-overlay">
+                <div class="wrestler-name">{{ w.title }}</div>
+                <div class="wrestler-tag">{{ w.tag }}</div>
+              </div>
+            </div>
+            {% if w.bio %}
+            <div class="wrestler-stats">
+              <span class="wstat">{{ w.bio | truncatewords: 8 }}</span>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
         </div>
+        {% else %}
+        <div class="ring-empty reveal">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="rgba(255,69,0,0.2)" stroke-width="1.2"><path d="M12 2l2.4 4.8 5.6.8-4 3.9.9 5.5L12 14.5l-4.9 2.5.9-5.5-4-3.9 5.6-.8z"/></svg>
+          <p>Wrestler profiles coming soon.<br>The heat is being loaded.</p>
+        </div>
+        {% endif %}
       </div>
 
       <!-- BAD BOYS -->
@@ -460,10 +545,39 @@ layout: none
           <div class="page-title">BAD <span>BOYS</span></div>
           <div class="page-subtitle">Most wanted &middot; No filter</div>
         </div>
-        <div class="badboys-empty">
-          🚨 Bad Boys section coming soon.<br>
-          The heat is being loaded.
+        {% assign badboys = site.badboys %}
+        {% if badboys.size > 0 %}
+        <div class="badboys-list">
+          {% for bb in badboys %}
+          <div class="badboy-card reveal">
+            <div class="mugshot-wrap">
+              {% if bb.mugshot %}
+              <img src="{{ bb.mugshot }}" alt="{{ bb.title }}" loading="lazy">
+              {% else %}
+              <div style="width:100%;height:100%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="rgba(255,69,0,0.3)" stroke-width="1.2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>
+              </div>
+              {% endif %}
+              <div class="mugshot-label">WANTED</div>
+            </div>
+            <div class="badboy-info">
+              <div class="badboy-name">{{ bb.title }}</div>
+              {% if bb.description %}<div class="badboy-desc">{{ bb.description }}</div>{% endif %}
+              {% if bb.tags %}
+              <div class="badboy-meta">
+                {% for tag in bb.tags %}<span class="badboy-tag">{{ tag }}</span>{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
         </div>
+        {% else %}
+        <div class="badboys-empty reveal">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="rgba(255,69,0,0.2)" stroke-width="1.2"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="12" r="3"/><path d="M10 12h4"/></svg>
+          <p>Bad Boys section coming soon.<br>The heat is being loaded.</p>
+        </div>
+        {% endif %}
       </div>
 
       <!-- AUDIO -->
@@ -513,13 +627,13 @@ layout: none
         <div class="menu-section">
           <div class="menu-label">Navigate</div>
           <div class="menu-item" data-nav="wrestlers">
-            <div class="menu-icon orange"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg></div>
-            <div class="menu-text"><div class="menu-title">The Ring</div><div class="menu-desc">Wrestler profiles</div></div>
+            <div class="menu-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.8 5.6.8-4 3.9.9 5.5L12 14.5l-4.9 2.5.9-5.5-4-3.9 5.6-.8z"/><path d="M12 18v4M9 22h6"/></svg></div>
+            <div class="menu-text"><div class="menu-title">The Mat</div><div class="menu-desc">Wrestler profiles</div></div>
             <div class="menu-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
           </div>
           <div class="menu-divider"></div>
           <div class="menu-item" data-nav="badboys">
-            <div class="menu-icon orange"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+            <div class="menu-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="12" r="3"/><path d="M10 12h4"/><path d="M4 12a3 3 0 01-1-2.2V8a1 1 0 011-1h6a1 1 0 011 1v1.8A3 3 0 0110 12M14 12a3 3 0 001 2.2V16a1 1 0 01-1 1H8a1 1 0 01-1-1v-1.8A3 3 0 0114 12"/></svg></div>
             <div class="menu-text"><div class="menu-title">Bad Boys</div><div class="menu-desc">Most wanted</div></div>
             <div class="menu-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
           </div>
@@ -568,7 +682,7 @@ layout: none
           <div class="menu-divider"></div>
           <a class="menu-item" href="/dmca.html">
             <div class="menu-icon gray"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-            <div class="menu-text"><div class="menu-title">DMCA</div></div>
+            <div class="menu-text"><div class="menu-title">DMCA Notice</div></div>
             <div class="menu-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
           </a>
         </div>
@@ -587,11 +701,11 @@ layout: none
         <span>Home</span>
       </button>
       <button class="nav-item" data-page="wrestlers">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>
-        <span>The Ring</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.8 5.6.8-4 3.9.9 5.5L12 14.5l-4.9 2.5.9-5.5-4-3.9 5.6-.8z"/><path d="M12 18v4M9 22h6"/></svg>
+        <span>The Mat</span>
       </button>
       <button class="nav-item" data-page="badboys">
-        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="12" r="3"/><path d="M10 12h4"/><path d="M4 12a3 3 0 01-1-2.2V8a1 1 0 011-1h6a1 1 0 011 1v1.8A3 3 0 0110 12M14 12a3 3 0 001 2.2V16a1 1 0 01-1 1H8a1 1 0 01-1-1v-1.8A3 3 0 0014 12"/></svg>
         <span>Bad Boys</span>
       </button>
       <button class="nav-item" data-page="audio">
@@ -749,28 +863,70 @@ layout: none
         });
       });
 
-      /* LIKES */
+      /* ── SUPABASE CONFIG ── */
+      const SB_URL = 'https://wxyvielyommbsgbwhcbu.supabase.co';
+      const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
+
+      async function sbFetch(path, method, body) {
+        const opts = { method: method || 'GET', headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(SB_URL + '/rest/v1/' + path, opts);
+        if (!res.ok) return null;
+        const text = await res.text();
+        return text ? JSON.parse(text) : null;
+      }
+
+      /* LIKES — localStorage para estado personal + Supabase para conteos reales */
       const likedKey = 'hw_liked';
-      const likesKey = 'hw_likes';
       let liked = new Set(JSON.parse(localStorage.getItem(likedKey) || '[]'));
-      let likes = JSON.parse(localStorage.getItem(likesKey) || '{}');
+      let likes = {};
+
+      async function loadAllLikes() {
+        const data = await sbFetch('likes?select=post_id,count');
+        if (data) data.forEach(row => { likes[row.post_id] = row.count; });
+        document.querySelectorAll('.like-btn').forEach(btn => {
+          const id = btn.dataset.id;
+          btn.querySelector('.like-count').textContent = fmt(likes[id] || 0);
+          btn.classList.toggle('liked', liked.has(id));
+        });
+      }
+
+      async function toggleLike(postId) {
+        const id = String(postId);
+        const wasLiked = liked.has(id);
+        if (wasLiked) { liked.delete(id); } else { liked.add(id); }
+        localStorage.setItem(likedKey, JSON.stringify([...liked]));
+        const delta = wasLiked ? -1 : 1;
+        const current = likes[id] || 0;
+        const newCount = Math.max(0, current + delta);
+        likes[id] = newCount;
+
+        /* Update UI instantly */
+        document.querySelectorAll('.like-btn[data-id="'+id+'"]').forEach(btn => {
+          btn.classList.toggle('liked', !wasLiked);
+          btn.querySelector('.like-count').textContent = fmt(newCount);
+        });
+
+        /* Upsert to Supabase */
+        const existing = await sbFetch('likes?post_id=eq.' + encodeURIComponent(id) + '&select=id,count');
+        if (existing && existing.length > 0) {
+          await sbFetch('likes?post_id=eq.' + encodeURIComponent(id), 'PATCH', { count: newCount });
+        } else {
+          await sbFetch('likes', 'POST', { post_id: id, count: newCount });
+        }
+      }
 
       document.querySelectorAll('.like-btn').forEach(btn => {
-        const id = btn.dataset.id;
-        if (!likes[id]) likes[id] = 0;
-        btn.querySelector('.like-count').textContent = fmt(likes[id]);
-        if (liked.has(id)) btn.classList.add('liked');
         btn.addEventListener('click', () => {
-          if (liked.has(id)) { liked.delete(id); likes[id] = Math.max(0, likes[id]-1); }
-          else { liked.add(id); likes[id]++; }
-          btn.classList.toggle('liked', liked.has(id));
-          btn.querySelector('.like-count').textContent = fmt(likes[id]);
-          localStorage.setItem(likedKey, JSON.stringify([...liked]));
-          localStorage.setItem(likesKey, JSON.stringify(likes));
+          toggleLike(btn.dataset.id);
+          btn.classList.add('like-pop');
+          setTimeout(() => btn.classList.remove('like-pop'), 400);
         });
       });
 
-      /* SAVE */
+      loadAllLikes();
+
+      /* SAVE — sigue en localStorage (es preferencia personal) */
       const savedKey = 'hw_saved';
       let saved = new Set(JSON.parse(localStorage.getItem(savedKey) || '[]'));
       document.querySelectorAll('.save-btn').forEach(btn => {
@@ -793,39 +949,45 @@ layout: none
         });
       });
 
-      /* COMMENTS */
+      /* COMMENTS — Supabase reales */
+      async function loadComments(postId, listEl, countBtn) {
+        const data = await sbFetch('comments?post_id=eq.' + encodeURIComponent(postId) + '&order=created_at.asc&select=text');
+        if (data) {
+          listEl.innerHTML = '';
+          data.forEach(row => addComment(listEl, row.text, false));
+          if (countBtn) countBtn.querySelector('.comment-count').textContent = data.length || 0;
+        }
+      }
+
+      function addComment(list, text, animate) {
+        const div = document.createElement('div');
+        div.className = 'preview-comment';
+        div.innerHTML = '<strong style="color:var(--fire-orange);margin-right:0.3rem">HW</strong>' + text;
+        if (animate) { div.style.cssText='opacity:0;transform:translateY(6px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
+        list.appendChild(div);
+      }
+
       document.querySelectorAll('.comment-toggle-btn').forEach(btn => {
         const id = btn.dataset.id;
         const section = $('comments-' + id);
         if (!section) return;
-        const key = 'hw_comments_' + id;
         const listEl = section.querySelector('.comments-list-' + id);
-        const arr = JSON.parse(localStorage.getItem(key) || '[]');
-        arr.forEach(text => addComment(listEl, text, false));
-        btn.querySelector('.comment-count').textContent = arr.length || 0;
+
+        loadComments(id, listEl, btn);
 
         const input = section.querySelector('.comment-field[data-id="'+id+'"]');
         const send  = section.querySelector('.comment-send[data-id="'+id+'"]');
-        send.addEventListener('click', post);
-        input.addEventListener('keydown', e => { if(e.key==='Enter') post(); });
+        send.addEventListener('click', postComment);
+        input.addEventListener('keydown', e => { if(e.key==='Enter') postComment(); });
 
-        function post() {
+        async function postComment() {
           const text = input.value.trim(); if(!text) return;
-          const arr2 = JSON.parse(localStorage.getItem(key) || '[]');
-          arr2.push(text);
-          localStorage.setItem(key, JSON.stringify(arr2));
-          addComment(listEl, text, true);
-          btn.querySelector('.comment-count').textContent = arr2.length;
           input.value = '';
+          addComment(listEl, text, true);
+          await sbFetch('comments', 'POST', { post_id: id, text });
+          const data = await sbFetch('comments?post_id=eq.' + encodeURIComponent(id) + '&select=id');
+          if (data) btn.querySelector('.comment-count').textContent = data.length;
           toast('Posted 🔥');
-        }
-
-        function addComment(list, text, animate) {
-          const div = document.createElement('div');
-          div.className = 'preview-comment';
-          div.innerHTML = '<strong style="color:var(--fire-orange);margin-right:0.3rem">HW</strong>' + text;
-          if (animate) { div.style.cssText='opacity:0;transform:translateY(6px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
-          list.appendChild(div);
         }
       });
 
@@ -847,9 +1009,9 @@ layout: none
         $('viewer-desc').innerHTML = desc.replace(/#(\w+)/g,'<span class="htag">#$1</span>');
         $('photo-viewer').classList.add('open');
         document.body.style.overflow = 'hidden';
-        const isLiked = liked.has(String(postId));
-        $('viewer-like').classList.toggle('liked', isLiked);
-        $('viewer-like-count').textContent = fmt(likes[postId] || 0);
+        const id = String(postId);
+        $('viewer-like').classList.toggle('liked', liked.has(id));
+        $('viewer-like-count').textContent = fmt(likes[id] || 0);
       }
 
       function updateSlide(animate) {
@@ -869,25 +1031,21 @@ layout: none
       $('viewer-back').addEventListener('click', closeViewer);
 
       document.querySelectorAll('.card-photos').forEach(photos => {
-        const img = photos.querySelector('img');
-        if (!img) return;
+        const imgs = photos.dataset.imgs ? JSON.parse(photos.dataset.imgs) : [];
+        if (!imgs.length) return;
         const desc = photos.dataset.desc || '';
         const card = photos.closest('.post-card');
         const postId = card ? card.querySelector('.like-btn')?.dataset.id : null;
-        photos.addEventListener('click', () => openViewer([img.src], 0, desc, postId));
+        photos.addEventListener('click', () => openViewer(imgs, 0, desc, postId));
       });
 
       $('viewer-like').addEventListener('click', () => {
         if (!viewerPostId) return;
-        const id = String(viewerPostId);
-        if (liked.has(id)) { liked.delete(id); likes[id] = Math.max(0,(likes[id]||0)-1); }
-        else { liked.add(id); likes[id] = (likes[id]||0)+1; }
-        $('viewer-like').classList.toggle('liked', liked.has(id));
-        $('viewer-like-count').textContent = fmt(likes[id]||0);
-        localStorage.setItem(likedKey, JSON.stringify([...liked]));
-        localStorage.setItem(likesKey, JSON.stringify(likes));
-        const cardBtn = document.querySelector('.like-btn[data-id="'+id+'"]');
-        if (cardBtn) { cardBtn.classList.toggle('liked', liked.has(id)); cardBtn.querySelector('.like-count').textContent = fmt(likes[id]||0); }
+        toggleLike(viewerPostId).then(() => {
+          const id = String(viewerPostId);
+          $('viewer-like').classList.toggle('liked', liked.has(id));
+          $('viewer-like-count').textContent = fmt(likes[id]||0);
+        });
       });
 
       $('viewer-save').addEventListener('click', () => {
@@ -960,19 +1118,55 @@ layout: none
         });
       });
 
-      /* CARD ENTRANCE ANIMATION */
-      const cardObs = new IntersectionObserver(entries => {
-        entries.forEach(e => {
-          if (e.isIntersecting) { e.target.style.animationPlayState='running'; cardObs.unobserve(e.target); }
+      /* MULTI-PHOTO SLIDERS */
+      document.querySelectorAll('[data-slider]').forEach(slider => {
+        const track = slider.querySelector('.slider-track');
+        const dots  = slider.querySelectorAll('.photo-dot');
+        if (!track || !dots.length) return;
+        let idx = 0, sx = 0, isDragging = false;
+
+        function goTo(n) {
+          idx = Math.max(0, Math.min(dots.length - 1, n));
+          track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+          dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        }
+
+        slider.addEventListener('touchstart', e => {
+          sx = e.touches[0].clientX;
+          isDragging = true;
+        }, {passive:true});
+
+        slider.addEventListener('touchmove', e => {
+          if (!isDragging) return;
+          const dx = e.touches[0].clientX - sx;
+          track.style.transition = 'none';
+          track.style.transform = 'translateX(calc(-' + (idx * 100) + '% + ' + dx + 'px))';
+        }, {passive:true});
+
+        slider.addEventListener('touchend', e => {
+          if (!isDragging) return;
+          isDragging = false;
+          track.style.transition = 'transform 0.35s var(--ease)';
+          const dx = e.changedTouches[0].clientX - sx;
+          if (Math.abs(dx) > 50) goTo(dx < 0 ? idx + 1 : idx - 1);
+          else goTo(idx);
         });
-      },{ threshold:0.05 });
-      document.querySelectorAll('.post-card').forEach((card,i) => {
-        card.style.animationDelay = (i*0.07)+'s';
-        card.style.animationPlayState = 'paused';
-        cardObs.observe(card);
       });
 
-      /* SCROLL REVEAL */
+      /* CARD ENTRANCE — staggered cascade on scroll */
+      const cardObs = new IntersectionObserver(entries => {
+        entries.forEach((e, i) => {
+          if (e.isIntersecting) {
+            const card = e.target;
+            const delay = card.dataset.idx ? Math.min(parseInt(card.dataset.idx) * 80, 400) : 0;
+            setTimeout(() => card.classList.add('visible'), delay);
+            cardObs.unobserve(card);
+          }
+        });
+      },{ threshold:0.08, rootMargin:'0px 0px -40px 0px' });
+      document.querySelectorAll('.post-card').forEach(card => cardObs.observe(card));
+
+      /* SCROLL REVEAL — for non-card elements */
       const revObs = new IntersectionObserver(entries => {
         entries.forEach(e => { if(e.isIntersecting){e.target.classList.add('visible');revObs.unobserve(e.target);} });
       },{ threshold:0.1 });
@@ -1010,4 +1204,4 @@ layout: none
   })();
   </script>
 </body>
-  </html>
+</html>
