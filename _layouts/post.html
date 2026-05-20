@@ -6,20 +6,19 @@ layout: none
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#080505">
+  <meta name="theme-color" content="#000000">
   <title>{{ page.title }} — HOTT WRESTLING</title>
   <meta name="description" content="{{ page.description | truncate: 155 }}">
   <meta property="og:title" content="{{ page.title }} — HOTT WRESTLING">
   <meta property="og:description" content="{{ page.description | truncate: 155 }}">
   <meta property="og:type" content="article">
   <meta property="og:url" content="{{ site.url }}{{ page.url }}">
-  {% if page.image %}
-  <meta property="og:image" content="{{ page.image }}">
-  <meta name="twitter:image" content="{{ page.image }}">
+  {% assign first_img = page.images | first | default: page.image %}
+  {% if first_img %}
+  <meta property="og:image" content="{{ first_img }}">
+  <meta name="twitter:image" content="{{ first_img }}">
   {% endif %}
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{{ page.title }} — HOTT WRESTLING">
-  <meta name="twitter:description" content="{{ page.description | truncate: 155 }}">
   <link rel="canonical" href="{{ site.url }}{{ page.url }}">
   <link rel="manifest" href="/manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,80 +26,89 @@ layout: none
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <style>
     :root {
-      --bg:#080505; --surface:#100808; --surface-2:#180a0a;
+      --bg:#000000; --surface:#0d0d0d; --surface-2:#141414;
       --fire-orange:#FF4500; --fire-yellow:#FFB800; --fire-red:#CC1100;
-      --text:#F0EAE0; --text-dim:#8a7060; --text-muted:#4a2a2a;
-      --border:#2a1010; --border-hot:rgba(255,69,0,0.25);
+      --fire-deep:#8B1A00;
+      --text:#F0EAE0; --text-dim:#888888; --text-muted:#444444;
+      --border:#1f1f1f;
       --font-d:'Bebas Neue',Impact,sans-serif;
       --font-b:'DM Sans',Arial,sans-serif;
       --ease:cubic-bezier(0.16,1,0.3,1);
     }
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    html{background:var(--bg);}
-    body{font-family:var(--font-b);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+    html{background:#000;}
+    body{font-family:var(--font-b);background:#000;color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
 
     /* TOP BAR */
-    .top-bar{height:52px;background:rgba(8,5,5,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;padding:0 1rem;position:sticky;top:0;z-index:50;}
+    .top-bar{height:48px;background:#000;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;padding:0 1rem;position:sticky;top:0;z-index:50;}
     .back-btn{background:none;border:none;color:var(--text-dim);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
     .back-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
     .back-btn:active{color:var(--fire-orange);}
     .top-logo{font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.04em;color:#fff;text-decoration:none;}
     .top-logo span{background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 
-    /* POST */
-    .post-wrap{max-width:680px;margin:0 auto;padding-bottom:3rem;}
+    /* POST HEADER */
+    .post-header{padding:0.9rem 1rem 0.6rem;display:flex;align-items:center;gap:0.65rem;}
+    .post-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--fire-deep),var(--fire-red));display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.6rem;color:#fff;border:1.5px solid rgba(255,69,0,0.4);flex-shrink:0;}
+    .post-meta{flex:1;}
+    .post-author{font-size:0.82rem;font-weight:600;color:var(--text);}
+    .post-cat{font-size:0.52rem;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-top:0.05rem;}
+    .post-date{font-size:0.58rem;color:var(--text-muted);}
 
-    .post-header{padding:1.25rem 1rem 0.75rem;}
-    .post-cat{font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.15em;color:var(--fire-orange);text-transform:uppercase;margin-bottom:0.5rem;}
-    .post-title{font-family:var(--font-d);font-size:clamp(1.6rem,6vw,2.4rem);color:#fff;letter-spacing:0.03em;line-height:1.1;margin-bottom:0.5rem;}
-    .post-date{font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;}
+    /* PHOTOS — full width stacked */
+    .post-photos{width:100%;}
+    .post-photo{width:100%;display:block;height:auto;object-fit:contain;background:#000;cursor:pointer;}
+    .post-photo+.post-photo{margin-top:2px;}
 
-    /* IMAGE */
-    .post-image{width:100%;display:block;max-height:90vw;object-fit:cover;}
-
-    /* ACTIONS */
-    .post-actions{display:flex;align-items:center;padding:0.75rem 0.9rem;border-bottom:1px solid var(--border);gap:0.2rem;}
-    .act-btn{background:none;border:none;color:var(--text-dim);display:flex;align-items:center;gap:0.35rem;padding:0.45rem 0.65rem;border-radius:8px;cursor:pointer;font-size:0.8rem;font-weight:600;transition:all 0.2s;}
-    .act-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:all 0.2s;}
-    .act-btn:active{transform:scale(0.88);}
+    /* ACTIONS — Tumblr style spacious */
+    .post-actions{display:flex;align-items:center;padding:0.5rem 0.5rem;gap:0.2rem;border-bottom:1px solid var(--border);}
+    .act-btn{background:none;border:none;display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.75rem;color:var(--text-muted);font-size:0.78rem;font-family:var(--font-b);cursor:pointer;border-radius:8px;transition:all 0.2s;}
+    .act-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    .act-btn:active{transform:scale(0.88);color:var(--fire-orange);}
     .act-btn.liked{color:#ff3b5c;}
     .act-btn.liked svg{fill:#ff3b5c;stroke:#ff3b5c;}
-    .act-btn.saved svg{fill:var(--fire-yellow);stroke:var(--fire-yellow);}
+    .act-btn.saved svg{fill:var(--text-dim);stroke:var(--text-dim);}
     .act-spacer{flex:1;}
 
     /* DESCRIPTION */
-    .post-desc{padding:1rem;font-size:0.9rem;line-height:1.75;color:var(--text-dim);}
-    .post-desc .htag{color:var(--fire-orange);}
+    .post-desc{padding:0.85rem 1rem 0.6rem;font-size:0.85rem;line-height:1.75;color:var(--text-dim);}
+    .post-desc .htag{color:var(--text-muted);opacity:0.8;}
 
     /* COMMENTS */
     .comments-section{padding:1rem;border-top:1px solid var(--border);}
-    .comments-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.75rem;}
-    .comment-item{display:flex;gap:0.6rem;margin-bottom:0.75rem;align-items:flex-start;}
-    .comment-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#8B1A00,#CC1100);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.6rem;color:#fff;}
-    .comment-text{font-size:0.82rem;color:var(--text-dim);line-height:1.5;padding-top:0.2rem;}
-    .comment-form{display:flex;gap:0.5rem;align-items:center;margin-top:1rem;}
-    .comment-input{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:0.5rem 0.9rem;color:var(--text);font-family:var(--font-b);font-size:0.82rem;outline:none;}
-    .comment-input:focus{border-color:var(--border-hot);}
+    .comments-title{font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.75rem;text-transform:uppercase;}
+    .comment-item{display:flex;gap:0.55rem;margin-bottom:0.65rem;}
+    .comment-av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--fire-deep),var(--fire-red));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.52rem;color:#fff;}
+    .comment-text{font-size:0.8rem;color:var(--text-dim);line-height:1.45;padding-top:0.2rem;}
+    .comment-form{display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem;}
+    .comment-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:0.5rem 0.9rem;color:var(--text);font-family:var(--font-b);font-size:0.82rem;outline:none;}
+    .comment-input:focus{border-color:rgba(255,69,0,0.3);}
     .comment-input::placeholder{color:var(--text-muted);}
     .comment-send{background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
-    .comment-send svg{width:14px;height:14px;fill:none;stroke:var(--fire-orange);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .comment-send svg{width:13px;height:13px;fill:none;stroke:var(--fire-orange);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
     .comment-send:active{background:rgba(255,69,0,0.2);}
 
     /* RELATED */
-    .related-section{padding:1rem;}
-    .related-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.75rem;text-transform:uppercase;}
+    .related-section{padding:1rem 0 2rem;}
+    .related-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.6rem;text-transform:uppercase;padding:0 1rem;}
     .related-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}
     .related-card{position:relative;aspect-ratio:1;overflow:hidden;display:block;background:var(--surface);}
     .related-card img{width:100%;height:100%;object-fit:cover;display:block;}
-    .related-card-cat{position:absolute;bottom:4px;left:4px;background:rgba(255,69,0,0.88);color:#fff;font-size:0.42rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.15rem 0.35rem;border-radius:3px;font-weight:700;}
+    .related-card-cat{position:absolute;bottom:3px;left:3px;background:rgba(255,69,0,0.88);color:#fff;font-size:0.4rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.12rem 0.3rem;border-radius:3px;font-weight:700;}
+
+    /* PHOTO VIEWER — with pan support */
+    .photo-viewer{position:fixed;inset:0;z-index:500;background:#000;transform:translateY(100%);transition:transform 0.38s var(--ease);}
+    .photo-viewer.open{transform:translateY(0);}
+    .viewer-topbar{position:absolute;top:0;left:0;right:0;z-index:10;padding:env(safe-area-inset-top,0) 1rem 0.7rem;padding-top:calc(env(safe-area-inset-top,0px) + 0.7rem);display:flex;align-items:center;gap:0.7rem;background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent);}
+    .viewer-back{background:rgba(0,0,0,0.5);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;}
+    .viewer-back svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;}
+    .viewer-counter{font-size:0.75rem;color:rgba(255,255,255,0.7);background:rgba(0,0,0,0.5);padding:0.25rem 0.65rem;border-radius:12px;}
+    .viewer-wrap{position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;touch-action:none;}
+    .viewer-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-drag:none;}
 
     /* TOAST */
-    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(255,69,0,0.92);color:#fff;padding:0.55rem 1.2rem;border-radius:20px;font-size:0.82rem;font-weight:600;opacity:0;transition:all 0.3s var(--ease);pointer-events:none;z-index:300;white-space:nowrap;}
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,30,0.95);border:1px solid var(--border);color:var(--text);padding:0.5rem 1.1rem;border-radius:20px;font-size:0.72rem;opacity:0;transition:all 0.3s var(--ease);pointer-events:none;z-index:300;white-space:nowrap;}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-    /* BACK TO FEED */
-    .back-to-feed{display:flex;align-items:center;gap:0.5rem;padding:1rem;color:var(--fire-orange);font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;text-decoration:none;border-top:1px solid var(--border);}
-    .back-to-feed svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   </style>
 </head>
 <body>
@@ -112,20 +120,30 @@ layout: none
     <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
   </header>
 
-  <article class="post-wrap" itemscope itemtype="https://schema.org/Article">
+  <article itemscope itemtype="https://schema.org/Article">
 
+    <!-- Header -->
     <div class="post-header">
-      <div class="post-cat">{{ page.category | upcase }}</div>
-      <h1 class="post-title" itemprop="headline">{{ page.title }}</h1>
-      <time class="post-date" itemprop="datePublished" datetime="{{ page.date | date_to_xmlschema }}">
-        {{ page.date | date: "%B %d, %Y" }}
-      </time>
+      <div class="post-avatar">HW</div>
+      <div class="post-meta">
+        <div class="post-author">HOTT WRESTLING</div>
+        <div class="post-cat">{{ page.category }}</div>
+      </div>
+      <div class="post-date">{{ page.date | date: "%b %d, %Y" }}</div>
     </div>
 
-    {% if page.image %}
-    <img class="post-image" src="{{ page.image }}" alt="{{ page.title }}" itemprop="image">
-    {% endif %}
+    <!-- All photos stacked -->
+    <div class="post-photos" id="post-photos">
+      {% if page.images %}
+        {% for img in page.images %}
+        <img class="post-photo" src="{{ img }}" alt="{{ page.title }}" loading="lazy" decoding="async" data-idx="{{ forloop.index0 }}" itemprop="image">
+        {% endfor %}
+      {% elsif page.image %}
+        <img class="post-photo" src="{{ page.image }}" alt="{{ page.title }}" loading="lazy" decoding="async" data-idx="0" itemprop="image">
+      {% endif %}
+    </div>
 
+    <!-- Actions -->
     <div class="post-actions">
       <button class="act-btn like-btn" id="like-btn">
         <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
@@ -144,12 +162,14 @@ layout: none
       </button>
     </div>
 
+    <!-- Description -->
     {% if page.description %}
     <div class="post-desc" itemprop="description">
-      {{ page.description | replace: '#', '<span class="htag">#' | replace: ' ', '</span> ' }}
+      {{ page.description }}
     </div>
     {% endif %}
 
+    <!-- Comments -->
     <section class="comments-section">
       <div class="comments-title">Comments</div>
       <div id="comments-list"></div>
@@ -161,29 +181,39 @@ layout: none
       </div>
     </section>
 
-    {% assign related = site.posts | where_exp: "p", "p.url != page.url" | slice: 0, 6 %}
+    <!-- Related posts -->
+    {% assign related = site.posts | where_exp: "p", "p.url != page.url" | slice: 0, 9 %}
     {% if related.size > 0 %}
     <section class="related-section">
-      <div class="related-title">More Heat</div>
+      <div class="related-title">More Like This</div>
       <div class="related-grid">
         {% for rp in related %}
+        {% assign rp_img = rp.images | first | default: rp.image %}
+        {% if rp_img %}
         <a class="related-card" href="{{ rp.url }}">
-          {% if rp.image %}
-          <img src="{{ rp.image }}" alt="{{ rp.title }}" loading="lazy">
-          {% endif %}
+          <img src="{{ rp_img }}" alt="{{ rp.title }}" loading="lazy">
           <span class="related-card-cat">{{ rp.category }}</span>
         </a>
+        {% endif %}
         {% endfor %}
       </div>
     </section>
     {% endif %}
 
-    <a class="back-to-feed" href="/">
-      <svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
-      Back to Feed
-    </a>
-
   </article>
+
+  <!-- Photo Viewer with pan support -->
+  <div class="photo-viewer" id="photo-viewer">
+    <div class="viewer-topbar">
+      <button class="viewer-back" id="viewer-back">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="viewer-counter" id="viewer-counter">1 / 1</span>
+    </div>
+    <div class="viewer-wrap" id="viewer-wrap">
+      <img class="viewer-img" id="viewer-img" src="" alt="">
+    </div>
+  </div>
 
   <div class="toast" id="toast"></div>
 
@@ -193,97 +223,209 @@ layout: none
     const SB_URL  = 'https://wxyvielyommbsgbwhcbu.supabase.co';
     const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
 
-    function $(id) { return document.getElementById(id); }
+    function $(id){return document.getElementById(id);}
     let toastTimer;
-    function toast(msg) {
-      const t = $('toast'); t.textContent = msg; t.classList.add('show');
-      clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
-    }
+    function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);}
 
-    async function sbFetch(path, method, body) {
-      const opts = { method: method || 'GET', headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
-      if (body) opts.body = JSON.stringify(body);
-      const res = await fetch(SB_URL + '/rest/v1/' + path, opts);
-      if (!res.ok) return null;
-      const text = await res.text();
-      return text ? JSON.parse(text) : null;
+    async function sbFetch(path,method,body){
+      const opts={method:method||'GET',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'}};
+      if(body)opts.body=JSON.stringify(body);
+      try{const res=await fetch(SB_URL+'/rest/v1/'+path,opts);if(!res.ok)return null;const text=await res.text();return text?JSON.parse(text):null;}
+      catch(e){return null;}
     }
 
     /* LIKES */
-    const likedKey = 'hw_liked';
-    let liked = new Set(JSON.parse(localStorage.getItem(likedKey) || '[]'));
-    let likeCount = 0;
+    const likedKey='hw_liked';
+    let liked=new Set(JSON.parse(localStorage.getItem(likedKey)||'[]'));
+    let likeCount=0;
 
-    async function loadLikes() {
-      const data = await sbFetch('likes?post_id=eq.' + encodeURIComponent(POST_ID) + '&select=count');
-      if (data && data.length > 0) { likeCount = data[0].count; $('like-count').textContent = likeCount; }
-      if (liked.has(POST_ID)) $('like-btn').classList.add('liked');
+    async function loadLikes(){
+      const data=await sbFetch('likes?post_id=eq.'+encodeURIComponent(POST_ID)+'&select=count');
+      if(data&&data.length>0){likeCount=data[0].count;$('like-count').textContent=likeCount;}
+      if(liked.has(POST_ID))$('like-btn').classList.add('liked');
     }
 
-    $('like-btn').addEventListener('click', async () => {
-      const wasLiked = liked.has(POST_ID);
-      if (wasLiked) { liked.delete(POST_ID); likeCount = Math.max(0, likeCount - 1); }
-      else { liked.add(POST_ID); likeCount++; }
-      localStorage.setItem(likedKey, JSON.stringify([...liked]));
-      $('like-btn').classList.toggle('liked', !wasLiked);
-      $('like-count').textContent = likeCount;
-      const existing = await sbFetch('likes?post_id=eq.' + encodeURIComponent(POST_ID) + '&select=id');
-      if (existing && existing.length > 0) { await sbFetch('likes?post_id=eq.' + encodeURIComponent(POST_ID), 'PATCH', { count: likeCount }); }
-      else { await sbFetch('likes', 'POST', { post_id: POST_ID, count: likeCount }); }
+    $('like-btn').addEventListener('click',async()=>{
+      const wasLiked=liked.has(POST_ID);
+      if(wasLiked){liked.delete(POST_ID);likeCount=Math.max(0,likeCount-1);}
+      else{liked.add(POST_ID);likeCount++;}
+      localStorage.setItem(likedKey,JSON.stringify([...liked]));
+      $('like-btn').classList.toggle('liked',!wasLiked);
+      $('like-count').textContent=likeCount;
+      const existing=await sbFetch('likes?post_id=eq.'+encodeURIComponent(POST_ID)+'&select=id');
+      if(existing&&existing.length>0){await sbFetch('likes?post_id=eq.'+encodeURIComponent(POST_ID),'PATCH',{count:likeCount});}
+      else{await sbFetch('likes','POST',{post_id:POST_ID,count:likeCount});}
     });
 
     /* SAVE */
-    const savedKey = 'hw_saved';
-    let saved = new Set(JSON.parse(localStorage.getItem(savedKey) || '[]'));
-    if (saved.has(POST_ID)) $('save-btn').classList.add('saved');
-    $('save-btn').addEventListener('click', () => {
-      if (saved.has(POST_ID)) { saved.delete(POST_ID); toast('Removed'); }
-      else { saved.add(POST_ID); toast('Saved! 🔥'); }
-      saved.has(POST_ID) ? $('save-btn').classList.add('saved') : $('save-btn').classList.remove('saved');
-      localStorage.setItem(savedKey, JSON.stringify([...saved]));
+    const savedKey='hw_saved';
+    let saved=new Set(JSON.parse(localStorage.getItem(savedKey)||'[]'));
+    if(saved.has(POST_ID))$('save-btn').classList.add('saved');
+    $('save-btn').addEventListener('click',()=>{
+      if(saved.has(POST_ID)){saved.delete(POST_ID);toast('Removed');}
+      else{saved.add(POST_ID);toast('Saved!');}
+      $('save-btn').classList.toggle('saved',saved.has(POST_ID));
+      localStorage.setItem(savedKey,JSON.stringify([...saved]));
     });
 
     /* SHARE */
-    document.querySelector('.share-btn').addEventListener('click', async () => {
-      if (navigator.share) { try { await navigator.share({ url: location.href, title: '{{ page.title }}' }); } catch(e){} }
-      else { await navigator.clipboard.writeText(location.href).catch(()=>{}); toast('Link copied! 🔥'); }
+    document.querySelector('.share-btn').addEventListener('click',async()=>{
+      if(navigator.share){try{await navigator.share({url:location.href,title:'{{ page.title }}'});}catch(e){}}
+      else{await navigator.clipboard.writeText(location.href).catch(()=>{});toast('Link copied!');}
     });
 
     /* COMMENTS */
-    async function loadComments() {
-      const data = await sbFetch('comments?post_id=eq.' + encodeURIComponent(POST_ID) + '&order=created_at.asc&select=text');
-      if (data) {
-        $('comments-list').innerHTML = '';
-        data.forEach(row => addComment(row.text, false));
-        $('comment-count').textContent = data.length;
-      }
+    async function loadComments(){
+      const data=await sbFetch('comments?post_id=eq.'+encodeURIComponent(POST_ID)+'&order=created_at.asc&select=text');
+      if(data){$('comments-list').innerHTML='';data.forEach(row=>addComment(row.text,false));$('comment-count').textContent=data.length;}
     }
-
-    function addComment(text, animate) {
-      const div = document.createElement('div'); div.className = 'comment-item';
-      div.innerHTML = '<div class="comment-av">HW</div><div class="comment-text">' + text + '</div>';
-      if (animate) { div.style.cssText = 'opacity:0;transform:translateY(6px);transition:all 0.3s'; requestAnimationFrame(() => { div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
+    function addComment(text,animate){
+      const div=document.createElement('div');div.className='comment-item';
+      div.innerHTML='<div class="comment-av">HW</div><div class="comment-text">'+text+'</div>';
+      if(animate){div.style.cssText='opacity:0;transform:translateY(6px);transition:all 0.3s';requestAnimationFrame(()=>{div.style.opacity='1';div.style.transform='translateY(0)';});}
       $('comments-list').appendChild(div);
     }
-
-    async function postComment() {
-      const input = $('comment-input');
-      const text = input.value.trim(); if (!text) return;
-      input.value = '';
-      addComment(text, true);
-      await sbFetch('comments', 'POST', { post_id: POST_ID, text });
-      const data = await sbFetch('comments?post_id=eq.' + encodeURIComponent(POST_ID) + '&select=id');
-      if (data) $('comment-count').textContent = data.length;
-      toast('Posted 🔥');
+    async function postComment(){
+      const input=$('comment-input');const text=input.value.trim();if(!text)return;
+      input.value='';addComment(text,true);
+      await sbFetch('comments','POST',{post_id:POST_ID,text});
+      const data=await sbFetch('comments?post_id=eq.'+encodeURIComponent(POST_ID)+'&select=id');
+      if(data)$('comment-count').textContent=data.length;
+      toast('Posted!');
     }
-
-    $('comment-send').addEventListener('click', postComment);
-    $('comment-input').addEventListener('keydown', e => { if (e.key === 'Enter') postComment(); });
-    $('comment-btn').addEventListener('click', () => $('comment-input').focus());
+    $('comment-send').addEventListener('click',postComment);
+    $('comment-input').addEventListener('keydown',e=>{if(e.key==='Enter')postComment();});
+    $('comment-btn').addEventListener('click',()=>$('comment-input').focus());
 
     loadLikes();
     loadComments();
+
+    /* ── PHOTO VIEWER WITH PAN ── */
+    const viewer=$('photo-viewer');
+    const viewerWrap=$('viewer-wrap');
+    const viewerImg=$('viewer-img');
+    const viewerCounter=$('viewer-counter');
+    const photos=Array.from(document.querySelectorAll('.post-photo'));
+    let currentIdx=0;
+
+    /* Transform state */
+    let scale=1,panX=0,panY=0;
+    let lastScale=1,lastPanX=0,lastPanY=0;
+    let initPinchDist=0;
+    let touch1={x:0,y:0},touch2={x:0,y:0};
+    let isDragging=false,dragStartX=0,dragStartY=0;
+    let lastTap=0;
+
+    function openViewer(idx){
+      currentIdx=idx;
+      scale=1;panX=0;panY=0;
+      viewerImg.src=photos[idx].src;
+      viewerCounter.textContent=(idx+1)+' / '+photos.length;
+      applyTransform();
+      viewer.classList.add('open');
+      document.body.style.overflow='hidden';
+    }
+
+    function closeViewer(){
+      viewer.classList.remove('open');
+      document.body.style.overflow='';
+    }
+
+    function applyTransform(){
+      viewerImg.style.transform='translate('+panX+'px,'+panY+'px) scale('+scale+')';
+    }
+
+    function clampPan(){
+      if(scale<=1){panX=0;panY=0;return;}
+      const wrap=viewerWrap.getBoundingClientRect();
+      const maxX=Math.max(0,(wrap.width*scale-wrap.width)/2);
+      const maxY=Math.max(0,(wrap.height*scale-wrap.height)/2);
+      panX=Math.max(-maxX,Math.min(maxX,panX));
+      panY=Math.max(-maxY,Math.min(maxY,panY));
+    }
+
+    $('viewer-back').addEventListener('click',closeViewer);
+
+    photos.forEach((img,i)=>{
+      img.addEventListener('click',()=>openViewer(i));
+    });
+
+    /* Touch handlers */
+    viewerWrap.addEventListener('touchstart',e=>{
+      if(e.touches.length===1){
+        const t=e.touches[0];
+        dragStartX=t.clientX-panX;
+        dragStartY=t.clientY-panY;
+        isDragging=true;
+        lastScale=scale;lastPanX=panX;lastPanY=panY;
+
+        /* Double tap */
+        const now=Date.now();
+        if(now-lastTap<320){
+          e.preventDefault();
+          if(scale>1){scale=1;panX=0;panY=0;}
+          else{
+            scale=2.5;
+            const rect=viewerWrap.getBoundingClientRect();
+            panX=(rect.width/2-t.clientX)*1.5;
+            panY=(rect.height/2-t.clientY)*1.5;
+            clampPan();
+          }
+          applyTransform();
+          lastTap=0;return;
+        }
+        lastTap=now;
+      }
+      if(e.touches.length===2){
+        isDragging=false;
+        const t1=e.touches[0],t2=e.touches[1];
+        initPinchDist=Math.hypot(t1.clientX-t2.clientX,t1.clientY-t2.clientY);
+        lastScale=scale;
+        touch1={x:t1.clientX,y:t1.clientY};
+        touch2={x:t2.clientX,y:t2.clientY};
+        e.preventDefault();
+      }
+    },{passive:false});
+
+    viewerWrap.addEventListener('touchmove',e=>{
+      e.preventDefault();
+      if(e.touches.length===1&&isDragging&&scale>1){
+        const t=e.touches[0];
+        panX=t.clientX-dragStartX;
+        panY=t.clientY-dragStartY;
+        clampPan();
+        applyTransform();
+      }
+      if(e.touches.length===2){
+        const t1=e.touches[0],t2=e.touches[1];
+        const dist=Math.hypot(t1.clientX-t2.clientX,t1.clientY-t2.clientY);
+        const newScale=Math.max(1,Math.min(5,lastScale*(dist/initPinchDist)));
+
+        /* Pan with pinch center */
+        const cx=(t1.clientX+t2.clientX)/2;
+        const cy=(t1.clientY+t2.clientY)/2;
+        const rect=viewerWrap.getBoundingClientRect();
+        const scaleDiff=newScale-scale;
+        panX-=(cx-rect.width/2)*scaleDiff*0.5;
+        panY-=(cy-rect.height/2)*scaleDiff*0.5;
+        scale=newScale;
+        clampPan();
+        applyTransform();
+      }
+    },{passive:false});
+
+    viewerWrap.addEventListener('touchend',e=>{
+      isDragging=false;
+      if(scale<=1){scale=1;panX=0;panY=0;applyTransform();}
+      /* Swipe to close when not zoomed */
+      if(scale<=1&&e.changedTouches.length>0){
+        const dy=e.changedTouches[0].clientY-dragStartY-panY;
+        if(dy>100)closeViewer();
+      }
+    },{passive:true});
+
   })();
   </script>
 </body>
 </html>
+    
