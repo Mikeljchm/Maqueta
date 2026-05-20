@@ -137,11 +137,10 @@ layout: none
       border-radius: 10px;
       margin: 0.75rem 0.75rem 0;
       overflow: hidden;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+      opacity: 1;
     }
-    .post-card.visible { opacity:1; transform:translateY(0); }
+    .post-card.animate { opacity:0; transform:translateY(20px); transition:opacity 0.5s var(--ease),transform 0.5s var(--ease); }
+    .post-card.animate.visible { opacity:1; transform:translateY(0); }
     .post-card:active { border-left-color:rgba(255,69,0,0.5); }
 
     /* Card header — compact like Tumblr */
@@ -1000,35 +999,33 @@ layout: none
       toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
     }
 
+    /* NAV — outside initApp so it always works */
+    document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.page;
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const pg = document.getElementById('page-' + id);
+        if (pg) pg.classList.add('active');
+      });
+    });
+
+    document.querySelectorAll('.menu-item[data-nav]').forEach(item => {
+      item.addEventListener('click', () => {
+        const id = item.dataset.nav;
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const navBtn = document.querySelector('.nav-item[data-page="'+id+'"]');
+        if (navBtn) navBtn.classList.add('active');
+        const pg = document.getElementById('page-' + id);
+        if (pg) pg.classList.add('active');
+      });
+    });
+
     window.initApp = function initApp() {
 
-      /* NAV */
-      document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.page;
-          document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-          document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-          btn.classList.add('active');
-          const pg = document.getElementById('page-' + id);
-          if (pg) pg.classList.add('active');
-        });
-      });
-
-      document.querySelectorAll('.menu-item[data-nav]').forEach(item => {
-        item.addEventListener('click', () => {
-          const id = item.dataset.nav;
-          document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-          document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-          const navBtn = document.querySelector('.nav-item[data-page="'+id+'"]');
-          if (navBtn) navBtn.classList.add('active');
-          const pg = document.getElementById('page-' + id);
-          if (pg) pg.classList.add('active');
-        });
-      });
-
-      $('search-shortcut').addEventListener('click', () => {
-        document.querySelector('.nav-item[data-page="search"]').click();
-      });
+      /* CATEGORY PILLS */
 
       /* CATEGORY PILLS */
       document.querySelectorAll('.cat-pill').forEach(btn => {
@@ -1201,7 +1198,7 @@ layout: none
       }
 
       function closeViewer() { $('photo-viewer').classList.remove('open'); document.body.style.overflow = ''; }
-      $('viewer-back').addEventListener('click', closeViewer);
+      if($('viewer-back'))$('viewer-back').addEventListener('click', closeViewer);
 
       /* Open viewer on photo tap — use index of tapped photo */
       document.querySelectorAll('.card-photos').forEach(photos => {
@@ -1217,7 +1214,7 @@ layout: none
       });
 
       /* Viewer like */
-      $('viewer-like').addEventListener('click', () => {
+      if($('viewer-like'))$('viewer-like').addEventListener('click', () => {
         if (!viewerPostId) return;
         toggleLike(viewerPostId).then(() => {
           const id = String(viewerPostId);
@@ -1226,7 +1223,7 @@ layout: none
         });
       });
 
-      $('viewer-save').addEventListener('click', () => {
+      if($('viewer-save'))$('viewer-save').addEventListener('click', () => {
         if (!viewerPostId) return;
         const id = String(viewerPostId);
         if (saved.has(id)) { saved.delete(id); toast('Removed'); }
@@ -1236,7 +1233,7 @@ layout: none
 
       /* Double tap to like */
       let lastTap = 0;
-      $('viewer-photo-wrap').addEventListener('touchend', e => {
+      if($('viewer-photo-wrap'))$('viewer-photo-wrap').addEventListener('touchend', e => {
         if (e.touches.length > 0) return;
         const now = Date.now();
         if (now - lastTap < 320) {
@@ -1287,7 +1284,7 @@ layout: none
         if (img) allPosts.push({ img:img.src, desc:desc?desc.textContent:'', cat, id });
       });
 
-      $('search-input').addEventListener('input', e => {
+      if($('search-input'))$('search-input').addEventListener('input', e => {
         const q = e.target.value.toLowerCase().trim();
         const grid = $('search-grid'); grid.innerHTML = '';
         if (!q) return;
@@ -1317,7 +1314,10 @@ layout: none
           }
         });
       },{ threshold:0.06, rootMargin:'0px 0px -30px 0px' });
-      document.querySelectorAll('.post-card').forEach(card => cardObs.observe(card));
+      document.querySelectorAll('.post-card').forEach(card => {
+        card.classList.add('animate');
+        cardObs.observe(card);
+      });
 
       /* REVEAL */
       const revObs = new IntersectionObserver(entries => {
@@ -1326,17 +1326,17 @@ layout: none
       document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
 
       /* MINI PLAYER */
-      $('mini-play-btn').addEventListener('click', () => {
+      if($('mini-play-btn'))$('mini-play-btn').addEventListener('click', () => {
         const btn = $('mini-play-btn');
         const isPlaying = btn.innerHTML.includes('rect');
         btn.innerHTML = isPlaying ? '<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>' : '<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
       });
-      $('mini-close-btn').addEventListener('click', () => { $('mini-player').classList.remove('visible'); });
+      if($('mini-close-btn'))$('mini-close-btn').addEventListener('click', () => { if($('mini-player'))$('mini-player').classList.remove('visible'); });
 
       /* PWA */
       let deferredPWA;
       window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPWA = e; $('pwa-install-btn').classList.add('visible'); });
-      $('pwa-install-btn').addEventListener('click', async () => {
+      if($('pwa-install-btn'))$('pwa-install-btn').addEventListener('click', async () => {
         if (!deferredPWA) return;
         deferredPWA.prompt();
         const { outcome } = await deferredPWA.userChoice;
@@ -1617,4 +1617,4 @@ layout: none
   })();
   </script>
 </body>
-  </html>
+</html>
