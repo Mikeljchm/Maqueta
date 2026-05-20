@@ -111,33 +111,38 @@ layout: none
     .page.active { opacity:1; pointer-events:all; transform:translateY(0); }
 
     /* BOTTOM NAV */
-    .bottom-nav { flex-shrink:0; height:calc(var(--nav-h) + var(--safe-bottom)); padding-bottom:var(--safe-bottom); background:#000; border-top:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-around; padding-top:0.4rem; position:relative; z-index:50; }
-    .nav-item { display:flex; flex-direction:column; align-items:center; gap:0.15rem; cursor:pointer; padding:0.25rem 0.6rem; border-radius:10px; transition:all 0.25s var(--ease); background:none; border:none; color:var(--text-muted); position:relative; }
-    .nav-item svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; transition:all 0.25s var(--ease); }
-    .nav-item span:not(.nav-dot) { font-size:0.48rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; line-height:1; }
+    .bottom-nav { flex-shrink:0; height:calc(var(--nav-h) + var(--safe-bottom)); padding-bottom:var(--safe-bottom); background:#0a0a0a; border-top:1px solid #222; display:flex; align-items:flex-start; justify-content:space-around; padding-top:0.5rem; position:relative; z-index:50; }
+    .nav-item { display:flex; flex-direction:column; align-items:center; gap:0.2rem; cursor:pointer; padding:0.3rem 0.5rem; border-radius:10px; transition:all 0.25s var(--ease); background:none; border:none; color:#555; position:relative; min-width:44px; }
+    .nav-item svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:all 0.25s var(--ease); }
+    .nav-item span:not(.nav-dot) { font-size:0.46rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; line-height:1; color:inherit; }
     .nav-item.active { color:var(--fire-orange); }
-    .nav-item.active svg { filter:drop-shadow(0 0 5px rgba(255,69,0,0.5)); }
-    .nav-item.active::before { content:''; position:absolute; top:-1px; left:50%; transform:translateX(-50%); width:16px; height:2px; border-radius:2px; background:var(--fire-orange); }
+    .nav-item.active svg { filter:drop-shadow(0 0 6px rgba(255,69,0,0.55)); stroke:var(--fire-orange); }
+    .nav-item.active::before { content:''; position:absolute; top:-1px; left:50%; transform:translateX(-50%); width:20px; height:2px; border-radius:2px; background:var(--fire-orange); box-shadow:0 0 8px rgba(255,69,0,0.5); }
     .nav-item:active { transform:scale(0.88); }
-    .nav-dot { position:absolute; top:0.15rem; right:0.3rem; width:5px; height:5px; background:var(--fire-orange); border-radius:50%; animation:pulse-dot 2s ease-in-out infinite; }
+    .nav-dot { position:absolute; top:0.2rem; right:0.2rem; width:5px; height:5px; background:var(--fire-orange); border-radius:50%; animation:pulse-dot 2s ease-in-out infinite; }
     @keyframes pulse-dot { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.4);opacity:0.7;} }
 
     /* CATEGORY PILLS */
-    .cat-pills { display:flex; gap:0.4rem; padding:0.7rem 1rem 0.6rem; overflow-x:auto; scrollbar-width:none; position:sticky; top:0; z-index:10; background:#000; border-bottom:1px solid var(--border); }
+    .cat-pills { display:flex; gap:0.45rem; padding:0.75rem 1rem 0.65rem; overflow-x:auto; scrollbar-width:none; position:sticky; top:0; z-index:10; background:rgba(0,0,0,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #1a1a1a; }
     .cat-pills::-webkit-scrollbar { display:none; }
-    .cat-pill { flex-shrink:0; padding:0.3rem 0.8rem; border-radius:20px; font-size:0.62rem; font-family:var(--font-b); font-weight:500; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; border:1px solid var(--border); background:transparent; color:var(--text-dim); transition:all 0.2s var(--ease); white-space:nowrap; }
-    .cat-pill.active { background:var(--fire-orange); border-color:var(--fire-orange); color:#fff; }
+    .cat-pill { flex-shrink:0; padding:0.32rem 0.85rem; border-radius:20px; font-size:0.6rem; font-family:var(--font-b); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; border:1px solid #2a2a2a; background:#111; color:#666; transition:all 0.2s var(--ease); white-space:nowrap; }
+    .cat-pill:active { transform:scale(0.95); }
+    .cat-pill.active { background:var(--fire-orange); border-color:var(--fire-orange); color:#fff; box-shadow:0 0 12px rgba(255,69,0,0.3); }
 
     /* ── TUMBLR-STYLE POST CARD ── */
     .post-card {
-      background: #000;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 0;
+      background: #0a0a0a;
+      border: 1px solid #1e1e1e;
+      border-left: 2px solid rgba(255,69,0,0.22);
+      border-radius: 10px;
+      margin: 0.75rem 0.75rem 0;
+      overflow: hidden;
       opacity: 0;
       transform: translateY(20px);
       transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
     }
     .post-card.visible { opacity:1; transform:translateY(0); }
+    .post-card:active { border-left-color:rgba(255,69,0,0.5); }
 
     /* Card header — compact like Tumblr */
     .card-header { display:flex; align-items:center; gap:0.6rem; padding:0.7rem 0.9rem 0.5rem; }
@@ -156,7 +161,7 @@ layout: none
 
     /* PHOTOS — feed card layouts */
     .card-media-wrap { width:100%; background:#000; display:block; text-decoration:none; cursor:pointer; }
-    .card-first-photo { width:100%; display:block; height:auto; object-fit:contain; max-height:100vw; background:#000; }
+    .card-first-photo { width:100%; display:block; height:auto; object-fit:cover; background:#000; }
 
     /* Two photos side by side */
     .card-duo-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; }
@@ -172,14 +177,15 @@ layout: none
 
     /* See all — llamativo naranja fuego */
     .card-see-all {
-      display:flex; align-items:center; justify-content:center; gap:0.5rem;
-      width:100%; padding:0.65rem 1rem;
-      background:linear-gradient(135deg,var(--fire-red),var(--fire-orange));
-      color:#fff; font-family:var(--font-d); font-size:0.85rem; letter-spacing:0.1em;
+      display:flex; align-items:center; justify-content:center; gap:0.6rem;
+      width:100%; padding:0.75rem 1rem;
+      background:linear-gradient(135deg,#CC1100,#FF4500);
+      color:#fff; font-family:var(--font-d); font-size:0.95rem; letter-spacing:0.12em;
       text-decoration:none; text-transform:uppercase;
       transition:opacity 0.2s;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.1);
     }
-    .card-see-all svg { width:14px; height:14px; fill:#fff; flex-shrink:0; }
+    .card-see-all svg { width:15px; height:15px; fill:#fff; flex-shrink:0; opacity:0.9; }
     .card-see-all:active { opacity:0.82; }
 
     /* CARD BODY */
@@ -528,7 +534,7 @@ layout: none
                 </a>
                 <a href="{{ post.url }}" class="card-see-all">
                   <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                  See All Content ({{ img_count }})
+                  View Full Content &amp; More Posts ({{ img_count }})
                 </a>
               </div>
               {% endif %}
@@ -859,28 +865,27 @@ layout: none
     <!-- BOTTOM NAV -->
     <nav class="bottom-nav">
       <button class="nav-item active" data-page="home">
-        <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span>Home</span>
       </button>
       <button class="nav-item" data-page="wrestlers">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.8 5.6.8-4 3.9.9 5.5L12 14.5l-4.9 2.5.9-5.5-4-3.9 5.6-.8z"/></svg>
-        <span>The Mat</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h3v4c0 1.5 1 2.5 3 2.5s3-1 3-2.5V3h3v5c0 4-2 7-5 8v5h2v2H7v-2h2v-5c-3-1-5-4-5-8V3z"/><path d="M12 9.5V13" stroke-width="1.5"/></svg>
+        <span>The Ring</span>
       </button>
       <button class="nav-item" data-page="badboys">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="12" r="3"/><path d="M10 12h4"/></svg>
+        <svg viewBox="0 2 24 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="14" r="4"/><circle cx="17" cy="14" r="4"/><path d="M7 10a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4"/><path d="M10 14h4"/></svg>
         <span>Bad Boys</span>
       </button>
       <button class="nav-item" data-page="audio">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/><circle cx="19" cy="5" r="3" fill="#FF4500" stroke="#FF4500"/></svg>
         <span>Stories</span>
-        <span class="nav-dot"></span>
       </button>
       <button class="nav-item" data-page="search">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <span>Search</span>
       </button>
       <button class="nav-item" data-page="more">
-        <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         <span>More</span>
       </button>
     </nav>
@@ -1323,6 +1328,7 @@ layout: none
       let lrTTSPlaying = false;
       let lrTTSUtterance = null;
       let lrTTSSpeed = 1;
+      let lrTTSKeepAlive = null;
 
       /* Category filter */
       document.querySelectorAll('.lr-pill').forEach(btn => {
@@ -1454,18 +1460,64 @@ layout: none
       }
 
       function startLRTTS() {
-        if (!('speechSynthesis' in window)) return;
+        if (!('speechSynthesis' in window)) {
+          toast('TTS not supported in this browser');
+          return;
+        }
         const textEl = document.getElementById('lr-reader-text');
         if (!textEl) return;
         stopLRTTS();
-        lrTTSUtterance = new SpeechSynthesisUtterance(textEl.innerText);
-        lrTTSUtterance.rate = lrTTSSpeed;
-        lrTTSUtterance.lang = lrCurrentLang || 'en';
-        lrTTSUtterance.onend = () => { lrTTSPlaying = false; document.getElementById('lr-tts-status').textContent = 'Finished'; updateLRTTSIcon(false); };
-        window.speechSynthesis.speak(lrTTSUtterance);
-        lrTTSPlaying = true;
-        document.getElementById('lr-tts-status').textContent = 'Reading aloud...';
-        updateLRTTSIcon(true);
+
+        function doSpeak() {
+          const text = textEl.innerText.trim();
+          if (!text) return;
+          lrTTSUtterance = new SpeechSynthesisUtterance(text);
+          lrTTSUtterance.rate = lrTTSSpeed;
+          lrTTSUtterance.lang = lrCurrentLang || 'en-US';
+
+          /* Pick best voice for language */
+          const voices = window.speechSynthesis.getVoices();
+          const match = voices.find(v => v.lang.startsWith(lrCurrentLang || 'en'));
+          if (match) lrTTSUtterance.voice = match;
+
+          lrTTSUtterance.onstart = () => {
+            lrTTSPlaying = true;
+            document.getElementById('lr-tts-status').textContent = 'Reading aloud...';
+            updateLRTTSIcon(true);
+          };
+          lrTTSUtterance.onend = () => {
+            lrTTSPlaying = false;
+            clearInterval(lrTTSKeepAlive);
+            document.getElementById('lr-tts-status').textContent = 'Finished';
+            updateLRTTSIcon(false);
+          };
+          lrTTSUtterance.onerror = () => {
+            lrTTSPlaying = false;
+            clearInterval(lrTTSKeepAlive);
+            updateLRTTSIcon(false);
+          };
+
+          /* Android Chrome fix — keep alive ping every 10s */
+          window.speechSynthesis.cancel();
+          setTimeout(() => {
+            window.speechSynthesis.speak(lrTTSUtterance);
+            lrTTSKeepAlive = setInterval(() => {
+              if (!window.speechSynthesis.speaking) { clearInterval(lrTTSKeepAlive); return; }
+              window.speechSynthesis.pause();
+              window.speechSynthesis.resume();
+            }, 10000);
+          }, 100);
+        }
+
+        /* Wait for voices if not loaded yet */
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          doSpeak();
+        } else {
+          window.speechSynthesis.onvoiceschanged = () => { doSpeak(); };
+          /* Fallback if onvoiceschanged never fires */
+          setTimeout(doSpeak, 800);
+        }
       }
 
       function pauseLRTTS() {
@@ -1477,6 +1529,7 @@ layout: none
 
       function stopLRTTS() {
         window.speechSynthesis.cancel();
+        clearInterval(lrTTSKeepAlive);
         lrTTSPlaying = false;
         lrTTSUtterance = null;
       }
