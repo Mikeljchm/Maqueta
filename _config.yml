@@ -5,15 +5,18 @@ baseurl: ""
 permalink: /:year/:month/:day/:title/
 plugins:
   - jekyll-feed
-  
+
 defaults:
   - scope:
       path: ""
       type: "posts"
     values:
       layout: "post"
+
 collections:
   wrestlers:
     output: false
   badboys:
+    output: false
+  stories:
     output: false
