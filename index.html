@@ -297,26 +297,26 @@ layout: none
     .menu-divider { height:1px; background:var(--border); margin:0 1rem; }
 
     /* PHOTO VIEWER */
-    .photo-viewer { position:fixed; inset:0; z-index:500; background:#000; display:flex; flex-direction:column; transform:translateY(100%); transition:transform 0.38s var(--ease); }
+    .photo-viewer { position:fixed; inset:0; z-index:500; background:#000; transform:translateY(100%); transition:transform 0.38s var(--ease); }
     .photo-viewer.open { transform:translateY(0); }
     .viewer-topbar { position:absolute; top:0; left:0; right:0; z-index:10; padding:env(safe-area-inset-top,0) 1rem 0.7rem; padding-top:calc(env(safe-area-inset-top,0px) + 0.7rem); display:flex; align-items:center; gap:0.7rem; background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent); }
     .viewer-back { background:rgba(0,0,0,0.5); border:none; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; }
     .viewer-back svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
     .viewer-counter { font-size:0.75rem; color:rgba(255,255,255,0.7); background:rgba(0,0,0,0.5); padding:0.25rem 0.65rem; border-radius:12px; }
-    .viewer-photo-wrap { flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
-    .viewer-photo-track { display:flex; height:100%; transition:transform 0.3s var(--ease); will-change:transform; }
-    .viewer-slide { flex:0 0 100vw; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-    .viewer-slide img { max-width:100%; max-height:100%; object-fit:contain; display:block; transform-origin:center center; will-change:transform; touch-action:none; }
-    .viewer-bottom { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.9)); padding:2rem 1rem calc(env(safe-area-inset-bottom,0px) + 1rem); z-index:10; }
-    .viewer-desc { font-size:0.78rem; color:#aaa; line-height:1.5; margin-bottom:0.6rem; }
+    .viewer-photo-wrap { position:absolute; top:0; left:0; right:0; bottom:120px; overflow:hidden; }
+    .viewer-photo-track { position:absolute; top:0; left:0; height:100%; display:flex; transition:transform 0.3s var(--ease); will-change:transform; }
+    .viewer-slide { width:100vw; min-width:100vw; max-width:100vw; height:100%; flex-shrink:0; flex-grow:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .viewer-slide img { width:100%; height:100%; object-fit:contain; display:block; transform-origin:center center; will-change:transform; touch-action:none; user-select:none; }
+    .viewer-bottom { position:absolute; bottom:0; left:0; right:0; height:120px; background:linear-gradient(transparent,rgba(0,0,0,0.95)); padding:1rem 1rem calc(env(safe-area-inset-bottom,0px) + 0.75rem); z-index:10; display:flex; flex-direction:column; justify-content:flex-end; }
+    .viewer-desc { font-size:0.78rem; color:#aaa; line-height:1.5; margin-bottom:0.5rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .viewer-desc .htag { color:var(--text-muted); }
     .viewer-actions { display:flex; align-items:center; gap:0.5rem; }
-    .viewer-act { background:rgba(255,255,255,0.07); border:none; border-radius:8px; display:flex; align-items:center; gap:0.3rem; padding:0.5rem 0.7rem; color:#aaa; font-size:0.75rem; cursor:pointer; }
+    .viewer-act { background:rgba(255,255,255,0.07); border:none; border-radius:8px; display:flex; align-items:center; gap:0.3rem; padding:0.45rem 0.65rem; color:#aaa; font-size:0.75rem; cursor:pointer; }
     .viewer-act svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
     .viewer-act.liked { color:#ff3b5c; }
     .viewer-act.liked svg { fill:#ff3b5c; stroke:#ff3b5c; }
     .viewer-spacer { flex:1; }
-    .viewer-heart { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(0); font-size:5rem; opacity:0; pointer-events:none; transition:transform 0.15s ease,opacity 0.5s ease 0.15s; z-index:20; }
+    .viewer-heart { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%) scale(0); font-size:5rem; opacity:0; pointer-events:none; transition:transform 0.15s ease,opacity 0.5s ease 0.15s; z-index:20; }
     .viewer-heart.pop { transform:translate(-50%,-50%) scale(1.4); opacity:1; }
 
     /* TELEGRAM FLOAT */
@@ -333,6 +333,88 @@ layout: none
     /* REVEAL */
     .reveal { opacity:0; transform:translateY(14px); transition:opacity 0.5s var(--ease),transform 0.5s var(--ease); }
     .reveal.visible { opacity:1; transform:translateY(0); }
+    /* ── LOCKER ROOM ── */
+    .lr-hero { padding:1.75rem 1rem 1.25rem; border-bottom:1px solid var(--border); background:linear-gradient(to bottom,#050000,#000); }
+    .lr-eyebrow { font-size:0.5rem; letter-spacing:0.4em; color:var(--fire-orange); text-transform:uppercase; margin-bottom:0.4rem; opacity:0.75; }
+    .lr-title { font-family:var(--font-d); font-size:clamp(2.4rem,10vw,3.2rem); color:#fff; letter-spacing:0.04em; line-height:0.9; margin-bottom:0.5rem; }
+    .lr-title span { background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .lr-sub { font-family:var(--font-it); font-style:italic; font-size:0.82rem; color:var(--text-muted); line-height:1.5; }
+
+    .lr-pills { display:flex; gap:0.4rem; padding:0.65rem 1rem; overflow-x:auto; scrollbar-width:none; background:#000; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; }
+    .lr-pills::-webkit-scrollbar { display:none; }
+    .lr-pill { flex-shrink:0; padding:0.28rem 0.75rem; border-radius:20px; font-size:0.6rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; border:1px solid var(--border); background:transparent; color:var(--text-dim); transition:all 0.2s; white-space:nowrap; }
+    .lr-pill.active { background:var(--fire-orange); border-color:var(--fire-orange); color:#fff; }
+
+    .lr-card { border-bottom:1px solid var(--border); cursor:pointer; opacity:0; transform:translateY(16px); transition:opacity 0.5s var(--ease),transform 0.5s var(--ease); }
+    .lr-card.visible { opacity:1; transform:translateY(0); }
+    .lr-card:active { background:var(--surface); }
+    .lr-cover { width:100%; aspect-ratio:16/7; object-fit:cover; display:block; filter:brightness(0.8); }
+    .lr-info { padding:0.85rem 1rem 0.8rem; }
+    .lr-meta-top { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.45rem; }
+    .lr-cat { font-size:0.5rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--fire-orange); font-weight:600; }
+    .lr-dot { width:3px; height:3px; border-radius:50%; background:var(--text-muted); }
+    .lr-read-time { font-size:0.56rem; color:var(--text-muted); }
+    .lr-title-card { font-family:var(--font-it); font-size:1.2rem; font-weight:700; color:#fff; line-height:1.2; margin-bottom:0.4rem; }
+    .lr-preview { font-size:0.8rem; color:var(--text-dim); line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:0.65rem; }
+    .lr-langs { display:flex; gap:0.35rem; flex-wrap:wrap; margin-bottom:0.65rem; }
+    .lr-lang-btn { font-size:0.55rem; font-weight:700; letter-spacing:0.08em; padding:0.2rem 0.5rem; border-radius:4px; border:1px solid var(--border); background:transparent; color:var(--text-muted); cursor:pointer; transition:all 0.2s; }
+    .lr-lang-btn.active { background:rgba(255,69,0,0.1); border-color:rgba(255,69,0,0.35); color:var(--fire-orange); }
+    .lr-footer { display:flex; align-items:center; gap:0.65rem; }
+    .lr-read-btn { background:var(--fire-orange); border:none; border-radius:20px; padding:0.35rem 1.1rem; color:#fff; font-family:var(--font-d); font-size:0.7rem; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s; }
+    .lr-read-btn:active { opacity:0.85; transform:scale(0.95); }
+    .lr-listen-btn { background:none; border:1px solid var(--border); border-radius:20px; padding:0.3rem 0.75rem; color:var(--text-dim); font-size:0.6rem; cursor:pointer; display:flex; align-items:center; gap:0.3rem; transition:all 0.2s; }
+    .lr-listen-btn svg { width:11px; height:11px; fill:currentColor; }
+    .lr-listen-btn:active { border-color:var(--fire-orange); color:var(--fire-orange); }
+    .lr-likes { display:flex; align-items:center; gap:0.3rem; font-size:0.7rem; color:var(--text-muted); margin-left:auto; }
+    .lr-likes svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .lr-empty { padding:3.5rem 2rem; text-align:center; display:flex; flex-direction:column; align-items:center; gap:1rem; }
+    .lr-empty svg { opacity:0.15; }
+    .lr-empty p { color:var(--text-muted); font-size:0.85rem; line-height:1.7; }
+
+    /* STORY READER */
+    .lr-reader { position:fixed; inset:0; z-index:400; background:#000; transform:translateY(100%); transition:transform 0.42s var(--ease); display:flex; flex-direction:column; }
+    .lr-reader.open { transform:translateY(0); }
+    .lr-reader-topbar { flex-shrink:0; height:48px; background:rgba(0,0,0,0.97); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:0.75rem; padding:0 1rem; }
+    .lr-reader-back { background:none; border:none; color:var(--text-dim); width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+    .lr-reader-back svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .lr-reader-title-sm { font-family:var(--font-it); font-size:0.82rem; color:var(--text-dim); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .lr-tts-bar { flex-shrink:0; display:flex; align-items:center; gap:0.65rem; padding:0.65rem 1rem; background:var(--surface); border-bottom:1px solid var(--border); }
+    .lr-tts-play { width:36px; height:36px; border-radius:50%; background:var(--fire-orange); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:all 0.2s; }
+    .lr-tts-play:active { opacity:0.85; transform:scale(0.92); }
+    .lr-tts-play svg { width:14px; height:14px; fill:#fff; }
+    .lr-tts-info { flex:1; }
+    .lr-tts-info strong { display:block; font-size:0.78rem; color:var(--text); font-weight:600; }
+    .lr-tts-info span { font-size:0.62rem; color:var(--text-muted); }
+    .lr-tts-speed { background:var(--surface-2); border:1px solid var(--border); border-radius:6px; padding:0.2rem 0.5rem; color:var(--text-dim); font-size:0.65rem; cursor:pointer; flex-shrink:0; }
+    .lr-reader-scroll { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    .lr-reader-scroll::-webkit-scrollbar { display:none; }
+    .lr-reader-cover { width:100%; max-height:55vw; object-fit:cover; display:block; }
+    .lr-reader-body { padding:1.5rem 1.25rem; max-width:680px; margin:0 auto; }
+    .lr-reader-cat { font-size:0.5rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--fire-orange); margin-bottom:0.65rem; }
+    .lr-reader-title { font-family:var(--font-it); font-size:clamp(1.5rem,6vw,2rem); font-weight:700; color:#fff; line-height:1.15; margin-bottom:0.5rem; }
+    .lr-reader-meta { display:flex; gap:1rem; font-size:0.62rem; color:var(--text-muted); margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+    .lr-chapter-title { font-family:var(--font-d); font-size:1rem; letter-spacing:0.06em; color:var(--fire-orange); margin-bottom:1rem; }
+    .lr-reader-text { font-family:var(--font-it); font-size:1rem; line-height:1.85; color:#bbb; }
+    .lr-reader-text p { margin-bottom:1.25rem; }
+    .lr-reader-text p:first-child::first-letter { font-size:3rem; font-weight:700; color:var(--fire-orange); float:left; line-height:0.8; margin:0.15rem 0.2rem 0 0; font-family:var(--font-it); }
+    .lr-chapter-nav { padding:1.5rem 1.25rem; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); }
+    .lr-chapter-btn { background:none; border:1px solid var(--border); border-radius:8px; padding:0.5rem 1rem; color:var(--text-dim); font-size:0.75rem; cursor:pointer; transition:all 0.2s; }
+    .lr-chapter-btn:active { border-color:var(--fire-orange); color:var(--fire-orange); }
+    .lr-chapter-btn.primary { background:var(--fire-orange); border-color:var(--fire-orange); color:#fff; }
+    .lr-chapter-counter { font-size:0.65rem; color:var(--text-muted); }
+
+    /* Locker Room Comments */
+    .lr-comments-section { padding:1.25rem; border-top:1px solid var(--border); }
+    .lr-comments-title { font-family:var(--font-d); font-size:0.95rem; letter-spacing:0.06em; color:var(--text-dim); margin-bottom:0.75rem; text-transform:uppercase; }
+    .lr-comment-item { display:flex; gap:0.5rem; margin-bottom:0.65rem; }
+    .lr-comment-av { width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,var(--fire-deep),var(--fire-red)); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-d); font-size:0.5rem; color:#fff; }
+    .lr-comment-text { font-size:0.8rem; color:var(--text-dim); line-height:1.45; padding-top:0.15rem; }
+    .lr-comment-form { display:flex; gap:0.5rem; align-items:center; margin-top:0.75rem; }
+    .lr-comment-input { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:0.45rem 0.85rem; color:var(--text); font-family:var(--font-b); font-size:0.8rem; outline:none; }
+    .lr-comment-input:focus { border-color:rgba(255,69,0,0.3); }
+    .lr-comment-input::placeholder { color:var(--text-muted); }
+    .lr-comment-send { background:none; border:none; color:var(--fire-orange); font-family:var(--font-d); font-size:0.78rem; letter-spacing:0.06em; cursor:pointer; flex-shrink:0; }
+
   </style>
 </head>
 <body>
@@ -516,14 +598,122 @@ layout: none
         {% endif %}
       </div>
 
-      <!-- AUDIO -->
+      <!-- LOCKER ROOM -->
       <div class="page" id="page-audio">
-        <div class="audio-header">
-          <div class="audio-eyebrow">&#9670; Exclusive &#9670;</div>
-          <div class="audio-main-title">AUDIO <span>STORIES</span></div>
-          <div class="audio-sub">Close your eyes. Let the heat in.</div>
+
+        <!-- Hero -->
+        <div class="lr-hero">
+          <div class="lr-eyebrow">&#9670; Original Stories &#9670;</div>
+          <div class="lr-title">LOCKER<br><span>ROOM</span></div>
+          <div class="lr-sub">Where the real action happens.<br>Close the door. Start reading.</div>
         </div>
-        <div class="audio-empty">Audio stories coming soon.</div>
+
+        <!-- Category pills -->
+        <div class="lr-pills" id="lr-pills">
+          <button class="lr-pill active" data-lcat="all">All</button>
+          <button class="lr-pill" data-lcat="wrestling">Wrestling</button>
+          <button class="lr-pill" data-lcat="locker-room">Locker Room</button>
+          <button class="lr-pill" data-lcat="college">College</button>
+          <button class="lr-pill" data-lcat="coach">Coach</button>
+          <button class="lr-pill" data-lcat="rivals">Rivals</button>
+          <button class="lr-pill" data-lcat="romance">Romance</button>
+          <button class="lr-pill" data-lcat="fantasy">Fantasy</button>
+          <button class="lr-pill" data-lcat="thriller">Thriller</button>
+        </div>
+
+        <!-- Stories list -->
+        <div id="lr-list">
+          {% assign all_stories = site.stories %}
+          {% if all_stories.size > 0 %}
+            {% for story in all_stories %}
+            {% capture story_json %}{"idx":{{ forloop.index0 }},"title":{{ story.title | jsonify }},"category":{{ story.category | jsonify }},"cover":{{ story.cover | default: "" | jsonify }},"read_time":{{ story.read_time | default: "5 min read" | jsonify }},"slug":{{ story.slug | jsonify }},"languages":{{ story.languages | jsonify }}}{% endcapture %}
+            <div class="lr-card reveal" data-lcat="{{ story.category }}" data-story-idx="{{ forloop.index0 }}" data-story-json='{{ story_json | replace: "'", "&#39;" }}'>
+              {% if story.cover %}
+              <img class="lr-cover" src="{{ story.cover }}" alt="{{ story.title }}" loading="lazy">
+              {% endif %}
+              <div class="lr-info">
+                <div class="lr-meta-top">
+                  <span class="lr-cat">{{ story.category }}</span>
+                  <span class="lr-dot"></span>
+                  <span class="lr-read-time">{{ story.read_time | default: "5 min read" }}</span>
+                </div>
+                <div class="lr-title-card">{{ story.title }}</div>
+                {% if story.languages and story.languages.size > 0 %}
+                {% assign first_lang = story.languages | first %}
+                {% assign first_chapter = first_lang.chapters | first %}
+                {% if first_chapter %}
+                <div class="lr-preview">{{ first_chapter.content | truncatewords: 30 }}</div>
+                {% endif %}
+                <!-- Language flags -->
+                <div class="lr-langs">
+                  {% for lang in story.languages %}
+                  <button class="lr-lang-btn {% if forloop.first %}active{% endif %}"
+                    data-lang="{{ lang.code }}">{{ lang.code | upcase }}</button>
+                  {% endfor %}
+                </div>
+                {% endif %}
+                <div class="lr-footer">
+                  <button class="lr-read-btn" onclick="openLRStory({{ forloop.index0 }}, 0)">Read</button>
+                  <button class="lr-listen-btn" onclick="openLRStory({{ forloop.index0 }}, 0, true)">
+                    <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Listen
+                  </button>
+                  <div class="lr-likes">
+                    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                    <span class="lr-like-count" data-story-id="{{ story.slug }}">0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div class="lr-empty">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--fire-orange)" stroke-width="1.2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <p>Stories coming soon.<br>The locker room is heating up.</p>
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- STORY READER (full screen overlay) -->
+      <div class="lr-reader" id="lr-reader">
+        <div class="lr-reader-topbar">
+          <button class="lr-reader-back" onclick="closeLRReader()">
+            <svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+          </button>
+          <div class="lr-reader-title-sm" id="lr-reader-title-sm"></div>
+        </div>
+
+        <!-- TTS Player -->
+        <div class="lr-tts-bar" id="lr-tts-bar">
+          <button class="lr-tts-play" id="lr-tts-play" onclick="toggleLRTTS()">
+            <svg viewBox="0 0 24 24" id="lr-tts-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+          <div class="lr-tts-info">
+            <strong id="lr-tts-status">Listen to this story</strong>
+            <span>Tap play to read aloud</span>
+          </div>
+          <button class="lr-tts-speed" id="lr-tts-speed" onclick="cycleLRSpeed()">1x</button>
+        </div>
+
+        <!-- Reader content -->
+        <div class="lr-reader-scroll" id="lr-reader-scroll">
+          <div id="lr-reader-content"></div>
+
+          <!-- Chapter nav -->
+          <div class="lr-chapter-nav" id="lr-chapter-nav"></div>
+
+          <!-- Comments -->
+          <div class="lr-comments-section" id="lr-comments-section">
+            <div class="lr-comments-title">Comments</div>
+            <div class="lr-comments-list" id="lr-comments-list"></div>
+            <div class="lr-comment-form">
+              <input class="lr-comment-input" id="lr-comment-input" type="text" placeholder="Add a comment..." maxlength="280">
+              <button class="lr-comment-send" onclick="postLRComment()">Post</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- SEARCH -->
@@ -921,8 +1111,9 @@ layout: none
 
       function updateSlide(animate) {
         const track = $('viewer-track');
+        const w = window.innerWidth;
         track.style.transition = animate ? 'transform 0.32s cubic-bezier(0.16,1,0.3,1)' : 'none';
-        track.style.transform = 'translateX(-' + (viewerIdx * 100) + 'vw)';
+        track.style.transform = 'translateX(-' + (viewerIdx * w) + 'px)';
         $('viewer-counter').textContent = (viewerIdx+1) + ' / ' + viewerImgs.length;
         scale = 1;
         track.querySelectorAll('img').forEach(i => { i.style.transition=''; i.style.transform='scale(1)'; });
@@ -992,7 +1183,17 @@ layout: none
         if (e.touches.length===2) { e.preventDefault(); const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); scale=Math.max(1,Math.min(4,pinchScale*(d/pinchDist))); const img=$('viewer-track').querySelectorAll('img')[viewerIdx]; if(img) img.style.transform='scale('+scale+')'; }
       },{passive:false});
       wrap.addEventListener('touchend', e => {
-        if (scale<=1.1) { scale=1; const img=$('viewer-track').querySelectorAll('img')[viewerIdx]; if(img){img.style.transition='transform 0.3s';img.style.transform='scale(1)';setTimeout(()=>img.style.transition='',300);} const dx=e.changedTouches[0].clientX-swipeSx; if(Math.abs(dx)>50){if(dx<0&&viewerIdx<viewerImgs.length-1)viewerIdx++;else if(dx>0&&viewerIdx>0)viewerIdx--;updateSlide(true);} }
+        if (scale<=1.1) {
+          scale=1;
+          const img=$('viewer-track').querySelectorAll('img')[viewerIdx];
+          if(img){img.style.transition='transform 0.3s';img.style.transform='scale(1)';setTimeout(()=>img.style.transition='',300);}
+          const dx=e.changedTouches[0].clientX-swipeSx;
+          if(Math.abs(dx)>50){
+            if(dx<0&&viewerIdx<viewerImgs.length-1)viewerIdx++;
+            else if(dx>0&&viewerIdx>0)viewerIdx--;
+            updateSlide(true);
+          }
+        }
       });
 
       /* SEARCH */
@@ -1062,9 +1263,242 @@ layout: none
         deferredPWA = null; $('pwa-install-btn').classList.remove('visible');
       });
 
+      /* ── LOCKER ROOM ── */
+      // Read stories from data attributes in HTML
+      const LR_STORIES = [];
+      document.querySelectorAll('.lr-card[data-story-idx]').forEach(card => {
+        const idx = parseInt(card.dataset.storyIdx);
+        try {
+          const storyData = JSON.parse(card.dataset.storyJson || '{}');
+          LR_STORIES[idx] = storyData;
+        } catch(e) {}
+      });
+
+      let lrCurrentStory = null;
+      let lrCurrentLang = null;
+      let lrCurrentChapter = 0;
+      let lrTTSPlaying = false;
+      let lrTTSUtterance = null;
+      let lrTTSSpeed = 1;
+
+      /* Category filter */
+      document.querySelectorAll('.lr-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.lr-pill').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const cat = btn.dataset.lcat;
+          document.querySelectorAll('.lr-card').forEach(card => {
+            card.style.display = (cat === 'all' || card.dataset.lcat === cat) ? '' : 'none';
+          });
+        });
+      });
+
+      /* Open story reader */
+      function openLRStory(storyIdx, chapterIdx, autoPlay) {
+        const story = LR_STORIES[storyIdx];
+        if (!story) return;
+        lrCurrentStory = story;
+        lrCurrentChapter = chapterIdx || 0;
+        stopLRTTS();
+
+        // Determine language — use saved preference or first available
+        const savedLang = localStorage.getItem('hw_lr_lang');
+        const langs = story.languages || [];
+        if (savedLang && langs.find(l => l.code === savedLang)) {
+          lrCurrentLang = savedLang;
+        } else if (langs.length > 0) {
+          lrCurrentLang = langs[0].code;
+        } else {
+          lrCurrentLang = 'en';
+        }
+
+        renderLRReader(story, lrCurrentLang, lrCurrentChapter);
+        document.getElementById('lr-reader').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('lr-reader-scroll').scrollTop = 0;
+
+        // Load comments
+        loadLRComments(story.slug);
+
+        if (autoPlay) setTimeout(startLRTTS, 500);
+      }
+
+      function renderLRReader(story, langCode, chapterIdx) {
+        const langs = story.languages || [];
+        const langData = langs.find(l => l.code === langCode) || langs[0];
+        const chapters = langData ? (langData.chapters || []) : [];
+        const chapter = chapters[chapterIdx] || chapters[0] || { title: story.title, content: '' };
+
+        document.getElementById('lr-reader-title-sm').textContent = story.title;
+        document.getElementById('lr-tts-status').textContent = 'Listen to this story';
+        updateLRTTSIcon(false);
+
+        let html = '';
+        if (story.cover) html += `<img class="lr-reader-cover" src="${story.cover}" alt="${story.title}" loading="lazy">`;
+        html += `<div class="lr-reader-body">`;
+        html += `<div class="lr-reader-cat">${story.category}</div>`;
+        html += `<div class="lr-reader-title">${story.title}</div>`;
+        html += `<div class="lr-reader-meta"><span>${story.read_time}</span>`;
+
+        // Language switcher inline
+        if (langs.length > 1) {
+          html += `<span style="margin-left:auto;display:flex;gap:0.3rem;">`;
+          langs.forEach(l => {
+            const active = l.code === langCode ? 'style="color:var(--fire-orange);border-color:rgba(255,69,0,0.4)"' : '';
+            html += `<button onclick="switchLRLang('${l.code}')" style="background:none;border:1px solid var(--border);border-radius:4px;padding:0.15rem 0.4rem;font-size:0.55rem;color:var(--text-muted);cursor:pointer;font-weight:700;" ${active}>${l.code.toUpperCase()}</button>`;
+          });
+          html += `</span>`;
+        }
+
+        html += `</div>`;
+
+        // Chapter title
+        if (chapters.length > 1) {
+          html += `<div class="lr-chapter-title">${chapter.title || 'Chapter ' + (chapterIdx + 1)}</div>`;
+        }
+
+        // Content — split into paragraphs
+        const paragraphs = (chapter.content || '').split(/\n+/).filter(p => p.trim());
+        html += `<div class="lr-reader-text" id="lr-reader-text">`;
+        paragraphs.forEach(p => { html += `<p>${p.trim()}</p>`; });
+        html += `</div></div>`;
+
+        document.getElementById('lr-reader-content').innerHTML = html;
+
+        // Chapter navigation
+        const navEl = document.getElementById('lr-chapter-nav');
+        if (chapters.length > 1) {
+          let navHtml = '';
+          if (chapterIdx > 0) {
+            navHtml += `<button class="lr-chapter-btn" onclick="goLRChapter(${chapterIdx - 1})">&#8592; Previous</button>`;
+          } else { navHtml += `<span></span>`; }
+          navHtml += `<span class="lr-chapter-counter">${chapterIdx + 1} / ${chapters.length}</span>`;
+          if (chapterIdx < chapters.length - 1) {
+            navHtml += `<button class="lr-chapter-btn primary" onclick="goLRChapter(${chapterIdx + 1})">Next &#8594;</button>`;
+          } else { navHtml += `<span></span>`; }
+          navEl.innerHTML = navHtml;
+          navEl.style.display = 'flex';
+        } else {
+          navEl.style.display = 'none';
+        }
+      }
+
+      function goLRChapter(idx) {
+        lrCurrentChapter = idx;
+        stopLRTTS();
+        renderLRReader(lrCurrentStory, lrCurrentLang, idx);
+        document.getElementById('lr-reader-scroll').scrollTop = 0;
+      }
+
+      function switchLRLang(code) {
+        lrCurrentLang = code;
+        localStorage.setItem('hw_lr_lang', code);
+        stopLRTTS();
+        renderLRReader(lrCurrentStory, code, lrCurrentChapter);
+        document.getElementById('lr-reader-scroll').scrollTop = 0;
+      }
+
+      function closeLRReader() {
+        stopLRTTS();
+        document.getElementById('lr-reader').classList.remove('open');
+        document.body.style.overflow = '';
+        lrCurrentStory = null;
+      }
+
+      /* TTS */
+      function toggleLRTTS() {
+        if (lrTTSPlaying) { pauseLRTTS(); } else { startLRTTS(); }
+      }
+
+      function startLRTTS() {
+        if (!('speechSynthesis' in window)) return;
+        const textEl = document.getElementById('lr-reader-text');
+        if (!textEl) return;
+        stopLRTTS();
+        lrTTSUtterance = new SpeechSynthesisUtterance(textEl.innerText);
+        lrTTSUtterance.rate = lrTTSSpeed;
+        lrTTSUtterance.lang = lrCurrentLang || 'en';
+        lrTTSUtterance.onend = () => { lrTTSPlaying = false; document.getElementById('lr-tts-status').textContent = 'Finished'; updateLRTTSIcon(false); };
+        window.speechSynthesis.speak(lrTTSUtterance);
+        lrTTSPlaying = true;
+        document.getElementById('lr-tts-status').textContent = 'Reading aloud...';
+        updateLRTTSIcon(true);
+      }
+
+      function pauseLRTTS() {
+        window.speechSynthesis.pause();
+        lrTTSPlaying = false;
+        document.getElementById('lr-tts-status').textContent = 'Paused';
+        updateLRTTSIcon(false);
+      }
+
+      function stopLRTTS() {
+        window.speechSynthesis.cancel();
+        lrTTSPlaying = false;
+        lrTTSUtterance = null;
+      }
+
+      function cycleLRSpeed() {
+        const speeds = [1, 1.25, 1.5, 0.75];
+        lrTTSSpeed = speeds[(speeds.indexOf(lrTTSSpeed) + 1) % speeds.length];
+        document.getElementById('lr-tts-speed').textContent = lrTTSSpeed + 'x';
+        if (lrTTSPlaying) { stopLRTTS(); startLRTTS(); }
+      }
+
+      function updateLRTTSIcon(playing) {
+        const btn = document.getElementById('lr-tts-play');
+        btn.innerHTML = playing
+          ? '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+          : '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+      }
+
+      /* Locker Room Comments — Supabase */
+      async function loadLRComments(storySlug) {
+        const listEl = document.getElementById('lr-comments-list');
+        listEl.innerHTML = '';
+        const data = await sbFetch('comments?post_id=eq.lr_' + encodeURIComponent(storySlug) + '&order=created_at.asc&select=text');
+        if (data) data.forEach(row => addLRComment(row.text, false));
+      }
+
+      function addLRComment(text, animate) {
+        const listEl = document.getElementById('lr-comments-list');
+        const div = document.createElement('div'); div.className = 'lr-comment-item';
+        div.innerHTML = '<div class="lr-comment-av">HW</div><div class="lr-comment-text">' + text + '</div>';
+        if (animate) { div.style.cssText='opacity:0;transform:translateY(5px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
+        listEl.appendChild(div);
+      }
+
+      async function postLRComment() {
+        if (!lrCurrentStory) return;
+        const input = document.getElementById('lr-comment-input');
+        const text = input.value.trim(); if (!text) return;
+        input.value = '';
+        addLRComment(text, true);
+        const postId = 'lr_' + lrCurrentStory.slug;
+        await sbFetch('comments', 'POST', { post_id: postId, text });
+        toast('Posted!');
+      }
+
+      const lrCommentInput = document.getElementById('lr-comment-input');
+      if (lrCommentInput) {
+        lrCommentInput.addEventListener('keydown', e => {
+          if (e.key === 'Enter') postLRComment();
+        });
+      }
+
+      /* Expose globals */
+      window.openLRStory = openLRStory;
+      window.closeLRReader = closeLRReader;
+      window.toggleLRTTS = toggleLRTTS;
+      window.cycleLRSpeed = cycleLRSpeed;
+      window.goLRChapter = goLRChapter;
+      window.switchLRLang = switchLRLang;
+      window.postLRComment = postLRComment;
+
     } /* end initApp */
 
   })();
   </script>
 </body>
 </html>
+ 
