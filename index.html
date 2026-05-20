@@ -154,14 +154,25 @@ layout: none
     .card-cat-label { font-size:0.52rem; color:var(--text-muted); letter-spacing:0.12em; text-transform:uppercase; margin-top:0.05rem; }
     .card-date { font-size:0.58rem; color:var(--text-muted); }
 
-    /* PHOTOS — full width, no margin, stacked vertically */
-    .card-photos { width:100%; cursor:pointer; }
-    .card-photo-img {
-      width:100%; display:block;
-      height:auto; object-fit:contain;
-      background:#000;
+    /* PHOTOS — first big + peek of next */
+    .card-media-wrap { width:100%; position:relative; cursor:pointer; background:#000; }
+    .card-first-photo { width:100%; display:block; height:auto; object-fit:contain; max-height:100vw; background:#000; }
+    .card-photo-peek {
+      width:100%; height:80px; overflow:hidden; position:relative;
+      mask-image:linear-gradient(to bottom,rgba(0,0,0,0.6) 0%,transparent 100%);
+      -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,0.6) 0%,transparent 100%);
     }
-    .card-photo-img + .card-photo-img { margin-top:2px; }
+    .card-photo-peek img { width:100%; display:block; object-fit:cover; object-position:top; }
+    .card-see-all {
+      display:flex; align-items:center; justify-content:center; gap:0.5rem;
+      width:100%; padding:0.6rem 1rem;
+      background:rgba(13,13,13,0.95);
+      color:var(--text-dim); font-size:0.75rem; font-weight:500;
+      text-decoration:none; border-top:1px solid var(--border);
+      transition:all 0.2s;
+    }
+    .card-see-all svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.8; }
+    .card-see-all:active { color:var(--fire-orange); background:var(--surface); }
 
     /* CARD BODY */
     .card-body { padding:0.65rem 0.9rem 0.4rem; }
@@ -462,6 +473,11 @@ layout: none
           {% assign all_posts = site.posts %}
           {% if all_posts.size > 0 %}
             {% for post in all_posts %}
+            {% if post.images %}
+              {% assign all_imgs = post.images %}
+            {% elsif post.image %}
+              {% assign all_imgs = post.image | split: '|||' %}
+            {% endif %}
             <article class="post-card" data-cat="{{ post.category }}" data-idx="{{ forloop.index0 }}">
               <div class="card-header">
                 <div class="card-avatar">HW</div>
@@ -472,22 +488,26 @@ layout: none
                 <div class="card-date">{{ post.date | date: "%b %d, %Y" }}</div>
               </div>
 
-              {% if post.images %}
-                {% assign all_imgs = post.images %}
-              {% elsif post.image %}
-                {% assign all_imgs = post.image | split: '|||' %}
-              {% endif %}
-
               {% if all_imgs %}
-              <div class="card-photos" data-post-url="{{ post.url }}">
-                {% for img in all_imgs %}
-                <img class="card-photo-img"
-                  src="{{ img }}"
+              {% assign img_count = all_imgs | size %}
+              <div class="card-media-wrap">
+                <!-- First photo full width -->
+                <img class="card-first-photo"
+                  src="{{ all_imgs[0] }}"
                   alt="{{ post.title }}"
                   loading="lazy"
-                  decoding="async"
-                  data-idx="{{ forloop.index0 }}">
-                {% endfor %}
+                  decoding="async">
+                {% if img_count > 1 %}
+                <!-- Peek of second photo -->
+                <div class="card-photo-peek">
+                  <img src="{{ all_imgs[1] }}" alt="" loading="lazy" decoding="async">
+                </div>
+                <!-- Ver todo el contenido button -->
+                <a href="{{ post.url }}" class="card-see-all">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                  Ver todo el contenido ({{ img_count }})
+                </a>
+                {% endif %}
               </div>
               {% endif %}
 
@@ -761,8 +781,8 @@ layout: none
           </div>
           <div class="menu-divider"></div>
           <div class="menu-item" data-nav="audio">
-            <div class="menu-icon yellow"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
-            <div class="menu-text"><div class="menu-title">Audio Stories</div><div class="menu-desc">Exclusive narrated stories</div></div>
+            <div class="menu-icon yellow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+            <div class="menu-text"><div class="menu-title">Locker Room</div><div class="menu-desc">Original stories</div></div>
             <div class="menu-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
           </div>
         </div>
@@ -828,8 +848,8 @@ layout: none
         <span>Bad Boys</span>
       </button>
       <button class="nav-item" data-page="audio">
-        <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        <span>Audio</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Stories</span>
         <span class="nav-dot"></span>
       </button>
       <button class="nav-item" data-page="search">
@@ -1501,4 +1521,3 @@ layout: none
   </script>
 </body>
 </html>
- 
