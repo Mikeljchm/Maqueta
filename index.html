@@ -1384,266 +1384,290 @@ layout: none
         } catch(e) {}
       });
 
-      let lrCurrentStory = null;
-      let lrCurrentLang = null;
-      let lrCurrentChapter = 0;
-      let lrTTSPlaying = false;
-      let lrTTSUtterance = null;
-      let lrTTSSpeed = 1;
-      let lrTTSKeepAlive = null;
-
-      /* Category filter */
-      document.querySelectorAll('.lr-pill').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.lr-pill').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          const cat = btn.dataset.lcat;
-          document.querySelectorAll('.lr-card').forEach(card => {
-            card.style.display = (cat === 'all' || card.dataset.lcat === cat) ? '' : 'none';
-          });
-        });
-      });
-
-      /* Open story reader */
-      function openLRStory(storyIdx, chapterIdx, autoPlay) {
-        const story = LR_STORIES[storyIdx];
-        if (!story) return;
-        lrCurrentStory = story;
-        lrCurrentChapter = chapterIdx || 0;
-        stopLRTTS();
-
-        // Determine language — use saved preference or first available
-        const savedLang = localStorage.getItem('hw_lr_lang');
-        const langs = story.languages || [];
-        if (savedLang && langs.find(l => l.code === savedLang)) {
-          lrCurrentLang = savedLang;
-        } else if (langs.length > 0) {
-          lrCurrentLang = langs[0].code;
-        } else {
-          lrCurrentLang = 'en';
-        }
-
-        renderLRReader(story, lrCurrentLang, lrCurrentChapter);
-        document.getElementById('lr-reader').classList.add('open');
-        document.body.style.overflow = 'hidden';
-        document.getElementById('lr-reader-scroll').scrollTop = 0;
-
-        // Load comments
-        loadLRComments(story.slug);
-
-        if (autoPlay) setTimeout(startLRTTS, 500);
-      }
-
-      function renderLRReader(story, langCode, chapterIdx) {
-        const langs = story.languages || [];
-        const langData = langs.find(l => l.code === langCode) || langs[0];
-        const chapters = langData ? (langData.chapters || []) : [];
-        const chapter = chapters[chapterIdx] || chapters[0] || { title: story.title, content: '' };
-
-        document.getElementById('lr-reader-title-sm').textContent = story.title;
-        document.getElementById('lr-tts-status').textContent = 'Listen to this story';
-        updateLRTTSIcon(false);
-
-        let html = '';
-        if (story.cover) html += `<img class="lr-reader-cover" src="${story.cover}" alt="${story.title}" loading="lazy">`;
-        html += `<div class="lr-reader-body">`;
-        html += `<div class="lr-reader-cat">${story.category}</div>`;
-        html += `<div class="lr-reader-title">${story.title}</div>`;
-        html += `<div class="lr-reader-meta"><span>${story.read_time}</span>`;
-
-        // Language switcher inline
-        if (langs.length > 1) {
-          html += `<span style="margin-left:auto;display:flex;gap:0.3rem;">`;
-          langs.forEach(l => {
-            const active = l.code === langCode ? 'style="color:var(--fire-orange);border-color:rgba(255,69,0,0.4)"' : '';
-            html += `<button onclick="switchLRLang('${l.code}')" style="background:none;border:1px solid var(--border);border-radius:4px;padding:0.15rem 0.4rem;font-size:0.55rem;color:var(--text-muted);cursor:pointer;font-weight:700;" ${active}>${l.code.toUpperCase()}</button>`;
-          });
-          html += `</span>`;
-        }
-
-        html += `</div>`;
-
-        // Chapter title
-        if (chapters.length > 1) {
-          html += `<div class="lr-chapter-title">${chapter.title || 'Chapter ' + (chapterIdx + 1)}</div>`;
-        }
-
-        // Content — split into paragraphs
-        const paragraphs = (chapter.content || '').split(/\n+/).filter(p => p.trim());
-        html += `<div class="lr-reader-text" id="lr-reader-text">`;
-        paragraphs.forEach(p => { html += `<p>${p.trim()}</p>`; });
-        html += `</div></div>`;
-
-        document.getElementById('lr-reader-content').innerHTML = html;
-
-        // Chapter navigation
-        const navEl = document.getElementById('lr-chapter-nav');
-        if (chapters.length > 1) {
-          let navHtml = '';
-          if (chapterIdx > 0) {
-            navHtml += `<button class="lr-chapter-btn" onclick="goLRChapter(${chapterIdx - 1})">&#8592; Previous</button>`;
-          } else { navHtml += `<span></span>`; }
-          navHtml += `<span class="lr-chapter-counter">${chapterIdx + 1} / ${chapters.length}</span>`;
-          if (chapterIdx < chapters.length - 1) {
-            navHtml += `<button class="lr-chapter-btn primary" onclick="goLRChapter(${chapterIdx + 1})">Next &#8594;</button>`;
-          } else { navHtml += `<span></span>`; }
-          navEl.innerHTML = navHtml;
-          navEl.style.display = 'flex';
-        } else {
-          navEl.style.display = 'none';
-        }
-      }
-
-      function goLRChapter(idx) {
-        lrCurrentChapter = idx;
-        stopLRTTS();
-        renderLRReader(lrCurrentStory, lrCurrentLang, idx);
-        document.getElementById('lr-reader-scroll').scrollTop = 0;
-      }
-
-      function switchLRLang(code) {
-        lrCurrentLang = code;
-        localStorage.setItem('hw_lr_lang', code);
-        stopLRTTS();
-        renderLRReader(lrCurrentStory, code, lrCurrentChapter);
-        document.getElementById('lr-reader-scroll').scrollTop = 0;
-      }
-
-      function closeLRReader() {
-        stopLRTTS();
-        document.getElementById('lr-reader').classList.remove('open');
-        document.body.style.overflow = '';
-        lrCurrentStory = null;
-      }
-
-      /* TTS — chunk-based for Android reliability */
-      function toggleLRTTS() {
-        if (lrTTSPlaying) { pauseLRTTS(); } else { startLRTTS(); }
-      }
-
-      function startLRTTS() {
-        if (!('speechSynthesis' in window)) { toast('TTS not supported'); return; }
-        const textEl = document.getElementById('lr-reader-text');
-        if (!textEl) return;
-        stopLRTTS();
-
-        const fullText = textEl.innerText.trim();
-        if (!fullText) return;
-
-        /* Split into sentences — Android handles short chunks reliably */
-        const chunks = fullText.match(/[^.!?]+[.!?]+/g) || [fullText];
-        let chunkIdx = 0;
-
-        function speakNext() {
-          if (chunkIdx >= chunks.length) {
-            lrTTSPlaying = false;
-            document.getElementById('lr-tts-status').textContent = 'Finished';
-            updateLRTTSIcon(false);
-            return;
-          }
-          const chunk = chunks[chunkIdx].trim();
-          if (!chunk) { chunkIdx++; speakNext(); return; }
-
-          const utt = new SpeechSynthesisUtterance(chunk);
-          utt.rate = lrTTSSpeed;
-          utt.lang = lrCurrentLang || 'en-US';
-          const voices = window.speechSynthesis.getVoices();
-          const match = voices.find(v => v.lang.startsWith(lrCurrentLang || 'en'));
-          if (match) utt.voice = match;
-          utt.onend = () => { chunkIdx++; speakNext(); };
-          utt.onerror = (e) => { if (e.error !== 'interrupted') { chunkIdx++; speakNext(); } };
-          lrTTSUtterance = utt;
-          window.speechSynthesis.speak(utt);
-        }
-
-        function doSpeak() {
-          window.speechSynthesis.cancel();
-          lrTTSPlaying = true;
-          chunkIdx = 0;
-          document.getElementById('lr-tts-status').textContent = 'Reading aloud...';
-          updateLRTTSIcon(true);
-          setTimeout(speakNext, 200);
-        }
-
-        const voices = window.speechSynthesis.getVoices();
-        if (voices.length > 0) { doSpeak(); }
-        else { window.speechSynthesis.onvoiceschanged = doSpeak; setTimeout(doSpeak, 800); }
-      }
-
-      function pauseLRTTS() {
-        window.speechSynthesis.pause();
-        lrTTSPlaying = false;
-        document.getElementById('lr-tts-status').textContent = 'Paused';
-        updateLRTTSIcon(false);
-      }
-
-      function stopLRTTS() {
-        window.speechSynthesis.cancel();
-        clearInterval(lrTTSKeepAlive);
-        lrTTSPlaying = false;
-        lrTTSUtterance = null;
-      }
-
-      function cycleLRSpeed() {
-        const speeds = [1, 1.25, 1.5, 0.75];
-        lrTTSSpeed = speeds[(speeds.indexOf(lrTTSSpeed) + 1) % speeds.length];
-        document.getElementById('lr-tts-speed').textContent = lrTTSSpeed + 'x';
-        if (lrTTSPlaying) { stopLRTTS(); startLRTTS(); }
-      }
-
-      function updateLRTTSIcon(playing) {
-        const btn = document.getElementById('lr-tts-play');
-        btn.innerHTML = playing
-          ? '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
-          : '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
-      }
-
-      /* Locker Room Comments — Supabase */
-      async function loadLRComments(storySlug) {
-        const listEl = document.getElementById('lr-comments-list');
-        listEl.innerHTML = '';
-        const data = await sbFetch('comments?post_id=eq.lr_' + encodeURIComponent(storySlug) + '&order=created_at.asc&select=text');
-        if (data) data.forEach(row => addLRComment(row.text, false));
-      }
-
-      function addLRComment(text, animate) {
-        const listEl = document.getElementById('lr-comments-list');
-        const div = document.createElement('div'); div.className = 'lr-comment-item';
-        div.innerHTML = '<div class="lr-comment-av">HW</div><div class="lr-comment-text">' + text + '</div>';
-        if (animate) { div.style.cssText='opacity:0;transform:translateY(5px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
-        listEl.appendChild(div);
-      }
-
-      async function postLRComment() {
-        if (!lrCurrentStory) return;
-        const input = document.getElementById('lr-comment-input');
-        const text = input.value.trim(); if (!text) return;
-        input.value = '';
-        addLRComment(text, true);
-        const postId = 'lr_' + lrCurrentStory.slug;
-        await sbFetch('comments', 'POST', { post_id: postId, text });
-        toast('Posted!');
-      }
-
-      const lrCommentInput = document.getElementById('lr-comment-input');
-      if (lrCommentInput) {
-        lrCommentInput.addEventListener('keydown', e => {
-          if (e.key === 'Enter') postLRComment();
-        });
-      }
-
-      /* Expose globals */
-      window.openLRStory = function(idx, chap, auto) { openLRStory(idx, chap, auto); };
-      window._openLRStoryImpl = openLRStory;
-      window._closeLRReaderImpl = closeLRReader;
-      window.closeLRReader = closeLRReader;
-      window.toggleLRTTS = toggleLRTTS;
-      window.cycleLRSpeed = cycleLRSpeed;
-      window.goLRChapter = goLRChapter;
-      window.switchLRLang = switchLRLang;
-      window.postLRComment = postLRComment;
 
     } /* end initApp */
+
+  })();
+
+  /* LOCKER ROOM — separate IIFE, always runs */
+  (function() {
+    function $(id) { return document.getElementById(id); }
+    function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
+    let toastTimer2;
+    function toast(msg) {
+      const t = $('toast'); if(!t) return;
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(toastTimer2);
+      toastTimer2 = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    const SB_URL = 'https://wxyvielyommbsgbwhcbu.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
+    async function sbFetch(path,method,body){
+      const opts={method:method||'GET',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'}};
+      if(body)opts.body=JSON.stringify(body);
+      try{const r=await fetch(SB_URL+'/rest/v1/'+path,opts);if(!r.ok)return null;const tx=await r.text();return tx?JSON.parse(tx):null;}catch(e){return null;}
+    }
+
+    let lrCurrentStory = null;
+    let lrCurrentLang = null;
+    let lrCurrentChapter = 0;
+    let lrTTSPlaying = false;
+    let lrTTSUtterance = null;
+    let lrTTSSpeed = 1;
+    let lrTTSKeepAlive = null;
+
+    /* Category filter */
+    document.querySelectorAll('.lr-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.lr-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.dataset.lcat;
+        document.querySelectorAll('.lr-card').forEach(card => {
+        card.style.display = (cat === 'all' || card.dataset.lcat === cat) ? '' : 'none';
+        });
+      });
+    });
+
+    /* Open story reader */
+    function openLRStory(storyIdx, chapterIdx, autoPlay) {
+      const story = LR_STORIES[storyIdx];
+      if (!story) return;
+      lrCurrentStory = story;
+      lrCurrentChapter = chapterIdx || 0;
+      stopLRTTS();
+
+      // Determine language — use saved preference or first available
+      const savedLang = localStorage.getItem('hw_lr_lang');
+      const langs = story.languages || [];
+      if (savedLang && langs.find(l => l.code === savedLang)) {
+        lrCurrentLang = savedLang;
+      } else if (langs.length > 0) {
+        lrCurrentLang = langs[0].code;
+      } else {
+        lrCurrentLang = 'en';
+      }
+
+      renderLRReader(story, lrCurrentLang, lrCurrentChapter);
+      document.getElementById('lr-reader').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('lr-reader-scroll').scrollTop = 0;
+
+      // Load comments
+      loadLRComments(story.slug);
+
+      if (autoPlay) setTimeout(startLRTTS, 500);
+    }
+
+    function renderLRReader(story, langCode, chapterIdx) {
+      const langs = story.languages || [];
+      const langData = langs.find(l => l.code === langCode) || langs[0];
+      const chapters = langData ? (langData.chapters || []) : [];
+      const chapter = chapters[chapterIdx] || chapters[0] || { title: story.title, content: '' };
+
+      document.getElementById('lr-reader-title-sm').textContent = story.title;
+      document.getElementById('lr-tts-status').textContent = 'Listen to this story';
+      updateLRTTSIcon(false);
+
+      let html = '';
+      if (story.cover) html += `<img class="lr-reader-cover" src="${story.cover}" alt="${story.title}" loading="lazy">`;
+      html += `<div class="lr-reader-body">`;
+      html += `<div class="lr-reader-cat">${story.category}</div>`;
+      html += `<div class="lr-reader-title">${story.title}</div>`;
+      html += `<div class="lr-reader-meta"><span>${story.read_time}</span>`;
+
+      // Language switcher inline
+      if (langs.length > 1) {
+        html += `<span style="margin-left:auto;display:flex;gap:0.3rem;">`;
+        langs.forEach(l => {
+        const active = l.code === langCode ? 'style="color:var(--fire-orange);border-color:rgba(255,69,0,0.4)"' : '';
+        html += `<button onclick="switchLRLang('${l.code}')" style="background:none;border:1px solid var(--border);border-radius:4px;padding:0.15rem 0.4rem;font-size:0.55rem;color:var(--text-muted);cursor:pointer;font-weight:700;" ${active}>${l.code.toUpperCase()}</button>`;
+        });
+        html += `</span>`;
+      }
+
+      html += `</div>`;
+
+      // Chapter title
+      if (chapters.length > 1) {
+        html += `<div class="lr-chapter-title">${chapter.title || 'Chapter ' + (chapterIdx + 1)}</div>`;
+      }
+
+      // Content — split into paragraphs
+      const paragraphs = (chapter.content || '').split(/\n+/).filter(p => p.trim());
+      html += `<div class="lr-reader-text" id="lr-reader-text">`;
+      paragraphs.forEach(p => { html += `<p>${p.trim()}</p>`; });
+      html += `</div></div>`;
+
+      document.getElementById('lr-reader-content').innerHTML = html;
+
+      // Chapter navigation
+      const navEl = document.getElementById('lr-chapter-nav');
+      if (chapters.length > 1) {
+        let navHtml = '';
+        if (chapterIdx > 0) {
+        navHtml += `<button class="lr-chapter-btn" onclick="goLRChapter(${chapterIdx - 1})">&#8592; Previous</button>`;
+        } else { navHtml += `<span></span>`; }
+        navHtml += `<span class="lr-chapter-counter">${chapterIdx + 1} / ${chapters.length}</span>`;
+        if (chapterIdx < chapters.length - 1) {
+        navHtml += `<button class="lr-chapter-btn primary" onclick="goLRChapter(${chapterIdx + 1})">Next &#8594;</button>`;
+        } else { navHtml += `<span></span>`; }
+        navEl.innerHTML = navHtml;
+        navEl.style.display = 'flex';
+      } else {
+        navEl.style.display = 'none';
+      }
+    }
+
+    function goLRChapter(idx) {
+      lrCurrentChapter = idx;
+      stopLRTTS();
+      renderLRReader(lrCurrentStory, lrCurrentLang, idx);
+      document.getElementById('lr-reader-scroll').scrollTop = 0;
+    }
+
+    function switchLRLang(code) {
+      lrCurrentLang = code;
+      localStorage.setItem('hw_lr_lang', code);
+      stopLRTTS();
+      renderLRReader(lrCurrentStory, code, lrCurrentChapter);
+      document.getElementById('lr-reader-scroll').scrollTop = 0;
+    }
+
+    function closeLRReader() {
+      stopLRTTS();
+      document.getElementById('lr-reader').classList.remove('open');
+      document.body.style.overflow = '';
+      lrCurrentStory = null;
+    }
+
+    /* TTS — chunk-based for Android reliability */
+    function toggleLRTTS() {
+      if (lrTTSPlaying) { pauseLRTTS(); } else { startLRTTS(); }
+    }
+
+    function startLRTTS() {
+      if (!('speechSynthesis' in window)) { toast('TTS not supported'); return; }
+      const textEl = document.getElementById('lr-reader-text');
+      if (!textEl) return;
+      stopLRTTS();
+
+      const fullText = textEl.innerText.trim();
+      if (!fullText) return;
+
+      /* Split into sentences — Android handles short chunks reliably */
+      const chunks = fullText.match(/[^.!?]+[.!?]+/g) || [fullText];
+      let chunkIdx = 0;
+
+      function speakNext() {
+        if (chunkIdx >= chunks.length) {
+        lrTTSPlaying = false;
+        document.getElementById('lr-tts-status').textContent = 'Finished';
+        updateLRTTSIcon(false);
+        return;
+        }
+        const chunk = chunks[chunkIdx].trim();
+        if (!chunk) { chunkIdx++; speakNext(); return; }
+
+        const utt = new SpeechSynthesisUtterance(chunk);
+        utt.rate = lrTTSSpeed;
+        utt.lang = lrCurrentLang || 'en-US';
+        const voices = window.speechSynthesis.getVoices();
+        const match = voices.find(v => v.lang.startsWith(lrCurrentLang || 'en'));
+        if (match) utt.voice = match;
+        utt.onend = () => { chunkIdx++; speakNext(); };
+        utt.onerror = (e) => { if (e.error !== 'interrupted') { chunkIdx++; speakNext(); } };
+        lrTTSUtterance = utt;
+        window.speechSynthesis.speak(utt);
+      }
+
+      function doSpeak() {
+        window.speechSynthesis.cancel();
+        lrTTSPlaying = true;
+        chunkIdx = 0;
+        document.getElementById('lr-tts-status').textContent = 'Reading aloud...';
+        updateLRTTSIcon(true);
+        setTimeout(speakNext, 200);
+      }
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) { doSpeak(); }
+      else { window.speechSynthesis.onvoiceschanged = doSpeak; setTimeout(doSpeak, 800); }
+    }
+
+    function pauseLRTTS() {
+      window.speechSynthesis.pause();
+      lrTTSPlaying = false;
+      document.getElementById('lr-tts-status').textContent = 'Paused';
+      updateLRTTSIcon(false);
+    }
+
+    function stopLRTTS() {
+      window.speechSynthesis.cancel();
+      clearInterval(lrTTSKeepAlive);
+      lrTTSPlaying = false;
+      lrTTSUtterance = null;
+    }
+
+    function cycleLRSpeed() {
+      const speeds = [1, 1.25, 1.5, 0.75];
+      lrTTSSpeed = speeds[(speeds.indexOf(lrTTSSpeed) + 1) % speeds.length];
+      document.getElementById('lr-tts-speed').textContent = lrTTSSpeed + 'x';
+      if (lrTTSPlaying) { stopLRTTS(); startLRTTS(); }
+    }
+
+    function updateLRTTSIcon(playing) {
+      const btn = document.getElementById('lr-tts-play');
+      btn.innerHTML = playing
+        ? '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+        : '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+    }
+
+    /* Locker Room Comments — Supabase */
+    async function loadLRComments(storySlug) {
+      const listEl = document.getElementById('lr-comments-list');
+      listEl.innerHTML = '';
+      const data = await sbFetch('comments?post_id=eq.lr_' + encodeURIComponent(storySlug) + '&order=created_at.asc&select=text');
+      if (data) data.forEach(row => addLRComment(row.text, false));
+    }
+
+    function addLRComment(text, animate) {
+      const listEl = document.getElementById('lr-comments-list');
+      const div = document.createElement('div'); div.className = 'lr-comment-item';
+      div.innerHTML = '<div class="lr-comment-av">HW</div><div class="lr-comment-text">' + text + '</div>';
+      if (animate) { div.style.cssText='opacity:0;transform:translateY(5px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
+      listEl.appendChild(div);
+    }
+
+    async function postLRComment() {
+      if (!lrCurrentStory) return;
+      const input = document.getElementById('lr-comment-input');
+      const text = input.value.trim(); if (!text) return;
+      input.value = '';
+      addLRComment(text, true);
+      const postId = 'lr_' + lrCurrentStory.slug;
+      await sbFetch('comments', 'POST', { post_id: postId, text });
+      toast('Posted!');
+    }
+
+    const lrCommentInput = document.getElementById('lr-comment-input');
+    if (lrCommentInput) {
+      lrCommentInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') postLRComment();
+      });
+    }
+
+    /* Expose globals */
+    window.openLRStory = function(idx, chap, auto) { openLRStory(idx, chap, auto); };
+    window._openLRStoryImpl = openLRStory;
+    window._closeLRReaderImpl = closeLRReader;
+    window.closeLRReader = closeLRReader;
+    window.toggleLRTTS = toggleLRTTS;
+    window.cycleLRSpeed = cycleLRSpeed;
+    window.goLRChapter = goLRChapter;
+    window.switchLRLang = switchLRLang;
+    window.postLRComment = postLRComment;
+
 
   })();
   </script>
