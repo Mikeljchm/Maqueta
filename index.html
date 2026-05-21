@@ -356,8 +356,9 @@ layout: none
     .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
     /* REVEAL */
-    .reveal { opacity:0; transform:translateY(14px); transition:opacity 0.5s var(--ease),transform 0.5s var(--ease); }
-    .reveal.visible { opacity:1; transform:translateY(0); }
+    .reveal { opacity:1; transform:none; }
+    .reveal.animate { opacity:0; transform:translateY(14px); transition:opacity 0.5s var(--ease),transform 0.5s var(--ease); }
+    .reveal.animate.visible { opacity:1; transform:translateY(0); }
     /* ── LOCKER ROOM ── */
     .lr-hero { padding:1.75rem 1rem 1.25rem; border-bottom:1px solid var(--border); background:linear-gradient(to bottom,#050000,#000); }
     .lr-eyebrow { font-size:0.5rem; letter-spacing:0.4em; color:var(--fire-orange); text-transform:uppercase; margin-bottom:0.4rem; opacity:0.75; }
