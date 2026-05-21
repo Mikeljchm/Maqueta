@@ -1,0 +1,271 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>{{ page.title }} — HOTT WRESTLING</title>
+  <meta name="description" content="{{ page.bio | truncate: 155 }}">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <style>
+    :root {
+      --bg:#000; --surface:#0d0d0d; --surface-2:#141414;
+      --fire-orange:#FF4500; --fire-yellow:#FFB800; --fire-red:#CC1100;
+      --fire-deep:#8B1A00;
+      --text:#F0EAE0; --text-dim:#888; --text-muted:#444;
+      --border:#1f1f1f;
+      --font-d:'Bebas Neue',Impact,sans-serif;
+      --font-b:'DM Sans',Arial,sans-serif;
+      --ease:cubic-bezier(0.16,1,0.3,1);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    html{background:#000;}
+    body{font-family:var(--font-b);background:#000;color:var(--text);-webkit-font-smoothing:antialiased;}
+
+    .top-bar{height:48px;background:#000;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;padding:0 1rem;position:sticky;top:0;z-index:50;}
+    .back-btn{background:none;border:none;color:var(--text-dim);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+    .back-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .back-btn:active{color:var(--fire-orange);}
+    .top-logo{font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.04em;color:#fff;text-decoration:none;}
+    .top-logo span{background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+    /* HERO */
+    .profile-hero{position:relative;width:100%;aspect-ratio:3/4;max-height:85vw;overflow:hidden;background:#0a0a0a;}
+    .profile-hero img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
+    .profile-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.95) 0%,transparent 50%);}
+    .profile-hero-info{position:absolute;bottom:0;left:0;right:0;padding:1.5rem 1rem 1rem;}
+    .profile-name{font-family:var(--font-d);font-size:clamp(2rem,8vw,3rem);color:#fff;letter-spacing:0.04em;line-height:1;margin-bottom:0.3rem;}
+    .profile-tag{font-size:0.6rem;color:var(--fire-orange);letter-spacing:0.18em;text-transform:uppercase;}
+
+    /* BIO */
+    .profile-bio{padding:1rem;font-size:0.88rem;color:var(--text-dim);line-height:1.7;border-bottom:1px solid var(--border);}
+
+    /* PHOTOS GRID */
+    .section-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.08em;color:var(--text-dim);text-transform:uppercase;padding:0.85rem 1rem 0.5rem;}
+    .photos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}
+    .photo-thumb{position:relative;aspect-ratio:1;overflow:hidden;cursor:pointer;background:var(--surface);}
+    .photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.3s var(--ease);}
+    .photo-thumb:active img{transform:scale(1.05);}
+
+    /* VIDEOS */
+    .videos-list{padding:0.5rem 1rem 1rem;}
+    .video-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.75rem;cursor:pointer;}
+    .video-play{width:36px;height:36px;border-radius:50%;background:var(--fire-orange);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .video-play svg{width:14px;height:14px;fill:#fff;}
+    .video-title{font-size:0.82rem;color:var(--text-dim);}
+
+    /* PHOTO VIEWER */
+    .photo-viewer{position:fixed;inset:0;z-index:500;background:#000;transform:translateY(100%);transition:transform 0.38s var(--ease);overflow:hidden;}
+    .photo-viewer.open{transform:translateY(0);}
+    .viewer-topbar{position:absolute;top:0;left:0;right:0;z-index:10;padding:calc(env(safe-area-inset-top,0px) + 0.7rem) 1rem 0.7rem;display:flex;align-items:center;gap:0.7rem;background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent);}
+    .viewer-back{background:rgba(0,0,0,0.5);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;}
+    .viewer-back svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;}
+    .viewer-counter{font-size:0.75rem;color:rgba(255,255,255,0.7);background:rgba(0,0,0,0.5);padding:0.25rem 0.65rem;border-radius:12px;}
+    .viewer-container{position:absolute;inset:0;overflow:hidden;touch-action:none;}
+    .viewer-img-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;will-change:transform;}
+    .viewer-img{display:block;max-width:100%;max-height:100%;object-fit:contain;user-select:none;pointer-events:none;}
+
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,30,0.95);border:1px solid var(--border);color:var(--text);padding:0.5rem 1.1rem;border-radius:20px;font-size:0.72rem;opacity:0;transition:all 0.3s var(--ease);pointer-events:none;z-index:300;white-space:nowrap;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  </style>
+</head>
+<body>
+
+  <header class="top-bar">
+    <button class="back-btn" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+    </button>
+    <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
+  </header>
+
+  <!-- HERO -->
+  {% assign hero_img = page.images | first | default: page.photo %}
+  {% if hero_img %}
+  <div class="profile-hero">
+    <img src="{{ hero_img }}" alt="{{ page.title }}">
+    <div class="profile-hero-overlay"></div>
+    <div class="profile-hero-info">
+      <div class="profile-name">{{ page.title }}</div>
+      {% if page.tag %}<div class="profile-tag">{{ page.tag }}</div>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- BIO -->
+  {% if page.bio %}
+  <div class="profile-bio">{{ page.bio }}</div>
+  {% endif %}
+
+  <!-- ALL PHOTOS -->
+  {% assign all_photos = "" | split: "" %}
+  {% if page.photo %}{% assign all_photos = all_photos | push: page.photo %}{% endif %}
+  {% if page.images %}{% for img in page.images %}{% assign all_photos = all_photos | push: img %}{% endfor %}{% endif %}
+  {% assign all_photos = all_photos | uniq %}
+
+  {% if all_photos.size > 0 %}
+  <div class="section-title">Photos ({{ all_photos.size }})</div>
+  <div class="photos-grid" id="photos-grid">
+    {% for img in all_photos %}
+    <div class="photo-thumb" data-idx="{{ forloop.index0 }}">
+      <img src="{{ img }}" alt="{{ page.title }}" loading="lazy">
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- VIDEOS -->
+  {% if page.videos and page.videos.size > 0 %}
+  <div class="section-title">Videos</div>
+  <div class="videos-list">
+    {% for vid in page.videos %}
+    <div class="video-item" onclick="window.open('{{ vid }}','_blank')">
+      <div class="video-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+      <div class="video-title">Video {{ forloop.index }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- PHOTO VIEWER -->
+  <div class="photo-viewer" id="photo-viewer">
+    <div class="viewer-topbar">
+      <button class="viewer-back" id="viewer-back">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="viewer-counter" id="viewer-counter">1 / 1</span>
+    </div>
+    <div class="viewer-container" id="viewer-container">
+      <div class="viewer-img-wrap" id="viewer-img-wrap">
+        <img class="viewer-img" id="viewer-img" src="" alt="">
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  (function(){
+    /* Collect all photos */
+    const thumbs = Array.from(document.querySelectorAll('.photo-thumb'));
+    const imgs = thumbs.map(t => t.querySelector('img').src);
+
+    const viewer = document.getElementById('photo-viewer');
+    const vImg = document.getElementById('viewer-img');
+    const vCounter = document.getElementById('viewer-counter');
+    const container = document.getElementById('viewer-container');
+    const wrap = document.getElementById('viewer-img-wrap');
+
+    let curIdx = 0;
+    let scale = 1, posX = 0, posY = 0;
+    let gestureStartScale = 1, gestureStartPosX = 0, gestureStartPosY = 0;
+    let pinchStartDist = 0;
+    let touch0 = {x:0,y:0};
+    let swipeStartY = 0;
+    let lastTap = 0;
+    let numTouches = 0;
+
+    function openViewer(idx) {
+      curIdx = idx;
+      vImg.src = imgs[idx];
+      vCounter.textContent = (idx+1) + ' / ' + imgs.length;
+      scale=1; posX=0; posY=0;
+      applyTransform(false);
+      viewer.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeViewer() {
+      viewer.classList.remove('open');
+      document.body.style.overflow = '';
+      scale=1; posX=0; posY=0;
+      applyTransform(false);
+    }
+
+    function applyTransform(animate) {
+      wrap.style.transition = animate ? 'transform 0.25s ease' : 'none';
+      wrap.style.transform = 'translate('+posX+'px,'+posY+'px) scale('+scale+')';
+    }
+
+    function clampPos() {
+      if(scale<=1){posX=0;posY=0;return;}
+      const cw=container.clientWidth, ch=container.clientHeight;
+      const overX=Math.max(0,(cw*scale-cw)/2);
+      const overY=Math.max(0,(ch*scale-ch)/2);
+      posX=Math.max(-overX,Math.min(overX,posX));
+      posY=Math.max(-overY,Math.min(overY,posY));
+    }
+
+    thumbs.forEach((t,i) => t.addEventListener('click', () => openViewer(i)));
+    document.getElementById('viewer-back').addEventListener('click', closeViewer);
+
+    container.addEventListener('touchstart', e => {
+      numTouches = e.touches.length;
+      wrap.style.transition = 'none';
+      if(e.touches.length===1){
+        const t = e.touches[0];
+        touch0 = {x:t.clientX, y:t.clientY};
+        gestureStartPosX = posX; gestureStartPosY = posY;
+        swipeStartY = t.clientY;
+        const now = Date.now();
+        if(now-lastTap<300){
+          e.preventDefault();
+          if(scale>1){scale=1;posX=0;posY=0;}
+          else{
+            const rect=container.getBoundingClientRect();
+            scale=3;
+            posX=(rect.width/2-t.clientX)*(scale-1);
+            posY=(rect.height/2-t.clientY)*(scale-1);
+            clampPos();
+          }
+          applyTransform(true);
+          lastTap=0;return;
+        }
+        lastTap=now;
+      }
+      if(e.touches.length===2){
+        e.preventDefault();
+        const t0=e.touches[0],t1=e.touches[1];
+        pinchStartDist=Math.hypot(t0.clientX-t1.clientX,t0.clientY-t1.clientY);
+        gestureStartScale=scale;
+        gestureStartPosX=posX; gestureStartPosY=posY;
+      }
+    },{passive:false});
+
+    container.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if(e.touches.length===1&&numTouches===1&&scale>1){
+        const t=e.touches[0];
+        posX=gestureStartPosX+(t.clientX-touch0.x);
+        posY=gestureStartPosY+(t.clientY-touch0.y);
+        clampPos(); applyTransform(false);
+      }
+      if(e.touches.length===2){
+        const t0=e.touches[0],t1=e.touches[1];
+        const dist=Math.hypot(t0.clientX-t1.clientX,t0.clientY-t1.clientY);
+        const newScale=Math.max(1,Math.min(6,gestureStartScale*(dist/pinchStartDist)));
+        const rect=container.getBoundingClientRect();
+        const midX=(t0.clientX+t1.clientX)/2-rect.left;
+        const midY=(t0.clientY+t1.clientY)/2-rect.top;
+        const scaleRatio=newScale/gestureStartScale;
+        posX=midX+(gestureStartPosX-midX)*scaleRatio;
+        posY=midY+(gestureStartPosY-midY)*scaleRatio;
+        scale=newScale; clampPos(); applyTransform(false);
+      }
+    },{passive:false});
+
+    container.addEventListener('touchend', e => {
+      if(scale<=1){{scale=1;posX=0;posY=0;applyTransform(true);}}
+      if(scale<=1&&e.changedTouches.length){
+        const dy=e.changedTouches[0].clientY-swipeStartY;
+        if(dy>120)closeViewer();
+      }
+      numTouches=e.touches.length;
+    },{passive:true});
+  })();
+  </script>
+</body>
+</html>
