@@ -1373,17 +1373,15 @@ layout: none
         deferredPWA = null; $('pwa-install-btn').classList.remove('visible');
       });
 
-      /* ── LOCKER ROOM ── */
-      // Read stories from data attributes in HTML
-      const LR_STORIES = [];
+      /* ── LOCKER ROOM — LR_STORIES filled here then shared globally ── */
+      window.LR_STORIES = [];
       document.querySelectorAll('.lr-card[data-story-idx]').forEach(card => {
         const idx = parseInt(card.dataset.storyIdx);
         try {
           const storyData = JSON.parse(card.dataset.storyJson || '{}');
-          LR_STORIES[idx] = storyData;
+          window.LR_STORIES[idx] = storyData;
         } catch(e) {}
       });
-
 
     } /* end initApp */
 
@@ -1409,7 +1407,17 @@ layout: none
       try{const r=await fetch(SB_URL+'/rest/v1/'+path,opts);if(!r.ok)return null;const tx=await r.text();return tx?JSON.parse(tx):null;}catch(e){return null;}
     }
 
-    let lrCurrentStory = null;
+    /* Fill LR_STORIES here too — works even if initApp crashed */
+    if (!window.LR_STORIES || window.LR_STORIES.length === 0) {
+      window.LR_STORIES = [];
+      document.querySelectorAll('.lr-card[data-story-idx]').forEach(card => {
+        const idx = parseInt(card.dataset.storyIdx);
+        try {
+          const storyData = JSON.parse(card.dataset.storyJson || '{}');
+          window.LR_STORIES[idx] = storyData;
+        } catch(e) { console.warn('LR story parse error:', e); }
+      });
+    }
     let lrCurrentLang = null;
     let lrCurrentChapter = 0;
     let lrTTSPlaying = false;
@@ -1431,8 +1439,8 @@ layout: none
 
     /* Open story reader */
     function openLRStory(storyIdx, chapterIdx, autoPlay) {
-      const story = LR_STORIES[storyIdx];
-      if (!story) return;
+      const story = window.LR_STORIES[storyIdx];
+      if (!story) { console.warn('Story not found:', storyIdx, window.LR_STORIES); return; }
       lrCurrentStory = story;
       lrCurrentChapter = chapterIdx || 0;
       stopLRTTS();
