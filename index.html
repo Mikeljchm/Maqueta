@@ -356,8 +356,9 @@ layout: none
     .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
     /* REVEAL */
-    .reveal { opacity:0; transform:translateY(14px); transition:opacity 0.5s var(--ease),transform 0.5s var(--ease); }
-    .reveal.visible { opacity:1; transform:translateY(0); }
+    .reveal { opacity:1; transform:none; }
+    .reveal.animate { opacity:0; transform:translateY(14px); transition:opacity 0.5s var(--ease),transform 0.5s var(--ease); }
+    .reveal.animate.visible { opacity:1; transform:translateY(0); }
     /* ── LOCKER ROOM ── */
     .lr-hero { padding:1.75rem 1rem 1.25rem; border-bottom:1px solid var(--border); background:linear-gradient(to bottom,#050000,#000); }
     .lr-eyebrow { font-size:0.5rem; letter-spacing:0.4em; color:var(--fire-orange); text-transform:uppercase; margin-bottom:0.4rem; opacity:0.75; }
@@ -612,16 +613,17 @@ layout: none
         {% if wrestlers.size > 0 %}
         <div class="wrestlers-grid">
           {% for w in wrestlers %}
-          <div class="wrestler-card reveal">
+          <a href="{{ w.url }}" class="wrestler-card reveal" style="text-decoration:none;">
             <div class="wrestler-thumb">
-              {% if w.photo %}<img src="{{ w.photo }}" alt="{{ w.title }}" loading="lazy">{% endif %}
+              {% if w.images %}<img src="{{ w.images | first }}" alt="{{ w.title }}" loading="lazy">
+              {% elsif w.photo %}<img src="{{ w.photo }}" alt="{{ w.title }}" loading="lazy">{% endif %}
               <div class="wrestler-thumb-overlay">
                 <div class="wrestler-name">{{ w.title }}</div>
                 <div class="wrestler-tag">{{ w.tag }}</div>
               </div>
             </div>
             {% if w.bio %}<div class="wrestler-stats"><span class="wstat">{{ w.bio | truncatewords: 8 }}</span></div>{% endif %}
-          </div>
+          </a>
           {% endfor %}
         </div>
         {% else %}
@@ -632,33 +634,34 @@ layout: none
         {% endif %}
       </div>
 
-      <!-- BAD BOYS -->
+      <!-- STUDS -->
       <div class="page" id="page-badboys">
         <div class="page-title-bar">
           <div class="page-title">THE <span>STUDS</span></div>
           <div class="page-subtitle">Bad Boys &middot; Bulge &middot; Hairy &middot; Juicy &middot; No filter</div>
         </div>
-        {% assign badboys = site.badboys %}
-        {% if badboys.size > 0 %}
+        {% assign all_studs = site.studs | concat: site.badboys %}
+        {% if all_studs.size > 0 %}
         <div class="badboys-list">
-          {% for bb in badboys %}
-          <div class="badboy-card reveal">
+          {% for bb in all_studs %}
+          <a href="{{ bb.url }}" class="badboy-card reveal" style="text-decoration:none;">
             <div class="mugshot-wrap">
-              {% if bb.mugshot %}<img src="{{ bb.mugshot }}" alt="{{ bb.title }}" loading="lazy">{% endif %}
-              <div class="mugshot-label">WANTED</div>
+              {% if bb.images %}<img src="{{ bb.images | first }}" alt="{{ bb.title }}" loading="lazy">
+              {% elsif bb.mugshot %}<img src="{{ bb.mugshot }}" alt="{{ bb.title }}" loading="lazy">{% endif %}
+              <div class="mugshot-label">{{ bb.category | default: 'STUD' | upcase }}</div>
             </div>
             <div class="badboy-info">
               <div class="badboy-name">{{ bb.title }}</div>
               {% if bb.description %}<div class="badboy-desc">{{ bb.description }}</div>{% endif %}
               {% if bb.tags %}<div class="badboy-meta">{% for tag in bb.tags %}<span class="badboy-tag">{{ tag }}</span>{% endfor %}</div>{% endif %}
             </div>
-          </div>
+          </a>
           {% endfor %}
         </div>
         {% else %}
         <div class="badboys-empty reveal">
           <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--fire-orange)" stroke-width="1.2"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="12" r="3"/><path d="M10 12h4"/></svg>
-          <p>Bad Boys section coming soon.</p>
+          <p>Studs section coming soon.</p>
         </div>
         {% endif %}
       </div>
