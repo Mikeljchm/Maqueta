@@ -1052,11 +1052,19 @@ layout: none
       card.style.transform = 'none';
       card.addEventListener('click', () => {
         const idx = parseInt(card.dataset.storyIdx);
-        if (typeof openLRStory === 'function') openLRStory(idx, 0);
+        if (typeof window.openLRStory === 'function') window.openLRStory(idx, 0);
       });
     });
 
-        window.initApp = function initApp() {
+    /* Pre-register LR functions as globals */
+    window.openLRStory = function(idx, chap, auto) {
+      if (window._openLRStoryImpl) window._openLRStoryImpl(idx, chap, auto);
+    };
+    window.closeLRReader = function() {
+      if (window._closeLRReaderImpl) window._closeLRReaderImpl();
+    };
+
+    window.initApp = function initApp() {
 
       /* CATEGORY PILLS — moved outside initApp */
 
@@ -1625,7 +1633,9 @@ layout: none
       }
 
       /* Expose globals */
-      window.openLRStory = openLRStory;
+      window.openLRStory = function(idx, chap, auto) { openLRStory(idx, chap, auto); };
+      window._openLRStoryImpl = openLRStory;
+      window._closeLRReaderImpl = closeLRReader;
       window.closeLRReader = closeLRReader;
       window.toggleLRTTS = toggleLRTTS;
       window.cycleLRSpeed = cycleLRSpeed;
