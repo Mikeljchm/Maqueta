@@ -8,8 +8,9 @@ public_folder: /uploads
 locale: en
 
 collections:
+
   - name: posts
-    label: Posts
+    label: Posts — Feed
     label_singular: Post
     folder: _posts
     create: true
@@ -20,26 +21,45 @@ collections:
       - label: Title
         name: title
         widget: string
-        hint: "Title of the post (only you see this)"
-
-      - label: Photos
-        name: images
-        widget: list
-        field:
-          label: Photo URL
-          name: url
-          widget: string
-          hint: "Paste Imgbox direct link (https://images2.imgbox.com/...)"
 
       - label: Category
         name: category
         widget: string
-        hint: "wrestling, bulge, badboys, fan, hall, ai, audio..."
+        hint: "wrestling, bulge, studs, fan, hall, ai..."
+
+      - label: Photos (unlimited)
+        name: images
+        widget: list
+        allow_add: true
+        field:
+          label: Photo URL
+          name: url
+          widget: string
+          hint: "https://images2.imgbox.com/..."
+
+      - label: GIFs (unlimited)
+        name: gifs
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: GIF URL
+          name: url
+          widget: string
+
+      - label: Videos (unlimited)
+        name: videos
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: Video URL
+          name: url
+          widget: string
 
       - label: Description
         name: description
         widget: text
-        hint: "Write something hot... use #hashtags"
 
       - label: Date
         name: date
@@ -47,6 +67,122 @@ collections:
         format: "YYYY-MM-DD"
         date_format: "YYYY-MM-DD"
         time_format: false
+
+  - name: studs
+    label: Studs
+    label_singular: Stud
+    folder: _studs
+    create: true
+    slug: "{{slug}}"
+    editor:
+      preview: false
+    fields:
+      - label: Name
+        name: title
+        widget: string
+
+      - label: Category
+        name: category
+        widget: string
+        hint: "bad-boys, bulge, hairy, juicy, college..."
+
+      - label: Tags
+        name: tags
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: Tag
+          name: tag
+          widget: string
+
+      - label: Description
+        name: description
+        widget: text
+        required: false
+
+      - label: Photos (unlimited)
+        name: images
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: Photo URL
+          name: url
+          widget: string
+
+      - label: GIFs (unlimited)
+        name: gifs
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: GIF URL
+          name: url
+          widget: string
+
+      - label: Videos (unlimited)
+        name: videos
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: Video URL
+          name: url
+          widget: string
+
+  - name: wrestlers
+    label: The Mat — Wrestlers
+    label_singular: Wrestler
+    folder: _wrestlers
+    create: true
+    slug: "{{slug}}"
+    editor:
+      preview: false
+    fields:
+      - label: Name
+        name: title
+        widget: string
+
+      - label: Category
+        name: tag
+        widget: string
+        hint: "heavyweight, college, amateur, pro..."
+
+      - label: Bio
+        name: bio
+        widget: text
+        required: false
+
+      - label: Photos (unlimited)
+        name: images
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: Photo URL
+          name: url
+          widget: string
+
+      - label: GIFs (unlimited)
+        name: gifs
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: GIF URL
+          name: url
+          widget: string
+
+      - label: Videos (unlimited)
+        name: videos
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: Video URL
+          name: url
+          widget: string
 
   - name: stories
     label: Locker Room — Stories
@@ -61,21 +197,31 @@ collections:
         name: title
         widget: string
 
+      - label: Category
+        name: category
+        widget: string
+        hint: "stepfather, wrestling, college, locker-room..."
+
       - label: Cover Image URL
         name: cover
         widget: string
         required: false
-        hint: "Paste Imgbox link (optional)"
 
-      - label: Category
-        name: category
-        widget: string
-        hint: "wrestling, locker-room, college, coach, rivals, romance, fantasy, thriller..."
+      - label: Extra Photos (unlimited)
+        name: images
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: Photo URL
+          name: url
+          widget: string
 
       - label: Read Time
         name: read_time
         widget: string
         default: "5 min read"
+        required: false
 
       - label: Date
         name: date
@@ -87,9 +233,9 @@ collections:
       - label: Languages
         name: languages
         widget: list
-        hint: "Add one entry per language"
+        allow_add: true
         fields:
-          - label: Language Code
+          - label: Language
             name: code
             widget: select
             options:
@@ -114,37 +260,11 @@ collections:
           - label: Chapters
             name: chapters
             widget: list
+            allow_add: true
             fields:
               - label: Chapter Title
                 name: title
                 widget: string
-                hint: "e.g. Chapter 1 — The Beginning"
               - label: Content
                 name: content
                 widget: text
-                hint: "Full chapter text — no character limit"
-
-  - name: wrestlers
-    label: The Mat — Wrestlers
-    folder: _wrestlers
-    create: true
-    slug: "{{slug}}"
-    fields:
-      - { label: "Name", name: "title", widget: "string" }
-      - { label: "Tag", name: "tag", widget: "string" }
-      - { label: "Photo URL", name: "photo", widget: "string" }
-      - { label: "Bio", name: "bio", widget: "text" }
-
-  - name: badboys
-    label: Bad Boys
-    folder: _badboys
-    create: true
-    slug: "{{slug}}"
-    fields:
-      - { label: "Name", name: "title", widget: "string" }
-      - { label: "Mugshot URL", name: "mugshot", widget: "string" }
-      - { label: "Description", name: "description", widget: "text" }
-      - label: Tags
-        name: tags
-        widget: list
-        field: { label: "Tag", name: "tag", widget: "string" }
