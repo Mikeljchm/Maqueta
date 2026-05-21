@@ -20,3 +20,5 @@ collections:
     output: false
   stories:
     output: false
+  studs:
+    output: false
