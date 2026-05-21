@@ -12,13 +12,25 @@ defaults:
       type: "posts"
     values:
       layout: "post"
+  - scope:
+      path: ""
+      type: "wrestlers"
+    values:
+      layout: "wrestler"
+  - scope:
+      path: ""
+      type: "studs"
+    values:
+      layout: "stud"
 
 collections:
   wrestlers:
-    output: false
+    output: true
+    permalink: /the-mat/:name/
   badboys:
     output: false
   stories:
     output: false
   studs:
-    output: false
+    output: true
+    permalink: /studs/:name/
