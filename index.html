@@ -369,8 +369,7 @@ layout: none
     .lr-pill { flex-shrink:0; padding:0.28rem 0.75rem; border-radius:20px; font-size:0.6rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; border:1px solid var(--border); background:transparent; color:var(--text-dim); transition:all 0.2s; white-space:nowrap; }
     .lr-pill.active { background:var(--fire-orange); border-color:var(--fire-orange); color:#fff; }
 
-    .lr-card { border-bottom:1px solid var(--border); cursor:pointer; opacity:0; transform:translateY(16px); transition:opacity 0.5s var(--ease),transform 0.5s var(--ease); }
-    .lr-card.visible { opacity:1; transform:translateY(0); }
+    .lr-card { border-bottom:1px solid var(--border); cursor:pointer; opacity:1; }
     .lr-card:active { background:var(--surface); }
     .lr-cover { width:100%; aspect-ratio:16/7; object-fit:cover; display:block; filter:brightness(0.8); }
     .lr-info { padding:0.85rem 1rem 0.8rem; }
@@ -1023,21 +1022,43 @@ layout: none
       });
     });
 
-    window.initApp = function initApp() {
-
-      /* CATEGORY PILLS */
-
-      /* CATEGORY PILLS */
-      document.querySelectorAll('.cat-pill').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          const cat = btn.dataset.cat;
-          document.querySelectorAll('.post-card').forEach(card => {
-            card.style.display = (cat === 'all' || card.dataset.cat === cat) ? '' : 'none';
-          });
+    /* CATEGORY PILLS — outside initApp so always works */
+    document.querySelectorAll('.cat-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.dataset.cat;
+        document.querySelectorAll('.post-card').forEach(card => {
+          card.style.display = (cat === 'all' || card.dataset.cat === cat) ? '' : 'none';
         });
       });
+    });
+
+    /* LR CATEGORY PILLS — outside initApp */
+    document.querySelectorAll('.lr-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.lr-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.dataset.lcat;
+        document.querySelectorAll('.lr-card').forEach(card => {
+          card.style.display = (cat === 'all' || card.dataset.lcat === cat) ? '' : 'none';
+        });
+      });
+    });
+
+    /* LR CARDS — make visible and clickable outside initApp */
+    document.querySelectorAll('.lr-card').forEach(card => {
+      card.style.opacity = '1';
+      card.style.transform = 'none';
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.storyIdx);
+        if (typeof openLRStory === 'function') openLRStory(idx, 0);
+      });
+    });
+
+        window.initApp = function initApp() {
+
+      /* CATEGORY PILLS — moved outside initApp */
 
       /* READ MORE */
       document.querySelectorAll('.card-read-more').forEach(btn => {
