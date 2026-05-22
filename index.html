@@ -1052,6 +1052,22 @@ layout: none
       toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
     }
 
+    /* PWA FIX — nav disappears when returning from post */
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        const app = document.getElementById('app');
+        const nav = document.querySelector('.bottom-nav');
+        if (app) app.style.display = 'flex';
+        if (nav) nav.style.display = 'flex';
+      }
+    });
+    window.addEventListener('pageshow', (e) => {
+      const app = document.getElementById('app');
+      const nav = document.querySelector('.bottom-nav');
+      if (app) app.style.display = 'flex';
+      if (nav) nav.style.display = 'flex';
+    });
+
     /* NAV — outside initApp so it always works */
     document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
       btn.addEventListener('click', () => {
