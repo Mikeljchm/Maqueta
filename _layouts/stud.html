@@ -66,13 +66,23 @@
     /* PHOTO VIEWER */
     .photo-viewer{position:fixed;inset:0;z-index:500;background:#000;transform:translateY(100%);transition:transform 0.38s var(--ease);overflow:hidden;}
     .photo-viewer.open{transform:translateY(0);}
-    .viewer-topbar{position:absolute;top:0;left:0;right:0;z-index:10;padding:calc(env(safe-area-inset-top,0px) + 0.7rem) 1rem 0.7rem;display:flex;align-items:center;gap:0.7rem;background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent);}
-    .viewer-back{background:rgba(0,0,0,0.5);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;}
+    /* Blur background */
+    .viewer-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(20px);transform:scale(1.1);opacity:0.35;transition:background-image 0.2s;}
+    .viewer-topbar{position:absolute;top:0;left:0;right:0;z-index:10;padding:calc(env(safe-area-inset-top,0px) + 0.7rem) 1rem 0.7rem;display:flex;align-items:center;gap:0.7rem;background:linear-gradient(to bottom,rgba(0,0,0,0.7),transparent);}
+    .viewer-back{background:rgba(0,0,0,0.5);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;flex-shrink:0;}
     .viewer-back svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;}
-    .viewer-counter{font-size:0.75rem;color:rgba(255,255,255,0.7);background:rgba(0,0,0,0.5);padding:0.25rem 0.65rem;border-radius:12px;}
+    .viewer-counter{font-size:0.75rem;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.5);padding:0.25rem 0.65rem;border-radius:12px;margin-left:auto;}
     .viewer-container{position:absolute;inset:0;overflow:hidden;touch-action:none;}
     .viewer-img-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;will-change:transform;}
-    .viewer-img{display:block;max-width:100%;max-height:100%;object-fit:contain;user-select:none;pointer-events:none;}
+    .viewer-img{display:block;max-width:100%;max-height:100%;object-fit:contain;user-select:none;pointer-events:none;position:relative;z-index:2;}
+    /* Nav arrows */
+    .viewer-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:20;background:rgba(0,0,0,0.45);border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;transition:background 0.2s;}
+    .viewer-arrow:active{background:rgba(255,69,0,0.6);}
+    .viewer-arrow-prev{left:0.75rem;}
+    .viewer-arrow-next{right:0.75rem;}
+    .viewer-arrow svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+    .viewer-arrow.hidden{opacity:0;pointer-events:none;}
+
 
     .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,30,0.95);border:1px solid var(--border);color:var(--text);padding:0.5rem 1.1rem;border-radius:20px;font-size:0.72rem;opacity:0;transition:all 0.3s var(--ease);pointer-events:none;z-index:300;}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -146,12 +156,19 @@
 
   <!-- PHOTO VIEWER -->
   <div class="photo-viewer" id="photo-viewer">
+    <div class="viewer-bg" id="viewer-bg"></div>
     <div class="viewer-topbar">
       <button class="viewer-back" id="viewer-back">
         <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
       <span class="viewer-counter" id="viewer-counter">1 / 1</span>
     </div>
+    <button class="viewer-arrow viewer-arrow-prev" id="viewer-prev">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="viewer-arrow viewer-arrow-next" id="viewer-next">
+      <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
     <div class="viewer-container" id="viewer-container">
       <div class="viewer-img-wrap" id="viewer-img-wrap">
         <img class="viewer-img" id="viewer-img" src="" alt="">
@@ -159,92 +176,143 @@
     </div>
   </div>
 
+
   <div class="toast" id="toast"></div>
 
-  <script>
+    <script>
   (function(){
     const thumbs = Array.from(document.querySelectorAll('.photo-thumb'));
     const imgs = thumbs.map(t => t.querySelector('img').src);
 
     const viewer = document.getElementById('photo-viewer');
     const vImg = document.getElementById('viewer-img');
+    const vBg = document.getElementById('viewer-bg');
     const vCounter = document.getElementById('viewer-counter');
     const container = document.getElementById('viewer-container');
     const wrap = document.getElementById('viewer-img-wrap');
+    const prevBtn = document.getElementById('viewer-prev');
+    const nextBtn = document.getElementById('viewer-next');
 
     let curIdx=0, scale=1, posX=0, posY=0;
     let gestureStartScale=1, gestureStartPosX=0, gestureStartPosY=0;
-    let pinchStartDist=0, touch0={x:0,y:0}, swipeStartY=0, lastTap=0, numTouches=0;
+    let pinchStartDist=0, touch0={x:0,y:0}, swipeStartX=0, swipeStartY=0, lastTap=0, numTouches=0;
 
-    function openViewer(idx){
-      curIdx=idx; vImg.src=imgs[idx];
-      vCounter.textContent=(idx+1)+' / '+imgs.length;
-      scale=1;posX=0;posY=0;applyTransform(false);
-      viewer.classList.add('open');document.body.style.overflow='hidden';
+    function updateArrows() {
+      prevBtn.classList.toggle('hidden', curIdx === 0);
+      nextBtn.classList.toggle('hidden', curIdx === imgs.length - 1);
     }
-    function closeViewer(){
-      viewer.classList.remove('open');document.body.style.overflow='';
-      scale=1;posX=0;posY=0;applyTransform(false);
+
+    function loadImg(idx) {
+      curIdx = idx;
+      vImg.src = imgs[idx];
+      vBg.style.backgroundImage = 'url(' + imgs[idx] + ')';
+      vCounter.textContent = (idx+1) + ' / ' + imgs.length;
+      scale=1; posX=0; posY=0;
+      applyTransform(false);
+      updateArrows();
     }
-    function applyTransform(animate){
-      wrap.style.transition=animate?'transform 0.25s ease':'none';
-      wrap.style.transform='translate('+posX+'px,'+posY+'px) scale('+scale+')';
+
+    function openViewer(idx) {
+      loadImg(idx);
+      viewer.classList.add('open');
+      document.body.style.overflow = 'hidden';
     }
-    function clampPos(){
+
+    function closeViewer() {
+      viewer.classList.remove('open');
+      document.body.style.overflow = '';
+      scale=1; posX=0; posY=0;
+      applyTransform(false);
+    }
+
+    function applyTransform(animate) {
+      wrap.style.transition = animate ? 'transform 0.25s ease' : 'none';
+      wrap.style.transform = 'translate('+posX+'px,'+posY+'px) scale('+scale+')';
+    }
+
+    function clampPos() {
       if(scale<=1){posX=0;posY=0;return;}
-      const cw=container.clientWidth,ch=container.clientHeight;
-      const overX=Math.max(0,(cw*scale-cw)/2),overY=Math.max(0,(ch*scale-ch)/2);
+      const cw=container.clientWidth, ch=container.clientHeight;
+      const overX=Math.max(0,(cw*scale-cw)/2);
+      const overY=Math.max(0,(ch*scale-ch)/2);
       posX=Math.max(-overX,Math.min(overX,posX));
       posY=Math.max(-overY,Math.min(overY,posY));
     }
 
-    thumbs.forEach((t,i)=>t.addEventListener('click',()=>openViewer(i)));
-    document.getElementById('viewer-back').addEventListener('click',closeViewer);
+    thumbs.forEach((t,i) => t.addEventListener('click', () => openViewer(i)));
+    document.getElementById('viewer-back').addEventListener('click', closeViewer);
+    prevBtn.addEventListener('click', () => { if(curIdx > 0) loadImg(curIdx-1); });
+    nextBtn.addEventListener('click', () => { if(curIdx < imgs.length-1) loadImg(curIdx+1); });
 
-    container.addEventListener('touchstart',e=>{
-      numTouches=e.touches.length;wrap.style.transition='none';
+    container.addEventListener('touchstart', e => {
+      numTouches = e.touches.length;
+      wrap.style.transition = 'none';
       if(e.touches.length===1){
-        const t=e.touches[0];touch0={x:t.clientX,y:t.clientY};
-        gestureStartPosX=posX;gestureStartPosY=posY;swipeStartY=t.clientY;
+        const t=e.touches[0];
+        touch0={x:t.clientX,y:t.clientY};
+        gestureStartPosX=posX; gestureStartPosY=posY;
+        swipeStartX=t.clientX; swipeStartY=t.clientY;
         const now=Date.now();
         if(now-lastTap<300){
           e.preventDefault();
           if(scale>1){scale=1;posX=0;posY=0;}
-          else{const rect=container.getBoundingClientRect();scale=3;posX=(rect.width/2-t.clientX)*(scale-1);posY=(rect.height/2-t.clientY)*(scale-1);clampPos();}
-          applyTransform(true);lastTap=0;return;
+          else{
+            const rect=container.getBoundingClientRect();
+            scale=3;
+            posX=(rect.width/2-t.clientX)*(scale-1);
+            posY=(rect.height/2-t.clientY)*(scale-1);
+            clampPos();
+          }
+          applyTransform(true); lastTap=0; return;
         }
         lastTap=now;
       }
       if(e.touches.length===2){
-        e.preventDefault();const t0=e.touches[0],t1=e.touches[1];
+        e.preventDefault();
+        const t0=e.touches[0],t1=e.touches[1];
         pinchStartDist=Math.hypot(t0.clientX-t1.clientX,t0.clientY-t1.clientY);
-        gestureStartScale=scale;gestureStartPosX=posX;gestureStartPosY=posY;
+        gestureStartScale=scale; gestureStartPosX=posX; gestureStartPosY=posY;
       }
     },{passive:false});
 
-    container.addEventListener('touchmove',e=>{
+    container.addEventListener('touchmove', e => {
       e.preventDefault();
       if(e.touches.length===1&&numTouches===1&&scale>1){
-        const t=e.touches[0];posX=gestureStartPosX+(t.clientX-touch0.x);posY=gestureStartPosY+(t.clientY-touch0.y);clampPos();applyTransform(false);
+        const t=e.touches[0];
+        posX=gestureStartPosX+(t.clientX-touch0.x);
+        posY=gestureStartPosY+(t.clientY-touch0.y);
+        clampPos(); applyTransform(false);
       }
       if(e.touches.length===2){
         const t0=e.touches[0],t1=e.touches[1];
         const dist=Math.hypot(t0.clientX-t1.clientX,t0.clientY-t1.clientY);
         const newScale=Math.max(1,Math.min(6,gestureStartScale*(dist/pinchStartDist)));
         const rect=container.getBoundingClientRect();
-        const midX=(t0.clientX+t1.clientX)/2-rect.left,midY=(t0.clientY+t1.clientY)/2-rect.top;
+        const midX=(t0.clientX+t1.clientX)/2-rect.left;
+        const midY=(t0.clientY+t1.clientY)/2-rect.top;
         posX=midX+(gestureStartPosX-midX)*(newScale/gestureStartScale);
         posY=midY+(gestureStartPosY-midY)*(newScale/gestureStartScale);
-        scale=newScale;clampPos();applyTransform(false);
+        scale=newScale; clampPos(); applyTransform(false);
       }
     },{passive:false});
 
-    container.addEventListener('touchend',e=>{
-      if(scale<=1){scale=1;posX=0;posY=0;applyTransform(true);}
-      if(scale<=1&&e.changedTouches.length){const dy=e.changedTouches[0].clientY-swipeStartY;if(dy>120)closeViewer();}
+    container.addEventListener('touchend', e => {
+      if(scale<=1){
+        scale=1; posX=0; posY=0; applyTransform(true);
+        if(e.changedTouches.length){
+          const dx=e.changedTouches[0].clientX-swipeStartX;
+          const dy=e.changedTouches[0].clientY-swipeStartY;
+          if(Math.abs(dy)>Math.abs(dx)&&dy>100){ closeViewer(); return; }
+          if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>60){
+            if(dx<0&&curIdx<imgs.length-1) loadImg(curIdx+1);
+            if(dx>0&&curIdx>0) loadImg(curIdx-1);
+          }
+        }
+      }
       numTouches=e.touches.length;
     },{passive:true});
   })();
   </script>
+
 </body>
 </html>
