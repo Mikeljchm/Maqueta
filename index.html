@@ -10,8 +10,37 @@ layout: none
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="The hottest wrestling content. No filters, no censorship.">
+
+  <!-- OG / Social sharing -->
   <meta property="og:title" content="HOTT WRESTLING">
-  <meta property="og:description" content="Where the heat rises.">
+  <meta property="og:description" content="The hottest wrestling content. No filters, no censorship.">
+  <meta property="og:image" content="https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png">
+  <meta property="og:image:width" content="500">
+  <meta property="og:image:height" content="500">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hottwrestling.com">
+  <meta property="og:site_name" content="HOTT WRESTLING">
+
+  <!-- Twitter / X card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HOTT WRESTLING">
+  <meta name="twitter:description" content="The hottest wrestling content. No filters, no censorship.">
+  <meta name="twitter:image" content="https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://hottwrestling.com">
+
+  <!-- OneSignal Push Notifications -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "291cb1c0-ddd6-4c1d-a8ce-9fea08cd8264",
+      });
+    });
+  </script>
+
   <title>HOTT WRESTLING</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" href="https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png">
@@ -1682,6 +1711,13 @@ layout: none
 
 
   })();
+
+  /* SERVICE WORKER */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
   </script>
 </body>
 </html>
