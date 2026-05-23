@@ -1,25 +1,22 @@
 ---
-layout: none
 ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#080505">
+  <meta name="theme-color" content="#000000">
   <title>{{ page.title }} — HOTT WRESTLING</title>
   <meta name="description" content="{{ page.description | truncate: 155 }}">
   <meta property="og:title" content="{{ page.title }} — HOTT WRESTLING">
   <meta property="og:description" content="{{ page.description | truncate: 155 }}">
   <meta property="og:type" content="article">
   <meta property="og:url" content="{{ site.url }}{{ page.url }}">
-  {% if page.image %}
-  <meta property="og:image" content="{{ page.image }}">
-  <meta name="twitter:image" content="{{ page.image }}">
+  {% assign first_img_raw = page.images | first | default: page.image %}
+  {% assign first_img = first_img_raw.url | default: first_img_raw %}
+  {% if first_img %}
+  <meta property="og:image" content="{{ first_img }}">
   {% endif %}
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{{ page.title }} — HOTT WRESTLING">
-  <meta name="twitter:description" content="{{ page.description | truncate: 155 }}">
   <link rel="canonical" href="{{ site.url }}{{ page.url }}">
   <link rel="manifest" href="/manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,80 +24,108 @@ layout: none
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <style>
     :root {
-      --bg:#080505; --surface:#100808; --surface-2:#180a0a;
+      --bg:#000; --surface:#0d0d0d; --surface-2:#141414;
       --fire-orange:#FF4500; --fire-yellow:#FFB800; --fire-red:#CC1100;
-      --text:#F0EAE0; --text-dim:#8a7060; --text-muted:#4a2a2a;
-      --border:#2a1010; --border-hot:rgba(255,69,0,0.25);
+      --fire-deep:#8B1A00;
+      --text:#F0EAE0; --text-dim:#888; --text-muted:#444;
+      --border:#1f1f1f;
       --font-d:'Bebas Neue',Impact,sans-serif;
       --font-b:'DM Sans',Arial,sans-serif;
       --ease:cubic-bezier(0.16,1,0.3,1);
     }
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    html{background:var(--bg);}
-    body{font-family:var(--font-b);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+    html{background:#000;}
+    body{font-family:var(--font-b);background:#000;color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
 
     /* TOP BAR */
-    .top-bar{height:52px;background:rgba(8,5,5,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;padding:0 1rem;position:sticky;top:0;z-index:50;}
+    .top-bar{height:48px;background:#000;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;padding:0 1rem;position:sticky;top:0;z-index:50;}
     .back-btn{background:none;border:none;color:var(--text-dim);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
     .back-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
     .back-btn:active{color:var(--fire-orange);}
     .top-logo{font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.04em;color:#fff;text-decoration:none;}
     .top-logo span{background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 
-    /* POST */
-    .post-wrap{max-width:680px;margin:0 auto;padding-bottom:3rem;}
+    /* POST HEADER */
+    .post-header{padding:0.9rem 1rem 0.6rem;display:flex;align-items:center;gap:0.65rem;}
+    .post-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--fire-deep),var(--fire-red));display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.6rem;color:#fff;border:1.5px solid rgba(255,69,0,0.4);flex-shrink:0;}
+    .post-meta{flex:1;}
+    .post-author{font-size:0.82rem;font-weight:600;color:var(--text);}
+    .post-cat{font-size:0.52rem;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-top:0.05rem;}
+    .post-date{font-size:0.58rem;color:var(--text-muted);}
 
-    .post-header{padding:1.25rem 1rem 0.75rem;}
-    .post-cat{font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.15em;color:var(--fire-orange);text-transform:uppercase;margin-bottom:0.5rem;}
-    .post-title{font-family:var(--font-d);font-size:clamp(1.6rem,6vw,2.4rem);color:#fff;letter-spacing:0.03em;line-height:1.1;margin-bottom:0.5rem;}
-    .post-date{font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;}
+    /* PHOTOS */
+    .post-photos{width:100%;cursor:pointer;}
 
-    /* IMAGE */
-    .post-image{width:100%;display:block;max-height:90vw;object-fit:cover;}
+    /* Single photo — blurred bg */
+    .photo-single-wrap{position:relative;width:100%;overflow:hidden;background:#000;min-height:50vw;}
+    .photo-blur-bg{position:absolute;inset:0;width:100%;height:100%;background-size:cover;background-position:center;filter:blur(25px) brightness(0.35);transform:scale(1.15);}
+    .photo-main{position:relative;z-index:1;width:100%;height:auto;display:block;max-height:100vh;object-fit:contain;}
+
+    /* Two photos — side by side */
+    .photo-duo{display:grid;grid-template-columns:1fr 1fr;gap:2px;}
+    .photo-duo img{width:100%;height:100%;object-fit:cover;display:block;aspect-ratio:3/4;}
+
+    /* Multiple photos — stacked full width */
+    .photo-stack img{width:100%;display:block;height:auto;background:#000;}
+    .photo-stack img+img{margin-top:2px;}
 
     /* ACTIONS */
-    .post-actions{display:flex;align-items:center;padding:0.75rem 0.9rem;border-bottom:1px solid var(--border);gap:0.2rem;}
-    .act-btn{background:none;border:none;color:var(--text-dim);display:flex;align-items:center;gap:0.35rem;padding:0.45rem 0.65rem;border-radius:8px;cursor:pointer;font-size:0.8rem;font-weight:600;transition:all 0.2s;}
-    .act-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:all 0.2s;}
-    .act-btn:active{transform:scale(0.88);}
+    .post-actions{display:flex;align-items:center;padding:0.5rem 0.5rem;gap:0.2rem;border-bottom:1px solid var(--border);}
+    .act-btn{background:none;border:none;display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.75rem;color:var(--text-muted);font-size:0.78rem;font-family:var(--font-b);cursor:pointer;border-radius:8px;transition:all 0.2s;}
+    .act-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    .act-btn:active{transform:scale(0.88);color:var(--fire-orange);}
     .act-btn.liked{color:#ff3b5c;}
     .act-btn.liked svg{fill:#ff3b5c;stroke:#ff3b5c;}
-    .act-btn.saved svg{fill:var(--fire-yellow);stroke:var(--fire-yellow);}
+    .act-btn.saved svg{fill:var(--text-dim);stroke:var(--text-dim);}
     .act-spacer{flex:1;}
 
     /* DESCRIPTION */
-    .post-desc{padding:1rem;font-size:0.9rem;line-height:1.75;color:var(--text-dim);}
-    .post-desc .htag{color:var(--fire-orange);}
+    .post-desc{padding:0.85rem 1rem 0.6rem;font-size:0.85rem;line-height:1.75;color:var(--text-dim);}
 
     /* COMMENTS */
     .comments-section{padding:1rem;border-top:1px solid var(--border);}
-    .comments-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.75rem;}
-    .comment-item{display:flex;gap:0.6rem;margin-bottom:0.75rem;align-items:flex-start;}
-    .comment-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#8B1A00,#CC1100);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.6rem;color:#fff;}
-    .comment-text{font-size:0.82rem;color:var(--text-dim);line-height:1.5;padding-top:0.2rem;}
-    .comment-form{display:flex;gap:0.5rem;align-items:center;margin-top:1rem;}
-    .comment-input{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:0.5rem 0.9rem;color:var(--text);font-family:var(--font-b);font-size:0.82rem;outline:none;}
-    .comment-input:focus{border-color:var(--border-hot);}
+    .comments-title{font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.75rem;text-transform:uppercase;}
+    .comment-item{display:flex;gap:0.55rem;margin-bottom:0.65rem;}
+    .comment-av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--fire-deep),var(--fire-red));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.52rem;color:#fff;}
+    .comment-text{font-size:0.8rem;color:var(--text-dim);line-height:1.45;padding-top:0.2rem;}
+    .comment-form{display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem;}
+    .comment-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:0.5rem 0.9rem;color:var(--text);font-family:var(--font-b);font-size:0.82rem;outline:none;}
+    .comment-input:focus{border-color:rgba(255,69,0,0.3);}
     .comment-input::placeholder{color:var(--text-muted);}
     .comment-send{background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
-    .comment-send svg{width:14px;height:14px;fill:none;stroke:var(--fire-orange);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    .comment-send:active{background:rgba(255,69,0,0.2);}
+    .comment-send svg{width:13px;height:13px;fill:none;stroke:var(--fire-orange);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
     /* RELATED */
-    .related-section{padding:1rem;}
-    .related-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.75rem;text-transform:uppercase;}
+    .related-section{padding:1rem 0 2rem;}
+    .related-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.6rem;text-transform:uppercase;padding:0 1rem;}
     .related-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}
     .related-card{position:relative;aspect-ratio:1;overflow:hidden;display:block;background:var(--surface);}
     .related-card img{width:100%;height:100%;object-fit:cover;display:block;}
-    .related-card-cat{position:absolute;bottom:4px;left:4px;background:rgba(255,69,0,0.88);color:#fff;font-size:0.42rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.15rem 0.35rem;border-radius:3px;font-weight:700;}
+    .related-card-cat{position:absolute;bottom:3px;left:3px;background:rgba(255,69,0,0.88);color:#fff;font-size:0.4rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.12rem 0.3rem;border-radius:3px;font-weight:700;}
+
+    /* PHOTO VIEWER — proper pinch zoom with pan */
+    .photo-viewer{position:fixed;inset:0;z-index:500;background:#000;transform:translateY(100%);transition:transform 0.38s var(--ease);overflow:hidden;}
+    .photo-viewer.open{transform:translateY(0);}
+    .viewer-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(20px);transform:scale(1.1);opacity:0.35;transition:background-image 0.2s;}
+    .viewer-topbar{position:absolute;top:0;left:0;right:0;z-index:10;padding:env(safe-area-inset-top,0) 1rem 0.7rem;padding-top:calc(env(safe-area-inset-top,0px) + 0.7rem);display:flex;align-items:center;gap:0.7rem;background:linear-gradient(to bottom,rgba(0,0,0,0.7),transparent);pointer-events:auto;}
+    .viewer-back{background:rgba(0,0,0,0.5);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;flex-shrink:0;}
+    .viewer-back svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;}
+    .viewer-counter{font-size:0.75rem;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.5);padding:0.25rem 0.65rem;border-radius:12px;margin-left:auto;}
+    .viewer-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:20;background:rgba(0,0,0,0.45);border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;transition:background 0.2s;}
+    .viewer-arrow:active{background:rgba(255,69,0,0.6);}
+    .viewer-arrow-prev{left:0.75rem;}
+    .viewer-arrow-next{right:0.75rem;}
+    .viewer-arrow svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+    .viewer-arrow.hidden{opacity:0;pointer-events:none;}
+
+    /* Container for image — touch events here */
+    .viewer-container{position:absolute;inset:0;overflow:hidden;touch-action:none;}
+    .viewer-img-wrap{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;will-change:transform;}
+    .viewer-img{display:block;max-width:100%;max-height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;pointer-events:none;position:relative;z-index:2;}
 
     /* TOAST */
-    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(255,69,0,0.92);color:#fff;padding:0.55rem 1.2rem;border-radius:20px;font-size:0.82rem;font-weight:600;opacity:0;transition:all 0.3s var(--ease);pointer-events:none;z-index:300;white-space:nowrap;}
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,30,0.95);border:1px solid var(--border);color:var(--text);padding:0.5rem 1.1rem;border-radius:20px;font-size:0.72rem;opacity:0;transition:all 0.3s var(--ease);pointer-events:none;z-index:300;white-space:nowrap;}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-    /* BACK TO FEED */
-    .back-to-feed{display:flex;align-items:center;gap:0.5rem;padding:1rem;color:var(--fire-orange);font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;text-decoration:none;border-top:1px solid var(--border);}
-    .back-to-feed svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   </style>
 </head>
 <body>
@@ -112,18 +137,49 @@ layout: none
     <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
   </header>
 
-  <article class="post-wrap" itemscope itemtype="https://schema.org/Article">
+  <article itemscope itemtype="https://schema.org/Article">
 
     <div class="post-header">
-      <div class="post-cat">{{ page.category | upcase }}</div>
-      <h1 class="post-title" itemprop="headline">{{ page.title }}</h1>
-      <time class="post-date" itemprop="datePublished" datetime="{{ page.date | date_to_xmlschema }}">
-        {{ page.date | date: "%B %d, %Y" }}
-      </time>
+      <div class="post-avatar">HW</div>
+      <div class="post-meta">
+        <div class="post-author">HOTT WRESTLING</div>
+        <div class="post-cat">{{ page.category }}</div>
+      </div>
+      <div class="post-date">{{ page.date | date: "%b %d, %Y" }}</div>
     </div>
 
-    {% if page.image %}
-    <img class="post-image" src="{{ page.image }}" alt="{{ page.title }}" itemprop="image">
+    <!-- Photos — layout depends on count -->
+    {% if page.images %}
+      {% assign imgs = page.images %}
+    {% elsif page.image %}
+      {% assign imgs = page.image | split: '|||' %}
+    {% endif %}
+
+    {% if imgs %}
+    {% assign img_count = imgs | size %}
+    <div class="post-photos" id="post-photos">
+      {% if img_count == 1 %}
+      <!-- Single — blurred bg -->
+      <div class="photo-single-wrap" data-viewer-idx="0">
+        <div class="photo-blur-bg" style="background-image:url('{{ imgs[0].url | default: imgs[0] }}')"></div>
+        <img class="photo-main" src="{{ imgs[0].url | default: imgs[0] }}" alt="{{ page.title }}" loading="lazy" itemprop="image">
+      </div>
+      {% elsif img_count == 2 %}
+      <!-- Two — side by side -->
+      <div class="photo-duo">
+        {% for img in imgs %}
+        <img src="{{ img.url | default: img }}" alt="{{ page.title }}" loading="lazy" data-viewer-idx="{{ forloop.index0 }}" itemprop="image">
+        {% endfor %}
+      </div>
+      {% else %}
+      <!-- Multiple — stacked -->
+      <div class="photo-stack">
+        {% for img in imgs %}
+        <img src="{{ img.url | default: img }}" alt="{{ page.title }}" loading="lazy" data-viewer-idx="{{ forloop.index0 }}" itemprop="image">
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
     {% endif %}
 
     <div class="post-actions">
@@ -145,9 +201,7 @@ layout: none
     </div>
 
     {% if page.description %}
-    <div class="post-desc" itemprop="description">
-      {{ page.description | replace: '#', '<span class="htag">#' | replace: ' ', '</span> ' }}
-    </div>
+    <div class="post-desc" itemprop="description">{% assign desc_parts = page.description | split: '#' %}{{ desc_parts[0] }}{% for part in desc_parts offset:1 %}<span class="htag">#{{ part }}</span>{% endfor %}</div>
     {% endif %}
 
     <section class="comments-section">
@@ -161,128 +215,319 @@ layout: none
       </div>
     </section>
 
-    {% assign related = site.posts | where_exp: "p", "p.url != page.url" | slice: 0, 6 %}
+    {% assign related = site.posts | where_exp: "p", "p.url != page.url" | slice: 0, 9 %}
     {% if related.size > 0 %}
     <section class="related-section">
-      <div class="related-title">More Heat</div>
+      <div class="related-title">More Like This</div>
       <div class="related-grid">
         {% for rp in related %}
+        {% assign rp_img = rp.images | first | default: rp.image %}
+        {% if rp_img %}
         <a class="related-card" href="{{ rp.url }}">
-          {% if rp.image %}
-          <img src="{{ rp.image }}" alt="{{ rp.title }}" loading="lazy">
-          {% endif %}
+          <img src="{{ rp_img }}" alt="{{ rp.title }}" loading="lazy">
           <span class="related-card-cat">{{ rp.category }}</span>
         </a>
+        {% endif %}
         {% endfor %}
       </div>
     </section>
     {% endif %}
 
-    <a class="back-to-feed" href="/">
-      <svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
-      Back to Feed
-    </a>
-
   </article>
+
+  <!-- Photo Viewer -->
+  <div class="photo-viewer" id="photo-viewer">
+    <div class="viewer-bg" id="viewer-bg"></div>
+    <div class="viewer-topbar">
+      <button class="viewer-back" id="viewer-back">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="viewer-counter" id="viewer-counter">1 / 1</span>
+    </div>
+    <button class="viewer-arrow viewer-arrow-prev" id="viewer-prev">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="viewer-arrow viewer-arrow-next" id="viewer-next">
+      <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <div class="viewer-container" id="viewer-container">
+      <div class="viewer-img-wrap" id="viewer-img-wrap">
+        <img class="viewer-img" id="viewer-img" src="" alt="">
+      </div>
+    </div>
+  </div>
 
   <div class="toast" id="toast"></div>
 
   <script>
-  (function() {
-    const POST_ID = '{{ page.url | slugify }}';
-    const SB_URL  = 'https://wxyvielyommbsgbwhcbu.supabase.co';
-    const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
+  (function(){
+    const POST_ID='{{ page.url | slugify }}';
+    const SB_URL='https://wxyvielyommbsgbwhcbu.supabase.co';
+    const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
 
-    function $(id) { return document.getElementById(id); }
-    let toastTimer;
-    function toast(msg) {
-      const t = $('toast'); t.textContent = msg; t.classList.add('show');
-      clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
-    }
+    function $(id){return document.getElementById(id);}
+    let tt;
+    function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200);}
 
-    async function sbFetch(path, method, body) {
-      const opts = { method: method || 'GET', headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
-      if (body) opts.body = JSON.stringify(body);
-      const res = await fetch(SB_URL + '/rest/v1/' + path, opts);
-      if (!res.ok) return null;
-      const text = await res.text();
-      return text ? JSON.parse(text) : null;
+    async function sbFetch(path,method,body){
+      const opts={method:method||'GET',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'}};
+      if(body)opts.body=JSON.stringify(body);
+      try{const r=await fetch(SB_URL+'/rest/v1/'+path,opts);if(!r.ok)return null;const tx=await r.text();return tx?JSON.parse(tx):null;}catch(e){return null;}
     }
 
     /* LIKES */
-    const likedKey = 'hw_liked';
-    let liked = new Set(JSON.parse(localStorage.getItem(likedKey) || '[]'));
-    let likeCount = 0;
-
-    async function loadLikes() {
-      const data = await sbFetch('likes?post_id=eq.' + encodeURIComponent(POST_ID) + '&select=count');
-      if (data && data.length > 0) { likeCount = data[0].count; $('like-count').textContent = likeCount; }
-      if (liked.has(POST_ID)) $('like-btn').classList.add('liked');
+    const likedKey='hw_liked';
+    let liked=new Set(JSON.parse(localStorage.getItem(likedKey)||'[]'));
+    let likeCount=0;
+    async function loadLikes(){
+      const d=await sbFetch('likes?post_id=eq.'+encodeURIComponent(POST_ID)+'&select=count');
+      if(d&&d.length){likeCount=d[0].count;$('like-count').textContent=likeCount;}
+      if(liked.has(POST_ID))$('like-btn').classList.add('liked');
     }
-
-    $('like-btn').addEventListener('click', async () => {
-      const wasLiked = liked.has(POST_ID);
-      if (wasLiked) { liked.delete(POST_ID); likeCount = Math.max(0, likeCount - 1); }
-      else { liked.add(POST_ID); likeCount++; }
-      localStorage.setItem(likedKey, JSON.stringify([...liked]));
-      $('like-btn').classList.toggle('liked', !wasLiked);
-      $('like-count').textContent = likeCount;
-      const existing = await sbFetch('likes?post_id=eq.' + encodeURIComponent(POST_ID) + '&select=id');
-      if (existing && existing.length > 0) { await sbFetch('likes?post_id=eq.' + encodeURIComponent(POST_ID), 'PATCH', { count: likeCount }); }
-      else { await sbFetch('likes', 'POST', { post_id: POST_ID, count: likeCount }); }
+    $('like-btn').addEventListener('click',async()=>{
+      const was=liked.has(POST_ID);
+      was?liked.delete(POST_ID):liked.add(POST_ID);
+      likeCount=Math.max(0,likeCount+(was?-1:1));
+      localStorage.setItem(likedKey,JSON.stringify([...liked]));
+      $('like-btn').classList.toggle('liked',!was);
+      $('like-count').textContent=likeCount;
+      const ex=await sbFetch('likes?post_id=eq.'+encodeURIComponent(POST_ID)+'&select=id');
+      ex&&ex.length?await sbFetch('likes?post_id=eq.'+encodeURIComponent(POST_ID),'PATCH',{count:likeCount}):await sbFetch('likes','POST',{post_id:POST_ID,count:likeCount});
     });
 
     /* SAVE */
-    const savedKey = 'hw_saved';
-    let saved = new Set(JSON.parse(localStorage.getItem(savedKey) || '[]'));
-    if (saved.has(POST_ID)) $('save-btn').classList.add('saved');
-    $('save-btn').addEventListener('click', () => {
-      if (saved.has(POST_ID)) { saved.delete(POST_ID); toast('Removed'); }
-      else { saved.add(POST_ID); toast('Saved! 🔥'); }
-      saved.has(POST_ID) ? $('save-btn').classList.add('saved') : $('save-btn').classList.remove('saved');
-      localStorage.setItem(savedKey, JSON.stringify([...saved]));
+    const savedKey='hw_saved';
+    let saved=new Set(JSON.parse(localStorage.getItem(savedKey)||'[]'));
+    if(saved.has(POST_ID))$('save-btn').classList.add('saved');
+    $('save-btn').addEventListener('click',()=>{
+      saved.has(POST_ID)?saved.delete(POST_ID):saved.add(POST_ID);
+      $('save-btn').classList.toggle('saved',saved.has(POST_ID));
+      localStorage.setItem(savedKey,JSON.stringify([...saved]));
+      toast(saved.has(POST_ID)?'Saved!':'Removed');
     });
 
     /* SHARE */
-    document.querySelector('.share-btn').addEventListener('click', async () => {
-      if (navigator.share) { try { await navigator.share({ url: location.href, title: '{{ page.title }}' }); } catch(e){} }
-      else { await navigator.clipboard.writeText(location.href).catch(()=>{}); toast('Link copied! 🔥'); }
+    document.querySelector('.share-btn').addEventListener('click',async()=>{
+      if(navigator.share)try{await navigator.share({url:location.href});}catch(e){}
+      else{await navigator.clipboard.writeText(location.href).catch(()=>{});toast('Link copied!');}
     });
 
     /* COMMENTS */
-    async function loadComments() {
-      const data = await sbFetch('comments?post_id=eq.' + encodeURIComponent(POST_ID) + '&order=created_at.asc&select=text');
-      if (data) {
-        $('comments-list').innerHTML = '';
-        data.forEach(row => addComment(row.text, false));
-        $('comment-count').textContent = data.length;
-      }
+    async function loadComments(){
+      const d=await sbFetch('comments?post_id=eq.'+encodeURIComponent(POST_ID)+'&order=created_at.asc&select=text');
+      if(d){$('comments-list').innerHTML='';d.forEach(r=>addComment(r.text,false));$('comment-count').textContent=d.length;}
     }
-
-    function addComment(text, animate) {
-      const div = document.createElement('div'); div.className = 'comment-item';
-      div.innerHTML = '<div class="comment-av">HW</div><div class="comment-text">' + text + '</div>';
-      if (animate) { div.style.cssText = 'opacity:0;transform:translateY(6px);transition:all 0.3s'; requestAnimationFrame(() => { div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
+    function addComment(text,animate){
+      const div=document.createElement('div');div.className='comment-item';
+      div.innerHTML='<div class="comment-av">HW</div><div class="comment-text">'+text+'</div>';
+      if(animate){div.style.cssText='opacity:0;transform:translateY(6px);transition:all 0.3s';requestAnimationFrame(()=>{div.style.opacity='1';div.style.transform='translateY(0)';});}
       $('comments-list').appendChild(div);
     }
+    async function postComment(){
+      const inp=$('comment-input');const text=inp.value.trim();if(!text)return;
+      inp.value='';addComment(text,true);
+      await sbFetch('comments','POST',{post_id:POST_ID,text});
+      const d=await sbFetch('comments?post_id=eq.'+encodeURIComponent(POST_ID)+'&select=id');
+      if(d)$('comment-count').textContent=d.length;
+      toast('Posted!');
+    }
+    $('comment-send').addEventListener('click',postComment);
+    $('comment-input').addEventListener('keydown',e=>{if(e.key==='Enter')postComment();});
+    $('comment-btn').addEventListener('click',()=>$('comment-input').focus());
+    loadLikes();loadComments();
 
-    async function postComment() {
-      const input = $('comment-input');
-      const text = input.value.trim(); if (!text) return;
-      input.value = '';
-      addComment(text, true);
-      await sbFetch('comments', 'POST', { post_id: POST_ID, text });
-      const data = await sbFetch('comments?post_id=eq.' + encodeURIComponent(POST_ID) + '&select=id');
-      if (data) $('comment-count').textContent = data.length;
-      toast('Posted 🔥');
+    /* ── PHOTO VIEWER — pinch zoom with correct pan ── */
+    const viewer=$('photo-viewer');
+    const container=$('viewer-container');
+    const wrap=$('viewer-img-wrap');
+    const vImg=$('viewer-img');
+    const vBg=$('viewer-bg');
+    const prevBtn=$('viewer-prev');
+    const nextBtn=$('viewer-next');
+
+    /* Collect all images from page */
+    const allImgs=Array.from(document.querySelectorAll('[data-viewer-idx]')).map(el=>el.tagName==='IMG'?el.src:el.querySelector('img')?.src).filter(Boolean);
+    const imgSrcs=[];
+    document.querySelectorAll('[data-viewer-idx]').forEach(el=>{
+      const idx=parseInt(el.dataset.viewerIdx);
+      imgSrcs[idx]=el.src||el.querySelector('img')?.src;
+    });
+
+    let currentIdx=0;
+    let posX=0,posY=0,curScale=1;
+    let gestureStartScale=1;
+    let gestureStartX=0,gestureStartY=0;
+    let gestureStartPosX=0,gestureStartPosY=0;
+    let pinchStartDist=0;
+    let pinchMidX=0,pinchMidY=0;
+    let lastTap=0;
+    let numTouches=0;
+
+    function updateArrows(){
+      if(prevBtn) prevBtn.classList.toggle('hidden', currentIdx===0);
+      if(nextBtn) nextBtn.classList.toggle('hidden', currentIdx>=imgSrcs.filter(Boolean).length-1);
     }
 
-    $('comment-send').addEventListener('click', postComment);
-    $('comment-input').addEventListener('keydown', e => { if (e.key === 'Enter') postComment(); });
-    $('comment-btn').addEventListener('click', () => $('comment-input').focus());
+    function loadViewerImg(idx){
+      currentIdx=idx;
+      const src=imgSrcs[idx];
+      if(!src) return;
+      vImg.src=src;
+      if(vBg) vBg.style.backgroundImage='url('+src+')';
+      $('viewer-counter').textContent=(idx+1)+' / '+imgSrcs.filter(Boolean).length;
+      posX=0;posY=0;curScale=1;
+      applyTransform(false);
+      updateArrows();
+    }
 
-    loadLikes();
-    loadComments();
+    if(prevBtn) prevBtn.addEventListener('click',()=>{ if(currentIdx>0) loadViewerImg(currentIdx-1); });
+    if(nextBtn) nextBtn.addEventListener('click',()=>{ if(currentIdx<imgSrcs.filter(Boolean).length-1) loadViewerImg(currentIdx+1); });
+
+    function applyTransform(animate){
+      if(animate)wrap.style.transition='transform 0.25s ease';
+      else wrap.style.transition='none';
+      wrap.style.transform='translate('+posX+'px,'+posY+'px) scale('+curScale+')';
+    }
+
+    function clampPos(){
+      if(curScale<=1){posX=0;posY=0;return;}
+      const cw=container.clientWidth;
+      const ch=container.clientHeight;
+      /* How much the image overflows each side */
+      const overX=Math.max(0,(cw*curScale-cw)/2);
+      const overY=Math.max(0,(ch*curScale-ch)/2);
+      posX=Math.max(-overX,Math.min(overX,posX));
+      posY=Math.max(-overY,Math.min(overY,posY));
+    }
+
+    function resetTransform(animate){
+      posX=0;posY=0;curScale=1;
+      applyTransform(animate);
+    }
+
+    function openViewer(idx){
+      currentIdx=Math.max(0,Math.min(imgSrcs.filter(Boolean).length-1,idx));
+      const src=imgSrcs[currentIdx]||'';
+      vImg.src=src;
+      if(vBg) vBg.style.backgroundImage='url('+src+')';
+      $('viewer-counter').textContent=(currentIdx+1)+' / '+imgSrcs.filter(Boolean).length;
+      resetTransform(false);
+      updateArrows();
+      viewer.classList.add('open');
+      document.body.style.overflow='hidden';
+    }
+
+    function closeViewer(){
+      viewer.classList.remove('open');
+      document.body.style.overflow='';
+      resetTransform(false);
+    }
+
+    $('viewer-back').addEventListener('click',closeViewer);
+
+    /* Open on tap */
+    document.querySelectorAll('[data-viewer-idx]').forEach(el=>{
+      el.style.cursor='pointer';
+      el.addEventListener('click',()=>openViewer(parseInt(el.dataset.viewerIdx)));
+    });
+    /* Also open single wrap */
+    document.querySelectorAll('.photo-single-wrap').forEach(el=>{
+      el.style.cursor='pointer';
+      el.addEventListener('click',()=>openViewer(0));
+    });
+
+    /* ── TOUCH HANDLING ── */
+    let touch0={x:0,y:0},touch1b={x:0,y:0};
+    let swipeStartY=0;
+
+    container.addEventListener('touchstart',e=>{
+      numTouches=e.touches.length;
+      wrap.style.transition='none';
+
+      if(numTouches===1){
+        const t=e.touches[0];
+        touch0={x:t.clientX,y:t.clientY};
+        gestureStartPosX=posX;
+        gestureStartPosY=posY;
+        swipeStartY=t.clientY;
+
+        /* Double tap zoom */
+        const now=Date.now();
+        if(now-lastTap<300){
+          e.preventDefault();
+          if(curScale>1){
+            resetTransform(true);
+          } else {
+            /* Zoom to tap point */
+            const rect=container.getBoundingClientRect();
+            const tapX=t.clientX-rect.left;
+            const tapY=t.clientY-rect.top;
+            curScale=3;
+            /* Center on tap point */
+            posX=(rect.width/2-tapX)*(curScale-1);
+            posY=(rect.height/2-tapY)*(curScale-1);
+            clampPos();
+            applyTransform(true);
+          }
+          lastTap=0;return;
+        }
+        lastTap=now;
+      }
+
+      if(numTouches===2){
+        e.preventDefault();
+        const t0=e.touches[0],t1=e.touches[1];
+        pinchStartDist=Math.hypot(t0.clientX-t1.clientX,t0.clientY-t1.clientY);
+        pinchMidX=(t0.clientX+t1.clientX)/2;
+        pinchMidY=(t0.clientY+t1.clientY)/2;
+        gestureStartScale=curScale;
+        gestureStartPosX=posX;
+        gestureStartPosY=posY;
+      }
+    },{passive:false});
+
+    container.addEventListener('touchmove',e=>{
+      e.preventDefault();
+      if(e.touches.length===1&&numTouches===1&&curScale>1){
+        /* Pan */
+        const t=e.touches[0];
+        posX=gestureStartPosX+(t.clientX-touch0.x);
+        posY=gestureStartPosY+(t.clientY-touch0.y);
+        clampPos();
+        applyTransform(false);
+      }
+
+      if(e.touches.length===2){
+        const t0=e.touches[0],t1=e.touches[1];
+        const dist=Math.hypot(t0.clientX-t1.clientX,t0.clientY-t1.clientY);
+        const newScale=Math.max(1,Math.min(6,gestureStartScale*(dist/pinchStartDist)));
+
+        /* Zoom toward pinch midpoint */
+        const rect=container.getBoundingClientRect();
+        const midX=(t0.clientX+t1.clientX)/2-rect.left;
+        const midY=(t0.clientY+t1.clientY)/2-rect.top;
+        const scaleRatio=newScale/gestureStartScale;
+
+        posX=midX+(gestureStartPosX-midX)*scaleRatio;
+        posY=midY+(gestureStartPosY-midY)*scaleRatio;
+        curScale=newScale;
+        clampPos();
+        applyTransform(false);
+      }
+    },{passive:false});
+
+    container.addEventListener('touchend',e=>{
+      if(curScale<=1)resetTransform(true);
+      else clampPos();
+
+      /* Swipe down to close when not zoomed */
+      if(curScale<=1&&e.changedTouches.length){
+        const dy=e.changedTouches[0].clientY-swipeStartY;
+        if(dy>120)closeViewer();
+      }
+      numTouches=e.touches.length;
+    },{passive:true});
+
   })();
   </script>
 </body>
