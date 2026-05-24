@@ -184,6 +184,104 @@ collections:
           name: url
           widget: string
 
+  - name: bulge
+    label: Bulge Sport
+    label_singular: Athlete
+    folder: _bulge
+    create: true
+    slug: "{{slug}}"
+    editor:
+      preview: false
+    fields:
+      - label: Name
+        name: title
+        widget: string
+
+      - label: Sport
+        name: sport
+        widget: select
+        options:
+          - { label: "Football", value: "football" }
+          - { label: "Baseball", value: "baseball" }
+          - { label: "Rugby", value: "rugby" }
+          - { label: "Swimming", value: "swimming" }
+          - { label: "Tennis", value: "tennis" }
+          - { label: "Volleyball", value: "volleyball" }
+          - { label: "Basketball", value: "basketball" }
+          - { label: "Soccer", value: "soccer" }
+          - { label: "Track & Field", value: "track" }
+          - { label: "Gymnastics", value: "gymnastics" }
+          - { label: "MMA", value: "mma" }
+          - { label: "Cycling", value: "cycling" }
+          - { label: "Other", value: "other" }
+
+      - label: Team / Club
+        name: team
+        widget: string
+        required: false
+        hint: "Team name, country, college..."
+
+      - label: Tags
+        name: tags
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: Tag
+          name: tag
+          widget: string
+          hint: "bulge, tight, uniform, wet..."
+
+      - label: Stats
+        name: stats
+        widget: list
+        allow_add: true
+        required: false
+        fields:
+          - label: Label
+            name: label
+            widget: string
+            hint: "Sport, Country, Position..."
+          - label: Value
+            name: value
+            widget: string
+
+      - label: Description
+        name: description
+        widget: text
+        required: false
+
+      - label: Photos (unlimited)
+        name: images
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: Photo URL
+          name: url
+          widget: string
+          hint: "https://images2.imgbox.com/..."
+
+      - label: GIFs (unlimited)
+        name: gifs
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: GIF URL
+          name: url
+          widget: string
+
+      - label: Videos (unlimited)
+        name: videos
+        widget: list
+        allow_add: true
+        required: false
+        field:
+          label: Video URL
+          name: url
+          widget: string
+
   - name: stories
     label: Locker Room — Stories
     label_singular: Story
