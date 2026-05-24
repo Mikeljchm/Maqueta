@@ -22,6 +22,11 @@ defaults:
       type: "studs"
     values:
       layout: "stud"
+  - scope:
+      path: ""
+      type: "bulge"
+    values:
+      layout: "bulge"
 
 collections:
   wrestlers:
@@ -34,3 +39,6 @@ collections:
   studs:
     output: true
     permalink: /studs/:name/
+  bulge:
+    output: true
+    permalink: /bulge-sport/:name/
