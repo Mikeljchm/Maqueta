@@ -2,8 +2,6 @@ backend:
   name: github
   repo: Mikeljchm/Maqueta
   branch: main
-  base_url: https://maqueta-8t9.pages.dev
-  auth_endpoint: /api/auth
 
 media_folder: uploads
 public_folder: /uploads
