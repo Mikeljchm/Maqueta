@@ -5,7 +5,7 @@ export async function onRequest(context) {
 
   if (path === '/api/auth') {
     const redirectUri = `${url.origin}/api/auth/callback/github`;
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${env.GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&scope=repo`;
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${env.GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo`;
     return Response.redirect(githubAuthUrl, 302);
   }
 
@@ -34,22 +34,29 @@ export async function onRequest(context) {
       return new Response(`Auth error: ${tokenData.error_description}`, { status: 400 });
     }
 
-    const script = `
-      <script>
-        (function() {
-          function receiveMessage(e) {
-            window.opener.postMessage(
-              'authorization:github:success:${JSON.stringify({ token: tokenData.access_token, provider: 'github' })}',
-              e.origin
-            );
-          }
-          window.addEventListener('message', receiveMessage, false);
-          window.opener.postMessage('authorizing:github', '*');
-        })();
-      </script>
-    `;
+    const token = tokenData.access_token;
+    const content = `
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+(function() {
+  var token = "${token}";
+  var message = JSON.stringify({
+    token: token,
+    provider: "github"
+  });
+  function receiveMessage(e) {
+    window.opener.postMessage("authorization:github:success:" + message, e.origin);
+  }
+  window.addEventListener("message", receiveMessage, false);
+  window.opener.postMessage("authorizing:github", "*");
+})();
+</script>
+</body>
+</html>`;
 
-    return new Response(script, {
+    return new Response(content, {
       headers: { 'Content-Type': 'text/html' },
     });
   }
