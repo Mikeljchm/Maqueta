@@ -750,7 +750,7 @@ layout: none
           {% if all_stories.size > 0 %}
             {% for story in all_stories %}
             {% capture story_json %}{"idx":{{ forloop.index0 }},"title":{{ story.title | jsonify }},"category":{{ story.category | jsonify }},"cover":{{ story.cover | default: "" | jsonify }},"read_time":{{ story.read_time | default: "5 min read" | jsonify }},"slug":{{ story.slug | jsonify }},"languages":{{ story.languages | jsonify }}}{% endcapture %}
-            <div class="lr-card reveal" data-lcat="{{ story.category }}" data-story-idx="{{ forloop.index0 }}" data-story-json='{{ story_json | replace: "'", "&#39;" }}'>
+            <div class="lr-card reveal" data-lcat="{{ story.category }}" data-story-idx="{{ forloop.index0 }}" data-story-json="{{ story_json | escape }}">
               {% if story.cover %}
               <img class="lr-cover" src="{{ story.cover }}" alt="{{ story.title }}" loading="lazy">
               {% endif %}
@@ -839,28 +839,45 @@ layout: none
         </div>
       </div>
 
-      <!-- SEARCH -->
-      <div class="page" id="page-search">
-        <div class="search-bar-wrap">
-          <div class="search-bar">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input class="search-input" id="search-input" type="text" placeholder="Search wrestlers, categories...">
-          </div>
+      <!-- BULGE SPORT -->
+      <div class="page" id="page-bulge">
+        <div class="page-title-bar">
+          <div class="page-title">BULGE <span>SPORT</span></div>
+          <div class="page-subtitle">Athletes &middot; All sports &middot; No filter</div>
         </div>
-        <div class="search-tags-title">Popular searches</div>
-        <div class="search-tags">
-          <span class="search-tag">wrestling</span>
-          <span class="search-tag">bulge</span>
-          <span class="search-tag">bad boys</span>
-          <span class="search-tag">fan files</span>
-          <span class="search-tag">hall of flame</span>
-          <span class="search-tag">spandex</span>
-          <span class="search-tag">locker room</span>
-          <span class="search-tag">amateur</span>
-          <span class="search-tag">college</span>
-          <span class="search-tag">submission</span>
+        {% assign all_bulge = site.bulge %}
+        {% if all_bulge.size > 0 %}
+        <div class="cat-pills" style="border-top:none;">
+          <button class="cat-pill active" data-bcat="all">All</button>
+          {% assign b_sports = "" %}
+          {% for athlete in all_bulge %}
+            {% unless b_sports contains athlete.sport %}
+              {% assign b_sports = b_sports | append: athlete.sport | append: "," %}
+              <button class="cat-pill" data-bcat="{{ athlete.sport }}">{{ athlete.sport | replace: '-', ' ' | capitalize }}</button>
+            {% endunless %}
+          {% endfor %}
         </div>
-        <div class="feed-grid" id="search-grid"></div>
+        <div class="wrestlers-grid" id="bulge-grid">
+          {% for athlete in all_bulge %}
+          <a href="{{ athlete.url }}" class="wrestler-card reveal" data-bsport="{{ athlete.sport }}" style="text-decoration:none;">
+            <div class="wrestler-thumb">
+              {% if athlete.images %}<img src="{{ athlete.images | first }}" alt="{{ athlete.title }}" loading="lazy">
+              {% elsif athlete.photo %}<img src="{{ athlete.photo }}" alt="{{ athlete.title }}" loading="lazy">{% endif %}
+              <div class="wrestler-thumb-overlay">
+                <div class="wrestler-name">{{ athlete.title }}</div>
+                <div class="wrestler-tag">{{ athlete.sport | replace: '-', ' ' | upcase }}</div>
+              </div>
+            </div>
+            {% if athlete.team %}<div class="wrestler-stats"><span class="wstat">{{ athlete.team }}</span></div>{% endif %}
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="ring-empty reveal">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--fire-orange)" stroke-width="1.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M9 14l1.5 6M15 14l-1.5 6"/></svg>
+          <p>Athletes coming soon.<br>The field is heating up.</p>
+        </div>
+        {% endif %}
       </div>
 
       <!-- MORE -->
@@ -886,6 +903,12 @@ layout: none
           <div class="menu-item" data-nav="badboys">
             <div class="menu-icon orange"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.409 13.017A5 5 0 0 1 22 15c0 3.866-4 7-9 7-4.077 0-8.153-.82-10.371-2.462-.426-.316-.631-.832-.62-1.362C2.118 12.723 2.627 2 10 2a3 3 0 0 1 3 3 2 2 0 0 1-2 2c-1.105 0-1.64-.444-2-1"/><path d="M15 14a5 5 0 0 0-7.584 2"/><path d="M9.964 6.825C8.019 7.977 9.5 13 8 15"/></svg></div>
             <div class="menu-text"><div class="menu-title">Studs</div><div class="menu-desc">Bad Boys, Bulge & more</div></div>
+            <div class="menu-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+          </div>
+          <div class="menu-divider"></div>
+          <div class="menu-item" data-nav="bulge">
+            <div class="menu-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M9 14l1.5 6M15 14l-1.5 6"/></svg></div>
+            <div class="menu-text"><div class="menu-title">Bulge Sport</div><div class="menu-desc">Football, Rugby, Swimming &amp; more</div></div>
             <div class="menu-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
           </div>
           <div class="menu-divider"></div>
@@ -960,9 +983,9 @@ layout: none
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/><circle cx="19" cy="5" r="3" fill="#FF4500" stroke="#FF4500"/></svg>
         <span>Stories</span>
       </button>
-      <button class="nav-item" data-page="search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <span>Search</span>
+      <button class="nav-item" data-page="bulge">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 7a16 16 20 0 1 10.98 4.362"/><path d="M12 12a13 13 0 0 1-8.66 5"/><path d="M16.83 13.634a16 16 0 0 1-9.267 7.328"/><path d="M20.66 17A13 13 0 0 0 12 12a13 13 0 0 1 0-10"/><path d="M8.17 15.366a16 16 0 0 1-1.713-11.69"/><circle cx="12" cy="12" r="10"/></svg>
+        <span>Bulge</span>
       </button>
       <button class="nav-item" data-page="more">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -1134,6 +1157,18 @@ layout: none
       });
     });
 
+    /* BULGE SPORT PILLS — outside initApp */
+    document.querySelectorAll('.cat-pill[data-bcat]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-pill[data-bcat]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const sport = btn.dataset.bcat;
+        document.querySelectorAll('.wrestler-card[data-bsport]').forEach(card => {
+          card.style.display = (sport === 'all' || card.dataset.bsport === sport) ? '' : 'none';
+        });
+      });
+    });
+
     /* CATEGORY PILLS — outside initApp so always works */
     document.querySelectorAll('.cat-pill[data-cat]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1205,55 +1240,9 @@ layout: none
         } catch(e) { return null; }
       }
 
-      /* LIKES */
-      const likedKey = 'hw_liked';
-      let liked = new Set(JSON.parse(localStorage.getItem(likedKey) || '[]'));
-      let likes = {};
+      /* LIKES — handled by independent IIFE below initApp */
 
-      async function loadAllLikes() {
-        const data = await sbFetch('likes?select=post_id,count');
-        if (data) data.forEach(row => { likes[row.post_id] = row.count; });
-        document.querySelectorAll('.like-btn').forEach(btn => {
-          const id = btn.dataset.id;
-          btn.querySelector('.like-count').textContent = fmt(likes[id] || 0);
-          btn.classList.toggle('liked', liked.has(id));
-        });
-      }
-
-      async function toggleLike(postId) {
-        const id = String(postId);
-        const wasLiked = liked.has(id);
-        if (wasLiked) { liked.delete(id); } else { liked.add(id); }
-        localStorage.setItem(likedKey, JSON.stringify([...liked]));
-        const newCount = Math.max(0, (likes[id] || 0) + (wasLiked ? -1 : 1));
-        likes[id] = newCount;
-        document.querySelectorAll('.like-btn[data-id="'+id+'"]').forEach(btn => {
-          btn.classList.toggle('liked', !wasLiked);
-          btn.querySelector('.like-count').textContent = fmt(newCount);
-        });
-        const existing = await sbFetch('likes?post_id=eq.' + encodeURIComponent(id) + '&select=id');
-        if (existing && existing.length > 0) { await sbFetch('likes?post_id=eq.' + encodeURIComponent(id), 'PATCH', { count: newCount }); }
-        else { await sbFetch('likes', 'POST', { post_id: id, count: newCount }); }
-      }
-
-      document.querySelectorAll('.like-btn').forEach(btn => {
-        btn.addEventListener('click', () => toggleLike(btn.dataset.id));
-      });
-      loadAllLikes();
-
-      /* SAVE */
-      const savedKey = 'hw_saved';
-      let saved = new Set(JSON.parse(localStorage.getItem(savedKey) || '[]'));
-      document.querySelectorAll('.save-btn').forEach(btn => {
-        const id = btn.dataset.id;
-        if (saved.has(id)) btn.classList.add('saved');
-        btn.addEventListener('click', () => {
-          if (saved.has(id)) { saved.delete(id); toast('Removed'); }
-          else { saved.add(id); toast('Saved!'); }
-          btn.classList.toggle('saved', saved.has(id));
-          localStorage.setItem(savedKey, JSON.stringify([...saved]));
-        });
-      });
+      /* SAVE — handled by independent IIFE below initApp */
 
       /* SHARE */
       document.querySelectorAll('.share-btn').forEach(btn => {
@@ -1316,35 +1305,34 @@ layout: none
       function closeViewer() { $('photo-viewer').classList.remove('open'); document.body.style.overflow = ''; }
       if($('viewer-back'))$('viewer-back').addEventListener('click', closeViewer);
 
-      /* Open viewer on photo tap — use index of tapped photo */
-      document.querySelectorAll('.card-photos').forEach(photos => {
-        const postCard = photos.closest('.post-card');
-        const postId = postCard ? postCard.querySelector('.like-btn')?.dataset.id : null;
-        const desc = postCard ? postCard.querySelector('.card-desc')?.textContent || '' : '';
-        photos.querySelectorAll('.card-photo-img').forEach((img, i) => {
-          img.addEventListener('click', () => {
-            const imgs = Array.from(photos.querySelectorAll('.card-photo-img')).map(im => im.src);
+      /* Open viewer on photo tap — uses actual card classes */
+      document.querySelectorAll('.post-card').forEach(card => {
+        const postId = card.querySelector('.like-btn')?.dataset.id;
+        const desc = card.querySelector('.card-desc')?.textContent || '';
+        const imgs = Array.from(card.querySelectorAll('.card-media-wrap img, .card-first-photo'))
+          .map(im => im.src).filter(Boolean);
+        if (!imgs.length) return;
+        card.querySelectorAll('.card-media-wrap img, .card-first-photo').forEach((img, i) => {
+          img.style.cursor = 'pointer';
+          img.addEventListener('click', e => {
+            e.preventDefault();
             openViewer(imgs, i, postId, desc);
           });
         });
       });
 
-      /* Viewer like */
+      /* Viewer like — delegates to feed like-btn via click */
       if($('viewer-like'))$('viewer-like').addEventListener('click', () => {
         if (!viewerPostId) return;
-        toggleLike(viewerPostId).then(() => {
-          const id = String(viewerPostId);
-          $('viewer-like').classList.toggle('liked', liked.has(id));
-          $('viewer-like-count').textContent = fmt(likes[id]||0);
-        });
+        const feedBtn = document.querySelector('.like-btn[data-id="'+viewerPostId+'"]');
+        if (feedBtn) feedBtn.click();
+        else $('viewer-like').classList.toggle('liked');
       });
 
       if($('viewer-save'))$('viewer-save').addEventListener('click', () => {
         if (!viewerPostId) return;
-        const id = String(viewerPostId);
-        if (saved.has(id)) { saved.delete(id); toast('Removed'); }
-        else { saved.add(id); toast('Saved!'); }
-        localStorage.setItem(savedKey, JSON.stringify([...saved]));
+        const feedBtn = document.querySelector('.save-btn[data-id="'+viewerPostId+'"]');
+        if (feedBtn) feedBtn.click();
       });
 
       /* Double tap to like */
@@ -1393,11 +1381,13 @@ layout: none
       /* SEARCH */
       const allPosts = [];
       document.querySelectorAll('.post-card').forEach(card => {
-        const img = card.querySelector('.card-photo-img');
+        const img = card.querySelector('.card-media-wrap img, .card-first-photo');
         const desc = card.querySelector('.card-desc');
-        const cat = card.dataset.cat;
+        const title = card.querySelector('.card-title');
+        const cat = card.dataset.cat || '';
         const id = card.querySelector('.like-btn')?.dataset.id;
-        if (img) allPosts.push({ img:img.src, desc:desc?desc.textContent:'', cat, id });
+        const url = card.querySelector('.card-title a')?.href || '#';
+        if (img) allPosts.push({ img:img.src, desc:desc?desc.textContent:'', title:title?title.textContent:'', cat, id, url });
       });
 
       if($('search-input'))$('search-input').addEventListener('input', e => {
@@ -1539,15 +1529,16 @@ layout: none
         return;
       }
       grid.innerHTML = '';
-      document.querySelectorAll('.post-card[data-idx]').forEach(card => {
-        const id = card.querySelector('.save-btn')?.dataset.id;
+      document.querySelectorAll('.post-card').forEach(card => {
+        const saveBtn = card.querySelector('.save-btn');
+        const id = saveBtn?.dataset.id;
         if (!id || !savedIds.has(id)) return;
-        const img = card.querySelector('img');
+        const img = card.querySelector('.card-media-wrap img, .card-first-photo');
         const url = card.querySelector('.card-title a')?.href || '#';
         if (!img) return;
         const a = document.createElement('a');
         a.href = url;
-        a.style.cssText = 'display:block;aspect-ratio:1;overflow:hidden;background:#111;';
+        a.style.cssText = 'display:block;aspect-ratio:1;overflow:hidden;background:#111;border-radius:4px;';
         const i = document.createElement('img');
         i.src = img.src;
         i.style.cssText = 'width:100%;height:100%;object-fit:cover;';
@@ -1670,6 +1661,7 @@ layout: none
         } catch(e) { console.warn('LR story parse error:', e); }
       });
     }
+    let lrCurrentStory = null;
     let lrCurrentLang = null;
     let lrCurrentChapter = 0;
     let lrTTSPlaying = false;
