@@ -40,19 +40,23 @@ export async function onRequest(context) {
 <html>
 <head><title>Authenticating...</title></head>
 <body>
-<p>Authenticating, please wait...</p>
+<p style="font-family:sans-serif;text-align:center;margin-top:3rem;">Authenticating, please wait...</p>
 <script>
 (function() {
   var token = "${token}";
   var provider = "github";
   var data = JSON.stringify({ token: token, provider: provider });
   var message = "authorization:" + provider + ":success:" + data;
-  
+
   if (window.opener) {
     window.opener.postMessage(message, "*");
-    setTimeout(function() { window.close(); }, 1000);
+    setTimeout(function() { window.close(); }, 500);
   } else {
-    document.body.innerHTML = "<p>Auth complete. You can close this window.</p>";
+    try {
+      localStorage.setItem("netlify-cms-user", JSON.stringify({ token: token, provider: provider, backendName: "github" }));
+      localStorage.setItem("decap-cms-user", JSON.stringify({ token: token, provider: provider, backendName: "github" }));
+    } catch(e) {}
+    window.location.href = "/admin/";
   }
 })();
 </script>
