@@ -750,7 +750,7 @@ layout: none
           {% if all_stories.size > 0 %}
             {% for story in all_stories %}
             {% capture story_json %}{"idx":{{ forloop.index0 }},"title":{{ story.title | jsonify }},"category":{{ story.category | jsonify }},"cover":{{ story.cover | default: "" | jsonify }},"read_time":{{ story.read_time | default: "5 min read" | jsonify }},"slug":{{ story.slug | jsonify }},"languages":{{ story.languages | jsonify }}}{% endcapture %}
-            <div class="lr-card reveal" data-lcat="{{ story.category }}" data-story-idx="{{ forloop.index0 }}" data-story-json='{{ story_json | replace: "'", "&#39;" }}'>
+            <div class="lr-card reveal" data-lcat="{{ story.category }}" data-story-idx="{{ forloop.index0 }}" data-story-json="{{ story_json | escape }}">
               {% if story.cover %}
               <img class="lr-cover" src="{{ story.cover }}" alt="{{ story.title }}" loading="lazy">
               {% endif %}
@@ -1205,55 +1205,9 @@ layout: none
         } catch(e) { return null; }
       }
 
-      /* LIKES */
-      const likedKey = 'hw_liked';
-      let liked = new Set(JSON.parse(localStorage.getItem(likedKey) || '[]'));
-      let likes = {};
+      /* LIKES — handled by independent IIFE below initApp */
 
-      async function loadAllLikes() {
-        const data = await sbFetch('likes?select=post_id,count');
-        if (data) data.forEach(row => { likes[row.post_id] = row.count; });
-        document.querySelectorAll('.like-btn').forEach(btn => {
-          const id = btn.dataset.id;
-          btn.querySelector('.like-count').textContent = fmt(likes[id] || 0);
-          btn.classList.toggle('liked', liked.has(id));
-        });
-      }
-
-      async function toggleLike(postId) {
-        const id = String(postId);
-        const wasLiked = liked.has(id);
-        if (wasLiked) { liked.delete(id); } else { liked.add(id); }
-        localStorage.setItem(likedKey, JSON.stringify([...liked]));
-        const newCount = Math.max(0, (likes[id] || 0) + (wasLiked ? -1 : 1));
-        likes[id] = newCount;
-        document.querySelectorAll('.like-btn[data-id="'+id+'"]').forEach(btn => {
-          btn.classList.toggle('liked', !wasLiked);
-          btn.querySelector('.like-count').textContent = fmt(newCount);
-        });
-        const existing = await sbFetch('likes?post_id=eq.' + encodeURIComponent(id) + '&select=id');
-        if (existing && existing.length > 0) { await sbFetch('likes?post_id=eq.' + encodeURIComponent(id), 'PATCH', { count: newCount }); }
-        else { await sbFetch('likes', 'POST', { post_id: id, count: newCount }); }
-      }
-
-      document.querySelectorAll('.like-btn').forEach(btn => {
-        btn.addEventListener('click', () => toggleLike(btn.dataset.id));
-      });
-      loadAllLikes();
-
-      /* SAVE */
-      const savedKey = 'hw_saved';
-      let saved = new Set(JSON.parse(localStorage.getItem(savedKey) || '[]'));
-      document.querySelectorAll('.save-btn').forEach(btn => {
-        const id = btn.dataset.id;
-        if (saved.has(id)) btn.classList.add('saved');
-        btn.addEventListener('click', () => {
-          if (saved.has(id)) { saved.delete(id); toast('Removed'); }
-          else { saved.add(id); toast('Saved!'); }
-          btn.classList.toggle('saved', saved.has(id));
-          localStorage.setItem(savedKey, JSON.stringify([...saved]));
-        });
-      });
+      /* SAVE — handled by independent IIFE below initApp */
 
       /* SHARE */
       document.querySelectorAll('.share-btn').forEach(btn => {
@@ -1316,35 +1270,34 @@ layout: none
       function closeViewer() { $('photo-viewer').classList.remove('open'); document.body.style.overflow = ''; }
       if($('viewer-back'))$('viewer-back').addEventListener('click', closeViewer);
 
-      /* Open viewer on photo tap — use index of tapped photo */
-      document.querySelectorAll('.card-photos').forEach(photos => {
-        const postCard = photos.closest('.post-card');
-        const postId = postCard ? postCard.querySelector('.like-btn')?.dataset.id : null;
-        const desc = postCard ? postCard.querySelector('.card-desc')?.textContent || '' : '';
-        photos.querySelectorAll('.card-photo-img').forEach((img, i) => {
-          img.addEventListener('click', () => {
-            const imgs = Array.from(photos.querySelectorAll('.card-photo-img')).map(im => im.src);
+      /* Open viewer on photo tap — uses actual card classes */
+      document.querySelectorAll('.post-card').forEach(card => {
+        const postId = card.querySelector('.like-btn')?.dataset.id;
+        const desc = card.querySelector('.card-desc')?.textContent || '';
+        const imgs = Array.from(card.querySelectorAll('.card-media-wrap img, .card-first-photo'))
+          .map(im => im.src).filter(Boolean);
+        if (!imgs.length) return;
+        card.querySelectorAll('.card-media-wrap img, .card-first-photo').forEach((img, i) => {
+          img.style.cursor = 'pointer';
+          img.addEventListener('click', e => {
+            e.preventDefault();
             openViewer(imgs, i, postId, desc);
           });
         });
       });
 
-      /* Viewer like */
+      /* Viewer like — delegates to feed like-btn via click */
       if($('viewer-like'))$('viewer-like').addEventListener('click', () => {
         if (!viewerPostId) return;
-        toggleLike(viewerPostId).then(() => {
-          const id = String(viewerPostId);
-          $('viewer-like').classList.toggle('liked', liked.has(id));
-          $('viewer-like-count').textContent = fmt(likes[id]||0);
-        });
+        const feedBtn = document.querySelector('.like-btn[data-id="'+viewerPostId+'"]');
+        if (feedBtn) feedBtn.click();
+        else $('viewer-like').classList.toggle('liked');
       });
 
       if($('viewer-save'))$('viewer-save').addEventListener('click', () => {
         if (!viewerPostId) return;
-        const id = String(viewerPostId);
-        if (saved.has(id)) { saved.delete(id); toast('Removed'); }
-        else { saved.add(id); toast('Saved!'); }
-        localStorage.setItem(savedKey, JSON.stringify([...saved]));
+        const feedBtn = document.querySelector('.save-btn[data-id="'+viewerPostId+'"]');
+        if (feedBtn) feedBtn.click();
       });
 
       /* Double tap to like */
@@ -1393,11 +1346,13 @@ layout: none
       /* SEARCH */
       const allPosts = [];
       document.querySelectorAll('.post-card').forEach(card => {
-        const img = card.querySelector('.card-photo-img');
+        const img = card.querySelector('.card-media-wrap img, .card-first-photo');
         const desc = card.querySelector('.card-desc');
-        const cat = card.dataset.cat;
+        const title = card.querySelector('.card-title');
+        const cat = card.dataset.cat || '';
         const id = card.querySelector('.like-btn')?.dataset.id;
-        if (img) allPosts.push({ img:img.src, desc:desc?desc.textContent:'', cat, id });
+        const url = card.querySelector('.card-title a')?.href || '#';
+        if (img) allPosts.push({ img:img.src, desc:desc?desc.textContent:'', title:title?title.textContent:'', cat, id, url });
       });
 
       if($('search-input'))$('search-input').addEventListener('input', e => {
@@ -1539,15 +1494,16 @@ layout: none
         return;
       }
       grid.innerHTML = '';
-      document.querySelectorAll('.post-card[data-idx]').forEach(card => {
-        const id = card.querySelector('.save-btn')?.dataset.id;
+      document.querySelectorAll('.post-card').forEach(card => {
+        const saveBtn = card.querySelector('.save-btn');
+        const id = saveBtn?.dataset.id;
         if (!id || !savedIds.has(id)) return;
-        const img = card.querySelector('img');
+        const img = card.querySelector('.card-media-wrap img, .card-first-photo');
         const url = card.querySelector('.card-title a')?.href || '#';
         if (!img) return;
         const a = document.createElement('a');
         a.href = url;
-        a.style.cssText = 'display:block;aspect-ratio:1;overflow:hidden;background:#111;';
+        a.style.cssText = 'display:block;aspect-ratio:1;overflow:hidden;background:#111;border-radius:4px;';
         const i = document.createElement('img');
         i.src = img.src;
         i.style.cssText = 'width:100%;height:100%;object-fit:cover;';
@@ -1670,6 +1626,7 @@ layout: none
         } catch(e) { console.warn('LR story parse error:', e); }
       });
     }
+    let lrCurrentStory = null;
     let lrCurrentLang = null;
     let lrCurrentChapter = 0;
     let lrTTSPlaying = false;
