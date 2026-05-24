@@ -58,10 +58,9 @@
 
     /* VIDEOS */
     .videos-list{padding:0.5rem 1rem 2rem;}
-    .video-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.75rem;cursor:pointer;}
-    .video-play{width:36px;height:36px;border-radius:50%;background:var(--fire-orange);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-    .video-play svg{width:14px;height:14px;fill:#fff;}
-    .video-title{font-size:0.82rem;color:var(--text-dim);}
+    .video-wrap{margin-bottom:0.75rem;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:16/9;}
+    .video-wrap video,.video-wrap iframe{width:100%;height:100%;display:block;border:none;}
+    .video-wrap video{object-fit:contain;background:#000;}
 
     /* PHOTO VIEWER */
     .photo-viewer{position:fixed;inset:0;z-index:500;background:#000;transform:translateY(100%);transition:transform 0.38s var(--ease);overflow:hidden;}
@@ -146,10 +145,21 @@
   <div class="section-title">Videos</div>
   <div class="videos-list">
     {% for vid in page.videos %}
-    <div class="video-item" onclick="window.open('{{ vid }}','_blank')">
-      <div class="video-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-      <div class="video-title">Video {{ forloop.index }}</div>
+    {% if vid contains 'sendvid.com/embed' %}
+    <div class="video-wrap">
+      <iframe src="https:{{ vid }}" frameborder="0" allowfullscreen loading="lazy"></iframe>
     </div>
+    {% elsif vid contains '.mp4' or vid contains '.webm' or vid contains '.mov' %}
+    <div class="video-wrap">
+      <video controls preload="none" playsinline>
+        <source src="{{ vid }}" type="video/mp4">
+      </video>
+    </div>
+    {% else %}
+    <div class="video-wrap">
+      <iframe src="{{ vid }}" frameborder="0" allowfullscreen loading="lazy"></iframe>
+    </div>
+    {% endif %}
     {% endfor %}
   </div>
   {% endif %}
