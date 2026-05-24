@@ -15,37 +15,63 @@ stats:
     value: Puerto Rican / Italian
   - label: Career Record
     value: 83-20
-photo: https://images2.imgbox.com/ae/6f/gCLsqJ4K_o.png
+photo: https://hottwrestling.b-cdn.net/Dylan%20Palacio/gCLsqJ4K_o.png
 images:
-  - https://images2.imgbox.com/ae/6f/gCLsqJ4K_o.png
-  - https://images2.imgbox.com/ed/c5/hNrbIsay_o.png
-  - https://images2.imgbox.com/e2/c8/OLub9gUb_o.png
-  - https://images2.imgbox.com/38/d1/FkGODPLs_o.png
-  - https://images2.imgbox.com/68/7a/hu4BeJwS_o.png
-  - https://images2.imgbox.com/88/f6/cUJlXNw6_o.png
-  - https://images2.imgbox.com/40/94/eNRzoGmE_o.jpg
-  - https://images2.imgbox.com/30/5a/LsBuB8ZG_o.jpg
-  - https://images2.imgbox.com/ca/02/ySpoglTl_o.jpg
-  - https://images2.imgbox.com/98/d1/plx80HgG_o.jpg
-  - https://images2.imgbox.com/44/19/Bqqc7kHv_o.jpg
-  - https://images2.imgbox.com/51/c3/Usk8qF5G_o.jpg
-  - https://images2.imgbox.com/1f/f3/VqSriYLw_o.jpg
-  - https://images2.imgbox.com/90/84/X7VqciwT_o.jpg
-  - https://images2.imgbox.com/bd/77/NCEukuF9_o.jpg
-  - https://images2.imgbox.com/c1/37/0R1XspRe_o.jpg
-  - https://images2.imgbox.com/ff/4e/KPwspBss_o.gif
-  - https://images2.imgbox.com/1b/8c/IWpBEKSN_o.png
-  - https://images2.imgbox.com/2a/46/oi07zxra_o.gif
-  - https://images2.imgbox.com/f3/c2/lmz4b0Px_o.png
-  - https://images2.imgbox.com/d6/4b/lxeziyFB_o.png
-  - https://images2.imgbox.com/0c/f5/Oo6wdPLA_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/gCLsqJ4K_o.png
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/hNrbIsay_o.png
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/OLub9gUb_o.png
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FkGODPLs_o.png
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/hu4BeJwS_o.png
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/cUJlXNw6_o.png
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/eNRzoGmE_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/LsBuB8ZG_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/ySpoglTl_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/plx80HgG_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/Bqqc7kHv_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/Usk8qF5G_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/VqSriYLw_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/X7VqciwT_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/NCEukuF9_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/0R1XspRe_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/KPwspBss_o.gif
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/IWpBEKSN_o.png
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/oi07zxra_o.gif
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/IMB_Quq58I(1).gif
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/lmz4b0Px_o.png
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/lxeziyFB_o.png
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/Oo6wdPLA_o.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/IMG_8539.PNG
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/IMG_8540.PNG
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569479887.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569526827.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569533266.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569541548.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569551414.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569559727.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569566140.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569571282.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569598347.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569604365.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569609623.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569616104.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569631635.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569645961.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569660914.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569673216.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569705148.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569710775.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569731376.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569785180.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569796987.jpg
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/FB_IMG_1779569817894.jpg
 videos:
-  - https://sendvid.com/embed/hdthorc0
-  - https://sendvid.com/embed/z11de72m
-  - https://sendvid.com/embed/5ai6ego5
-  - https://sendvid.com/embed/2m4dfoiu
-  - https://sendvid.com/embed/rcyl6okh
-  - https://sendvid.com/embed/nuv1bvjy
-  - https://sendvid.com/embed/qi2npwdk
-  - https://sendvid.com/embed/7q2iqirr
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/35323371_dylanpostm_d22b6cae522c51d3f06f097581ca45e8(1).mp4
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/35374171_IMG_5188mo_25d9081971522569f78f4fa2de1c17f8(1).mp4
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/46534711_259273519__b02263eb58115ac7d4bcbbb9c998a7d5.mp4
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/46535191_90155516_5_00dbfb468b07f211d102c3af4d8ca0ef.mp4
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/46535211_91252004_2_3f90f20f1587668b7d6d4ff579707402.mp4
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/AQM12i8bhU6yf1hgk7jdXBeHBExRDqj0-AZV02d2mFQgtUF477_HJrbeLPdkSD0BNke3zDyDHVe6phZ-bGLE52pB.mp4
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/www.ssvid.net--DYLAN-The-First-Hour-Unknown-1080p-h264-mp4.mp4
+  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/YouCut_20260523_171907989.mp4
+description: "2x NCAA All-American from Cornell. 157 lbs of pure fire on the mat. #wrestling #cornell #ncaa #champion #157lbs"
 ---
