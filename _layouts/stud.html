@@ -126,9 +126,11 @@
   <div class="section-title">Videos</div>
   <div class="videos-list">
     {% for vid in page.videos %}
-    {% if vid contains 'sendvid.com/embed' %}<div class="video-wrap"><iframe src="https:{{ vid }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
-    {% elsif vid contains '.mp4' or vid contains '.webm' or vid contains '.mov' %}<div class="video-wrap"><video controls preload="none" playsinline><source src="{{ vid }}" type="video/mp4"></video></div>
-    {% else %}<div class="video-wrap"><iframe src="{{ vid }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
+    {% assign vid_url = vid.url | default: vid %}
+    {% assign vid_poster = vid.poster | default: page.poster | default: "" %}
+    {% if vid_url contains 'sendvid.com/embed' %}<div class="video-wrap"><iframe src="https:{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
+    {% elsif vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}<div class="video-wrap"><video controls preload="none" playsinline controlsList="nodownload" oncontextmenu="return false"{% if vid_poster != "" %} poster="{{ vid_poster }}"{% endif %}><source src="{{ vid_url }}" type="video/mp4"></video></div>
+    {% else %}<div class="video-wrap"><iframe src="{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
     {% endif %}
     {% endfor %}
   </div>
