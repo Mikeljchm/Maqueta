@@ -30,6 +30,9 @@ layout: none
   <!-- Canonical -->
   <link rel="canonical" href="https://hottwrestling.com">
 
+  <!-- Supabase Auth -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <!-- OneSignal Push Notifications -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
@@ -153,6 +156,40 @@ layout: none
     .nav-item:active { transform:scale(0.88); }
     .nav-dot { position:absolute; top:0.2rem; right:0.2rem; width:5px; height:5px; background:var(--fire-orange); border-radius:50%; animation:pulse-dot 2s ease-in-out infinite; }
     @keyframes pulse-dot { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.4);opacity:0.7;} }
+
+    /* ADULT CONTENT BLUR */
+    .adult-blur { position:relative; }
+    .adult-blur .card-media-wrap img,
+    .adult-blur .card-first-photo { filter:blur(18px); transform:scale(1.05); }
+    .adult-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.5rem; z-index:5; cursor:pointer; }
+    .adult-overlay-icon { font-size:2rem; line-height:1; }
+    .adult-overlay-text { font-family:var(--font-d); font-size:0.85rem; color:#fff; letter-spacing:0.08em; text-align:center; text-shadow:0 2px 8px rgba(0,0,0,0.8); padding:0 1rem; }
+    .adult-overlay-btn { background:rgba(255,69,0,0.9); border:none; border-radius:20px; padding:0.4rem 1rem; font-family:var(--font-d); font-size:0.75rem; color:#fff; letter-spacing:0.1em; cursor:pointer; margin-top:0.25rem; }
+
+    /* AUTH MODAL */
+    .auth-modal { position:fixed; inset:0; z-index:900; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s var(--ease); }
+    .auth-modal.open { opacity:1; pointer-events:all; }
+    .auth-modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.75); }
+    .auth-modal-card { position:relative; z-index:1; width:100%; max-width:480px; background:var(--surface-2); border-radius:20px 20px 0 0; border-top:1px solid var(--border); padding:2rem 1.5rem 3rem; text-align:center; transform:translateY(30px); transition:transform 0.35s var(--ease); }
+    .auth-modal.open .auth-modal-card { transform:translateY(0); }
+    .auth-modal-icon { font-size:2.5rem; line-height:1; margin-bottom:0.75rem; }
+    .auth-modal-title { font-family:var(--font-d); font-size:1.6rem; color:#fff; letter-spacing:0.06em; margin-bottom:0.4rem; }
+    .auth-modal-sub { font-size:0.85rem; color:var(--text-dim); margin-bottom:1.5rem; line-height:1.6; }
+    .auth-google-btn { display:flex; align-items:center; justify-content:center; gap:0.75rem; width:100%; padding:0.9rem; background:#fff; border:none; border-radius:12px; font-size:0.95rem; font-weight:600; color:#1a1a1a; cursor:pointer; transition:all 0.2s var(--ease); margin-bottom:0.75rem; }
+    .auth-google-btn:active { transform:scale(0.97); }
+    .auth-google-btn svg { width:20px; height:20px; flex-shrink:0; }
+    .auth-modal-close { background:none; border:none; color:var(--text-muted); font-size:0.8rem; cursor:pointer; margin-top:0.5rem; }
+
+    /* USER PROFILE in More */
+    .user-profile-section { padding:1.25rem 1rem; display:flex; align-items:center; gap:0.85rem; border-bottom:1px solid var(--border); }
+    .user-avatar { width:48px; height:48px; border-radius:50%; object-fit:cover; border:2px solid var(--fire-orange); flex-shrink:0; }
+    .user-avatar-placeholder { width:48px; height:48px; border-radius:50%; background:var(--surface-3); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .user-avatar-placeholder svg { width:24px; height:24px; fill:none; stroke:var(--text-muted); stroke-width:1.5; }
+    .user-info { flex:1; }
+    .user-name { font-size:0.9rem; font-weight:600; color:var(--text); }
+    .user-email { font-size:0.72rem; color:var(--text-muted); margin-top:0.1rem; }
+    .user-login-btn { background:var(--fire-orange); border:none; border-radius:20px; padding:0.45rem 1rem; font-family:var(--font-d); font-size:0.75rem; color:#fff; letter-spacing:0.08em; cursor:pointer; }
+    .user-logout-btn { background:none; border:1px solid var(--border); border-radius:20px; padding:0.45rem 1rem; font-size:0.72rem; color:var(--text-muted); cursor:pointer; }
 
     /* CATEGORY PILLS */
     .cat-pills { display:flex; gap:0.45rem; padding:0.75rem 1rem 0.65rem; overflow-x:auto; scrollbar-width:none; position:sticky; top:0; z-index:10; background:rgba(0,0,0,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #1a1a1a; }
@@ -548,7 +585,7 @@ layout: none
             {% elsif post.image %}
               {% assign all_imgs = post.image | split: '|||' %}
             {% endif %}
-            <article class="post-card" data-cat="{{ post.category }}" data-idx="{{ forloop.index0 }}">
+            <article class="post-card{% if post.adult %} adult-card{% endif %}" data-cat="{{ post.category }}" data-idx="{{ forloop.index0 }}" data-adult="{{ post.adult | default: false }}">
               <div class="card-header">
                 <div class="card-avatar">HW</div>
                 <div class="card-meta">
@@ -560,6 +597,7 @@ layout: none
 
               {% if all_imgs %}
               {% assign img_count = all_imgs | size %}
+              <div class="card-media-container" style="position:relative;">
               {% if img_count == 1 %}
               <!-- Single photo — whole card links to post -->
               <a href="{{ post.url }}" class="card-media-wrap">
@@ -594,6 +632,14 @@ layout: none
                 </a>
               </div>
               {% endif %}
+              {% if post.adult %}
+              <div class="adult-overlay" id="adult-overlay-{{ forloop.index0 }}" onclick="openAuthModal()">
+                <div class="adult-overlay-icon">&#128520;</div>
+                <div class="adult-overlay-text">Adults Only. No Exceptions.</div>
+                <div class="adult-overlay-btn">Sign in to unlock &#128293;</div>
+              </div>
+              {% endif %}
+              </div>
               {% endif %}
 
               <div class="card-body">
@@ -891,6 +937,17 @@ layout: none
 
       <!-- MORE -->
       <div class="page" id="page-more">
+        <!-- USER PROFILE -->
+        <div class="user-profile-section" id="user-profile-section">
+          <div class="user-avatar-placeholder" id="user-avatar-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          </div>
+          <div class="user-info" id="user-info">
+            <div class="user-name" id="user-display-name">Sign in to unlock +18 content</div>
+            <div class="user-email" id="user-display-email">Free &middot; No credit card needed</div>
+          </div>
+          <button class="user-login-btn" id="user-action-btn" onclick="openAuthModal()">Sign In</button>
+        </div>
         <div class="profile-header">
           <div class="profile-logo">HOTT <span>WRESTLING</span></div>
           <div class="profile-tagline">"Where the heat rises."</div>
@@ -1052,6 +1109,21 @@ layout: none
     <div class="tg-float-pulse"></div>
     <svg viewBox="0 0 24 24"><path d="M21 5L2 12.5l7 1M21 5l-2.5 15L9 13.5M21 5L9 13.5m0 0v5l3.5-3"/></svg>
   </a>
+
+  <!-- AUTH MODAL -->
+  <div class="auth-modal" id="auth-modal">
+    <div class="auth-modal-backdrop" onclick="closeAuthModal()"></div>
+    <div class="auth-modal-card">
+      <div class="auth-modal-icon">&#128520;</div>
+      <div class="auth-modal-title">Adults Only. No Exceptions.</div>
+      <div class="auth-modal-sub">Sign in to see what's hiding behind here &#128293;</div>
+      <button class="auth-google-btn" onclick="signInWithGoogle()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+      <button class="auth-modal-close" onclick="closeAuthModal()">Maybe later</button>
+    </div>
+  </div>
 
   <div class="toast" id="toast"></div>
 
@@ -1971,6 +2043,112 @@ layout: none
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     });
   }
+  </script>
+
+  <script>
+  /* ── SUPABASE AUTH ── */
+  const SUPA_URL = 'https://wxyvielyommbsgbwhcbu.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
+  const supaAuth = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  let currentUser = null;
+
+  function openAuthModal() {
+    document.getElementById('auth-modal').classList.add('open');
+  }
+
+  function closeAuthModal() {
+    document.getElementById('auth-modal').classList.remove('open');
+  }
+
+  async function signInWithGoogle() {
+    await supaAuth.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+  }
+
+  async function signOut() {
+    await supaAuth.auth.signOut();
+    currentUser = null;
+    updateAuthUI(null);
+    applyAdultBlur();
+  }
+
+  function updateAuthUI(user) {
+    const nameEl = document.getElementById('user-display-name');
+    const emailEl = document.getElementById('user-display-email');
+    const avatarWrap = document.getElementById('user-avatar-wrap');
+    const actionBtn = document.getElementById('user-action-btn');
+
+    if (user) {
+      const meta = user.user_metadata || {};
+      const name = meta.full_name || meta.name || user.email.split('@')[0];
+      const avatar = meta.avatar_url || meta.picture || '';
+      const email = user.email || '';
+
+      if (nameEl) nameEl.textContent = name;
+      if (emailEl) emailEl.textContent = email;
+      if (avatarWrap) {
+        if (avatar) {
+          avatarWrap.innerHTML = '<img class="user-avatar" src="' + avatar + '" alt="' + name + '">';
+        } else {
+          avatarWrap.innerHTML = '<div class="user-avatar-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>';
+        }
+      }
+      if (actionBtn) {
+        actionBtn.textContent = 'Sign Out';
+        actionBtn.onclick = signOut;
+        actionBtn.className = 'user-logout-btn';
+      }
+    } else {
+      if (nameEl) nameEl.textContent = 'Sign in to unlock +18 content';
+      if (emailEl) emailEl.textContent = 'Free \u00b7 No credit card needed';
+      if (avatarWrap) avatarWrap.innerHTML = '<div class="user-avatar-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>';
+      if (actionBtn) {
+        actionBtn.textContent = 'Sign In';
+        actionBtn.onclick = openAuthModal;
+        actionBtn.className = 'user-login-btn';
+      }
+    }
+  }
+
+  function applyAdultBlur() {
+    const isLoggedIn = !!currentUser;
+    document.querySelectorAll('.adult-card').forEach(card => {
+      const overlay = card.querySelector('.adult-overlay');
+      const mediaContainer = card.querySelector('.card-media-container');
+      if (isLoggedIn) {
+        card.classList.remove('adult-blur');
+        if (overlay) overlay.style.display = 'none';
+      } else {
+        card.classList.add('adult-blur');
+        if (overlay) overlay.style.display = 'flex';
+      }
+    });
+  }
+
+  /* Init auth on load */
+  (async function initAuth() {
+    const { data: { session } } = await supaAuth.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      updateAuthUI(currentUser);
+    }
+    applyAdultBlur();
+
+    supaAuth.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        currentUser = session.user;
+        updateAuthUI(currentUser);
+        closeAuthModal();
+      } else {
+        currentUser = null;
+        updateAuthUI(null);
+      }
+      applyAdultBlur();
+    });
+  })();
   </script>
 </body>
 </html>
