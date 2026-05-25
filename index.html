@@ -346,10 +346,13 @@ layout: none
     .menu-item:active { background:var(--surface); }
     .menu-icon { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     .menu-icon svg { width:17px; height:17px; fill:none; stroke:#fff; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .menu-icon svg.filled { fill:#fff; stroke:none; }
     .menu-icon.orange { background:rgba(255,69,0,0.12); border:1px solid rgba(255,69,0,0.25); }
     .menu-icon.orange svg { stroke:var(--fire-orange); }
+    .menu-icon.orange svg.filled { fill:var(--fire-orange); stroke:none; }
     .menu-icon.yellow { background:rgba(255,184,0,0.1); border:1px solid rgba(255,184,0,0.2); }
     .menu-icon.yellow svg { stroke:var(--fire-yellow); }
+    .menu-icon.yellow svg.filled { fill:var(--fire-yellow); stroke:none; }
     .menu-icon.gray { background:var(--surface); border:1px solid var(--border); }
     .menu-text { flex:1; }
     .menu-title { font-size:0.86rem; font-weight:600; color:var(--text); }
@@ -637,6 +640,10 @@ layout: none
           </div>
           {% endif %}
         </div>
+        <!-- LOAD MORE BUTTON -->
+        <button id="load-more-btn" style="display:none;width:calc(100% - 2rem);margin:0.75rem 1rem 1.5rem;padding:0.85rem;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;color:var(--fire-orange);font-family:var(--font-d);font-size:1rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s var(--ease);">
+          LOAD MORE
+        </button>
       </div>
 
       <!-- THE MAT -->
@@ -897,25 +904,25 @@ layout: none
         <div class="menu-section">
           <div class="menu-label">Navigate</div>
           <div class="menu-item" data-nav="wrestlers">
-            <div class="menu-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.8 5.6.8-4 3.9.9 5.5L12 14.5l-4.9 2.5.9-5.5-4-3.9 5.6-.8z"/><path d="M12 18v4M9 22h6"/></svg></div>
+            <div class="menu-icon orange"><svg class="filled" viewBox="0 0 487.663 487.663" fill="currentColor"><path d="M485.403,406.853l-39.131-85.618c0,0,16.452-71.837,16.468-72.9c0.096-6.141-2.239-12.063-6.514-16.467l-77.321-79.86c2.263,3.594,4.055,7.553,5.003,11.949c2.208,10.245-0.031,20.385-5.394,28.48l11.528,47.997c3.276,13.66-4.389,27.799-17.716,32.423c-11.179,3.835-3.927,1.346-46.351,15.906c-7.658,4.154-12.638,11.989-13.027,20.726L308.178,416.1c-0.617,13.75,10.035,25.391,23.784,26.007c0.372,0.016,0.754,0.023,1.128,0.023c13.253,0,24.278-10.44,24.877-23.808l4.123-92.205l36.25-18.722l-2.539,10.537c-1.307,5.418-0.754,11.121,1.565,16.191l42.708,93.447c5.703,12.476,20.442,18.048,33.022,12.305C485.614,434.158,491.123,419.369,485.403,406.853z M332.148,213.35l-0.113,11.858l-77.134,26.469c-10.845,3.715-16.621,15.527-12.898,26.38c2.954,8.613,11.008,14.032,19.64,14.032c2.232,0,4.511-0.365,6.739-1.136l91.022-31.228c8.323-2.856,13.945-10.644,14.026-19.444l0.398-42.117c-4.924,4.956-11.244,8.622-18.577,10.206L332.148,213.35z M212.299,117.161c16.977,9.694,38.124,4.834,49.546-10.423c1.331,7.155,4.671,14.017,10.116,19.646c14.73,15.193,39.008,15.583,54.21,0.852c15.217-14.731,15.597-38.984,0.876-54.203c-14.722-15.208-38.993-15.607-54.203-0.876c-1.524,1.484-2.799,3.123-4.032,4.777c-1.986-10.716-8.338-20.546-18.535-26.371c-18.396-10.488-41.808-4.08-52.288,14.31C187.51,83.271,193.901,106.673,212.299,117.161z M260.011,312.068c-0.04-0.023-66.694-41.474-66.735-41.499l23.532-41.272l9.702,14.302c1.42,2.091,3.333,3.698,5.354,5.126c4.331-5.72,10.35-10.262,17.651-12.768l37.533-12.882l-1.598,0.35c-3.854,0.827-7.69,0.34-11.032-1.16l-42.66-19.176l-33.2-14.927l79.51,17.895c3.027,0.673,6.077,0.656,8.94,0.032l64.748-13.96c11.211-2.409,18.332-13.456,15.915-24.675c-2.409-11.21-13.409-18.349-24.675-15.916l-60.272,12.995l-75.049-16.896l24.133,0.496c-1.477-1.242-3.033-2.41-4.77-3.399l-12.248-6.992c-7.603-4.332-16.621-5.476-25.066-3.164c-8.444,2.312-15.624,7.884-19.964,15.485l-99.302,182.65L6.804,400.105c-9.449,10.001-9.004,25.771,1.007,35.221c9.993,9.458,25.778,9.003,35.22-1.007l66.24-70.126c1.72-1.808,3.148-3.877,4.251-6.115l29.518-60.083c0.065,0.04,0.115,0.097,0.18,0.138l78.941,49.084l1.136,70.401c0.226,13.62,11.34,24.513,24.911,24.513c0.138,0,0.276,0,0.414,0c13.756-0.226,24.733-11.56,24.513-25.325l-1.364-83.979C271.635,324.358,267.206,316.547,260.011,312.068z"/></svg></div>
             <div class="menu-text"><div class="menu-title">The Mat</div><div class="menu-desc">Wrestler profiles</div></div>
             <div class="menu-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
           </div>
           <div class="menu-divider"></div>
           <div class="menu-item" data-nav="badboys">
-            <div class="menu-icon orange"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.409 13.017A5 5 0 0 1 22 15c0 3.866-4 7-9 7-4.077 0-8.153-.82-10.371-2.462-.426-.316-.631-.832-.62-1.362C2.118 12.723 2.627 2 10 2a3 3 0 0 1 3 3 2 2 0 0 1-2 2c-1.105 0-1.64-.444-2-1"/><path d="M15 14a5 5 0 0 0-7.584 2"/><path d="M9.964 6.825C8.019 7.977 9.5 13 8 15"/></svg></div>
-            <div class="menu-text"><div class="menu-title">Studs</div><div class="menu-desc">Bad Boys, Bulge & more</div></div>
+            <div class="menu-icon orange"><svg class="filled" viewBox="0 0 285.052 285.052" fill="currentColor"><path d="M246.315,143.623c-17.304-9.577-31.077-24.764-39.093-42.717V64.218c0-35-28.475-63.475-63.475-63.475S80.273,29.218,80.273,64.218v33.856c-7.985,19.285-22.242,35.134-40.832,45.164C15.113,156.363,0,181.675,0,209.295c0,41.362,33.65,75.013,75.013,75.013c18.228,0,34.953-6.544,47.966-17.395c6.512,2.262,13.496,3.508,20.769,3.508c6.63,0,13.025-1.026,19.037-2.92c12.909,10.5,29.356,16.808,47.254,16.808c41.362,0,75.013-33.65,75.013-75.013C285.052,182.01,270.209,156.846,246.315,143.623z M95.273,64.218c0-26.729,21.746-48.475,48.475-48.475s48.475,21.746,48.475,48.475v106.638c0,3.05-2.48,5.53-5.53,5.53h-85.889c-3.05,0-5.53-2.48-5.53-5.53V64.218z M75.013,269.308C41.922,269.308,15,242.386,15,209.295c0-22.1,12.095-42.353,31.564-52.856c13.322-7.187,24.731-16.943,33.709-28.615v43.032c0,5.161,1.929,9.871,5.085,13.482c-3.156,3.611-5.085,8.32-5.085,13.481v9.127c0,21.76,11.011,40.993,27.749,52.434C98.545,265.646,87.201,269.308,75.013,269.308z M151.248,254.838v-30.983c0-4.143-3.357-7.5-7.5-7.5s-7.5,3.357-7.5,7.5v30.983c-23.18-3.616-40.975-23.714-40.975-47.892v-9.127c0-3.049,2.48-5.529,5.53-5.529h85.889c3.05,0,5.53,2.48,5.53,5.529v9.127C192.223,231.124,174.428,251.222,151.248,254.838z M210.039,269.308c-11.663,0-22.551-3.356-31.773-9.135c17.411-11.33,28.956-30.95,28.956-53.227v-9.127c0-5.161-1.929-9.871-5.085-13.481c3.156-3.611,5.085-8.321,5.085-13.482v-41.212c8.669,10.979,19.479,20.268,31.829,27.104c19.121,10.582,31,30.717,31,52.548C270.052,242.386,243.13,269.308,210.039,269.308z"/><circle cx="116.354" cy="141.04" r="7.5"/><path d="M116.354,124.597c4.143,0,7.5-3.357,7.5-7.5V64.382c0-4.143-3.357-7.5-7.5-7.5s-7.5,3.357-7.5,7.5v52.715C108.854,121.24,112.212,124.597,116.354,124.597z"/></svg></div>
+            <div class="menu-text"><div class="menu-title">Studs</div><div class="menu-desc">Bad Boys, Bulge &amp; more</div></div>
             <div class="menu-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
           </div>
           <div class="menu-divider"></div>
           <div class="menu-item" data-nav="bulge">
-            <div class="menu-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M9 14l1.5 6M15 14l-1.5 6"/></svg></div>
+            <div class="menu-icon orange"><svg class="filled" viewBox="0 0 512 512" fill="currentColor"><path d="M256 123.021c-50.91 0-102.246 2.886-189.084 8.588 23.825 5.534 46.826 10.086 69.297 13.664 96.682-5.682 142.892-5.682 239.574 0 22.471-3.578 45.472-8.13 69.297-13.664-86.838-5.702-138.174-8.588-189.084-8.588zM25.117 139.664c.019 9.64.08 19.471.264 29.25 199.173 45.623 262.065 45.623 461.238 0 .184-9.779.245-19.61.264-29.25-167.381 44.142-294.385 44.142-461.766 0zm.819 47.834c.542 13.036 1.435 25.696 2.984 37.313 1.938 14.532 4.867 27.376 8.88 36.964 3.967 9.474 8.795 15.347 14.038 18.051 38.386 15.253 65.763 14.797 90.47 28.274a73.11 73.11 0 0 1 9.005 5.802c1.008-27.584 5.494-62.545 25.421-98.158-43.358-5.28-91.246-14.688-150.798-28.246zm460.128 0c-59.552 13.558-107.44 22.967-150.798 28.246 19.927 35.613 24.413 70.574 25.421 98.158a73.11 73.11 0 0 1 9.004-5.802c24.708-13.477 52.085-13.02 90.471-28.274 5.243-2.704 10.071-8.577 14.037-18.05 4.014-9.59 6.943-22.433 8.881-36.965 1.549-11.617 2.442-24.277 2.984-37.313zm-289.709 30.38c-26.301 42.381-27.315 83.996-27.353 114.577a111.803 111.803 0 0 1 6.084 9.621c9.388 16.63 17.537 39.314 25.644 71.742 6.973 27.892 30.698 41.184 55.27 41.184 24.572 0 48.297-13.292 55.27-41.184 8.107-32.428 16.256-55.112 25.644-71.742a111.803 111.803 0 0 1 6.084-9.62c-.038-30.582-1.052-72.197-27.353-114.577-40.839 3.888-78.451 3.888-119.29 0z"/></svg></div>
             <div class="menu-text"><div class="menu-title">Bulge Sport</div><div class="menu-desc">Football, Rugby, Swimming &amp; more</div></div>
             <div class="menu-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
           </div>
           <div class="menu-divider"></div>
           <div class="menu-item" data-nav="audio">
-            <div class="menu-icon yellow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+            <div class="menu-icon yellow"><svg class="filled" viewBox="0 0 36 36" fill="currentColor"><path d="M18,2.5c-8.82,0-16,6.28-16,14s7.18,14,16,14a18,18,0,0,0,4.88-.68l5.53,3.52a1,1,0,0,0,1.54-.84l0-6.73a13,13,0,0,0,4-9.27C34,8.78,26.82,2.5,18,2.5ZM28.29,24.61a1,1,0,0,0-.32.73l0,5.34-4.38-2.79a1,1,0,0,0-.83-.11A16,16,0,0,1,18,28.5c-7.72,0-14-5.38-14-12s6.28-12,14-12,14,5.38,14,12A11.08,11.08,0,0,1,28.29,24.61Z"/><path d="M25,15.5H11a1,1,0,0,0,0,2H25a1,1,0,0,0,0-2Z"/><path d="M21.75,20.5h-7.5a1,1,0,0,0,0,2h7.5a1,1,0,0,0,0-2Z"/><path d="M11.28,12.5H24.72a1,1,0,0,0,0-2H11.28a1,1,0,0,0,0,2Z"/></svg></div>
             <div class="menu-text"><div class="menu-title">Locker Room</div><div class="menu-desc">Original stories</div></div>
             <div class="menu-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
           </div>
@@ -1115,10 +1122,12 @@ layout: none
         if (pg) pg.classList.add('active');
         /* Reset home feed when going back to home */
         if (id === 'home') {
-          document.querySelectorAll('.post-card').forEach(c => c.style.display = '');
+          currentCat = 'all';
+          visibleCount = POSTS_PER_PAGE;
           document.querySelectorAll('.cat-pill[data-cat]').forEach(b => b.classList.remove('active'));
           const allPill = document.querySelector('.cat-pill[data-cat="all"]');
           if (allPill) allPill.classList.add('active');
+          renderFeed();
         }
       });
     });
@@ -1172,16 +1181,47 @@ layout: none
     });
 
     /* CATEGORY PILLS — outside initApp so always works */
+    const POSTS_PER_PAGE = 12;
+    let currentCat = 'all';
+    let visibleCount = POSTS_PER_PAGE;
+
+    function getFilteredCards() {
+      return Array.from(document.querySelectorAll('.post-card')).filter(card => {
+        return currentCat === 'all' || card.dataset.cat === currentCat;
+      });
+    }
+
+    function renderFeed() {
+      const filtered = getFilteredCards();
+      const allCards = document.querySelectorAll('.post-card');
+      allCards.forEach(c => c.style.display = 'none');
+      filtered.forEach((card, i) => {
+        card.style.display = i < visibleCount ? '' : 'none';
+      });
+      const btn = document.getElementById('load-more-btn');
+      if (btn) btn.style.display = filtered.length > visibleCount ? '' : 'none';
+    }
+
     document.querySelectorAll('.cat-pill[data-cat]').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.cat-pill[data-cat]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const cat = btn.dataset.cat;
-        document.querySelectorAll('.post-card').forEach(card => {
-          card.style.display = (cat === 'all' || card.dataset.cat === cat) ? '' : 'none';
-        });
+        currentCat = btn.dataset.cat;
+        visibleCount = POSTS_PER_PAGE;
+        renderFeed();
       });
     });
+
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', () => {
+        visibleCount += POSTS_PER_PAGE;
+        renderFeed();
+      });
+    }
+
+    /* Init feed on load */
+    renderFeed();
 
     /* LR CATEGORY PILLS — outside initApp */
     document.querySelectorAll('.lr-pill').forEach(btn => {
