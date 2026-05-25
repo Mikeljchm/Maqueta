@@ -524,9 +524,12 @@ layout: none
     /* Locker Room Comments */
     .lr-comments-section { padding:1.25rem; border-top:1px solid var(--border); }
     .lr-comments-title { font-family:var(--font-d); font-size:0.95rem; letter-spacing:0.06em; color:var(--text-dim); margin-bottom:0.75rem; text-transform:uppercase; }
-    .lr-comment-item { display:flex; gap:0.5rem; margin-bottom:0.65rem; }
-    .lr-comment-av { width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,var(--fire-deep),var(--fire-red)); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-d); font-size:0.5rem; color:#fff; }
-    .lr-comment-text { font-size:0.8rem; color:var(--text-dim); line-height:1.45; padding-top:0.15rem; }
+    .lr-comment-item { display:flex; gap:0.5rem; margin-bottom:0.65rem; align-items:flex-start; }
+    .lr-comment-av { width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,var(--fire-deep),var(--fire-red)); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-d); font-size:0.5rem; color:#fff; overflow:hidden; }
+    .lr-comment-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .lr-comment-body { flex:1; }
+    .lr-comment-username { font-size:0.68rem; font-weight:600; color:var(--fire-orange); margin-bottom:0.12rem; }
+    .lr-comment-text { font-size:0.8rem; color:var(--text-dim); line-height:1.45; }
     .lr-comment-form { display:flex; gap:0.5rem; align-items:center; margin-top:0.75rem; }
     .lr-comment-input { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:0.45rem 0.85rem; color:var(--text); font-family:var(--font-b); font-size:0.8rem; outline:none; }
     .lr-comment-input:focus { border-color:rgba(255,69,0,0.3); }
@@ -1993,14 +1996,18 @@ layout: none
     async function loadLRComments(storySlug) {
       const listEl = document.getElementById('lr-comments-list');
       listEl.innerHTML = '';
-      const data = await sbFetch('comments?post_id=eq.lr_' + encodeURIComponent(storySlug) + '&order=created_at.asc&select=text');
-      if (data) data.forEach(row => addLRComment(row.text, false));
+      const data = await sbFetch('comments?post_id=eq.lr_' + encodeURIComponent(storySlug) + '&order=created_at.asc&select=text,user_name,user_avatar');
+      if (data) data.forEach(row => addLRComment(row.text, false, row.user_name, row.user_avatar));
     }
 
-    function addLRComment(text, animate) {
+    function addLRComment(text, animate, userName, userAvatar) {
       const listEl = document.getElementById('lr-comments-list');
       const div = document.createElement('div'); div.className = 'lr-comment-item';
-      div.innerHTML = '<div class="lr-comment-av">HW</div><div class="lr-comment-text">' + text + '</div>';
+      let avHtml = userAvatar
+        ? '<div class="lr-comment-av"><img src="'+userAvatar+'" alt="'+(userName||'User')+'" onerror="this.parentNode.innerHTML=\'HW\'"></div>'
+        : '<div class="lr-comment-av">HW</div>';
+      const nameHtml = userName ? '<div class="lr-comment-username">'+userName+'</div>' : '';
+      div.innerHTML = avHtml + '<div class="lr-comment-body">'+nameHtml+'<div class="lr-comment-text">'+text+'</div></div>';
       if (animate) { div.style.cssText='opacity:0;transform:translateY(5px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
       listEl.appendChild(div);
     }
@@ -2010,9 +2017,15 @@ layout: none
       const input = document.getElementById('lr-comment-input');
       const text = input.value.trim(); if (!text) return;
       input.value = '';
-      addLRComment(text, true);
+      let userName = null, userAvatar = null;
+      if (currentUser) {
+        const meta = currentUser.user_metadata || {};
+        userName = meta.full_name || meta.name || currentUser.email.split('@')[0];
+        userAvatar = meta.avatar_url || meta.picture || null;
+      }
+      addLRComment(text, true, userName, userAvatar);
       const postId = 'lr_' + lrCurrentStory.slug;
-      await sbFetch('comments', 'POST', { post_id: postId, text });
+      await sbFetch('comments', 'POST', { post_id: postId, text, user_name: userName, user_avatar: userAvatar });
       toast('Posted!');
     }
 
