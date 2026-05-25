@@ -1,0 +1,331 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>{{ page.title }} — HOTT WRESTLING</title>
+  <meta name="description" content="{% if page.languages %}{% assign fl = page.languages | first %}{% if fl.chapters %}{{ fl.chapters | first | map: 'content' | first | truncate: 155 }}{% endif %}{% endif %}">
+  <meta property="og:title" content="{{ page.title }} — HOTT WRESTLING">
+  <meta property="og:type" content="article">
+  {% if page.cover %}<meta property="og:image" content="{{ page.cover }}">{% endif %}
+  <link rel="canonical" href="{{ site.url }}{{ page.url }}">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg:#000; --surface:#0d0d0d; --surface-2:#141414;
+      --fire-orange:#FF4500; --fire-yellow:#FFB800; --fire-red:#CC1100; --fire-deep:#8B1A00;
+      --text:#F0EAE0; --text-dim:#888; --text-muted:#444; --border:#1f1f1f;
+      --font-d:'Bebas Neue',Impact,sans-serif;
+      --font-b:'DM Sans',Arial,sans-serif;
+      --font-it:'DM Sans',Georgia,serif;
+      --ease:cubic-bezier(0.16,1,0.3,1);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    html,body{background:#000;height:100%;}
+    body{font-family:var(--font-b);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+
+    .top-bar{height:48px;background:#000;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;padding:0 1rem;position:sticky;top:0;z-index:50;}
+    .back-btn{background:none;border:none;color:var(--text-dim);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+    .back-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .back-btn:active{color:var(--fire-orange);}
+    .top-logo{font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.04em;color:#fff;text-decoration:none;}
+    .top-logo span{background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+    /* TTS BAR */
+    .tts-bar{display:flex;align-items:center;gap:0.65rem;padding:0.65rem 1rem;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:48px;z-index:40;}
+    .tts-play{width:36px;height:36px;border-radius:50%;background:var(--fire-orange);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.2s;}
+    .tts-play:active{opacity:0.85;transform:scale(0.92);}
+    .tts-play svg{width:14px;height:14px;fill:#fff;}
+    .tts-info{flex:1;}
+    .tts-info strong{display:block;font-size:0.78rem;color:var(--text);font-weight:600;}
+    .tts-info span{font-size:0.62rem;color:var(--text-muted);}
+    .tts-speed{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:0.2rem 0.5rem;color:var(--text-dim);font-size:0.65rem;cursor:pointer;flex-shrink:0;}
+
+    /* LANG SWITCHER */
+    .lang-bar{display:flex;gap:0.4rem;padding:0.65rem 1rem;background:#000;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+    .lang-bar::-webkit-scrollbar{display:none;}
+    .lang-btn{flex-shrink:0;padding:0.28rem 0.75rem;border-radius:20px;font-size:0.6rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-dim);transition:all 0.2s;}
+    .lang-btn.active{background:var(--fire-orange);border-color:var(--fire-orange);color:#fff;}
+
+    /* COVER */
+    .story-cover{width:100%;max-height:60vw;object-fit:cover;display:block;}
+
+    /* BODY */
+    .story-body{padding:1.5rem 1.25rem 2rem;max-width:680px;margin:0 auto;}
+    .story-cat{font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--fire-orange);margin-bottom:0.65rem;}
+    .story-title{font-family:var(--font-d);font-size:clamp(1.5rem,6vw,2rem);color:#fff;line-height:1.15;margin-bottom:0.5rem;}
+    .story-meta{display:flex;align-items:center;gap:0.5rem;font-size:0.65rem;color:var(--text-muted);margin-bottom:1.5rem;flex-wrap:wrap;}
+    .story-meta span{display:flex;align-items:center;gap:0.3rem;}
+
+    /* CHAPTER NAV */
+    .chapter-nav{display:flex;gap:0.4rem;padding:0.75rem 1.25rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+    .chapter-nav::-webkit-scrollbar{display:none;}
+    .chap-btn{flex-shrink:0;padding:0.3rem 0.75rem;border-radius:20px;font-size:0.6rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-muted);transition:all 0.2s;}
+    .chap-btn.active{background:var(--fire-deep);border-color:var(--fire-orange);color:var(--fire-orange);}
+
+    /* CHAPTER CONTENT */
+    .chapter-content{padding:1.5rem 1.25rem 2rem;max-width:680px;margin:0 auto;font-family:var(--font-it);font-size:1rem;line-height:1.85;color:var(--text-dim);}
+    .chapter-title{font-family:var(--font-d);font-size:1.2rem;color:#fff;letter-spacing:0.06em;margin-bottom:1rem;}
+    .chapter-content p{margin-bottom:1rem;}
+
+    /* COMMENTS */
+    .comments-section{padding:1.25rem;border-top:1px solid var(--border);}
+    .comments-title{font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.75rem;text-transform:uppercase;}
+    .comment-item{display:flex;gap:0.55rem;margin-bottom:0.65rem;align-items:flex-start;}
+    .comment-av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--fire-deep),var(--fire-red));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.52rem;color:#fff;overflow:hidden;}
+    .comment-av img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+    .comment-body{flex:1;}
+    .comment-username{font-size:0.7rem;font-weight:600;color:var(--fire-orange);margin-bottom:0.15rem;}
+    .comment-text{font-size:0.8rem;color:var(--text-dim);line-height:1.45;}
+    .comment-form{display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem;}
+    .comment-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:0.5rem 0.9rem;color:var(--text);font-family:var(--font-b);font-size:0.82rem;outline:none;}
+    .comment-input:focus{border-color:rgba(255,69,0,0.3);}
+    .comment-input::placeholder{color:var(--text-muted);}
+    .comment-send{background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+    .comment-send svg{width:13px;height:13px;fill:none;stroke:var(--fire-orange);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,30,0.95);border:1px solid var(--border);color:var(--text);padding:0.5rem 1.1rem;border-radius:20px;font-size:0.72rem;opacity:0;transition:all 0.3s var(--ease);pointer-events:none;z-index:300;white-space:nowrap;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  </style>
+</head>
+<body>
+
+  <header class="top-bar">
+    <button class="back-btn" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+    </button>
+    <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
+  </header>
+
+  <!-- TTS BAR -->
+  <div class="tts-bar">
+    <button class="tts-play" id="tts-play" onclick="toggleTTS()">
+      <svg viewBox="0 0 24 24" id="tts-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    </button>
+    <div class="tts-info">
+      <strong id="tts-status">Listen to this story</strong>
+      <span>Tap play to read aloud</span>
+    </div>
+    <button class="tts-speed" id="tts-speed" onclick="cycleTTSSpeed()">1x</button>
+  </div>
+
+  {% if page.languages and page.languages.size > 1 %}
+  <div class="lang-bar" id="lang-bar">
+    {% for lang in page.languages %}
+    <button class="lang-btn {% if forloop.first %}active{% endif %}" data-lang="{{ lang.code }}" onclick="switchLang('{{ lang.code }}')">
+      {{ lang.code | upcase }}
+    </button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if page.cover %}
+  <img class="story-cover" src="{{ page.cover }}" alt="{{ page.title }}" loading="lazy">
+  {% endif %}
+
+  <div class="story-body">
+    <div class="story-cat">{{ page.category }}</div>
+    <div class="story-title">{{ page.title }}</div>
+    <div class="story-meta">
+      <span>{{ page.read_time | default: "5 min read" }}</span>
+    </div>
+  </div>
+
+  <!-- CHAPTER NAV -->
+  <div class="chapter-nav" id="chapter-nav"></div>
+
+  <!-- CHAPTER CONTENT -->
+  <div class="chapter-content" id="chapter-content"></div>
+
+  <!-- COMMENTS -->
+  <div class="comments-section">
+    <div class="comments-title">Comments</div>
+    <div id="comments-list"></div>
+    <div class="comment-form">
+      <input class="comment-input" id="comment-input" type="text" placeholder="Add a comment..." maxlength="280">
+      <button class="comment-send" id="comment-send">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  /* STORY DATA from Jekyll */
+  const STORY_SLUG = '{{ page.slug }}';
+  const STORY_DATA = {{ page.languages | jsonify }};
+
+  /* SUPABASE */
+  const _SB_URL = 'https://wxyvielyommbsgbwhcbu.supabase.co';
+  const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
+  const _sb = supabase.createClient(_SB_URL, _SB_KEY);
+  let currentUser = null;
+
+  async function sbFetch(path, method, body) {
+    const opts = { method: method||'GET', headers: { 'apikey': _SB_KEY, 'Authorization': 'Bearer '+_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
+    if (body) opts.body = JSON.stringify(body);
+    try { const r = await fetch(_SB_URL+'/rest/v1/'+path, opts); if(!r.ok) return null; const tx = await r.text(); return tx ? JSON.parse(tx) : null; } catch(e) { return null; }
+  }
+
+  function toast(msg) { const t = document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+
+  /* LANG & CHAPTER */
+  let currentLang = STORY_DATA && STORY_DATA.length > 0 ? STORY_DATA[0].code : 'en';
+  let currentChapter = 0;
+  let ttsPlaying = false;
+  let ttsUtterance = null;
+  let ttsSpeed = 1;
+
+  function getLangData(code) {
+    return STORY_DATA ? STORY_DATA.find(l => l.code === code) || STORY_DATA[0] : null;
+  }
+
+  function renderChapterNav(langCode) {
+    const langData = getLangData(langCode);
+    const chapters = langData ? (langData.chapters || []) : [];
+    const nav = document.getElementById('chapter-nav');
+    if (chapters.length <= 1) { nav.style.display = 'none'; return; }
+    nav.style.display = 'flex';
+    nav.innerHTML = '';
+    chapters.forEach((ch, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'chap-btn' + (i === currentChapter ? ' active' : '');
+      btn.textContent = ch.title || ('Chapter ' + (i+1));
+      btn.onclick = () => goChapter(i);
+      nav.appendChild(btn);
+    });
+  }
+
+  function renderChapterContent(langCode, chapterIdx) {
+    const langData = getLangData(langCode);
+    const chapters = langData ? (langData.chapters || []) : [];
+    const chapter = chapters[chapterIdx] || chapters[0] || { title: '', content: '' };
+    const el = document.getElementById('chapter-content');
+    let html = '';
+    if (chapter.title) html += '<div class="chapter-title">' + chapter.title + '</div>';
+    const paragraphs = (chapter.content || '').split('\n').filter(p => p.trim());
+    paragraphs.forEach(p => { html += '<p>' + p + '</p>'; });
+    el.innerHTML = html;
+    stopTTS();
+  }
+
+  function goChapter(idx) {
+    currentChapter = idx;
+    renderChapterNav(currentLang);
+    renderChapterContent(currentLang, currentChapter);
+    document.getElementById('chapter-content').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function switchLang(code) {
+    currentLang = code;
+    currentChapter = 0;
+    localStorage.setItem('hw_lr_lang', code);
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === code));
+    renderChapterNav(code);
+    renderChapterContent(code, 0);
+  }
+
+  /* TTS */
+  function toggleTTS() {
+    if (ttsPlaying) { stopTTS(); } else { startTTS(); }
+  }
+
+  function startTTS() {
+    if (!window.speechSynthesis) return;
+    stopTTS();
+    const langData = getLangData(currentLang);
+    const chapters = langData ? (langData.chapters || []) : [];
+    const chapter = chapters[currentChapter] || chapters[0];
+    if (!chapter) return;
+    ttsUtterance = new SpeechSynthesisUtterance(chapter.content || '');
+    ttsUtterance.lang = currentLang === 'es' ? 'es-ES' : currentLang === 'pt' ? 'pt-BR' : 'en-US';
+    ttsUtterance.rate = ttsSpeed;
+    ttsUtterance.onend = () => { ttsPlaying = false; updateTTSIcon(false); };
+    ttsUtterance.onerror = () => { ttsPlaying = false; updateTTSIcon(false); };
+    window.speechSynthesis.speak(ttsUtterance);
+    ttsPlaying = true;
+    updateTTSIcon(true);
+    document.getElementById('tts-status').textContent = 'Playing...';
+  }
+
+  function stopTTS() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    ttsPlaying = false;
+    updateTTSIcon(false);
+    document.getElementById('tts-status').textContent = 'Listen to this story';
+  }
+
+  function updateTTSIcon(playing) {
+    document.getElementById('tts-icon').innerHTML = playing
+      ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
+      : '<polygon points="5 3 19 12 5 21 5 3"/>';
+  }
+
+  function cycleTTSSpeed() {
+    const speeds = [1, 1.25, 1.5, 2];
+    const idx = speeds.indexOf(ttsSpeed);
+    ttsSpeed = speeds[(idx + 1) % speeds.length];
+    document.getElementById('tts-speed').textContent = ttsSpeed + 'x';
+    if (ttsPlaying) { stopTTS(); startTTS(); }
+  }
+
+  /* COMMENTS */
+  async function loadComments() {
+    const data = await sbFetch('comments?post_id=eq.lr_' + encodeURIComponent(STORY_SLUG) + '&order=created_at.asc&select=text,user_name,user_avatar');
+    if (data) {
+      document.getElementById('comments-list').innerHTML = '';
+      data.forEach(row => addComment(row.text, false, row.user_name, row.user_avatar));
+    }
+  }
+
+  function addComment(text, animate, userName, userAvatar) {
+    const div = document.createElement('div'); div.className = 'comment-item';
+    let avHtml = userAvatar
+      ? '<div class="comment-av"><img src="'+userAvatar+'" alt="'+(userName||'User')+'" onerror="this.parentNode.innerHTML=\'HW\'"></div>'
+      : '<div class="comment-av">HW</div>';
+    const nameHtml = userName ? '<div class="comment-username">'+userName+'</div>' : '';
+    div.innerHTML = avHtml + '<div class="comment-body">'+nameHtml+'<div class="comment-text">'+text+'</div></div>';
+    if (animate) { div.style.cssText='opacity:0;transform:translateY(6px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
+    document.getElementById('comments-list').appendChild(div);
+  }
+
+  async function postComment() {
+    const input = document.getElementById('comment-input');
+    const text = input.value.trim(); if (!text) return;
+    input.value = '';
+    let userName = null, userAvatar = null;
+    if (currentUser) {
+      const meta = currentUser.user_metadata || {};
+      userName = meta.full_name || meta.name || currentUser.email.split('@')[0];
+      userAvatar = meta.avatar_url || meta.picture || null;
+    }
+    addComment(text, true, userName, userAvatar);
+    await sbFetch('comments', 'POST', { post_id: 'lr_' + STORY_SLUG, text, user_name: userName, user_avatar: userAvatar });
+    toast('Posted!');
+  }
+
+  document.getElementById('comment-send').addEventListener('click', postComment);
+  document.getElementById('comment-input').addEventListener('keydown', e => { if(e.key==='Enter') postComment(); });
+
+  /* AUTH */
+  (async function() {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (session) currentUser = session.user;
+    _sb.auth.onAuthStateChange((ev, sess) => { currentUser = sess ? sess.user : null; });
+  })();
+
+  /* INIT */
+  renderChapterNav(currentLang);
+  renderChapterContent(currentLang, currentChapter);
+  loadComments();
+  </script>
+</body>
+</html>
