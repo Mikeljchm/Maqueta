@@ -28,6 +28,12 @@ collections:
         widget: string
         hint: "wrestling, bulge, studs, fan, hall, ai..."
 
+      - label: Adult Content (+18)
+        name: adult
+        widget: boolean
+        default: false
+        required: false
+
       - label: Photos (unlimited)
         name: images
         widget: list
