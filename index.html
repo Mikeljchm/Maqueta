@@ -32,6 +32,8 @@ layout: none
 
   <!-- Supabase Auth -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Google One Tap -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <!-- OneSignal Push Notifications -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -1113,6 +1115,14 @@ layout: none
     <svg viewBox="0 0 24 24"><path d="M21 5L2 12.5l7 1M21 5l-2.5 15L9 13.5M21 5L9 13.5m0 0v5l3.5-3"/></svg>
   </a>
 
+  <!-- GOOGLE ONE TAP -->
+  <div id="g_id_onload"
+    data-client_id="773339245981-hbptgetbcvbvhqmimft3nq5l5skf5mog.apps.googleusercontent.com"
+    data-callback="handleOneTap"
+    data-auto_prompt="false"
+    data-itp_support="true">
+  </div>
+
   <!-- AUTH MODAL -->
   <div class="auth-modal" id="auth-modal">
     <div class="auth-modal-backdrop" onclick="closeAuthModal()"></div>
@@ -2066,12 +2076,49 @@ layout: none
 
   let currentUser = null;
 
+  /* GOOGLE ONE TAP CALLBACK */
+  async function handleOneTap(response) {
+    const { data, error } = await supaAuth.auth.signInWithIdToken({
+      provider: 'google',
+      token: response.credential,
+    });
+    if (!error && data.session) {
+      currentUser = data.session.user;
+      updateAuthUI(currentUser);
+      closeAuthModal();
+      applyAdultBlur();
+    }
+  }
+
+  function showOneTap() {
+    if (window.google && window.google.accounts) {
+      google.accounts.id.initialize({
+        client_id: '773339245981-hbptgetbcvbvhqmimft3nq5l5skf5mog.apps.googleusercontent.com',
+        callback: handleOneTap,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        itp_support: true,
+      });
+      google.accounts.id.prompt();
+    } else {
+      openAuthModalFallback();
+    }
+  }
+
   function openAuthModal() {
+    if (currentUser) return;
+    showOneTap();
+  }
+
+  function openAuthModalFallback() {
     document.getElementById('auth-modal').classList.add('open');
   }
 
   function closeAuthModal() {
     document.getElementById('auth-modal').classList.remove('open');
+    if (window.google && window.google.accounts) {
+      google.accounts.id.cancel();
+    }
   }
 
   async function signInWithGoogle() {
@@ -2086,6 +2133,9 @@ layout: none
     currentUser = null;
     updateAuthUI(null);
     applyAdultBlur();
+    if (window.google && window.google.accounts) {
+      google.accounts.id.disableAutoSelect();
+    }
   }
 
   function updateAuthUI(user) {
@@ -2130,7 +2180,6 @@ layout: none
     const isLoggedIn = !!currentUser;
     document.querySelectorAll('.adult-card').forEach(card => {
       const overlay = card.querySelector('.adult-overlay');
-      const mediaContainer = card.querySelector('.card-media-container');
       if (isLoggedIn) {
         card.classList.remove('adult-blur');
         if (overlay) overlay.style.display = 'none';
