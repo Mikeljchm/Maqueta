@@ -31,6 +31,11 @@ collections:
         widget: boolean
         default: false
         required: false
+      - label: Video Poster (cover image URL)
+        name: poster
+        widget: string
+        required: false
+        hint: "URL de la imagen de portada para todos los videos del post"
       - label: Photos (unlimited)
         name: images
         widget: list
@@ -89,6 +94,11 @@ collections:
         widget: boolean
         default: false
         required: false
+      - label: Video Poster (cover image URL)
+        name: poster
+        widget: string
+        required: false
+        hint: "URL de la imagen de portada para todos los videos"
       - label: Tags
         name: tags
         widget: list
@@ -151,6 +161,11 @@ collections:
         widget: boolean
         default: false
         required: false
+      - label: Video Poster (cover image URL)
+        name: poster
+        widget: string
+        required: false
+        hint: "URL de la imagen de portada para todos los videos"
       - label: Bio
         name: bio
         widget: text
@@ -217,6 +232,11 @@ collections:
         widget: boolean
         default: false
         required: false
+      - label: Video Poster (cover image URL)
+        name: poster
+        widget: string
+        required: false
+        hint: "URL de la imagen de portada para todos los videos"
       - label: Team / Club
         name: team
         widget: string
@@ -355,4 +375,4 @@ collections:
                 widget: string
               - label: Content
                 name: content
-                widget: text 
+                widget: text
