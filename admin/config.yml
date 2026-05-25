@@ -94,6 +94,11 @@ collections:
         widget: boolean
         default: false
         required: false
+      - label: Cover Photo (banner + list)
+        name: cover
+        widget: string
+        required: false
+        hint: "Foto suave para el banner y la lista — mugshot, cara, uniforme"
       - label: Video Poster (cover image URL)
         name: poster
         widget: string
@@ -161,6 +166,11 @@ collections:
         widget: boolean
         default: false
         required: false
+      - label: Cover Photo (banner + list)
+        name: cover
+        widget: string
+        required: false
+        hint: "Foto suave para el banner y la lista"
       - label: Video Poster (cover image URL)
         name: poster
         widget: string
@@ -232,6 +242,11 @@ collections:
         widget: boolean
         default: false
         required: false
+      - label: Cover Photo (banner + list)
+        name: cover
+        widget: string
+        required: false
+        hint: "Foto suave para el banner y la lista"
       - label: Video Poster (cover image URL)
         name: poster
         widget: string
