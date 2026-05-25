@@ -88,9 +88,12 @@
     .post-desc .htag{color:#c8a882;font-weight:500;}
     .comments-section{padding:1rem;border-top:1px solid var(--border);}
     .comments-title{font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.75rem;text-transform:uppercase;}
-    .comment-item{display:flex;gap:0.55rem;margin-bottom:0.65rem;}
-    .comment-av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--fire-deep),var(--fire-red));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.52rem;color:#fff;}
-    .comment-text{font-size:0.8rem;color:var(--text-dim);line-height:1.45;padding-top:0.2rem;}
+    .comment-item{display:flex;gap:0.55rem;margin-bottom:0.65rem;align-items:flex-start;}
+    .comment-av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--fire-deep),var(--fire-red));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.52rem;color:#fff;overflow:hidden;}
+    .comment-av img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+    .comment-body{flex:1;}
+    .comment-username{font-size:0.7rem;font-weight:600;color:var(--fire-orange);margin-bottom:0.15rem;}
+    .comment-text{font-size:0.8rem;color:var(--text-dim);line-height:1.45;}
     .comment-form{display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem;}
     .comment-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:0.5rem 0.9rem;color:var(--text);font-family:var(--font-b);font-size:0.82rem;outline:none;}
     .comment-input:focus{border-color:rgba(255,69,0,0.3);}
@@ -328,19 +331,34 @@
       else{await navigator.clipboard.writeText(location.href).catch(()=>{});toast('Link copied!');}
     });
     async function loadComments(){
-      const d=await sbFetch('comments?post_id=eq.'+encodeURIComponent(POST_ID)+'&order=created_at.asc&select=text');
-      if(d){$('comments-list').innerHTML='';d.forEach(r=>addComment(r.text,false));$('comment-count').textContent=d.length;}
+      const d=await sbFetch('comments?post_id=eq.'+encodeURIComponent(POST_ID)+'&order=created_at.asc&select=text,user_name,user_avatar');
+      if(d){$('comments-list').innerHTML='';d.forEach(r=>addComment(r.text,false,r.user_name,r.user_avatar));$('comment-count').textContent=d.length;}
     }
-    function addComment(text,animate){
+    function addComment(text,animate,userName,userAvatar){
       const div=document.createElement('div');div.className='comment-item';
-      div.innerHTML='<div class="comment-av">HW</div><div class="comment-text">'+text+'</div>';
+      let avHtml='';
+      if(userAvatar){
+        avHtml='<div class="comment-av"><img src="'+userAvatar+'" alt="'+( userName||'User')+'" onerror="this.parentNode.innerHTML=\'HW\'"></div>';
+      } else {
+        avHtml='<div class="comment-av">HW</div>';
+      }
+      const nameHtml=userName?'<div class="comment-username">'+userName+'</div>':'';
+      div.innerHTML=avHtml+'<div class="comment-body">'+nameHtml+'<div class="comment-text">'+text+'</div></div>';
       if(animate){div.style.cssText='opacity:0;transform:translateY(6px);transition:all 0.3s';requestAnimationFrame(()=>{div.style.opacity='1';div.style.transform='translateY(0)';});}
       $('comments-list').appendChild(div);
     }
     async function postComment(){
       const inp=$('comment-input');const text=inp.value.trim();if(!text)return;
-      inp.value='';addComment(text,true);
-      await sbFetch('comments','POST',{post_id:POST_ID,text});
+      inp.value='';
+      const { data:{ session } } = await _sb.auth.getSession();
+      let userName=null, userAvatar=null;
+      if(session){
+        const meta=session.user.user_metadata||{};
+        userName=meta.full_name||meta.name||session.user.email.split('@')[0];
+        userAvatar=meta.avatar_url||meta.picture||null;
+      }
+      addComment(text,true,userName,userAvatar);
+      await sbFetch('comments','POST',{post_id:POST_ID,text,user_name:userName,user_avatar:userAvatar});
       const d=await sbFetch('comments?post_id=eq.'+encodeURIComponent(POST_ID)+'&select=id');
       if(d)$('comment-count').textContent=d.length;
       toast('Posted!');
