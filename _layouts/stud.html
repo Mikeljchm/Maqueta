@@ -83,7 +83,7 @@
     <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
   </header>
 
-  {% assign hero_img = page.mugshot | default: page.images | first %}
+  {% assign hero_img = page.cover | default: page.mugshot | default: page.images | first %}
   {% if hero_img %}
   <div class="profile-hero">
     <img src="{{ hero_img }}" alt="{{ page.title }}">
@@ -214,4 +214,4 @@
   })();
   </script>
 </body>
-</html>
+</html> 
