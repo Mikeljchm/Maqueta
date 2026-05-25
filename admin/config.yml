@@ -22,18 +22,15 @@ collections:
       - label: Title
         name: title
         widget: string
-
       - label: Category
         name: category
         widget: string
         hint: "wrestling, bulge, studs, fan, hall, ai..."
-
       - label: Adult Content (+18)
         name: adult
         widget: boolean
         default: false
         required: false
-
       - label: Photos (unlimited)
         name: images
         widget: list
@@ -43,7 +40,6 @@ collections:
           name: url
           widget: string
           hint: "https://images2.imgbox.com/..."
-
       - label: GIFs (unlimited)
         name: gifs
         widget: list
@@ -53,7 +49,6 @@ collections:
           label: GIF URL
           name: url
           widget: string
-
       - label: Videos (unlimited)
         name: videos
         widget: list
@@ -63,11 +58,9 @@ collections:
           label: Video URL
           name: url
           widget: string
-
       - label: Description
         name: description
         widget: text
-
       - label: Date
         name: date
         widget: datetime
@@ -87,12 +80,15 @@ collections:
       - label: Name
         name: title
         widget: string
-
       - label: Category
         name: category
         widget: string
         hint: "bad-boys, bulge, hairy, juicy, college..."
-
+      - label: Adult Content (+18)
+        name: adult
+        widget: boolean
+        default: false
+        required: false
       - label: Tags
         name: tags
         widget: list
@@ -102,12 +98,10 @@ collections:
           label: Tag
           name: tag
           widget: string
-
       - label: Description
         name: description
         widget: text
         required: false
-
       - label: Photos (unlimited)
         name: images
         widget: list
@@ -117,7 +111,6 @@ collections:
           label: Photo URL
           name: url
           widget: string
-
       - label: GIFs (unlimited)
         name: gifs
         widget: list
@@ -127,7 +120,6 @@ collections:
           label: GIF URL
           name: url
           widget: string
-
       - label: Videos (unlimited)
         name: videos
         widget: list
@@ -150,17 +142,19 @@ collections:
       - label: Name
         name: title
         widget: string
-
       - label: Category
         name: tag
         widget: string
         hint: "heavyweight, college, amateur, pro..."
-
+      - label: Adult Content (+18)
+        name: adult
+        widget: boolean
+        default: false
+        required: false
       - label: Bio
         name: bio
         widget: text
         required: false
-
       - label: Photos (unlimited)
         name: images
         widget: list
@@ -170,7 +164,6 @@ collections:
           label: Photo URL
           name: url
           widget: string
-
       - label: GIFs (unlimited)
         name: gifs
         widget: list
@@ -180,7 +173,6 @@ collections:
           label: GIF URL
           name: url
           widget: string
-
       - label: Videos (unlimited)
         name: videos
         widget: list
@@ -203,7 +195,6 @@ collections:
       - label: Name
         name: title
         widget: string
-
       - label: Sport
         name: sport
         widget: select
@@ -221,13 +212,16 @@ collections:
           - { label: "MMA", value: "mma" }
           - { label: "Cycling", value: "cycling" }
           - { label: "Other", value: "other" }
-
+      - label: Adult Content (+18)
+        name: adult
+        widget: boolean
+        default: false
+        required: false
       - label: Team / Club
         name: team
         widget: string
         required: false
         hint: "Team name, country, college..."
-
       - label: Tags
         name: tags
         widget: list
@@ -238,7 +232,6 @@ collections:
           name: tag
           widget: string
           hint: "bulge, tight, uniform, wet..."
-
       - label: Stats
         name: stats
         widget: list
@@ -252,12 +245,10 @@ collections:
           - label: Value
             name: value
             widget: string
-
       - label: Description
         name: description
         widget: text
         required: false
-
       - label: Photos (unlimited)
         name: images
         widget: list
@@ -268,7 +259,6 @@ collections:
           name: url
           widget: string
           hint: "https://images2.imgbox.com/..."
-
       - label: GIFs (unlimited)
         name: gifs
         widget: list
@@ -278,7 +268,6 @@ collections:
           label: GIF URL
           name: url
           widget: string
-
       - label: Videos (unlimited)
         name: videos
         widget: list
@@ -301,17 +290,14 @@ collections:
       - label: Title
         name: title
         widget: string
-
       - label: Category
         name: category
         widget: string
         hint: "stepfather, wrestling, college, locker-room..."
-
       - label: Cover Image URL
         name: cover
         widget: string
         required: false
-
       - label: Extra Photos (unlimited)
         name: images
         widget: list
@@ -321,20 +307,17 @@ collections:
           label: Photo URL
           name: url
           widget: string
-
       - label: Read Time
         name: read_time
         widget: string
         default: "5 min read"
         required: false
-
       - label: Date
         name: date
         widget: datetime
         format: "YYYY-MM-DD"
         date_format: "YYYY-MM-DD"
         time_format: false
-
       - label: Languages
         name: languages
         widget: list
@@ -372,4 +355,4 @@ collections:
                 widget: string
               - label: Content
                 name: content
-                widget: text
+                widget: text 
