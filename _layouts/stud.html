@@ -108,19 +108,17 @@
 
   {% if all_photos.size > 0 %}
   <div class="section-title">Photos ({{ all_photos.size }})</div>
-  <div class="photos-grid{% if page.adult %} adult-blurred{% endif %}" id="photos-grid">
+  <div class="photos-grid adult-blurred" id="photos-grid">
     {% for img in all_photos %}
     <div class="photo-thumb" data-idx="{{ forloop.index0 }}">
       <img src="{{ img }}" alt="{{ page.title }}" loading="lazy">
     </div>
     {% endfor %}
-    {% if page.adult %}
     <div class="adult-gate-grid" id="adult-gate" onclick="openAuthModal()">
       <div class="adult-gate-icon">&#128520;</div>
       <div class="adult-gate-title">Adults Only. No Exceptions.</div>
       <div class="adult-gate-btn">Sign in to unlock &#128293;</div>
     </div>
-    {% endif %}
   </div>
   {% endif %}
 
