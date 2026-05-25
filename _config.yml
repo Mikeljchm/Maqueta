@@ -27,6 +27,11 @@ defaults:
       type: "bulge"
     values:
       layout: "bulge"
+  - scope:
+      path: ""
+      type: "stories"
+    values:
+      layout: "story"
 
 collections:
   wrestlers:
@@ -35,7 +40,8 @@ collections:
   badboys:
     output: false
   stories:
-    output: false
+    output: true
+    permalink: /stories/:slug/
   studs:
     output: true
     permalink: /studs/:name/
