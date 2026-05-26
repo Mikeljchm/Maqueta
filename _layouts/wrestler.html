@@ -173,7 +173,7 @@
   const _sb = supabase.createClient(_SB_URL, _SB_KEY);
   function openAuthModal(){ document.getElementById('auth-modal').classList.add('open'); }
   function closeAuthModal(){ document.getElementById('auth-modal').classList.remove('open'); }
-  async function signInWithGoogle(){ await _sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: window.location.href } }); }
+  async function signInWithGoogle(){ await _sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: window.location.origin } }); }
   function unlockAdultContent(){
     const gate = document.getElementById('adult-gate');
     if(gate) gate.style.display = 'none';
@@ -217,4 +217,3 @@
   </script>
 </body>
 </html>
- 
