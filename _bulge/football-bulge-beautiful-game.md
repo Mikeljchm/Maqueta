@@ -19,7 +19,7 @@ images:
   - https://hottwrestling.b-cdn.net/bluetooth/tumblr_p4rn1jia0Z1wne4i9o1_1280.jpg
   - https://hottwrestling.b-cdn.net/bluetooth/Vargas-arsenal-591207.jpg
   - https://hottwrestling.b-cdn.net/bluetooth/villarreal-barcelona5-640x640x80.jpg
-  - "https://hottwrestling.b-cdn.net/bluetooth/Vodacom%2BBulls%2BTraining%2BSession%2BPseSVv9Pkocx.jpg
+  - "https://hottwrestling.b-cdn.net/bluetooth/Vodacom%2BBulls%2BTraining%2BSession%2BPseSVv9Pkocx.jpg" 
   - https://hottwrestling.b-cdn.net/Tumblr/Tumblr_l_76228724221284.jpg
 https://hottwrestling.b-cdn.net/Tumblr/Tumblr_l_76278711949286.jpg
 https://hottwrestling.b-cdn.net/Tumblr/Tumblr_l_76295142854384.gif
