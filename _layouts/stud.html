@@ -37,6 +37,7 @@
     .photo-thumb:active img{transform:scale(1.05);}
     /* ADULT */
     .adult-blurred img{filter:blur(18px)!important;transform:scale(1.05)!important;}
+    .adult-blurred.videos-wrap-blur{filter:blur(18px)!important;transform:scale(1.02)!important;pointer-events:none;}
     .adult-gate-grid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;z-index:10;cursor:pointer;}
     .adult-gate-icon{font-size:2rem;line-height:1;}
     .adult-gate-title{font-family:var(--font-d);font-size:0.9rem;color:#fff;letter-spacing:0.06em;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,0.9);padding:0 1rem;}
@@ -126,7 +127,7 @@
   {% if page.videos and page.videos.size > 0 %}
   <div class="section-title">Videos</div>
   <div class="videos-list" style="position:relative;">
-    <div id="videos-wrap">
+    <div id="videos-wrap" class="adult-blurred videos-wrap-blur">
     {% for vid in page.videos %}
     {% assign vid_url = vid.url | default: vid %}
     {% assign vid_poster = vid.poster | default: page.poster | default: "" %}
@@ -187,6 +188,8 @@
     if(videosGate) videosGate.style.display = 'none';
     const grid = document.getElementById('photos-grid');
     if(grid){ grid.classList.remove('adult-blurred'); grid.querySelectorAll('img').forEach(img=>{ img.style.filter='none'; img.style.transform='none'; }); }
+    const videosWrap = document.getElementById('videos-wrap');
+    if(videosWrap){ videosWrap.classList.remove('adult-blurred','videos-wrap-blur'); videosWrap.style.filter='none'; videosWrap.style.transform='none'; videosWrap.style.pointerEvents='auto'; }
   }
   (async function(){
     const { data:{ session } } = await _sb.auth.getSession();
