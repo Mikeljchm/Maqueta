@@ -128,6 +128,20 @@ collections:
           label: Tag
           name: tag
           widget: string
+      - label: Social Links
+        name: links
+        widget: list
+        allow_add: true
+        required: false
+        fields:
+          - label: Label
+            name: label
+            widget: string
+            hint: "OnlyFans, Instagram, X, Chaturbate..."
+          - label: URL
+            name: url
+            widget: string
+            hint: "https://onlyfans.com/usuario"
       - label: Description
         name: description
         widget: text
