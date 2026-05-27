@@ -12,6 +12,15 @@ tags:
   - Tattooed
   - Sexy
   - Hung
+links:
+  - label: OnlyFans
+    url: https://onlyfans.com/spartacozz
+  - label: Instagram
+    url: https://www.instagram.com/spartacozz_
+  - label: X / Twitter
+    url: https://x.com/spartacozz
+  - label: Chaturbate
+    url: https://chaturbate.com/spartazzz
 description: "July 30, 1997. 1.75cm. Colombia. Straight and absolutely devastating. Emm Z — known online as Spartacozz — is one of the hottest Colombian creators on the internet right now. Tattooed, built, and completely unfiltered on cam. Speaks English and Spanish. Active on OnlyFans, Chaturbate and X. Find him at onlyfans.com/spartacozz — chaturbate.com/spartazzz — x.com/spartacozz — instagram.com/spartacozz_ #spartacozz #colombian #straight #onlyfans #chaturbate #tattooed #sexy #hung #latino #colombiano"
 images:
   - https://hottwrestling.b-cdn.net/Spartacooz/20240531_164211.jpg
