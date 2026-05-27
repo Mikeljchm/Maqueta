@@ -102,8 +102,10 @@ layout: none
       transition:opacity 0.6s ease, visibility 0.6s ease;
     }
     #age-gate.hidden { opacity:0; visibility:hidden; pointer-events:none; }
-    .ag-logo { font-family:var(--font-d); font-size:clamp(2.8rem,13vw,5rem); color:#fff; letter-spacing:0.04em; line-height:0.9; margin-bottom:0.3rem; }
-    .ag-logo span { display:block; background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange),var(--fire-red)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation:flicker 2.5s ease-in-out infinite; }
+    .ag-logo { font-family:var(--font-d); font-size:clamp(2.8rem,13vw,5rem); color:#fff; letter-spacing:0.04em; line-height:0.9; margin-bottom:0.3rem; position:relative; display:inline-block; padding:0.3rem 0.8rem; }
+    .ag-logo::before { content:''; position:absolute; inset:-2px; border-radius:10px; background:conic-gradient(from var(--angle), transparent 70%, var(--fire-orange) 80%, var(--fire-yellow) 87%, var(--fire-orange) 93%, transparent); animation:borderTrace 2.5s linear infinite; z-index:-1; }
+    .ag-logo::after { content:''; position:absolute; inset:1px; border-radius:9px; background:#000; z-index:-1; }
+    .ag-logo span { display:block; background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange),var(--fire-red)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation:flicker 2.5s ease-in-out infinite; position:relative; z-index:1; }
     @keyframes flicker { 0%,100%{filter:drop-shadow(0 0 20px rgba(255,100,0,0.6));} 40%{filter:drop-shadow(0 0 35px rgba(255,180,0,0.9));} 70%{filter:drop-shadow(0 0 12px rgba(204,17,0,0.8));} }
     .ag-divider { width:60px; height:2px; background:linear-gradient(90deg,transparent,var(--fire-orange),transparent); margin:1rem auto; animation:divpulse 2s ease-in-out infinite; }
     @keyframes divpulse { 0%,100%{width:60px;opacity:0.5;} 50%{width:100px;opacity:1;} }
@@ -131,7 +133,8 @@ layout: none
       position:relative; z-index:50;
     }
     .top-logo { font-family:var(--font-d); font-size:1.3rem; letter-spacing:0.04em; color:#fff; text-decoration:none; line-height:1; }
-    .top-logo span { background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .top-logo span { background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation:pulseGlow 2.5s ease-in-out infinite; }
+    @keyframes pulseGlow { 0%,100%{filter:drop-shadow(0 0 3px rgba(255,69,0,0.3));} 50%{filter:drop-shadow(0 0 12px rgba(255,184,0,0.85)) drop-shadow(0 0 20px rgba(255,69,0,0.4));} }
     .top-actions { display:flex; gap:0.2rem; align-items:center; }
     .top-btn { background:none; border:none; color:var(--text-dim); width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; }
     .top-btn:active { color:var(--fire-orange); }
