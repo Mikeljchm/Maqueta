@@ -307,9 +307,16 @@
     if(gate2) gate2.style.display = 'none';
     const videosGate = document.getElementById('videos-gate');
     if(videosGate) videosGate.style.display = 'none';
-    document.querySelectorAll('.adult-blurred').forEach(el=>{ el.style.filter='none'; el.style.transform='none'; });
-    const adultGrid = document.getElementById('adult-photos-grid');
-    if(adultGrid){ adultGrid.classList.remove('adult-blurred'); adultGrid.querySelectorAll('img').forEach(img=>{ img.style.filter='none'; img.style.transform='none'; }); }
+    document.querySelectorAll('.adult-blurred').forEach(el=>{
+      el.classList.remove('adult-blurred');
+      el.style.filter='none';
+      el.style.transform='none';
+    });
+    document.querySelectorAll('.photo-main, .photo-blur-bg').forEach(el=>{
+      el.classList.remove('adult-blurred');
+      el.style.filter='none';
+      el.style.transform='none';
+    });
     const videosWrap = document.getElementById('videos-wrap');
     if(videosWrap){ videosWrap.classList.remove('videos-wrap-blur'); videosWrap.style.filter='none'; videosWrap.style.transform='none'; videosWrap.style.pointerEvents='auto'; }
   }
