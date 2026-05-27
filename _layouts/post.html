@@ -47,6 +47,7 @@
     .post-photos{width:100%;cursor:pointer;position:relative;}
     .photo-single-wrap{position:relative;width:100%;overflow:hidden;background:#000;min-height:50vw;}
     .photo-blur-bg{position:absolute;inset:0;width:100%;height:100%;background-size:cover;background-position:center;filter:blur(25px) brightness(0.35);transform:scale(1.15);}
+    .videos-wrap-blur{filter:blur(18px)!important;transform:scale(1.02)!important;pointer-events:none!important;}
     .photo-main{position:relative;z-index:1;width:100%;height:auto;display:block;max-height:100vh;object-fit:contain;}
     .photo-duo{display:grid;grid-template-columns:1fr 1fr;gap:2px;}
     .photo-duo img{width:100%;height:100%;object-fit:cover;display:block;aspect-ratio:3/4;}
@@ -177,7 +178,8 @@
     {% endif %}
 
     {% if page.videos and page.videos.size > 0 %}
-    <div class="post-videos">
+    <div class="post-videos" style="position:relative;">
+      <div id="videos-wrap"{% if page.adult %} class="videos-wrap-blur"{% endif %}>
       {% for vid in page.videos %}
       {% assign vid_url = vid.url | default: vid %}
       {% assign vid_poster = vid.poster | default: page.poster | default: "" %}
@@ -189,6 +191,14 @@
       <div class="video-wrap"><iframe src="{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
       {% endif %}
       {% endfor %}
+      </div>
+      {% if page.adult %}
+      <div class="adult-gate" id="videos-gate" onclick="openAuthModal()" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;background:rgba(0,0,0,0.15);cursor:pointer;">
+        <div class="adult-gate-icon">&#128520;</div>
+        <div class="adult-gate-title">Adults Only. No Exceptions.</div>
+        <button class="adult-gate-btn">Sign In — It's Free</button>
+      </div>
+      {% endif %}
     </div>
     {% endif %}
 
@@ -278,7 +288,11 @@
   function unlockAdultContent(){
     const gate = document.getElementById('adult-gate');
     if(gate) gate.style.display = 'none';
+    const videosGate = document.getElementById('videos-gate');
+    if(videosGate) videosGate.style.display = 'none';
     document.querySelectorAll('.adult-blurred').forEach(el=>{ el.style.filter='none'; el.style.transform='none'; });
+    const videosWrap = document.getElementById('videos-wrap');
+    if(videosWrap){ videosWrap.classList.remove('videos-wrap-blur'); videosWrap.style.filter='none'; videosWrap.style.transform='none'; videosWrap.style.pointerEvents='auto'; }
   }
   (async function(){
     const { data:{ session } } = await _sb.auth.getSession();
