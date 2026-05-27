@@ -21,8 +21,8 @@
     .back-btn:active{color:var(--fire-orange);}
     .top-logo{font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.04em;color:#fff;text-decoration:none;}
     .top-logo span{background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-    .profile-hero{position:relative;width:100%;aspect-ratio:3/4;max-height:85vw;overflow:hidden;background:#0a0a0a;}
-    .profile-hero img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
+    .profile-hero{position:relative;width:100%;padding-bottom:125%;overflow:hidden;background:#0a0a0a;}
+    .profile-hero img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
     .profile-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.97) 0%,rgba(0,0,0,0.65) 40%,rgba(0,0,0,0.25) 100%);}
     .profile-hero-info{position:absolute;bottom:0;left:0;right:0;padding:1.5rem 1rem 1.25rem;}
     .profile-name{font-family:var(--font-d);font-size:clamp(2rem,8vw,3rem);color:#fff;letter-spacing:0.04em;line-height:1;margin-bottom:0.3rem;}
@@ -86,7 +86,7 @@
     <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
   </header>
 
-  {% assign hero_img = page.cover | default: page.mugshot | default: page.images | first %}
+  {% assign hero_img = page.banner | default: page.cover | default: page.mugshot | default: page.images | first %}
   <div class="profile-hero">
     {% if hero_img %}<img src="{{ hero_img }}" alt="{{ page.title }}">{% endif %}
     <div class="profile-hero-overlay"></div>
