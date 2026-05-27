@@ -3,6 +3,7 @@ title: Spartacozz
 category: onlyfans
 adult: true
 cover: https://hottwrestling.b-cdn.net/Spartacooz/20240531_164211.jpg
+banner: https://hottwrestling.b-cdn.net/Spartacooz/20240531_164211.jpg
 tags:
   - Colombian
   - Straight
