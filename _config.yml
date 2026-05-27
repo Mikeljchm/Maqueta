@@ -3,6 +3,7 @@ description: The hottest wrestling content. No filters, no censorship.
 url: ""
 baseurl: ""
 permalink: /:year/:month/:day/:title/
+timezone: America/Caracas
 plugins:
   - jekyll-feed
 
