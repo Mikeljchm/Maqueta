@@ -126,6 +126,22 @@
   </div>
   {% endif %}
 
+  {% if page.adult_images and page.adult_images.size > 0 %}
+  <div class="section-title">+18 Content ({{ page.adult_images.size }})</div>
+  <div class="photos-grid adult-blurred" id="adult-photos-grid">
+    {% for img in page.adult_images %}
+    <div class="photo-thumb" data-idx="{{ forloop.index0 | plus: all_photos.size }}">
+      <img src="{{ img }}" alt="{{ page.title }}" loading="lazy">
+    </div>
+    {% endfor %}
+    <div class="adult-gate-grid" id="adult-gate-2" onclick="openAuthModal()">
+      <div class="adult-gate-icon">&#128520;</div>
+      <div class="adult-gate-title">Adults Only. No Exceptions.</div>
+      <div class="adult-gate-btn">Sign in to unlock &#128293;</div>
+    </div>
+  </div>
+  {% endif %}
+
   {% if page.videos and page.videos.size > 0 %}
   <div class="section-title">Videos</div>
   <div class="videos-list" style="position:relative;">
@@ -188,10 +204,14 @@
   function unlockAdultContent(){
     const gate = document.getElementById('adult-gate');
     if(gate) gate.style.display = 'none';
+    const gate2 = document.getElementById('adult-gate-2');
+    if(gate2) gate2.style.display = 'none';
     const videosGate = document.getElementById('videos-gate');
     if(videosGate) videosGate.style.display = 'none';
     const grid = document.getElementById('photos-grid');
     if(grid){ grid.classList.remove('adult-blurred'); grid.querySelectorAll('img').forEach(img=>{ img.style.filter='none'; img.style.transform='none'; }); }
+    const adultGrid = document.getElementById('adult-photos-grid');
+    if(adultGrid){ adultGrid.classList.remove('adult-blurred'); adultGrid.querySelectorAll('img').forEach(img=>{ img.style.filter='none'; img.style.transform='none'; }); }
     const videosWrap = document.getElementById('videos-wrap');
     if(videosWrap){ videosWrap.classList.remove('videos-wrap-blur'); videosWrap.style.filter='none'; videosWrap.style.transform='none'; videosWrap.style.pointerEvents='auto'; }
   }
