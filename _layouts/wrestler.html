@@ -86,10 +86,12 @@
     <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
   </header>
 
-  {% assign hero_img = page.banner | default: page.cover | default: page.photo | default: page.images | first %}
-  {% if hero_img %}
+  {% assign hero_img = page.banner | default: page.cover | default: page.photo %}
+  {% if hero_img == nil or hero_img == "" %}
+    {% assign hero_img = page.images | first %}
+  {% endif %}
   <div class="profile-hero">
-    <img src="{{ hero_img }}" alt="{{ page.title }}">
+    {% if hero_img %}<img src="{{ hero_img }}" alt="{{ page.title }}">{% endif %}
     <div class="profile-hero-overlay"></div>
     <div class="profile-hero-info">
       <div class="profile-tag-badge">{{ page.tag | upcase }}</div>
@@ -97,7 +99,6 @@
       {% if page.bio %}<div class="profile-hero-desc">{{ page.bio }}</div>{% endif %}
     </div>
   </div>
-  {% endif %}
 
   {% if page.tags and page.tags.size > 0 %}
   <div class="tags-wrap">{% for tag in page.tags %}<span class="tag-pill">{{ tag }}</span>{% endfor %}</div>
