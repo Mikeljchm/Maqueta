@@ -1,6 +1,7 @@
 ---
 title: Dylan Palacio
 tag: Cornell
+banner: https://hottwrestling.b-cdn.net/Dylan%20Palacio/gCLsqJ4K_o.png
 bio: "2x NCAA All-American. 2x EIWA Champion. Cornell University. 157 lbs. Born February 22, 1995 in Long Beach, New York. Puerto Rican and Italian descent. One of the most charismatic and explosive wrestlers to come out of the Ivy League. Career record 83-20."
 stats:
   - label: Weight Class
@@ -36,7 +37,7 @@ images:
   - https://hottwrestling.b-cdn.net/Dylan%20Palacio/KPwspBss_o.gif
   - https://hottwrestling.b-cdn.net/Dylan%20Palacio/IWpBEKSN_o.png
   - https://hottwrestling.b-cdn.net/Dylan%20Palacio/oi07zxra_o.gif
-  - https://hottwrestling.b-cdn.net/Dylan%20Palacio/IMB_Quq58I(1).gif
+  - "https://hottwrestling.b-cdn.net/Dylan%20Palacio/IMB_Quq58I(1).gif"
   - https://hottwrestling.b-cdn.net/Dylan%20Palacio/lmz4b0Px_o.png
   - https://hottwrestling.b-cdn.net/Dylan%20Palacio/lxeziyFB_o.png
   - https://hottwrestling.b-cdn.net/Dylan%20Palacio/Oo6wdPLA_o.jpg
