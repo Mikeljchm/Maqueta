@@ -21,9 +21,10 @@
     .back-btn:active{color:var(--fire-orange);}
     .top-logo{font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.04em;color:#fff;text-decoration:none;}
     .top-logo span{background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-    .profile-hero{position:relative;width:100%;min-height:75vw;overflow:hidden;background:#0a0a0a;background-size:cover;background-position:top center;}
+    .profile-hero{position:relative;width:100%;aspect-ratio:3/4;max-height:85vw;overflow:hidden;background:#0a0a0a;}
+    .profile-hero img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
     .profile-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.97) 0%,rgba(0,0,0,0.65) 40%,rgba(0,0,0,0.25) 100%);}
-    .profile-hero-info{position:relative;z-index:1;padding:75vw 1rem 1.25rem;margin-top:-75vw;}
+    .profile-hero-info{position:absolute;bottom:0;left:0;right:0;padding:1.5rem 1rem 1.25rem;}
     .profile-name{font-family:var(--font-d);font-size:clamp(2rem,8vw,3rem);color:#fff;letter-spacing:0.04em;line-height:1;margin-bottom:0.3rem;}
     .profile-tag-badge{display:inline-block;background:rgba(204,17,0,0.85);padding:0.2rem 0.6rem;font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.2em;color:#fff;margin-bottom:0.5rem;}
     .profile-hero-desc{font-size:0.82rem;color:rgba(240,234,224,0.85);line-height:1.65;margin-top:0.6rem;}
@@ -86,7 +87,9 @@
   </header>
 
   {% assign hero_img = page.banner | default: page.cover | default: page.photo | default: page.images | first %}
-  <div class="profile-hero"{% if hero_img %} style="background-image:url('{{ hero_img }}')"{% endif %}>
+  {% if hero_img %}
+  <div class="profile-hero">
+    <img src="{{ hero_img }}" alt="{{ page.title }}">
     <div class="profile-hero-overlay"></div>
     <div class="profile-hero-info">
       <div class="profile-tag-badge">{{ page.tag | upcase }}</div>
@@ -94,6 +97,7 @@
       {% if page.bio %}<div class="profile-hero-desc">{{ page.bio }}</div>{% endif %}
     </div>
   </div>
+  {% endif %}
 
   {% if page.tags and page.tags.size > 0 %}
   <div class="tags-wrap">{% for tag in page.tags %}<span class="tag-pill">{{ tag }}</span>{% endfor %}</div>
