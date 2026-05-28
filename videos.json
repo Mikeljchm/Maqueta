@@ -1,0 +1,14 @@
+---
+layout: null
+---
+[
+{% assign first = true %}
+{% for wrestler in site.wrestlers %}{% if wrestler.videos %}{% for vid in wrestler.videos %}{% assign vid_url = vid.url | default: vid %}{% if vid_url contains 'b-cdn.net' or vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}{% assign vid_poster = vid.poster | default: wrestler.banner | default: wrestler.cover | default: wrestler.photo | default: "" %}{% unless first %},
+{% endunless %}{% assign first = false %}{"url":{{ vid_url | jsonify }},"poster":{{ vid_poster | jsonify }},"title":{{ wrestler.title | jsonify }},"source":"wrestler"}{% endif %}{% endfor %}{% endif %}{% endfor %}
+{% for stud in site.studs %}{% if stud.videos %}{% for vid in stud.videos %}{% assign vid_url = vid.url | default: vid %}{% if vid_url contains 'b-cdn.net' or vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}{% assign vid_poster = vid.poster | default: stud.banner | default: stud.cover | default: "" %}{% unless first %},
+{% endunless %}{% assign first = false %}{"url":{{ vid_url | jsonify }},"poster":{{ vid_poster | jsonify }},"title":{{ stud.title | jsonify }},"source":"stud"}{% endif %}{% endfor %}{% endif %}{% endfor %}
+{% for post in site.posts %}{% if post.videos %}{% for vid in post.videos %}{% assign vid_url = vid.url | default: vid %}{% if vid_url contains 'b-cdn.net' or vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}{% assign vid_poster = vid.poster | default: post.poster | default: "" %}{% unless first %},
+{% endunless %}{% assign first = false %}{"url":{{ vid_url | jsonify }},"poster":{{ vid_poster | jsonify }},"title":{{ post.title | jsonify }},"source":"post"}{% endif %}{% endfor %}{% endif %}{% endfor %}
+{% for athlete in site.bulge %}{% if athlete.videos %}{% for vid in athlete.videos %}{% assign vid_url = vid.url | default: vid %}{% if vid_url contains 'b-cdn.net' or vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}{% assign vid_poster = vid.poster | default: athlete.banner | default: athlete.cover | default: "" %}{% unless first %},
+{% endunless %}{% assign first = false %}{"url":{{ vid_url | jsonify }},"poster":{{ vid_poster | jsonify }},"title":{{ athlete.title | jsonify }},"source":"bulge"}{% endif %}{% endfor %}{% endif %}{% endfor %}
+]
