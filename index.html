@@ -275,6 +275,39 @@ layout: none
     /* CARD ACTIONS — Tumblr style below description */
     .card-actions { display:flex; align-items:center; padding:0.6rem 0 0.85rem; border-top:1px solid #222; margin-top:0.6rem; }
     .card-act-btn { flex:1; background:none; border:none; display:flex; align-items:center; justify-content:center; gap:0.45rem; padding:0.5rem 0; color:#888; font-size:0.85rem; font-family:var(--font-b); cursor:pointer; border-radius:8px; transition:all 0.2s; }
+
+    /* GIF PICKER */
+    .gif-picker-overlay { position:fixed; inset:0; z-index:800; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s var(--ease); }
+    .gif-picker-overlay.open { opacity:1; pointer-events:all; }
+    .gif-picker-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.7); }
+    .gif-picker-card { position:relative; z-index:1; width:100%; max-width:480px; background:#0d0d0d; border-radius:20px 20px 0 0; border-top:1px solid #2a2a2a; padding:0 0 env(safe-area-inset-bottom,0px); max-height:72vh; display:flex; flex-direction:column; transform:translateY(30px); transition:transform 0.35s var(--ease); }
+    .gif-picker-overlay.open .gif-picker-card { transform:translateY(0); }
+    .gif-picker-header { display:flex; align-items:center; gap:0.5rem; padding:0.9rem 1rem 0.6rem; border-bottom:1px solid #1e1e1e; flex-shrink:0; }
+    .gif-picker-search { flex:1; background:#1a1a1a; border:1px solid #2a2a2a; border-radius:20px; padding:0.5rem 1rem; color:var(--text); font-size:0.85rem; font-family:var(--font-b); outline:none; }
+    .gif-picker-search::placeholder { color:#555; }
+    .gif-picker-search:focus { border-color:rgba(255,69,0,0.4); }
+    .gif-picker-close { background:none; border:none; color:#555; font-size:1.3rem; cursor:pointer; padding:0.2rem 0.4rem; flex-shrink:0; }
+    .gif-tabs { display:flex; gap:0.4rem; padding:0.6rem 1rem 0.4rem; overflow-x:auto; scrollbar-width:none; flex-shrink:0; }
+    .gif-tabs::-webkit-scrollbar { display:none; }
+    .gif-tab { flex-shrink:0; padding:0.28rem 0.75rem; border-radius:20px; font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; border:1px solid #2a2a2a; background:#111; color:#666; transition:all 0.2s var(--ease); white-space:nowrap; }
+    .gif-tab.active { background:var(--fire-orange); border-color:var(--fire-orange); color:#fff; }
+    .gif-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px; overflow-y:auto; padding:0.4rem 0.5rem 1rem; flex:1; -webkit-overflow-scrolling:touch; }
+    .gif-grid::-webkit-scrollbar { display:none; }
+    .gif-item { aspect-ratio:1; overflow:hidden; border-radius:6px; cursor:pointer; background:#111; transition:transform 0.15s var(--ease); }
+    .gif-item:active { transform:scale(0.93); }
+    .gif-item img { width:100%; height:100%; object-fit:cover; display:block; }
+    .gif-loading { grid-column:1/-1; text-align:center; padding:2rem; color:#555; font-size:0.8rem; }
+    .gif-btn { background:none; border:none; color:#888; font-size:0.75rem; font-family:var(--font-b); cursor:pointer; display:flex; align-items:center; gap:0.3rem; padding:0.5rem 0.6rem; border-radius:8px; transition:color 0.2s; flex-shrink:0; }
+    .gif-btn:active { color:var(--fire-orange); }
+    .gif-btn svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; }
+    .comment-gif-preview { padding:0.4rem 0.9rem 0; }
+    .comment-gif-preview img { max-height:120px; border-radius:8px; display:block; }
+    .comment-gif-remove { background:none; border:none; color:#555; font-size:0.7rem; cursor:pointer; padding:0.2rem 0; display:block; margin-top:0.2rem; }
+    .lr-comment-gif-preview { padding:0.4rem 0 0; }
+    .lr-comment-gif-preview img { max-height:120px; border-radius:8px; display:block; }
+    .lr-comment-gif-remove { background:none; border:none; color:#555; font-size:0.7rem; cursor:pointer; padding:0.2rem 0; display:block; margin-top:0.2rem; }
+    .comment-item img.comment-gif { max-width:180px; border-radius:8px; display:block; margin-top:0.4rem; }
+    .lr-comment-item img.comment-gif { max-width:180px; border-radius:8px; display:block; margin-top:0.4rem; }
     .card-act-btn svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:all 0.2s; }
     .card-act-btn:active { transform:scale(0.88); }
     .like-btn:active { color:#ff3b5c; }
@@ -680,8 +713,15 @@ layout: none
 
               <div class="card-comments" id="comments-{{ forloop.index }}">
                 <div class="comments-list" id="clist-{{ forloop.index }}"></div>
+                <div class="comment-gif-preview" id="gif-preview-{{ forloop.index }}" style="display:none;">
+                  <img src="" alt="gif" id="gif-preview-img-{{ forloop.index }}">
+                  <button class="comment-gif-remove" onclick="clearGifPreview('{{ forloop.index }}')">&#10005; Remove GIF</button>
+                </div>
                 <div class="comment-form">
                   <input class="comment-field" type="text" placeholder="Add a comment..." maxlength="280" data-id="{{ forloop.index }}">
+                  <button class="gif-btn" onclick="openGifPicker('{{ forloop.index }}','feed')">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M9 12h2m0 0v3m0-3V9M13 9h3m-3 6h3m-3-3h2"/></svg>
+                  </button>
                   <button class="comment-send" data-id="{{ forloop.index }}">Post</button>
                 </div>
               </div>
@@ -894,8 +934,15 @@ layout: none
           <div class="lr-comments-section" id="lr-comments-section">
             <div class="lr-comments-title">Comments</div>
             <div class="lr-comments-list" id="lr-comments-list"></div>
+            <div class="lr-comment-gif-preview" id="lr-gif-preview" style="display:none;">
+              <img src="" alt="gif" id="lr-gif-preview-img">
+              <button class="lr-comment-gif-remove" onclick="clearLRGifPreview()">&#10005; Remove GIF</button>
+            </div>
             <div class="lr-comment-form">
               <input class="lr-comment-input" id="lr-comment-input" type="text" placeholder="Add a comment..." maxlength="280">
+              <button class="gif-btn" onclick="openGifPicker('lr','lr')">
+                <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M9 12h2m0 0v3m0-3V9M13 9h3m-3 6h3m-3-3h2"/></svg>
+              </button>
               <button class="lr-comment-send" onclick="postLRComment()">Post</button>
             </div>
           </div>
@@ -1124,6 +1171,28 @@ layout: none
     data-callback="handleOneTap"
     data-auto_prompt="false"
     data-itp_support="true">
+  </div>
+
+  <!-- GIF PICKER -->
+  <div class="gif-picker-overlay" id="gif-picker-overlay">
+    <div class="gif-picker-backdrop" onclick="closeGifPicker()"></div>
+    <div class="gif-picker-card">
+      <div class="gif-picker-header">
+        <input class="gif-picker-search" id="gif-search-input" type="text" placeholder="Search GIFs..." autocomplete="off">
+        <button class="gif-picker-close" onclick="closeGifPicker()">&#10005;</button>
+      </div>
+      <div class="gif-tabs" id="gif-tabs">
+        <button class="gif-tab active" data-pack="trending">&#128293; Trending</button>
+        <button class="gif-tab" data-pack="reactions">&#128512; Reactions</button>
+        <button class="gif-tab" data-pack="wrestling">&#129354; Wrestling</button>
+        <button class="gif-tab" data-pack="hot">&#129322; Hot</button>
+        <button class="gif-tab" data-pack="sport">&#127947; Sport</button>
+        <button class="gif-tab" data-pack="lol">&#129322; LOL</button>
+      </div>
+      <div class="gif-grid" id="gif-grid">
+        <div class="gif-loading">Loading GIFs...</div>
+      </div>
+    </div>
   </div>
 
   <!-- AUTH MODAL -->
@@ -1719,17 +1788,18 @@ layout: none
 
     /* COMMENTS */
     async function loadComments(postId, listEl, countBtn) {
-      const data = await sbFetch('comments?post_id=eq.'+encodeURIComponent(postId)+'&order=created_at.asc&select=text');
+      const data = await sbFetch('comments?post_id=eq.'+encodeURIComponent(postId)+'&order=created_at.asc&select=text,gif_url');
       if (data) {
         listEl.innerHTML = '';
-        data.forEach(row => addComment(listEl, row.text, false));
+        data.forEach(row => addComment(listEl, row.text, false, row.gif_url));
         if (countBtn) { const c = countBtn.querySelector('.comment-count'); if(c) c.textContent = data.length||0; }
       }
     }
 
-    function addComment(list, text, animate) {
+    function addComment(list, text, animate, gifUrl) {
       const div = document.createElement('div'); div.className = 'comment-item';
-      div.innerHTML = '<div class="comment-av">HW</div><div class="comment-text">'+text+'</div>';
+      let gifHtml = gifUrl ? '<img class="comment-gif" src="'+gifUrl+'" alt="gif" loading="lazy">' : '';
+      div.innerHTML = '<div class="comment-av">HW</div><div class="comment-text">'+(text||'')+gifHtml+'</div>';
       if (animate) { div.style.cssText='opacity:0;transform:translateY(5px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
       list.appendChild(div);
     }
@@ -1746,10 +1816,14 @@ layout: none
       const send = section.querySelector('.comment-send[data-id="'+id+'"]');
       if (!input || !send) return;
       async function postComment() {
-        const text = input.value.trim(); if (!text) return;
+        const text = input.value.trim();
+        const gifUrl = window.getSelectedGif ? window.getSelectedGif(id) : null;
+        if (!text && !gifUrl) return;
         input.value = '';
-        addComment(listEl, text, true);
-        await sbFetch('comments', 'POST', {post_id:id, text});
+        if (window.clearGifPreview) window.clearGifPreview(id);
+        if (window.clearSelectedGif) window.clearSelectedGif(id);
+        addComment(listEl, text, true, gifUrl);
+        await sbFetch('comments', 'POST', {post_id:id, text: text||'', gif_url: gifUrl||null});
         const data = await sbFetch('comments?post_id=eq.'+encodeURIComponent(id)+'&select=id');
         if (data) { const c = btn.querySelector('.comment-count'); if(c) c.textContent = data.length; }
         toast('Posted!');
@@ -2005,22 +2079,22 @@ layout: none
         : '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
     }
 
-    /* Locker Room Comments — Supabase */
     async function loadLRComments(storySlug) {
       const listEl = document.getElementById('lr-comments-list');
       listEl.innerHTML = '';
-      const data = await sbFetch('comments?post_id=eq.lr_' + encodeURIComponent(storySlug) + '&order=created_at.asc&select=text,user_name,user_avatar');
-      if (data) data.forEach(row => addLRComment(row.text, false, row.user_name, row.user_avatar));
+      const data = await sbFetch('comments?post_id=eq.lr_' + encodeURIComponent(storySlug) + '&order=created_at.asc&select=text,user_name,user_avatar,gif_url');
+      if (data) data.forEach(row => addLRComment(row.text, false, row.user_name, row.user_avatar, row.gif_url));
     }
 
-    function addLRComment(text, animate, userName, userAvatar) {
+    function addLRComment(text, animate, userName, userAvatar, gifUrl) {
       const listEl = document.getElementById('lr-comments-list');
       const div = document.createElement('div'); div.className = 'lr-comment-item';
       let avHtml = userAvatar
         ? '<div class="lr-comment-av"><img src="'+userAvatar+'" alt="'+(userName||'User')+'" onerror="this.parentNode.innerHTML=\'HW\'"></div>'
         : '<div class="lr-comment-av">HW</div>';
       const nameHtml = userName ? '<div class="lr-comment-username">'+userName+'</div>' : '';
-      div.innerHTML = avHtml + '<div class="lr-comment-body">'+nameHtml+'<div class="lr-comment-text">'+text+'</div></div>';
+      let gifHtml = gifUrl ? '<img class="comment-gif" src="'+gifUrl+'" alt="gif" loading="lazy">' : '';
+      div.innerHTML = avHtml + '<div class="lr-comment-body">'+nameHtml+'<div class="lr-comment-text">'+(text||'')+gifHtml+'</div></div>';
       if (animate) { div.style.cssText='opacity:0;transform:translateY(5px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
       listEl.appendChild(div);
     }
@@ -2028,17 +2102,21 @@ layout: none
     async function postLRComment() {
       if (!lrCurrentStory) return;
       const input = document.getElementById('lr-comment-input');
-      const text = input.value.trim(); if (!text) return;
+      const text = input.value.trim();
+      const gifUrl = window.getSelectedGif ? window.getSelectedGif('lr') : null;
+      if (!text && !gifUrl) return;
       input.value = '';
+      if (window.clearLRGifPreview) window.clearLRGifPreview();
+      if (window.clearSelectedGif) window.clearSelectedGif('lr');
       let userName = null, userAvatar = null;
-      if (currentUser) {
-        const meta = currentUser.user_metadata || {};
-        userName = meta.full_name || meta.name || currentUser.email.split('@')[0];
+      if (window.currentUser) {
+        const meta = window.currentUser.user_metadata || {};
+        userName = meta.full_name || meta.name || window.currentUser.email.split('@')[0];
         userAvatar = meta.avatar_url || meta.picture || null;
       }
-      addLRComment(text, true, userName, userAvatar);
+      addLRComment(text, true, userName, userAvatar, gifUrl);
       const postId = 'lr_' + lrCurrentStory.slug;
-      await sbFetch('comments', 'POST', { post_id: postId, text, user_name: userName, user_avatar: userAvatar });
+      await sbFetch('comments', 'POST', { post_id: postId, text: text||'', user_name: userName, user_avatar: userAvatar, gif_url: gifUrl||null });
       toast('Posted!');
     }
 
@@ -2060,6 +2138,151 @@ layout: none
     window.switchLRLang = switchLRLang;
     window.postLRComment = postLRComment;
 
+
+  })();
+
+  /* ── GIF PICKER SYSTEM ── */
+  (function() {
+    const GIPHY_KEY = 'wO3tipVM2aLUnOx0QYQuBp2CxGjtm6KS';
+    const GIPHY_API = 'https://api.giphy.com/v1/gifs';
+    let gifTarget = null;
+    let gifContext = null;
+    let searchTimer = null;
+    let selectedGifUrl = {};
+    let currentPack = 'trending';
+
+    const PACKS = {
+      trending:  { query: 'trending',        label: 'Trending' },
+      reactions: { query: 'reaction funny',  label: 'Reactions' },
+      wrestling: { query: 'wrestling fight', label: 'Wrestling' },
+      hot:       { query: 'hot fire sexy',   label: 'Hot' },
+      sport:     { query: 'sport athlete',   label: 'Sport' },
+      lol:       { query: 'lol funny laugh', label: 'LOL' }
+    };
+
+    async function fetchGifs(query, isTrending) {
+      const grid = document.getElementById('gif-grid');
+      grid.innerHTML = '<div class="gif-loading">Loading...</div>';
+      try {
+        const endpoint = isTrending
+          ? `${GIPHY_API}/trending?api_key=${GIPHY_KEY}&limit=24&rating=r`
+          : `${GIPHY_API}/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(query)}&limit=24&rating=r`;
+        const res = await fetch(endpoint);
+        const json = await res.json();
+        renderGifs(json.data || []);
+      } catch(e) {
+        grid.innerHTML = '<div class="gif-loading">Error loading GIFs. Try again.</div>';
+      }
+    }
+
+    function renderGifs(gifs) {
+      const grid = document.getElementById('gif-grid');
+      if (!gifs.length) { grid.innerHTML = '<div class="gif-loading">No GIFs found.</div>'; return; }
+      grid.innerHTML = '';
+      gifs.forEach(gif => {
+        const url = gif.images.fixed_width_small.url || gif.images.fixed_width.url;
+        const original = gif.images.fixed_width.url;
+        const div = document.createElement('div');
+        div.className = 'gif-item';
+        div.innerHTML = '<img src="' + url + '" alt="gif" loading="lazy">';
+        div.addEventListener('click', () => selectGif(original));
+        grid.appendChild(div);
+      });
+    }
+
+    function selectGif(url) {
+      if (gifContext === 'feed' && gifTarget) {
+        selectedGifUrl[gifTarget] = url;
+        const preview = document.getElementById('gif-preview-' + gifTarget);
+        const previewImg = document.getElementById('gif-preview-img-' + gifTarget);
+        if (preview && previewImg) {
+          previewImg.src = url;
+          preview.style.display = '';
+        }
+      } else if (gifContext === 'lr') {
+        selectedGifUrl['lr'] = url;
+        const preview = document.getElementById('lr-gif-preview');
+        const previewImg = document.getElementById('lr-gif-preview-img');
+        if (preview && previewImg) {
+          previewImg.src = url;
+          preview.style.display = '';
+        }
+      }
+      closeGifPicker();
+    }
+
+    window.openGifPicker = function(target, context) {
+      gifTarget = target;
+      gifContext = context;
+      const overlay = document.getElementById('gif-picker-overlay');
+      overlay.classList.add('open');
+      document.getElementById('gif-search-input').value = '';
+      currentPack = 'trending';
+      document.querySelectorAll('.gif-tab').forEach(t => t.classList.remove('active'));
+      const firstTab = document.querySelector('.gif-tab[data-pack="trending"]');
+      if (firstTab) firstTab.classList.add('active');
+      fetchGifs('', true);
+    };
+
+    window.closeGifPicker = function() {
+      document.getElementById('gif-picker-overlay').classList.remove('open');
+    };
+
+    window.clearGifPreview = function(id) {
+      delete selectedGifUrl[id];
+      const preview = document.getElementById('gif-preview-' + id);
+      const previewImg = document.getElementById('gif-preview-img-' + id);
+      if (preview) preview.style.display = 'none';
+      if (previewImg) previewImg.src = '';
+    };
+
+    window.clearLRGifPreview = function() {
+      delete selectedGifUrl['lr'];
+      const preview = document.getElementById('lr-gif-preview');
+      const previewImg = document.getElementById('lr-gif-preview-img');
+      if (preview) preview.style.display = 'none';
+      if (previewImg) previewImg.src = '';
+    };
+
+    window.getSelectedGif = function(id) {
+      return selectedGifUrl[id] || null;
+    };
+
+    window.clearSelectedGif = function(id) {
+      delete selectedGifUrl[id];
+      window.clearGifPreview && window.clearGifPreview(id);
+    };
+
+    /* Tab clicks */
+    document.querySelectorAll('.gif-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.gif-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        currentPack = btn.dataset.pack;
+        const pack = PACKS[currentPack];
+        if (!pack) return;
+        const isTrending = currentPack === 'trending';
+        fetchGifs(pack.query, isTrending);
+        document.getElementById('gif-search-input').value = '';
+      });
+    });
+
+    /* Search input */
+    const searchInput = document.getElementById('gif-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        const q = searchInput.value.trim();
+        if (!q) {
+          fetchGifs('', true);
+          return;
+        }
+        searchTimer = setTimeout(() => {
+          document.querySelectorAll('.gif-tab').forEach(t => t.classList.remove('active'));
+          fetchGifs(q, false);
+        }, 400);
+      });
+    }
 
   })();
 
