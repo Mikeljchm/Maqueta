@@ -365,7 +365,6 @@
     <div class="hw-tk-header">
       <button class="hw-tk-close" id="hw-tk-close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       <span class="hw-tk-title" id="hw-tk-title"></span>
-      <span class="hw-tk-counter" id="hw-tk-counter"></span>
     </div>
     <div class="hw-tk-main">
       <video id="hw-tk-vid" playsinline controlsList="nodownload" oncontextmenu="return false"></video>
@@ -452,7 +451,6 @@
       bgVid.src=v.url;
       if(v.poster){mainVid.poster=v.poster;bgVid.poster=v.poster;}
       titleEl.textContent=v.title||'';
-      counterEl.textContent=(idx+1)+' / '+videos.length;
       fill.style.width='0%';
       thumb.style.left='0%';
       timeEl.textContent='0:00 / 0:00';
@@ -505,7 +503,7 @@
     });
     mainVid.addEventListener('play',function(){setPlayIcon(true);bgVid.play().catch(function(){});});
     mainVid.addEventListener('pause',function(){setPlayIcon(false);bgVid.pause();});
-    mainVid.addEventListener('ended',function(){next();});
+    mainVid.addEventListener('ended',function(){setPI(false);});
 
     // Controls
     closeBtn.addEventListener('click',close);
