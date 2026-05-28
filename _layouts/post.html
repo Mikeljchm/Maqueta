@@ -205,7 +205,7 @@
       {% assign vid_poster = vid.poster | default: page.poster | default: "" %}
       {% if vid_url contains 'sendvid.com/embed' %}
       <div class="video-wrap"><iframe src="https:{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
-      {% elsif vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}
+      {% elsif vid_url contains 'b-cdn.net' or vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}
       <div class="hw-vp" data-hw-player>
         <video preload="none" playsinline controlsList="nodownload" oncontextmenu="return false"{% if vid_poster != "" %} poster="{{ vid_poster }}"{% endif %}><source src="{{ vid_url }}" type="video/mp4"></video>
         <div class="hw-vp-bigplay"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
@@ -547,4 +547,3 @@
   </script>
 </body>
 </html>
- 
