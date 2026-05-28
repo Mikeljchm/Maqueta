@@ -239,7 +239,7 @@
       <div id="videos-wrap" class="adult-blurred videos-wrap-blur">
       {% for vid in page.videos %}
       {% assign vid_url = vid.url | default: vid %}
-      {% assign vid_poster = vid.poster | default: page.poster | default: "" %}
+      {% assign vid_poster = vid.poster | default: page.poster | default: vid_url | append: "?thumbnail=1" %}
       {% if vid_url contains 'sendvid.com/embed' %}<div class="video-wrap"><iframe src="https:{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
       {% elsif vid_url contains 'b-cdn.net' or vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}
       <div class="hw-vp" data-hw-player>
