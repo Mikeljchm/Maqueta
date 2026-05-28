@@ -75,9 +75,29 @@
     .auth-modal-close{background:none;border:none;color:#444;font-size:0.8rem;cursor:pointer;margin-top:0.5rem;}
     .post-videos{padding:0.5rem 0;}
     .video-wrap{margin-bottom:2px;background:#000;overflow:hidden;}
-    .video-wrap video,.video-wrap iframe{width:100%;height:auto;display:block;border:none;}
-    .video-wrap video{object-fit:contain;background:#000;max-height:90vh;}
-    .video-wrap iframe{aspect-ratio:16/9;}
+    .video-wrap iframe{width:100%;aspect-ratio:16/9;display:block;border:none;}
+    /* ── CUSTOM VIDEO PLAYER ── */
+    .hw-vp{position:relative;width:100%;background:#000;overflow:hidden;user-select:none;}
+    .hw-vp video{width:100%;height:auto;display:block;max-height:90vh;object-fit:contain;background:#000;}
+    .hw-vp-controls{position:absolute;bottom:0;left:0;right:0;padding:2.5rem 0.85rem 0.65rem;background:linear-gradient(to top,rgba(0,0,0,0.88),transparent);display:flex;flex-direction:column;gap:0.45rem;opacity:1;transition:opacity 0.35s var(--ease);}
+    .hw-vp.hw-hide .hw-vp-controls{opacity:0;pointer-events:none;}
+    .hw-vp-prog{position:relative;width:100%;height:3px;background:rgba(255,255,255,0.2);border-radius:3px;cursor:pointer;touch-action:none;}
+    .hw-vp-prog:active{height:5px;}
+    .hw-vp-fill{height:100%;background:linear-gradient(90deg,var(--fire-orange),var(--fire-yellow));border-radius:3px;width:0%;pointer-events:none;}
+    .hw-vp-thumb{position:absolute;top:50%;transform:translate(-50%,-50%) scale(0);width:14px;height:14px;background:var(--fire-orange);border-radius:50%;box-shadow:0 0 8px rgba(255,69,0,0.8);transition:transform 0.15s var(--ease);pointer-events:none;}
+    .hw-vp-prog:active .hw-vp-thumb,.hw-vp-prog.dragging .hw-vp-thumb{transform:translate(-50%,-50%) scale(1);}
+    .hw-vp-row{display:flex;align-items:center;gap:0.45rem;}
+    .hw-vp-btn{background:none;border:none;color:#fff;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;border-radius:50%;}
+    .hw-vp-btn:active{background:rgba(255,69,0,0.25);}
+    .hw-vp-btn svg{width:19px;height:19px;fill:#fff;}
+    .hw-vp-time{font-size:0.68rem;color:rgba(255,255,255,0.8);font-family:var(--font-b);flex-shrink:0;}
+    .hw-vp-spacer{flex:1;}
+    .hw-vp-vol{-webkit-appearance:none;width:55px;height:3px;background:rgba(255,255,255,0.25);border-radius:3px;outline:none;cursor:pointer;}
+    .hw-vp-vol::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--fire-orange);cursor:pointer;}
+    .hw-vp-bigplay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);width:64px;height:64px;background:rgba(255,69,0,0.8);border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;}
+    .hw-vp-bigplay svg{width:26px;height:26px;fill:#fff;margin-left:3px;}
+    .hw-vp-bigplay.hw-pop{animation:hwPop 0.5s var(--ease) forwards;}
+    @keyframes hwPop{0%{transform:translate(-50%,-50%) scale(0.7);opacity:1;}60%{transform:translate(-50%,-50%) scale(1.1);opacity:1;}100%{transform:translate(-50%,-50%) scale(1.5);opacity:0;}}
     .post-actions{display:flex;align-items:center;padding:0.5rem 0.5rem;gap:0.2rem;border-bottom:1px solid var(--border);}
     .act-btn{background:none;border:none;display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.75rem;color:var(--text-muted);font-size:0.78rem;font-family:var(--font-b);cursor:pointer;border-radius:8px;transition:all 0.2s;}
     .act-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
@@ -186,7 +206,21 @@
       {% if vid_url contains 'sendvid.com/embed' %}
       <div class="video-wrap"><iframe src="https:{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
       {% elsif vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}
-      <div class="video-wrap"><video controls preload="none" playsinline controlsList="nodownload" oncontextmenu="return false"{% if vid_poster != "" %} poster="{{ vid_poster }}"{% endif %}><source src="{{ vid_url }}" type="video/mp4"></video></div>
+      <div class="hw-vp" data-hw-player>
+        <video preload="none" playsinline controlsList="nodownload" oncontextmenu="return false"{% if vid_poster != "" %} poster="{{ vid_poster }}"{% endif %}><source src="{{ vid_url }}" type="video/mp4"></video>
+        <div class="hw-vp-bigplay"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+        <div class="hw-vp-controls">
+          <div class="hw-vp-prog"><div class="hw-vp-fill"></div><div class="hw-vp-thumb"></div></div>
+          <div class="hw-vp-row">
+            <button class="hw-vp-btn hw-play-btn"><svg viewBox="0 0 24 24" class="hw-play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+            <span class="hw-vp-time hw-time-el">0:00 / 0:00</span>
+            <div class="hw-vp-spacer"></div>
+            <input class="hw-vp-vol" type="range" min="0" max="1" step="0.05" value="1">
+            <button class="hw-vp-btn hw-mute-btn"><svg viewBox="0 0 24 24" class="hw-mute-icon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>
+            <button class="hw-vp-btn hw-full-btn"><svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
+          </div>
+        </div>
+      </div>
       {% else %}
       <div class="video-wrap"><iframe src="{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
       {% endif %}
@@ -440,5 +474,77 @@
     container.addEventListener('touchend',e=>{if(curScale<=1){resetTransform(true);if(e.changedTouches.length){const dx=e.changedTouches[0].clientX-swipeStartX;const dy=e.changedTouches[0].clientY-swipeStartY;if(Math.abs(dy)>Math.abs(dx)&&dy>120){closeViewer();return;}if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>60){if(dx<0&&currentIdx<imgSrcs.filter(Boolean).length-1)loadViewerImg(currentIdx+1);if(dx>0&&currentIdx>0)loadViewerImg(currentIdx-1);}}}else{clampPos();}numTouches=e.touches.length;},{passive:true});
   })();
   </script>
+
+  <script>
+  /* CUSTOM VIDEO PLAYER */
+  (function(){
+    function fmt(s){s=Math.floor(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+    document.querySelectorAll('[data-hw-player]').forEach(function(wrap){
+      const vid=wrap.querySelector('video');
+      const fill=wrap.querySelector('.hw-vp-fill');
+      const thumb=wrap.querySelector('.hw-vp-thumb');
+      const prog=wrap.querySelector('.hw-vp-prog');
+      const timeEl=wrap.querySelector('.hw-time-el');
+      const playBtn=wrap.querySelector('.hw-play-btn');
+      const playIcon=wrap.querySelector('.hw-play-icon');
+      const muteBtn=wrap.querySelector('.hw-mute-btn');
+      const muteIcon=wrap.querySelector('.hw-mute-icon');
+      const volSlider=wrap.querySelector('.hw-vp-vol');
+      const fullBtn=wrap.querySelector('.hw-full-btn');
+      const bigPlay=wrap.querySelector('.hw-vp-bigplay');
+      let hideTimer,dragging=false;
+
+      function showCtrls(){wrap.classList.remove('hw-hide');clearTimeout(hideTimer);hideTimer=setTimeout(function(){if(!vid.paused)wrap.classList.add('hw-hide');},3000);}
+      function setPlayIcon(playing){playIcon.innerHTML=playing?'<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>':'<polygon points="5 3 19 12 5 21 5 3"/>';}
+      function setMuteIcon(muted){muteIcon.innerHTML=muted?'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>':'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';}
+
+      vid.addEventListener('timeupdate',function(){
+        if(!vid.duration)return;
+        const p=(vid.currentTime/vid.duration)*100;
+        fill.style.width=p+'%';
+        thumb.style.left=p+'%';
+        if(timeEl)timeEl.textContent=fmt(vid.currentTime)+' / '+fmt(vid.duration);
+      });
+      vid.addEventListener('play',function(){setPlayIcon(true);showCtrls();});
+      vid.addEventListener('pause',function(){setPlayIcon(false);wrap.classList.remove('hw-hide');clearTimeout(hideTimer);});
+
+      wrap.addEventListener('click',function(e){
+        if(e.target.closest('.hw-vp-controls'))return;
+        if(vid.paused){vid.play();}
+        else{vid.pause();bigPlay.classList.add('hw-pop');setTimeout(function(){bigPlay.classList.remove('hw-pop');},500);}
+        showCtrls();
+      });
+      wrap.addEventListener('touchstart',function(){showCtrls();},{passive:true});
+      playBtn.addEventListener('click',function(e){e.stopPropagation();vid.paused?vid.play():vid.pause();});
+
+      function scrub(e){
+        const r=prog.getBoundingClientRect();
+        const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+        vid.currentTime=Math.max(0,Math.min(1,x/r.width))*vid.duration;
+      }
+      prog.addEventListener('click',scrub);
+      prog.addEventListener('touchstart',function(e){dragging=true;prog.classList.add('dragging');scrub(e);showCtrls();},{passive:true});
+      prog.addEventListener('touchmove',function(e){if(dragging)scrub(e);},{passive:true});
+      prog.addEventListener('touchend',function(){dragging=false;prog.classList.remove('dragging');});
+
+      if(volSlider){
+        volSlider.addEventListener('input',function(){vid.volume=volSlider.value;vid.muted=volSlider.value==0;setMuteIcon(vid.muted);});
+      }
+      muteBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        vid.muted=!vid.muted;
+        if(volSlider)volSlider.value=vid.muted?0:(vid.volume||1);
+        setMuteIcon(vid.muted);
+      });
+      fullBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(vid.requestFullscreen)vid.requestFullscreen();
+        else if(vid.webkitRequestFullscreen)vid.webkitRequestFullscreen();
+        else if(vid.webkitEnterFullscreen)vid.webkitEnterFullscreen();
+      });
+    });
+  })();
+  </script>
 </body>
 </html>
+ 
