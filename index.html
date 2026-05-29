@@ -205,10 +205,10 @@ layout: none
 
     /* ── TUMBLR-STYLE POST CARD ── */
     .post-card {
-      background: #111111;
+      background: #1a1a1a;
       border: none;
-      border-radius: 12px;
-      margin: 0 0 0.85rem 0;
+      border-radius: 0;
+      margin: 0 0 0.5rem 0;
       overflow: hidden;
       opacity: 1;
     }
@@ -230,22 +230,21 @@ layout: none
     .card-cat-label { font-size:0.52rem; color:var(--text-muted); letter-spacing:0.12em; text-transform:uppercase; margin-top:0.05rem; }
     .card-date { font-size:0.58rem; color:var(--text-muted); }
 
-    /* PHOTOS — feed card layouts */
-    .card-media-wrap { width:100%; background:#000; display:block; text-decoration:none; cursor:pointer; position:relative; }
-    .card-first-photo { width:100%; display:block; height:auto; object-fit:cover; background:#000; }
+    /* PHOTOS — feed card layouts — edge to edge */
+    .card-media-wrap { width:100%; background:#111; display:block; text-decoration:none; cursor:pointer; position:relative; }
+    .card-first-photo { width:100%; display:block; height:auto; object-fit:cover; background:#111; }
 
     /* Skeleton loader */
     .card-media-wrap::before {
       content:'';
       position:absolute;
       inset:0;
-      background:linear-gradient(90deg,#1a1a1a 25%,#222 50%,#1a1a1a 75%);
+      background:linear-gradient(90deg,#1a1a1a 25%,#252525 50%,#1a1a1a 75%);
       background-size:200% 100%;
       animation:skeleton 1.5s ease-in-out infinite;
       z-index:0;
     }
     .card-media-wrap img { position:relative; z-index:1; }
-    .card-media-wrap img.loaded::before { display:none; }
     @keyframes skeleton { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
 
     /* Two photos side by side */
@@ -260,17 +259,17 @@ layout: none
     }
     .card-photo-peek img { width:100%; display:block; object-fit:cover; object-position:top; }
 
-    /* See all */
+    /* See all — discreto */
     .card-see-all {
-      display:flex; align-items:center; justify-content:center; gap:0.6rem;
-      width:100%; padding:0.75rem 1rem;
-      background:#1a1a1a;
-      color:#888; font-family:var(--font-d); font-size:0.95rem; letter-spacing:0.12em;
+      display:flex; align-items:center; justify-content:center; gap:0.5rem;
+      width:100%; padding:0.6rem 1rem;
+      background:#222;
+      color:#666; font-family:var(--font-b); font-size:0.72rem; letter-spacing:0.06em;
       text-decoration:none; text-transform:uppercase;
-      transition:opacity 0.2s;
+      border-top:1px solid #2a2a2a;
     }
-    .card-see-all svg { width:15px; height:15px; fill:#888; flex-shrink:0; opacity:0.9; }
-    .card-see-all:active { opacity:0.82; }
+    .card-see-all svg { width:13px; height:13px; fill:#666; flex-shrink:0; }
+    .card-see-all:active { color:#aaa; }
 
     /* CARD BODY */
     .card-body { padding:0.75rem 0.9rem 0.5rem; }
@@ -284,7 +283,7 @@ layout: none
     .card-read-more:active { color:var(--fire-orange); }
 
     /* CARD ACTIONS */
-    .card-actions { display:flex; align-items:center; padding:0.6rem 0 0.85rem; border-top:1px solid #1e1e1e; margin-top:0.6rem; }
+    .card-actions { display:flex; align-items:center; padding:0.6rem 0 0.85rem; border-top:1px solid #222; margin-top:0.6rem; }
     .card-act-btn { flex:1; background:none; border:none; display:flex; align-items:center; justify-content:center; gap:0.45rem; padding:0.5rem 0; color:#666; font-size:0.85rem; font-family:var(--font-b); cursor:pointer; border-radius:8px; transition:all 0.2s; }
     .card-act-btn svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:all 0.2s; }
     .card-act-btn:active { transform:scale(0.88); }
@@ -311,7 +310,7 @@ layout: none
     .comment-send { background:none; border:none; color:var(--fire-orange); font-family:var(--font-d); font-size:0.78rem; letter-spacing:0.06em; cursor:pointer; flex-shrink:0; }
 
     /* FEED CONTAINER */
-    #feed-container { padding:0.75rem 0.75rem 0; background:#000; }
+    #feed-container { padding:0; background:#000; }
 
     /* EMPTY STATE */
     .empty-feed { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem; gap:1rem; text-align:center; }
@@ -592,6 +591,7 @@ layout: none
         <div class="cat-pills" id="cat-pills">
           <button class="cat-pill active" data-cat="all">All</button>
           <button class="cat-pill" data-cat="wrestling">Wrestling</button>
+          <button class="cat-pill" data-cat="military">Military</button>
           <button class="cat-pill" data-cat="bulge">Bulge</button>
           <button class="cat-pill" data-cat="badboys">Studs</button>
           <button class="cat-pill" data-cat="fan">Fan Files</button>
