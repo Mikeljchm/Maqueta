@@ -132,10 +132,10 @@
     .comment-input::placeholder{color:var(--text-muted);}
     .comment-send{background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
     .comment-send svg{width:13px;height:13px;fill:none;stroke:var(--fire-orange);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    .related-section{padding:1rem 0 2rem;}
+    .related-section{padding:1rem 0 5rem;}
     .related-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.06em;color:var(--text-dim);margin-bottom:0.6rem;text-transform:uppercase;padding:0 1rem;}
     .related-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}
-    .related-card{position:relative;aspect-ratio:1;overflow:hidden;display:block;background:var(--surface);}
+    .related-card{position:relative;aspect-ratio:1;overflow:hidden;display:block;background:#111;}
     .related-card img{width:100%;height:100%;object-fit:cover;display:block;}
     .related-card-cat{position:absolute;bottom:3px;left:3px;background:rgba(255,69,0,0.88);color:#fff;font-size:0.4rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.12rem 0.3rem;border-radius:3px;font-weight:700;}
     .photo-viewer{position:fixed;inset:0;z-index:500;background:#000;transform:translateY(100%);transition:transform 0.38s var(--ease);overflow:hidden;}
@@ -299,7 +299,16 @@
     <section class="related-section">
       <div class="related-title">More Like This</div>
       <div class="related-grid">
-        {% for rp in related %}{% assign rp_img = rp.images | first | default: rp.image %}{% if rp_img %}<a class="related-card" href="{{ rp.url }}"><img src="{{ rp_img }}" alt="{{ rp.title }}" loading="lazy"><span class="related-card-cat">{{ rp.category }}</span></a>{% endif %}{% endfor %}
+        {% for rp in related %}
+          {% assign rp_img = "" %}
+          {% if rp.images %}{% assign rp_img = rp.images | first %}{% elsif rp.image %}{% assign rp_img = rp.image %}{% endif %}
+          {% if rp_img and rp_img.size > 10 %}
+          <a class="related-card" href="{{ rp.url }}">
+            <img src="{{ rp_img }}" alt="{{ rp.title }}" loading="lazy">
+            <span class="related-card-cat">{{ rp.category }}</span>
+          </a>
+          {% endif %}
+        {% endfor %}
       </div>
     </section>
     {% endif %}
@@ -444,6 +453,34 @@
   </nav>
 
   <!-- TIKTOK FULLSCREEN OVERLAY -->
+  <style>
+    #hw-tiktok{position:fixed;inset:0;z-index:1000;background:#000;display:none;flex-direction:column;overflow:hidden;}
+    #hw-tiktok.open{display:flex;}
+    .hw-tk-bg{position:absolute;inset:0;overflow:hidden;z-index:0;}
+    .hw-tk-bg video{width:100%;height:100%;object-fit:cover;filter:blur(24px);transform:scale(1.15);opacity:0.55;}
+    .hw-tk-header{position:absolute;top:0;left:0;right:0;z-index:3;padding:0.85rem 1rem;display:flex;align-items:center;gap:0.75rem;background:linear-gradient(to bottom,rgba(0,0,0,0.65),transparent);}
+    .hw-tk-close{background:none;border:none;color:#fff;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .hw-tk-close svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;}
+    .hw-tk-title{font-family:var(--font-d);font-size:1rem;color:#fff;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .hw-tk-main{position:relative;z-index:2;width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+    .hw-tk-main video{width:100%;height:100%;object-fit:contain;max-height:100vh;}
+    .hw-tk-controls{position:absolute;bottom:0;left:0;right:0;z-index:3;padding:2rem 1rem 2.5rem;background:linear-gradient(to top,rgba(0,0,0,0.85),transparent);}
+    .hw-tk-prog{position:relative;width:100%;height:3px;background:rgba(255,255,255,0.2);border-radius:3px;cursor:pointer;touch-action:none;margin-bottom:0.6rem;}
+    .hw-tk-fill{height:100%;background:linear-gradient(90deg,#FF4500,#FFB800);border-radius:3px;width:0%;}
+    .hw-tk-thumb{position:absolute;top:50%;transform:translate(-50%,-50%) scale(0);width:14px;height:14px;background:#FF4500;border-radius:50%;pointer-events:none;}
+    .hw-tk-prog:active .hw-tk-thumb{transform:translate(-50%,-50%) scale(1);}
+    .hw-tk-row{display:flex;align-items:center;gap:0.5rem;}
+    .hw-tk-btn{background:none;border:none;color:#fff;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .hw-tk-btn svg{width:22px;height:22px;fill:#fff;}
+    .hw-tk-time{font-size:0.72rem;color:rgba(255,255,255,0.8);}
+    .hw-tk-spacer{flex:1;}
+    .hw-tk-hint{position:absolute;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:0.2rem;pointer-events:none;opacity:0;transition:opacity 0.3s;}
+    .hw-tk-hint.show{opacity:1;}
+    .hw-tk-hint-top{top:5rem;}
+    .hw-tk-hint-bot{bottom:6rem;}
+    .hw-tk-hint svg{width:22px;height:22px;fill:none;stroke:rgba(255,255,255,0.65);stroke-width:2;stroke-linecap:round;}
+    .hw-tk-hint span{font-size:0.6rem;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.06em;}
+  </style>
   <div id="hw-tiktok">
     <div class="hw-tk-bg"><video id="hw-tk-bg-vid" muted playsinline loop></video></div>
     <div class="hw-tk-header">
