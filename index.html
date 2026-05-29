@@ -2402,11 +2402,11 @@ layout: none
   }
 
   async function saveEdit() {
-    if (!editingCard) return;
+    if (editMode === 'edit' && !editingCard) return;
     const btn = document.getElementById('edit-save-btn');
     const status = document.getElementById('edit-status');
-    const filePath = editingCard.dataset.path;
-    if (!filePath) { status.textContent = 'Error: no file path'; return; }
+    const filePath = editingCard ? editingCard.dataset.path : null;
+    if (editMode === 'edit' && !filePath) { status.textContent = 'Error: no file path'; return; }
     const title = document.getElementById('edit-title-input').value.trim();
     const desc = document.getElementById('edit-desc-input').value.trim();
     const category = document.getElementById('edit-cat-input').value.trim();
