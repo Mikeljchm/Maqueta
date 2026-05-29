@@ -130,8 +130,10 @@ layout: none
       background:#000;
       border-bottom:1px solid var(--border);
       display:flex; align-items:center; justify-content:space-between; padding:0 1rem;
-      position:relative; z-index:50;
+      position:fixed; top:0; left:0; right:0; z-index:50;
+      transition:transform 0.3s var(--ease);
     }
+    .top-bar.hidden { transform:translateY(-100%); }
     .top-logo { font-family:var(--font-d); font-size:1.3rem; letter-spacing:0.04em; color:#fff; text-decoration:none; line-height:1; }
     .top-logo span { background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation:pulseGlow 2.5s ease-in-out infinite; }
     @keyframes pulseGlow { 0%,100%{filter:drop-shadow(0 0 3px rgba(255,69,0,0.3));} 50%{filter:drop-shadow(0 0 12px rgba(255,184,0,0.85)) drop-shadow(0 0 20px rgba(255,69,0,0.4));} }
@@ -141,6 +143,8 @@ layout: none
     .top-btn svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
     .pwa-btn { background:rgba(255,69,0,0.1); border:1px solid rgba(255,69,0,0.3); border-radius:7px; padding:0.3rem 0.65rem; color:var(--fire-orange); font-family:var(--font-d); font-size:0.7rem; letter-spacing:0.08em; cursor:pointer; display:none; align-items:center; gap:0.3rem; }
     .pwa-btn.visible { display:flex; }
+    /* Spacer for fixed top-bar */
+    .top-bar-spacer { height:48px; flex-shrink:0; }
 
     /* PAGES */
     .pages { flex:1; overflow:hidden; position:relative; }
@@ -197,8 +201,9 @@ layout: none
     .user-logout-btn { background:none; border:1px solid var(--border); border-radius:20px; padding:0.45rem 1rem; font-size:0.72rem; color:var(--text-muted); cursor:pointer; }
 
     /* CATEGORY PILLS */
-    .cat-pills { display:flex; gap:0.45rem; padding:0.75rem 1rem 0.65rem; overflow-x:auto; scrollbar-width:none; position:sticky; top:0; z-index:10; background:rgba(0,0,0,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #1a1a1a; }
+    .cat-pills { display:flex; gap:0.45rem; padding:0.75rem 1rem 0.65rem; overflow-x:auto; scrollbar-width:none; position:sticky; top:48px; z-index:40; background:rgba(0,0,0,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #1a1a1a; transition:top 0.3s var(--ease); }
     .cat-pills::-webkit-scrollbar { display:none; }
+    .cat-pills.hidden-bar { top:0; }
     .cat-pill { flex-shrink:0; padding:0.32rem 0.85rem; border-radius:20px; font-size:0.6rem; font-family:var(--font-b); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; border:1px solid #2a2a2a; background:#111; color:#666; transition:all 0.2s var(--ease); white-space:nowrap; }
     .cat-pill:active { transform:scale(0.95); }
     .cat-pill.active { background:var(--fire-orange); border-color:var(--fire-orange); color:#fff; box-shadow:0 0 12px rgba(255,69,0,0.3); }
@@ -234,19 +239,6 @@ layout: none
     .card-media-wrap { width:100%; background:#111; display:block; text-decoration:none; cursor:pointer; position:relative; }
     .card-first-photo { width:100%; display:block; height:auto; object-fit:cover; background:#111; }
 
-    /* Skeleton loader */
-    .card-media-wrap::before {
-      content:'';
-      position:absolute;
-      inset:0;
-      background:linear-gradient(90deg,#1a1a1a 25%,#252525 50%,#1a1a1a 75%);
-      background-size:200% 100%;
-      animation:skeleton 1.5s ease-in-out infinite;
-      z-index:0;
-    }
-    .card-media-wrap img { position:relative; z-index:1; }
-    @keyframes skeleton { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
-
     /* Two photos side by side */
     .card-duo-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; }
     .card-duo-grid img { width:100%; aspect-ratio:3/4; object-fit:cover; display:block; }
@@ -259,17 +251,15 @@ layout: none
     }
     .card-photo-peek img { width:100%; display:block; object-fit:cover; object-position:top; }
 
-    /* See all — discreto */
+    /* See all — pequeño botón con flechita */
     .card-see-all {
-      display:flex; align-items:center; justify-content:center; gap:0.5rem;
-      width:100%; padding:0.6rem 1rem;
-      background:#222;
-      color:#666; font-family:var(--font-b); font-size:0.72rem; letter-spacing:0.06em;
-      text-decoration:none; text-transform:uppercase;
+      display:flex; align-items:center; justify-content:center;
+      width:100%; padding:0.5rem;
+      background:#1e1e1e;
       border-top:1px solid #2a2a2a;
     }
-    .card-see-all svg { width:13px; height:13px; fill:#666; flex-shrink:0; }
-    .card-see-all:active { color:#aaa; }
+    .card-see-all svg { width:18px; height:18px; fill:none; stroke:#555; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .card-see-all:active svg { stroke:#888; }
 
     /* CARD BODY */
     .card-body { padding:0.75rem 0.9rem 0.5rem; }
@@ -571,7 +561,7 @@ layout: none
   <!-- APP -->
   <div id="app" style="display:none">
 
-    <header class="top-bar">
+    <header class="top-bar" id="top-bar">
       <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
       <div class="top-actions">
         <button class="pwa-btn" id="pwa-install-btn">
@@ -583,6 +573,7 @@ layout: none
         </button>
       </div>
     </header>
+    <div class="top-bar-spacer"></div>
 
     <div class="pages">
 
@@ -649,8 +640,7 @@ layout: none
                   </div>
                 </a>
                 <a href="{{ post.url }}" class="card-see-all">
-                  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                  View Full Content &amp; More Posts ({{ img_count }})
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </a>
               </div>
               {% endif %}
@@ -1336,6 +1326,33 @@ layout: none
         });
       }
     });
+
+    /* HIDE ON SCROLL — top-bar y cat-pills */
+    (function(){
+      var topBar = document.getElementById('top-bar');
+      var catPills = document.getElementById('cat-pills');
+      var lastY = 0;
+      var ticking = false;
+      var scrollEl = document.getElementById('page-home');
+      if(!scrollEl) return;
+      scrollEl.addEventListener('scroll', function(){
+        if(!ticking){
+          requestAnimationFrame(function(){
+            var y = scrollEl.scrollTop;
+            if(y > lastY && y > 60){
+              topBar.classList.add('hidden');
+              if(catPills) catPills.classList.add('hidden-bar');
+            } else {
+              topBar.classList.remove('hidden');
+              if(catPills) catPills.classList.remove('hidden-bar');
+            }
+            lastY = y;
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, {passive:true});
+    })();
 
     /* LR CATEGORY PILLS — outside initApp */
     document.querySelectorAll('.lr-pill').forEach(btn => {
