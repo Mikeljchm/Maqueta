@@ -330,6 +330,18 @@ layout: none
     .edit-cancel-btn{background:#222;color:#888;border:none;border-radius:10px;padding:0.85rem 1.25rem;font-family:var(--font-b);font-size:0.85rem;cursor:pointer;}
     .edit-saving{opacity:0.6;pointer-events:none;}
     .edit-status{text-align:center;font-size:0.75rem;margin-top:0.6rem;min-height:1rem;}
+    /* Toggles */
+    .edit-toggles{margin:0.5rem 0 1rem;display:flex;flex-direction:column;gap:0;}
+    .edit-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 0;border-bottom:1px solid #222;cursor:pointer;position:relative;}
+    .edit-toggle-label{font-size:0.82rem;color:#aaa;}
+    .edit-toggle-check{position:absolute;opacity:0;width:0;height:0;}
+    .edit-toggle-switch{width:42px;height:24px;background:#333;border-radius:12px;position:relative;flex-shrink:0;transition:background 0.2s;}
+    .edit-toggle-switch::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform 0.2s;}
+    .edit-toggle-check:checked + .edit-toggle-switch{background:var(--fire-orange);}
+    .edit-toggle-check:checked + .edit-toggle-switch::after{transform:translateX(18px);}
+    /* Delete */
+    .edit-delete-btn{width:100%;background:none;border:1px solid #3a1010;border-radius:10px;padding:0.75rem;color:#883333;font-family:var(--font-b);font-size:0.82rem;cursor:pointer;margin-top:0.75rem;transition:all 0.2s;}
+    .edit-delete-btn:active{background:#3a1010;color:#ff5252;}
 
     /* EMPTY STATE */
     .empty-feed { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem; gap:1rem; text-align:center; }
@@ -2331,6 +2343,20 @@ layout: none
     document.getElementById('edit-title-input').value = card.dataset.title || '';
     document.getElementById('edit-desc-input').value = card.dataset.desc || '';
     document.getElementById('edit-cat-input').value = card.dataset.category || '';
+    document.getElementById('edit-poster-input').value = card.dataset.poster || '';
+    document.getElementById('edit-date-input').value = card.dataset.date || '';
+    try { document.getElementById('edit-images-input').value = JSON.parse(card.dataset.images || '[]').join('\n'); } catch(e) { document.getElementById('edit-images-input').value = ''; }
+    try {
+      var vids = JSON.parse(card.dataset.videos || '[]');
+      document.getElementById('edit-videos-input').value = vids.map(function(v){ return v.url + (v.poster ? ' | ' + v.poster : ''); }).join('\n');
+    } catch(e) { document.getElementById('edit-videos-input').value = ''; }
+    try {
+      var links = JSON.parse(card.dataset.links || '[]');
+      document.getElementById('edit-links-input').value = links.map(function(l){ return l.label + ' | ' + l.url; }).join('\n');
+    } catch(e) { document.getElementById('edit-links-input').value = ''; }
+    document.getElementById('edit-adult-toggle').checked = card.dataset.adult === 'true';
+    document.getElementById('edit-featured-toggle').checked = card.dataset.featured === 'true';
+    document.getElementById('edit-draft-toggle').checked = card.dataset.draft === 'true';
     document.getElementById('edit-status').textContent = '';
     document.getElementById('edit-modal').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -2346,40 +2372,50 @@ layout: none
     if (!editingCard) return;
     const btn = document.getElementById('edit-save-btn');
     const status = document.getElementById('edit-status');
+    const filePath = editingCard.dataset.path;
+    if (!filePath) { status.textContent = 'Error: no file path'; return; }
     const title = document.getElementById('edit-title-input').value.trim();
     const desc = document.getElementById('edit-desc-input').value.trim();
     const category = document.getElementById('edit-cat-input').value.trim();
-    const filePath = editingCard.dataset.path;
-
-    if (!filePath) { status.textContent = 'Error: no file path'; return; }
-
+    const poster = document.getElementById('edit-poster-input').value.trim();
+    const date = document.getElementById('edit-date-input').value.trim();
+    const adult = document.getElementById('edit-adult-toggle').checked;
+    const featured = document.getElementById('edit-featured-toggle').checked;
+    const draft = document.getElementById('edit-draft-toggle').checked;
+    const images = document.getElementById('edit-images-input').value.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+    const videos = document.getElementById('edit-videos-input').value.split('\n').map(function(l){
+      var parts = l.split('|').map(function(p){return p.trim();});
+      return parts[0] ? {url:parts[0],poster:parts[1]||''} : null;
+    }).filter(Boolean);
+    const links = document.getElementById('edit-links-input').value.split('\n').map(function(l){
+      var parts = l.split('|').map(function(p){return p.trim();});
+      return parts[0]&&parts[1] ? {label:parts[0],url:parts[1]} : null;
+    }).filter(Boolean);
     btn.classList.add('edit-saving');
     btn.textContent = 'Saving...';
     status.textContent = '';
-
     try {
       const res = await fetch('/api/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ filePath, title, description: desc, category })
+        body: JSON.stringify({ filePath, title, description: desc, category, poster, date, adult, featured, draft, images, videos, links })
       });
-
       const data = await res.json();
-
       if (data.ok) {
-        // Update card in UI immediately
         editingCard.dataset.title = title;
         editingCard.dataset.desc = desc;
         editingCard.dataset.category = category;
+        editingCard.dataset.adult = adult;
         const titleEl = editingCard.querySelector('.card-title a');
         const descEl = editingCard.querySelector('.card-desc');
         const catEl = editingCard.querySelector('.card-cat-label');
         if (titleEl) titleEl.textContent = title;
         if (descEl) descEl.textContent = desc;
         if (catEl) catEl.textContent = category;
+        if (draft) editingCard.style.opacity = '0.4';
         status.style.color = '#4caf50';
-        status.textContent = '&#10003; Saved — deploy in ~1 min';
+        status.textContent = 'Saved — deploy in ~1 min';
         setTimeout(closeEditModal, 1500);
       } else {
         status.style.color = '#ff5252';
@@ -2394,6 +2430,35 @@ layout: none
     }
   }
 
+  async function deletePost() {
+    if (!editingCard) return;
+    const status = document.getElementById('edit-status');
+    const filePath = editingCard.dataset.path;
+    if (!filePath) return;
+    if (!confirm('Delete this post? This cannot be undone.')) return;
+    status.style.color = '#ff5252';
+    status.textContent = 'Deleting...';
+    try {
+      const res = await fetch('/api/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ filePath })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        editingCard.style.transition = 'opacity 0.4s';
+        editingCard.style.opacity = '0';
+        setTimeout(function(){ editingCard.remove(); }, 400);
+        closeEditModal();
+      } else {
+        status.textContent = 'Error: ' + (data.error || 'Unknown');
+      }
+    } catch(e) {
+      status.textContent = 'Error: ' + e.message;
+    }
+  }
+
   document.getElementById('edit-modal').addEventListener('click', function(e) {
     if (e.target === this) closeEditModal();
   });
@@ -2403,23 +2468,84 @@ layout: none
   <div id="edit-modal">
     <div class="edit-sheet">
       <div class="edit-sheet-handle"></div>
-      <div class="edit-sheet-title">Edit Post</div>
+      <div class="edit-sheet-title" id="edit-sheet-title">Edit Post</div>
+
+      <!-- TITLE -->
       <div class="edit-field">
         <label class="edit-label">Title</label>
         <input class="edit-input" id="edit-title-input" type="text" placeholder="Post title">
       </div>
+
+      <!-- DESCRIPTION -->
       <div class="edit-field">
         <label class="edit-label">Description &amp; Hashtags</label>
         <textarea class="edit-textarea" id="edit-desc-input" placeholder="Description with #hashtags"></textarea>
       </div>
+
+      <!-- CATEGORY -->
       <div class="edit-field">
         <label class="edit-label">Category</label>
         <input class="edit-input" id="edit-cat-input" type="text" placeholder="wrestling, military, bulge...">
       </div>
+
+      <!-- POSTER -->
+      <div class="edit-field">
+        <label class="edit-label">Poster (cover image URL)</label>
+        <input class="edit-input" id="edit-poster-input" type="text" placeholder="https://hottwrestling.b-cdn.net/...">
+      </div>
+
+      <!-- DATE -->
+      <div class="edit-field">
+        <label class="edit-label">Date</label>
+        <input class="edit-input" id="edit-date-input" type="date">
+      </div>
+
+      <!-- PHOTOS -->
+      <div class="edit-field">
+        <label class="edit-label">Photos <span style="color:#555;font-size:0.6rem;">(one URL per line)</span></label>
+        <textarea class="edit-textarea" id="edit-images-input" placeholder="https://hottwrestling.b-cdn.net/foto1.jpg&#10;https://hottwrestling.b-cdn.net/foto2.jpg" style="min-height:80px;font-size:0.72rem;"></textarea>
+      </div>
+
+      <!-- VIDEOS -->
+      <div class="edit-field">
+        <label class="edit-label">Videos <span style="color:#555;font-size:0.6rem;">(url | poster, one per line)</span></label>
+        <textarea class="edit-textarea" id="edit-videos-input" placeholder="https://hottwrestling.b-cdn.net/video.mp4 | https://poster.jpg" style="min-height:60px;font-size:0.72rem;"></textarea>
+      </div>
+
+      <!-- LINKS -->
+      <div class="edit-field">
+        <label class="edit-label">Links <span style="color:#555;font-size:0.6rem;">(label | url, one per line)</span></label>
+        <textarea class="edit-textarea" id="edit-links-input" placeholder="OnlyFans | https://onlyfans.com/...&#10;Telegram | https://t.me/..." style="min-height:60px;font-size:0.72rem;"></textarea>
+      </div>
+
+      <!-- TOGGLES -->
+      <div class="edit-toggles">
+        <label class="edit-toggle-row">
+          <span class="edit-toggle-label">Adult content</span>
+          <input type="checkbox" id="edit-adult-toggle" class="edit-toggle-check">
+          <span class="edit-toggle-switch"></span>
+        </label>
+        <label class="edit-toggle-row">
+          <span class="edit-toggle-label">Featured (stays on top)</span>
+          <input type="checkbox" id="edit-featured-toggle" class="edit-toggle-check">
+          <span class="edit-toggle-switch"></span>
+        </label>
+        <label class="edit-toggle-row">
+          <span class="edit-toggle-label">Draft (hidden from feed)</span>
+          <input type="checkbox" id="edit-draft-toggle" class="edit-toggle-check">
+          <span class="edit-toggle-switch"></span>
+        </label>
+      </div>
+
+      <!-- ACTIONS -->
       <div class="edit-actions">
         <button class="edit-cancel-btn" onclick="closeEditModal()">Cancel</button>
-        <button class="edit-save-btn" id="edit-save-btn" onclick="saveEdit()">Save Changes</button>
+        <button class="edit-save-btn" id="edit-save-btn" onclick="saveEdit()">Save</button>
       </div>
+
+      <!-- DELETE -->
+      <button class="edit-delete-btn" id="edit-delete-btn" onclick="deletePost()">&#128465; Delete Post</button>
+
       <div class="edit-status" id="edit-status"></div>
     </div>
   </div>
