@@ -253,11 +253,13 @@
         <img src="{{ img }}" alt="{{ page.title }}" loading="lazy">
         {% endfor %}
       </div>
+      {% if page.adult %}
       <div class="adult-gate" id="adult-gate-2" onclick="openAuthModal()" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;background:rgba(0,0,0,0.15);cursor:pointer;">
         <div class="adult-gate-icon">&#128520;</div>
         <div class="adult-gate-title">Adults Only. No Exceptions.</div>
         <button class="adult-gate-btn">Sign In — It's Free</button>
       </div>
+      {% endif %}
     </div>
     {% endif %}
 
