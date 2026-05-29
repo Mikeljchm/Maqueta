@@ -151,10 +151,11 @@ layout: none
     /* Admin buttons */
     .admin-login-btn{display:none;background:none;border:1px solid #333;border-radius:6px;padding:0.25rem 0.6rem;color:#555;font-size:0.65rem;font-family:var(--font-b);letter-spacing:0.06em;text-decoration:none;text-transform:uppercase;}
     .admin-logout-btn{display:none;background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3);border-radius:6px;padding:0.25rem 0.6rem;color:var(--fire-orange);font-size:0.65rem;font-family:var(--font-b);letter-spacing:0.06em;text-decoration:none;text-transform:uppercase;}
-    body:not(.is-admin) #admin-login-btn{display:flex;align-items:center;}
+    body:not(.is-admin) #admin-login-btn{display:none;}
+    body.show-admin-btn:not(.is-admin) #admin-login-btn{display:flex;align-items:center;}
     body.is-admin #admin-logout-btn{display:flex;align-items:center;}
     /* New post FAB */
-    #new-post-fab{display:none;position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 1rem);right:1rem;width:52px;height:52px;background:linear-gradient(135deg,var(--fire-red),var(--fire-orange));border-radius:50%;border:none;color:#fff;font-size:1.6rem;cursor:pointer;z-index:49;box-shadow:0 4px 20px rgba(255,69,0,0.4);align-items:center;justify-content:center;transition:transform 0.2s var(--ease);}
+    #new-post-fab{display:none;position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 4rem);right:1rem;width:48px;height:48px;background:linear-gradient(135deg,var(--fire-red),var(--fire-orange));border-radius:50%;border:none;color:#fff;font-size:1.5rem;cursor:pointer;z-index:101;box-shadow:0 4px 20px rgba(255,69,0,0.4);align-items:center;justify-content:center;transition:transform 0.2s var(--ease);}
     #new-post-fab:active{transform:scale(0.9);}
     body.is-admin #new-post-fab{display:flex;}
 
@@ -319,7 +320,7 @@ layout: none
     /* EDIT MODAL */
     #edit-modal{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.88);display:none;align-items:flex-end;justify-content:center;}
     #edit-modal.open{display:flex;}
-    .edit-sheet{background:#1a1a1a;border-radius:16px 16px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:1.25rem 1rem 2.5rem;}
+    .edit-sheet{background:#1a1a1a;border-radius:16px 16px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:1.25rem 1rem 4rem;}
     .edit-sheet-handle{width:36px;height:4px;background:#333;border-radius:2px;margin:0 auto 1.2rem;}
     .edit-sheet-title{font-family:var(--font-d);font-size:1.1rem;color:var(--text);letter-spacing:0.04em;margin-bottom:1.2rem;}
     .edit-field{margin-bottom:1rem;}
@@ -2337,9 +2338,10 @@ layout: none
     const session = getAdminSession();
     if (session && session.login === ADMIN_LOGIN) {
       document.body.classList.add('is-admin');
-      // Show admin bar
-      var bar = document.getElementById('admin-bar');
-      if (bar) bar.style.display = 'flex';
+    }
+    // Show login button only if ?admin=true in URL
+    if (new URLSearchParams(window.location.search).get('admin') === 'true') {
+      document.body.classList.add('show-admin-btn');
     }
   }
   initAdmin();
