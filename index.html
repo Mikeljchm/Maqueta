@@ -148,6 +148,11 @@ layout: none
     .top-btn svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
     .pwa-btn { background:rgba(255,69,0,0.1); border:1px solid rgba(255,69,0,0.3); border-radius:7px; padding:0.3rem 0.65rem; color:var(--fire-orange); font-family:var(--font-d); font-size:0.7rem; letter-spacing:0.08em; cursor:pointer; display:none; align-items:center; gap:0.3rem; }
     .pwa-btn.visible { display:flex; }
+    /* Admin buttons */
+    .admin-login-btn{display:none;background:none;border:1px solid #333;border-radius:6px;padding:0.25rem 0.6rem;color:#555;font-size:0.65rem;font-family:var(--font-b);letter-spacing:0.06em;text-decoration:none;text-transform:uppercase;}
+    .admin-logout-btn{display:none;background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3);border-radius:6px;padding:0.25rem 0.6rem;color:var(--fire-orange);font-size:0.65rem;font-family:var(--font-b);letter-spacing:0.06em;text-decoration:none;text-transform:uppercase;}
+    body:not(.is-admin) #admin-login-btn{display:flex;align-items:center;}
+    body.is-admin #admin-logout-btn{display:flex;align-items:center;}
 
     /* PAGES */
     .pages { flex:1; overflow:hidden; position:relative; }
@@ -589,6 +594,8 @@ layout: none
       <header class="top-bar" id="top-bar">
         <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
         <div class="top-actions">
+          <a href="/api/auth/login" class="admin-login-btn" id="admin-login-btn">Admin</a>
+          <a href="/api/auth/logout" class="admin-logout-btn" id="admin-logout-btn">Exit Admin</a>
           <button class="pwa-btn" id="pwa-install-btn">
             <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
             App
@@ -2298,16 +2305,26 @@ layout: none
   })();
 
   /* ADMIN INLINE EDIT */
-  const ADMIN_EMAIL = 'chuellomikel@gmail.com';
+  const ADMIN_LOGIN = 'Mikeljchm';
   var editingCard = null;
 
-  function updateAuthUI(user) {
-    if (user && user.email === ADMIN_EMAIL) {
+  // Check admin session from cookie
+  function getAdminSession() {
+    const match = document.cookie.match(/hw_admin=([^;]+)/);
+    if (!match) return null;
+    try { return JSON.parse(atob(match[1])); } catch(e) { return null; }
+  }
+
+  function initAdmin() {
+    const session = getAdminSession();
+    if (session && session.login === ADMIN_LOGIN) {
       document.body.classList.add('is-admin');
-    } else {
-      document.body.classList.remove('is-admin');
+      // Show admin bar
+      var bar = document.getElementById('admin-bar');
+      if (bar) bar.style.display = 'flex';
     }
   }
+  initAdmin();
 
   function openInlineEdit(card) {
     editingCard = card;
@@ -2341,15 +2358,11 @@ layout: none
     status.textContent = '';
 
     try {
-      // Get Google ID token
-      const { data: { session } } = await _sb.auth.getSession();
-      if (!session) { status.textContent = 'Not logged in'; return; }
-      const idToken = session.provider_token || session.access_token;
-
       const res = await fetch('/api/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filePath, title, description: desc, category, idToken })
+        credentials: 'include',
+        body: JSON.stringify({ filePath, title, description: desc, category })
       });
 
       const data = await res.json();
@@ -2366,7 +2379,7 @@ layout: none
         if (descEl) descEl.textContent = desc;
         if (catEl) catEl.textContent = category;
         status.style.color = '#4caf50';
-        status.textContent = '✓ Saved — deploy in ~1 min';
+        status.textContent = '&#10003; Saved — deploy in ~1 min';
         setTimeout(closeEditModal, 1500);
       } else {
         status.style.color = '#ff5252';
@@ -2381,7 +2394,6 @@ layout: none
     }
   }
 
-  // Close modal on backdrop tap
   document.getElementById('edit-modal').addEventListener('click', function(e) {
     if (e.target === this) closeEditModal();
   });
