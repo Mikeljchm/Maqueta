@@ -1,5 +1,4 @@
 export async function onRequestPost({ request, env }) {
-  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -8,24 +7,28 @@ export async function onRequestPost({ request, env }) {
   };
 
   try {
-    const { filePath, title, description, category, idToken } = await request.json();
-
-    // Verify Google ID token
-    const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
-    const tokenInfo = await verifyRes.json();
-
-    if (tokenInfo.email !== 'chuellomikel@gmail.com') {
+    // Verify admin session cookie
+    const cookie = request.headers.get('Cookie') || '';
+    const match = cookie.match(/hw_admin=([^;]+)/);
+    if (!match) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
     }
 
+    const session = JSON.parse(atob(match[1]));
+    if (session.login !== 'Mikeljchm') {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+    }
+
+    const { filePath, title, description, category } = await request.json();
     const GITHUB_TOKEN = env.GITHUB_TOKEN;
     const REPO = 'Mikeljchm/Maqueta';
 
-    // Get current file from GitHub (need SHA + content)
+    // Get current file SHA + content
     const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${filePath}`, {
       headers: {
         'Authorization': `token ${GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github.v3+json'
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'HottWrestling-Admin'
       }
     });
 
@@ -35,33 +38,24 @@ export async function onRequestPost({ request, env }) {
 
     const fileData = await getRes.json();
     const sha = fileData.sha;
-
-    // Decode current content
     const currentContent = atob(fileData.content.replace(/\n/g, ''));
 
     // Update frontmatter fields
     let newContent = currentContent;
+    if (title) newContent = newContent.replace(/^title:.*$/m, `title: "${title}"`);
+    if (description) newContent = newContent.replace(/^description:.*$/m, `description: "${description.replace(/"/g, '\\"')}"`);
+    if (category) newContent = newContent.replace(/^category:.*$/m, `category: ${category}`);
 
-    if (title) {
-      newContent = newContent.replace(/^title:.*$/m, `title: "${title}"`);
-    }
-    if (description) {
-      newContent = newContent.replace(/^description:.*$/m, `description: "${description.replace(/"/g, '\\"')}"`);
-    }
-    if (category) {
-      newContent = newContent.replace(/^category:.*$/m, `category: ${category}`);
-    }
-
-    // Encode to base64
+    // Encode and save
     const encoded = btoa(unescape(encodeURIComponent(newContent)));
 
-    // Save to GitHub
     const saveRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${filePath}`, {
       method: 'PUT',
       headers: {
         'Authorization': `token ${GITHUB_TOKEN}`,
         'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'HottWrestling-Admin'
       },
       body: JSON.stringify({
         message: `Edit: ${filePath}`,
@@ -71,7 +65,6 @@ export async function onRequestPost({ request, env }) {
     });
 
     const saveData = await saveRes.json();
-
     if (!saveRes.ok) {
       return new Response(JSON.stringify({ error: saveData.message }), { status: saveRes.status, headers });
     }
