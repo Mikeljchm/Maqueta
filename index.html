@@ -622,7 +622,7 @@ layout: none
         <div class="top-actions">
           <a href="/api/auth/login" class="admin-login-btn" id="admin-login-btn">Admin</a>
           <a href="/api/auth/logout" class="admin-logout-btn" id="admin-logout-btn">Exit Admin</a>
-          <button class="pwa-btn" id="pwa-install-btn">
+          <button class="pwa-btn" id="pwa-install-btn" onclick="if(window.deferredPrompt){window.deferredPrompt.prompt();window.deferredPrompt.userChoice.then(function(){window.deferredPrompt=null;document.getElementById('pwa-install-btn').classList.remove('visible');})}">
             <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
             App
           </button>
@@ -2241,9 +2241,47 @@ layout: none
   /* SERVICE WORKER */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => {
+          // Check for updates every 60 minutes
+          setInterval(() => reg.update(), 60 * 60 * 1000);
+        })
+        .catch(() => {});
     });
   }
+
+  // Handle PWA shortcuts — navigate to section on launch
+  (function(){
+    var params = new URLSearchParams(window.location.search);
+    var section = params.get('section');
+    if(section){
+      // Wait for app to init then navigate to section
+      var attempts = 0;
+      var check = setInterval(function(){
+        var pg = document.getElementById('page-' + section);
+        var btn = document.querySelector('.nav-item[data-page="' + section + '"]');
+        if(pg && btn){
+          clearInterval(check);
+          btn.click();
+        }
+        if(++attempts > 20) clearInterval(check);
+      }, 200);
+    }
+  })();
+
+  // PWA install prompt
+  var deferredPrompt;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    var btn = document.getElementById('pwa-install-btn');
+    if(btn) btn.classList.add('visible');
+  });
+  window.addEventListener('appinstalled', function(){
+    deferredPrompt = null;
+    var btn = document.getElementById('pwa-install-btn');
+    if(btn) btn.classList.remove('visible');
+  });
   </script>
 
   <script>
