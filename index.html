@@ -657,7 +657,7 @@ layout: none
             {% elsif post.image %}
               {% assign all_imgs = post.image | split: '|||' %}
             {% endif %}
-            <article class="post-card{% if post.adult %} adult-card{% endif %}" data-cat="{{ post.category }}" data-idx="{{ forloop.index0 }}" data-adult="{{ post.adult | default: false }}" data-path="{{ post.path }}" data-title="{{ post.title | escape }}" data-desc="{{ post.description | escape }}" data-category="{{ post.category }}">
+            <article class="post-card{% if post.adult %} adult-card{% endif %}" data-cat="{{ post.category }}" data-idx="{{ forloop.index0 }}" data-adult="{{ post.adult | default: false }}" data-path="{{ post.path }}" data-title="{{ post.title | escape }}" data-desc="{{ post.description | escape }}" data-category="{{ post.category }}" data-poster="{{ post.poster | default: "" }}" data-date="{{ post.date | date: '%Y-%m-%d' }}" data-images="{{ post.images | jsonify | escape }}" data-videos="{{ post.videos | jsonify | escape }}" data-links="{{ post.links | jsonify | escape }}" data-featured="{{ post.featured | default: false }}" data-draft="{{ post.published | default: true | map: 'false' }}">
               <div class="card-header">
                 <div class="card-avatar">HW</div>
                 <div class="card-meta">
