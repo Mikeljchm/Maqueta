@@ -356,7 +356,13 @@ layout: none
     .empty-feed p { color:var(--text-muted); font-size:0.88rem; line-height:1.6; }
 
     /* PAGE TITLE BAR */
-    .page-title-bar { padding:1rem 1rem 0.75rem; border-bottom:1px solid var(--border); background:#000; margin-top:0; }
+    .page-title-bar { padding:1rem 1rem 0.75rem; border-bottom:1px solid var(--border); background:#000; margin-top:0; display:flex; align-items:center; }
+    /* Section new button */
+    .section-new-btn{display:none;background:none;border:1px solid rgba(255,69,0,0.3);border-radius:8px;padding:0.3rem 0.65rem;color:var(--fire-orange);font-size:0.7rem;font-family:var(--font-b);letter-spacing:0.06em;cursor:pointer;margin-left:auto;}
+    .section-new-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;vertical-align:middle;margin-right:3px;}
+    body.is-admin .section-new-btn{display:flex;align-items:center;}
+    .page-title-bar{display:flex;align-items:center;flex-wrap:wrap;}
+    .page-title-bar .page-title{flex:1;}
     .page-title { font-family:var(--font-d); font-size:1.6rem; color:#fff; letter-spacing:0.06em; }
     .page-title span { background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
     .page-subtitle { font-size:0.62rem; color:var(--text-muted); letter-spacing:0.15em; text-transform:uppercase; margin-top:0.15rem; }
@@ -763,8 +769,11 @@ layout: none
       <!-- THE MAT -->
       <div class="page" id="page-wrestlers">
         <div class="page-title-bar">
-          <div class="page-title">THE <span>MAT</span></div>
-          <div class="page-subtitle">Wrestler profiles &middot; Updated weekly</div>
+          <div>
+            <div class="page-title">THE <span>MAT</span></div>
+            <div class="page-subtitle">Wrestler profiles &middot; Updated weekly</div>
+          </div>
+          <button class="section-new-btn" onclick="openNewProfile('_wrestlers')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New</button>
         </div>
         <!-- Category pills — dynamic from wrestlers -->
         {% assign wrestlers = site.wrestlers %}
@@ -806,6 +815,7 @@ layout: none
       <div class="page" id="page-badboys">
         <div class="page-title-bar">
           <div class="page-title">THE <span>STUDS</span></div>
+          <button class="section-new-btn" onclick="openNewProfile('_studs')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New</button>
         </div>
         {% assign all_studs = site.studs | concat: site.badboys %}
         {% if all_studs.size > 0 %}
@@ -2443,9 +2453,9 @@ layout: none
     btn.textContent = editMode === 'new' ? 'Creating...' : 'Saving...';
     status.textContent = '';
     try {
-      const endpoint = editMode === 'new' ? '/api/create' : '/api/save';
+      const endpoint = editMode === 'new' ? (window._newProfileCollection ? '/api/create-profile' : '/api/create') : '/api/save';
       const payload = editMode === 'new'
-        ? { title, description: desc, category, poster, date, adult, featured, draft, images, videos, links }
+        ? { title, description: desc, category, poster, date, adult, featured, draft, images, videos, links, collection: window._newProfileCollection }
         : { filePath, title, description: desc, category, poster, date, adult, featured, draft, images, videos, links };
 
       const res = await fetch(endpoint, {
@@ -2518,6 +2528,25 @@ layout: none
     } catch(e) {
       status.textContent = 'Error: ' + e.message;
     }
+  }
+
+  function openNewProfile(collection) {
+    editMode = 'new';
+    editingCard = null;
+    var colMap = {'_wrestlers':'wrestler','_studs':'stud','_bulge':'bulge'};
+    document.getElementById('edit-sheet-title').textContent = 'New ' + (colMap[collection]||'Profile');
+    document.getElementById('edit-save-btn').textContent = 'Create';
+    document.getElementById('edit-delete-btn').style.display = 'none';
+    ['edit-title-input','edit-desc-input','edit-cat-input','edit-poster-input','edit-images-input','edit-videos-input','edit-links-input'].forEach(function(id){document.getElementById(id).value='';});
+    document.getElementById('edit-date-input').value = new Date().toISOString().split('T')[0];
+    document.getElementById('edit-adult-toggle').checked = false;
+    document.getElementById('edit-featured-toggle').checked = false;
+    document.getElementById('edit-draft-toggle').checked = false;
+    document.getElementById('edit-status').textContent = '';
+    // Store collection for create endpoint
+    window._newProfileCollection = collection;
+    document.getElementById('edit-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
   }
 
   document.getElementById('edit-modal').addEventListener('click', function(e) {
