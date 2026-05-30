@@ -1418,14 +1418,16 @@ layout: none
       var strip = document.getElementById('top-strip');
       if(strip){ strip.style.transform = 'translateY(0)'; }
     }
-    // Standard back navigation
-    window.addEventListener('pageshow', function(e){ restoreNav(); });
-    // PWA — visibility change (when app comes to foreground)
-    document.addEventListener('visibilitychange', function(){
-      if(document.visibilityState === 'visible') restoreNav();
+    // Only restore on actual back navigation (persisted = from bfcache)
+    window.addEventListener('pageshow', function(e){
+      if(e.persisted) restoreNav();
     });
-    // PWA — focus event
-    window.addEventListener('focus', restoreNav);
+    // PWA — only when coming from background (hidden -> visible)
+    var wasHidden = false;
+    document.addEventListener('visibilitychange', function(){
+      if(document.visibilityState === 'hidden'){ wasHidden = true; }
+      else if(wasHidden){ wasHidden = false; restoreNav(); }
+    });
 
     /* HIDE ON SCROLL — top-strip completo */
     (function(){
