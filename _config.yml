@@ -49,3 +49,8 @@ collections:
   bulge:
     output: true
     permalink: /bulge-sport/:name/
+
+# Copiar al _site/ para Cloudflare Pages
+include:
+  - _worker.js
+  - functions
