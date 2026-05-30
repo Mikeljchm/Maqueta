@@ -155,6 +155,7 @@
   <header class="top-bar">
     <button class="back-btn" onclick="history.back()"><svg viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg></button>
     <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
+    <button class="admin-edit-btn" onclick="openEditModal()" title="Edit profile"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
   </header>
 
   {% assign hero_img = page.banner | default: page.cover | default: page.mugshot %}
@@ -574,6 +575,147 @@
       fullBtn.addEventListener('click',function(e){e.stopPropagation();var src=wrap.getAttribute('data-src');if(src&&window.hwTikTokOpen){vid.pause();window.hwTikTokOpen(src);}});
     });
   })();
+  </script>
+
+  <!-- EDIT MODAL -->
+  <div id="edit-modal">
+    <div class="edit-sheet">
+      <div class="edit-sheet-handle"></div>
+      <div class="edit-sheet-title">Edit Profile</div>
+      <div class="edit-field"><label class="edit-label">Title / Name</label><input class="edit-input" id="edit-title-input" type="text"></div>
+      <div class="edit-field"><label class="edit-label">Description &amp; Hashtags</label><textarea class="edit-textarea" id="edit-desc-input"></textarea></div>
+      <div class="edit-field"><label class="edit-label">Category / Tag</label><input class="edit-input" id="edit-cat-input" type="text"></div>
+      <div class="edit-field"><label class="edit-label">Cover (URL)</label><input class="edit-input" id="edit-cover-input" type="text"></div>
+      <div class="edit-field"><label class="edit-label">Banner (URL)</label><input class="edit-input" id="edit-banner-input" type="text"></div>
+      <div class="edit-field"><label class="edit-label">Bio</label><textarea class="edit-textarea" id="edit-bio-input" style="min-height:70px;"></textarea></div>
+      <div class="edit-field"><label class="edit-label">Photos <span style="color:#555;font-size:0.6rem;">(one URL per line)</span></label><textarea class="edit-textarea" id="edit-images-input" style="min-height:80px;font-size:0.72rem;"></textarea></div>
+      <div class="edit-field"><label class="edit-label">Videos <span style="color:#555;font-size:0.6rem;">(url | poster, one per line)</span></label><textarea class="edit-textarea" id="edit-videos-input" style="min-height:60px;font-size:0.72rem;"></textarea></div>
+      <div class="edit-field"><label class="edit-label">Links <span style="color:#555;font-size:0.6rem;">(label | url, one per line)</span></label><textarea class="edit-textarea" id="edit-links-input" style="min-height:60px;font-size:0.72rem;"></textarea></div>
+      <div class="edit-toggles">
+        <label class="edit-toggle-row"><span class="edit-toggle-label">Adult content</span><input type="checkbox" id="edit-adult-toggle" class="edit-toggle-check"><span class="edit-toggle-switch"></span></label>
+      </div>
+      <div class="edit-actions">
+        <button class="edit-cancel-btn" onclick="closeEditModal()">Cancel</button>
+        <button class="edit-save-btn" id="edit-save-btn" onclick="saveEdit()">Save Changes</button>
+      </div>
+      <button class="edit-delete-btn" onclick="deleteProfile()">&#128465; Delete Profile</button>
+      <div class="edit-status" id="edit-status"></div>
+    </div>
+  </div>
+
+  <script>
+  /* ADMIN INLINE EDIT */
+  var FILE_PATH = "{{ page.path }}";
+  var ADMIN_LOGIN = 'Mikeljchm';
+
+  function getAdminSession(){
+    var m = document.cookie.match(/hw_admin=([^;]+)/);
+    if(!m) return null;
+    try{ return JSON.parse(atob(m[1])); }catch(e){ return null; }
+  }
+
+  (function initAdmin(){
+    var s = getAdminSession();
+    if(s && s.login === ADMIN_LOGIN){
+      document.body.classList.add('is-admin');
+      document.querySelectorAll('.admin-edit-btn').forEach(function(b){ b.style.display='flex'; });
+    }
+  })();
+
+  function openEditModal(){
+    // Pre-fill fields from page data
+    var t = document.querySelector('.profile-hero-name, .profile-hero-title, h1');
+    var d = document.querySelector('.profile-hero-desc, .stud-desc, .bio-text');
+    document.getElementById('edit-title-input').value = t ? t.textContent.trim() : '';
+    document.getElementById('edit-desc-input').value = d ? d.textContent.trim() : '';
+    document.getElementById('edit-cat-input').value = '';
+    document.getElementById('edit-cover-input').value = '';
+    document.getElementById('edit-banner-input').value = '';
+    document.getElementById('edit-bio-input').value = '';
+    document.getElementById('edit-images-input').value = '';
+    document.getElementById('edit-videos-input').value = '';
+    document.getElementById('edit-links-input').value = '';
+    document.getElementById('edit-adult-toggle').checked = false;
+    document.getElementById('edit-status').textContent = '';
+    document.getElementById('edit-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeEditModal(){
+    document.getElementById('edit-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  async function saveEdit(){
+    var btn = document.getElementById('edit-save-btn');
+    var status = document.getElementById('edit-status');
+    var title = document.getElementById('edit-title-input').value.trim();
+    var desc = document.getElementById('edit-desc-input').value.trim();
+    var category = document.getElementById('edit-cat-input').value.trim();
+    var cover = document.getElementById('edit-cover-input').value.trim();
+    var banner = document.getElementById('edit-banner-input').value.trim();
+    var bio = document.getElementById('edit-bio-input').value.trim();
+    var adult = document.getElementById('edit-adult-toggle').checked;
+    var images = document.getElementById('edit-images-input').value.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+    var videos = document.getElementById('edit-videos-input').value.split('\n').map(function(l){
+      var p=l.split('|').map(function(x){return x.trim();});
+      return p[0]?{url:p[0],poster:p[1]||''}:null;
+    }).filter(Boolean);
+    var links = document.getElementById('edit-links-input').value.split('\n').map(function(l){
+      var p=l.split('|').map(function(x){return x.trim();});
+      return p[0]&&p[1]?{label:p[0],url:p[1]}:null;
+    }).filter(Boolean);
+
+    btn.classList.add('edit-saving');
+    btn.textContent = 'Saving...';
+    status.textContent = '';
+
+    try {
+      var res = await fetch('/api/save', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        credentials:'include',
+        body: JSON.stringify({filePath:FILE_PATH, title, description:desc, category, cover, banner, bio, adult, images, videos, links})
+      });
+      var data = await res.json();
+      if(data.ok){
+        status.style.color='#4caf50';
+        status.textContent='Saved — deploy in ~1 min';
+        setTimeout(closeEditModal, 1500);
+      } else {
+        status.style.color='#ff5252';
+        status.textContent='Error: '+(data.error||'Unknown');
+      }
+    } catch(e){
+      status.style.color='#ff5252';
+      status.textContent='Error: '+e.message;
+    } finally {
+      btn.classList.remove('edit-saving');
+      btn.textContent='Save Changes';
+    }
+  }
+
+  async function deleteProfile(){
+    if(!confirm('Delete this profile? This cannot be undone.')) return;
+    var status = document.getElementById('edit-status');
+    status.style.color='#ff5252';
+    status.textContent='Deleting...';
+    try {
+      var res = await fetch('/api/delete', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        credentials:'include',
+        body: JSON.stringify({filePath:FILE_PATH})
+      });
+      var data = await res.json();
+      if(data.ok){ window.location.href='/'; }
+      else { status.textContent='Error: '+(data.error||'Unknown'); }
+    } catch(e){ status.textContent='Error: '+e.message; }
+  }
+
+  document.getElementById('edit-modal').addEventListener('click',function(e){
+    if(e.target===this) closeEditModal();
+  });
   </script>
 </body>
 </html>
