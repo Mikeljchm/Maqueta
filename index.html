@@ -30,9 +30,7 @@ layout: none
   <!-- Canonical -->
   <link rel="canonical" href="https://hottwrestling.com">
 
-  <!-- Supabase Auth -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Google One Tap -->
+    <!-- Google One Tap -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <!-- OneSignal Push Notifications -->
@@ -1532,9 +1530,8 @@ layout: none
         });
       });
 
-      /* SUPABASE */
-      const SB_URL = 'https://wxyvielyommbsgbwhcbu.supabase.co';
-      const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
+      /* likes/comments — CF KV pendiente */
+      const SB_URL = ''; const SB_KEY = '';
 
       async function sbFetch(path, method, body) {
         const opts = { method: method || 'GET', headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
@@ -1777,8 +1774,7 @@ layout: none
     function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
     function toast(msg) { const t = $('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
 
-    const SB_URL = 'https://wxyvielyommbsgbwhcbu.supabase.co/rest/v1/';
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
+    const SB_URL = ''; const SB_KEY = ''; /* CF KV pendiente */
     async function sbFetch(path, method='GET', body) {
       const opts = { method, headers:{ 'apikey': SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' } };
       if (body) opts.body = JSON.stringify(body);
@@ -1949,8 +1945,7 @@ layout: none
       toastTimer2 = setTimeout(() => t.classList.remove('show'), 2200);
     }
 
-    const SB_URL = 'https://wxyvielyommbsgbwhcbu.supabase.co';
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
+    const SB_URL = ''; const SB_KEY = ''; /* CF KV pendiente */
     async function sbFetch(path,method,body){
       const opts={method:method||'GET',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'}};
       if(body)opts.body=JSON.stringify(body);
@@ -2287,25 +2282,26 @@ layout: none
   </script>
 
   <script>
-  /* ── SUPABASE AUTH ── */
-  const SUPA_URL = 'https://wxyvielyommbsgbwhcbu.supabase.co';
-  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
-  const supaAuth = supabase.createClient(SUPA_URL, SUPA_KEY);
+  /* ── HW FAN AUTH — Cloudflare Pages ── */
+  const HottAuth = {
+    _session: null, _cb: [],
+    async init() {
+      try { const r = await fetch('/auth/google/session',{credentials:'include'}); const d = await r.json(); this._session = d.authenticated ? d.user : null; } catch { this._session = null; }
+      this._cb.forEach(fn => fn(this._session)); return this._session;
+    },
+    login() { window.location.href = '/auth/google/login?redirect=' + encodeURIComponent(window.location.href); },
+    logout() { window.location.href = '/auth/google/logout?redirect=' + encodeURIComponent(window.location.href); },
+    isAuthenticated() { return !!this._session; },
+    getUser() { return this._session; },
+    onChange(fn) { this._cb.push(fn); }
+  };
 
   let currentUser = null;
 
   /* GOOGLE ONE TAP CALLBACK */
-  async function handleOneTap(response) {
-    const { data, error } = await supaAuth.auth.signInWithIdToken({
-      provider: 'google',
-      token: response.credential,
-    });
-    if (!error && data.session) {
-      currentUser = data.session.user;
-      updateAuthUI(currentUser);
-      closeAuthModal();
-      applyAdultBlur();
-    }
+  function handleOneTap(response) {
+    /* One Tap deshabilitado — usando redirect OAuth */
+    HottAuth.login();
   }
 
   function showOneTap() {
@@ -2339,22 +2335,9 @@ layout: none
     }
   }
 
-  async function signInWithGoogle() {
-    await supaAuth.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.href }
-    });
-  }
+  function signInWithGoogle() { HottAuth.login(); }
 
-  async function signOut() {
-    await supaAuth.auth.signOut();
-    currentUser = null;
-    updateAuthUI(null);
-    applyAdultBlur();
-    if (window.google && window.google.accounts) {
-      google.accounts.id.disableAutoSelect();
-    }
-  }
+  function signOut() { HottAuth.logout(); }
 
   function updateAuthUI(user) {
     const nameEl = document.getElementById('user-display-name');
@@ -2363,9 +2346,8 @@ layout: none
     const actionBtn = document.getElementById('user-action-btn');
 
     if (user) {
-      const meta = user.user_metadata || {};
-      const name = meta.full_name || meta.name || user.email.split('@')[0];
-      const avatar = meta.avatar_url || meta.picture || '';
+      const name = user.name || user.email.split('@')[0];
+      const avatar = user.picture || '';
       const email = user.email || '';
 
       if (nameEl) nameEl.textContent = name;
@@ -2410,16 +2392,16 @@ layout: none
 
   /* Init auth on load */
   (async function initAuth() {
-    const { data: { session } } = await supaAuth.auth.getSession();
+    const session = await HottAuth.init();
     if (session) {
-      currentUser = session.user;
+      currentUser = session;
       updateAuthUI(currentUser);
     }
     applyAdultBlur();
 
-    supaAuth.auth.onAuthStateChange((event, session) => {
+    HottAuth.onChange(session => {
       if (session) {
-        currentUser = session.user;
+        currentUser = session;
         updateAuthUI(currentUser);
         closeAuthModal();
       } else {
