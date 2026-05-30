@@ -445,6 +445,51 @@
 
 
 
+
+  <!-- PHOTO VIEWER -->
+  <div id="hw-photo-viewer" style="display:none;position:fixed;inset:0;z-index:900;background:#000;flex-direction:column;align-items:center;justify-content:center;">
+    <button onclick="hwViewerClose()" style="position:absolute;top:1rem;right:1rem;background:rgba(0,0,0,0.5);border:none;color:#fff;font-size:1.5rem;width:40px;height:40px;border-radius:50%;cursor:pointer;z-index:10;">&#215;</button>
+    <div id="hw-viewer-counter" style="position:absolute;top:1rem;left:1rem;color:#fff;font-size:0.8rem;background:rgba(0,0,0,0.5);padding:4px 10px;border-radius:20px;"></div>
+    <img id="hw-viewer-img" style="max-width:100%;max-height:100vh;object-fit:contain;touch-action:pinch-zoom;" src="">
+    <button onclick="hwViewerPrev()" style="position:absolute;left:0.5rem;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.4);border:none;color:#fff;font-size:1.5rem;width:36px;height:36px;border-radius:50%;cursor:pointer;">&#8592;</button>
+    <button onclick="hwViewerNext()" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.4);border:none;color:#fff;font-size:1.5rem;width:36px;height:36px;border-radius:50%;cursor:pointer;">&#8594;</button>
+  </div>
+
+  <script>
+  /* PHOTO VIEWER */
+  var hwViewerImgs = [], hwViewerIdx = 0;
+  function hwViewerOpen(imgs, idx){
+    hwViewerImgs = imgs; hwViewerIdx = idx || 0;
+    hwViewerShow();
+    document.getElementById('hw-photo-viewer').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  function hwViewerShow(){
+    var img = document.getElementById('hw-viewer-img');
+    var counter = document.getElementById('hw-viewer-counter');
+    img.src = hwViewerImgs[hwViewerIdx];
+    counter.textContent = (hwViewerIdx+1) + ' / ' + hwViewerImgs.length;
+  }
+  function hwViewerClose(){
+    document.getElementById('hw-photo-viewer').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  function hwViewerNext(){ hwViewerIdx = (hwViewerIdx+1) % hwViewerImgs.length; hwViewerShow(); }
+  function hwViewerPrev(){ hwViewerIdx = (hwViewerIdx-1+hwViewerImgs.length) % hwViewerImgs.length; hwViewerShow(); }
+  // Swipe
+  var hwVTouchX = 0;
+  document.getElementById('hw-photo-viewer').addEventListener('touchstart', function(e){ hwVTouchX = e.touches[0].clientX; }, {passive:true});
+  document.getElementById('hw-photo-viewer').addEventListener('touchend', function(e){
+    var dx = e.changedTouches[0].clientX - hwVTouchX;
+    if(Math.abs(dx) > 50){ dx < 0 ? hwViewerNext() : hwViewerPrev(); }
+  }, {passive:true});
+  // Close on bg tap
+  document.getElementById('hw-photo-viewer').addEventListener('click', function(e){
+    if(e.target === this) hwViewerClose();
+  });
+  window.openPhotoViewer = hwViewerOpen;
+  window.hwViewerOpen = hwViewerOpen;
+  </script>
   <script>
   /* TAB SWITCHER + PHOTO VIEWER INIT */
   function switchTab(tab){
