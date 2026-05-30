@@ -1411,6 +1411,15 @@ layout: none
       }
     });
 
+    /* RESTORE NAV ON BACK NAVIGATION */
+    window.addEventListener('pageshow', function(e){
+      var nav = document.querySelector('.bottom-nav');
+      if(nav) nav.classList.remove('hidden');
+      if(nav) nav.style.transform = 'translateY(0)';
+      var strip = document.getElementById('top-strip');
+      if(strip) strip.style.transform = 'translateY(0)';
+    });
+
     /* HIDE ON SCROLL — top-strip completo */
     (function(){
       var strip = document.getElementById('top-strip');
