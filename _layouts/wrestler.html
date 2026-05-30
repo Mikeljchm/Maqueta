@@ -267,32 +267,21 @@
 
   <!-- VIDEOS PANEL -->
   <div id="panel-videos" style="display:none;">
-    {% if page.videos and page.videos.size > 0 %}
-    <div class="videos-list" style="position:relative;padding:0.5rem 1rem 2rem;">
-      <div id="videos-wrap"{% if page.adult %} class="videos-wrap-blur"{% endif %}>
+        {% if page.videos and page.videos.size > 0 %}
+    <div class="videos-grid{% if page.adult %} adult-blurred videos-wrap-blur{% endif %}" id="videos-wrap">
       {% for vid in page.videos %}
       {% assign vid_url = vid.url | default: vid %}
-      {% assign vid_poster = vid.poster | default: page.poster | default: "" %}
-      {% if vid_url contains 'sendvid.com/embed' %}<div class="video-wrap"><iframe src="https:{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
-      {% elsif vid_url contains 'b-cdn.net' or vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}
-      <div class="video-thumb" onclick="if(window.hwTikTokOpen)window.hwTikTokOpen('{{ vid_url }}')" data-hw-player data-poster="{{ vid_poster }}" data-src="{{ vid_url }}" data-title="{{ page.title }}">
-        {% if vid_poster != "" %}<img src="{{ vid_poster }}" alt="{{ page.title }}" loading="lazy">{% else %}<video preload="metadata" muted playsinline><source src="{{ vid_url }}" type="video/mp4"></video>{% endif %}
+      {% assign vid_poster = vid.poster | default: page.banner | default: page.cover | default: "" %}
+      {% if vid_url contains 'b-cdn.net' or vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}
+      <div class="video-thumb" onclick="if(window.hwTikTokOpen){window.hwTikTokOpen('{{ vid_url }}')}">
+        {% if vid_poster != "" %}<img src="{{ vid_poster }}" alt="{{ page.title }}" loading="lazy">
+        {% else %}<video preload="metadata" muted playsinline><source src="{{ vid_url }}" type="video/mp4"></video>{% endif %}
         <div class="video-thumb-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-        <video preload="metadata" playsinline controlsList="nodownload" oncontextmenu="return false"{% if vid_poster != "" %} poster="{{ vid_poster }}"{% endif %}><source src="{{ vid_url }}" type="video/mp4"></video>
-        <div class="hw-vp-bigplay"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-        <div class="hw-vp-controls">
-          <div class="hw-vp-prog"><div class="hw-vp-fill"></div><div class="hw-vp-thumb"></div></div>
-          <div class="hw-vp-row">
-            <button class="hw-vp-btn hw-play-btn"><svg viewBox="0 0 24 24" class="hw-play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
-            <span class="hw-vp-time hw-time-el">0:00 / 0:00</span>
-            <div class="hw-vp-spacer"></div>
-            <input class="hw-vp-vol" type="range" min="0" max="1" step="0.05" value="1">
-            <button class="hw-vp-btn hw-mute-btn"><svg viewBox="0 0 24 24" class="hw-mute-icon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>
-            <button class="hw-vp-btn hw-full-btn"><svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
-          </div>
-        </div>
       </div>
-      {% else %}<div class="video-wrap"><iframe src="{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% else %}<div class="video-wrap"><iframe src="{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
       {% endif %}
       {% endfor %}
       </div>
