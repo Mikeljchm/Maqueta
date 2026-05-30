@@ -1411,14 +1411,21 @@ layout: none
       }
     });
 
-    /* RESTORE NAV ON BACK NAVIGATION */
-    window.addEventListener('pageshow', function(e){
+    /* RESTORE NAV ON BACK NAVIGATION — also fixes PWA */
+    function restoreNav(){
       var nav = document.querySelector('.bottom-nav');
-      if(nav) nav.classList.remove('hidden');
-      if(nav) nav.style.transform = 'translateY(0)';
+      if(nav){ nav.classList.remove('hidden'); nav.style.transform = 'translateY(0)'; }
       var strip = document.getElementById('top-strip');
-      if(strip) strip.style.transform = 'translateY(0)';
+      if(strip){ strip.style.transform = 'translateY(0)'; }
+    }
+    // Standard back navigation
+    window.addEventListener('pageshow', function(e){ restoreNav(); });
+    // PWA — visibility change (when app comes to foreground)
+    document.addEventListener('visibilitychange', function(){
+      if(document.visibilityState === 'visible') restoreNav();
     });
+    // PWA — focus event
+    window.addEventListener('focus', restoreNav);
 
     /* HIDE ON SCROLL — top-strip completo */
     (function(){
