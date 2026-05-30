@@ -270,7 +270,7 @@
       {% assign vid_url = vid.url | default: vid %}
       {% assign vid_poster = vid.poster | default: page.banner | default: page.cover | default: "" %}
       {% if vid_url contains 'b-cdn.net' or vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}
-      <div class="video-thumb" onclick="if(window.hwTikTokOpen){window.hwTikTokOpen('{{ vid_url }}')}">
+      <div class="video-thumb" data-vid="{{ vid_url }}" onclick="if(window.hwTikTokOpen){window.hwTikTokOpen(this.dataset.vid)}">
         {% if vid_poster != "" %}<img src="{{ vid_poster }}" alt="{{ page.title }}" loading="lazy">
         {% else %}<video preload="metadata" muted playsinline><source src="{{ vid_url }}" type="video/mp4"></video>{% endif %}
         <div class="video-thumb-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
