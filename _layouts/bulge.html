@@ -646,19 +646,30 @@
   })();
 
   function openEditModal(){
-    // Pre-fill fields from page data
-    var t = document.querySelector('.profile-hero-name, .profile-hero-title, h1');
-    var d = document.querySelector('.profile-hero-desc, .stud-desc, .bio-text');
-    document.getElementById('edit-title-input').value = t ? t.textContent.trim() : '';
-    document.getElementById('edit-desc-input').value = d ? d.textContent.trim() : '';
-    document.getElementById('edit-cat-input').value = '';
-    document.getElementById('edit-cover-input').value = '';
-    document.getElementById('edit-banner-input').value = '';
-    document.getElementById('edit-bio-input').value = '';
-    document.getElementById('edit-images-input').value = '';
-    document.getElementById('edit-videos-input').value = '';
-    document.getElementById('edit-links-input').value = '';
-    document.getElementById('edit-adult-toggle').checked = false;
+    document.getElementById('edit-title-input').value = {{ page.title | jsonify }};
+    document.getElementById('edit-desc-input').value = {{ page.description | default: "" | jsonify }};
+    document.getElementById('edit-cat-input').value = {{ page.category | default: page.tag | default: page.sport | default: "" | jsonify }};
+    document.getElementById('edit-cover-input').value = {{ page.cover | default: page.mugshot | default: "" | jsonify }};
+    document.getElementById('edit-banner-input').value = {{ page.banner | default: "" | jsonify }};
+    document.getElementById('edit-bio-input').value = {{ page.bio | default: "" | jsonify }};
+    document.getElementById('edit-adult-toggle').checked = {% if page.adult %}true{% else %}false{% endif %};
+    // Images
+    var imgs = {{ page.images | jsonify }};
+    document.getElementById('edit-images-input').value = Array.isArray(imgs) ? imgs.join('\n') : '';
+    // Videos
+    var vids = {{ page.videos | jsonify }};
+    if(Array.isArray(vids)){
+      document.getElementById('edit-videos-input').value = vids.map(function(v){
+        return typeof v === 'object' ? v.url + (v.poster ? ' | ' + v.poster : '') : v;
+      }).join('\n');
+    } else { document.getElementById('edit-videos-input').value = ''; }
+    // Links
+    var lnks = {{ page.links | jsonify }};
+    if(Array.isArray(lnks)){
+      document.getElementById('edit-links-input').value = lnks.map(function(l){
+        return typeof l === 'object' ? l.label + ' | ' + l.url : l;
+      }).join('\n');
+    } else { document.getElementById('edit-links-input').value = ''; }
     document.getElementById('edit-status').textContent = '';
     document.getElementById('edit-modal').classList.add('open');
     document.body.style.overflow = 'hidden';
