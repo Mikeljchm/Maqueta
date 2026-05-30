@@ -168,7 +168,8 @@ layout: none
     .page.active { opacity:1; pointer-events:all; transform:translateY(0); }
 
     /* BOTTOM NAV */
-    .bottom-nav { flex-shrink:0; height:calc(var(--nav-h) + var(--safe-bottom)); padding-bottom:var(--safe-bottom); background:#0a0a0a; border-top:1px solid #222; display:flex; align-items:flex-start; justify-content:space-around; padding-top:0.5rem; position:relative; z-index:50; }
+    .bottom-nav { height:calc(var(--nav-h) + var(--safe-bottom)); padding-bottom:var(--safe-bottom); background:#0a0a0a; border-top:1px solid #222; display:flex; align-items:flex-start; justify-content:space-around; padding-top:0.5rem; position:fixed; bottom:0; left:0; right:0; z-index:50; transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .bottom-nav.hidden { transform:translateY(100%); }
     .nav-item { display:flex; flex-direction:column; align-items:center; gap:0.2rem; cursor:pointer; padding:0.3rem 0.5rem; border-radius:10px; transition:all 0.25s var(--ease); background:none; border:none; color:#555; position:relative; min-width:44px; }
     .nav-item svg { width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:all 0.25s var(--ease); }
     .nav-item svg.filled { fill:currentColor; stroke:none; }
@@ -1428,6 +1429,28 @@ layout: none
       }
       setStripOffset();
       window.addEventListener('resize', setStripOffset);
+
+      // Nav hide on scroll
+      var nav = document.querySelector('.bottom-nav');
+      var lastNavY = 0;
+      var navTicking = false;
+      document.querySelectorAll('.page').forEach(function(pg){
+        pg.addEventListener('scroll', function(){
+          if(!navTicking){
+            requestAnimationFrame(function(){
+              var y = pg.scrollTop;
+              if(y > lastNavY && y > 80){
+                if(nav) nav.classList.add('hidden');
+              } else {
+                if(nav) nav.classList.remove('hidden');
+              }
+              lastNavY = y;
+              navTicking = false;
+            });
+            navTicking = true;
+          }
+        }, {passive:true});
+      });
 
       scrollEl.addEventListener('scroll', function(){
         if(!ticking){
