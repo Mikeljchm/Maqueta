@@ -1,15 +1,10 @@
-/* HOTT WRESTLING — Service Worker v3 */
-const CACHE_STATIC = 'hw-static-v3';
-const CACHE_PAGES = 'hw-pages-v3';
-const CACHE_IMAGES = 'hw-images-v3';
+/* HOTT WRESTLING — Service Worker v4 */
+const CACHE_STATIC = 'hw-static-v4';
+const CACHE_PAGES  = 'hw-pages-v4';
+const CACHE_IMAGES = 'hw-images-v4';
 
-const STATIC_FILES = [
-  '/',
-  '/manifest.json',
-  '/sw.js'
-];
+const STATIC_FILES = ['/', '/manifest.json'];
 
-// Install — cache static files
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_STATIC)
@@ -18,7 +13,6 @@ self.addEventListener('install', e => {
   );
 });
 
-// Activate — clean old caches
 self.addEventListener('activate', e => {
   const current = [CACHE_STATIC, CACHE_PAGES, CACHE_IMAGES];
   e.waitUntil(
@@ -30,17 +24,20 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch — estrategia por tipo de recurso
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Skip non-GET and external video/CDN requests — never cache videos
+  // NUNCA cachear: auth, API calls, videos, CDN
   if (e.request.method !== 'GET') return;
+  if (url.pathname.startsWith('/auth/')) return;
+  if (url.pathname.startsWith('/api/')) return;
   if (url.hostname.includes('b-cdn.net')) return;
   if (url.hostname.includes('bunny')) return;
   if (url.pathname.includes('.mp4') || url.pathname.includes('.webm')) return;
+  if (url.hostname.includes('googleapis.com')) return;
+  if (url.hostname.includes('accounts.google.com')) return;
 
-  // Images from external CDN — cache for 7 days
+  // Imágenes externas — cache 7 días
   if (url.hostname.includes('imgbox') || url.hostname.includes('imgcdn') || e.request.destination === 'image') {
     e.respondWith(
       caches.open(CACHE_IMAGES).then(cache =>
@@ -49,21 +46,19 @@ self.addEventListener('fetch', e => {
           return fetch(e.request).then(res => {
             if (res.ok) cache.put(e.request, res.clone());
             return res;
-          }).catch(() => cached);
+          }).catch(() => cached || new Response('', {status: 404}));
         })
       )
     );
     return;
   }
 
-  // HTML pages — network first, fallback to cache
+  // HTML — network first, sin cache si falla
   if (e.request.destination === 'document' || url.pathname.endsWith('/') || url.pathname.endsWith('.html')) {
     e.respondWith(
       fetch(e.request)
         .then(res => {
-          if (res.ok) {
-            caches.open(CACHE_PAGES).then(c => c.put(e.request, res.clone()));
-          }
+          if (res.ok) caches.open(CACHE_PAGES).then(c => c.put(e.request, res.clone()));
           return res;
         })
         .catch(() => caches.match(e.request).then(cached => cached || caches.match('/')))
@@ -71,21 +66,18 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Static assets — cache first
+  // Assets estáticos — cache first
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
       return fetch(e.request).then(res => {
-        if (res.ok) {
-          caches.open(CACHE_STATIC).then(c => c.put(e.request, res.clone()));
-        }
+        if (res.ok) caches.open(CACHE_STATIC).then(c => c.put(e.request, res.clone()));
         return res;
       });
     })
   );
 });
 
-// Push notifications (future)
 self.addEventListener('push', e => {
   if (!e.data) return;
   const data = e.data.json();
