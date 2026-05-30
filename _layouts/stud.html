@@ -11,8 +11,7 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
+    <style>
     :root{--bg:#000;--surface:#0d0d0d;--surface-2:#141414;--fire-orange:#FF4500;--fire-yellow:#FFB800;--fire-red:#CC1100;--fire-deep:#8B1A00;--text:#F0EAE0;--text-dim:#888;--text-muted:#444;--border:#1f1f1f;--font-d:'Bebas Neue',Impact,sans-serif;--font-b:'DM Sans',Arial,sans-serif;--ease:cubic-bezier(0.16,1,0.3,1);}
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}html{background:#000;}body{font-family:var(--font-b);background:#000;color:var(--text);-webkit-font-smoothing:antialiased;}
     .top-bar{height:48px;background:#000;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;padding:0 1rem;position:relative;z-index:50;}
@@ -472,10 +471,8 @@
     var pageTitle = {% if page.title %}{{ page.title | jsonify }}{% else %}""{% endif %};
     var pageBio   = {% if page.bio %}{{ page.bio | jsonify }}{% else %}""{% endif %};
 
-    /* ── SUPABASE ── */
-    var SURL = 'https://wxyvielyommbsgbwhcbu.supabase.co';
-    var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI3MjIsImV4cCI6MjA1OTI4ODcyMn0.mUYYHqvJQHqHakXRK8sS6CPSvEJYvpRIB0lPbvUgjCA';
-    var _sb = window.supabase ? supabase.createClient(SURL, SKEY) : null;
+    /* ── HW FAN AUTH ── */
+    /* HottAuth disponible via script externo — se inicializa abajo */
 
     /* ── UNLOCK ── */
     function unlock(){
@@ -499,14 +496,8 @@
       var m = document.cookie.match(/hw_admin=([^;]+)/);
       if(m){ try{ var s=JSON.parse(atob(m[1])); if(s && s.login==='Mikeljchm') unlock(); }catch(e){} }
       // Supabase session
-      if(_sb){
-        _sb.auth.getSession().then(function(res){
-          if(res.data && res.data.session) unlock();
-        });
-        _sb.auth.onAuthStateChange(function(event, session){
-          if(session) unlock();
-        });
-      }
+      HottAuth.init().then(function(s){ if(s) unlock(); });
+      HottAuth.onChange(function(s){ if(s) unlock(); });
     }
 
     /* ── PHOTO VIEWER ── */
