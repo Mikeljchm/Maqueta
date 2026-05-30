@@ -2390,8 +2390,8 @@ layout: none
     });
   }
 
-  /* Init auth on load */
-  (async function initAuth() {
+  /* Init auth — después del render para no bloquear */
+  document.addEventListener('DOMContentLoaded', async function initAuth() {
     const session = await HottAuth.init();
     if (session) {
       currentUser = session;
@@ -2399,9 +2399,9 @@ layout: none
     }
     applyAdultBlur();
 
-    HottAuth.onChange(session => {
-      if (session) {
-        currentUser = session;
+    HottAuth.onChange(s => {
+      if (s) {
+        currentUser = s;
         updateAuthUI(currentUser);
         closeAuthModal();
       } else {
@@ -2411,7 +2411,7 @@ layout: none
       }
       applyAdultBlur();
     });
-  })();
+  });
 
   /* ADMIN INLINE EDIT */
   const ADMIN_LOGIN = 'Mikeljchm';
