@@ -1459,9 +1459,9 @@ layout: none
             requestAnimationFrame(function(){
               var y = pg.scrollTop;
               if(y > lastNavY && y > 80){
-                if(nav) nav.classList.add('hidden');
+                if(nav) nav.style.transform = 'translateY(100%)';
               } else {
-                if(nav) nav.classList.remove('hidden');
+                if(nav) nav.style.transform = 'translateY(0)';
               }
               lastNavY = y;
               navTicking = false;
