@@ -327,20 +327,34 @@
   <script>
   /* ── 1. HottAuth GLOBAL — debe ir primero ── */
   var HottAuth = {
-    _session: null, _cb: [],
+    _session: null, _cb: [], _CACHE_KEY: 'hw_s', _TTL: 300000,
     init: function() {
       var self = this;
+      // Leer cache primero — instantáneo
+      try {
+        var raw = sessionStorage.getItem(self._CACHE_KEY);
+        if(raw){
+          var c = JSON.parse(raw);
+          if(Date.now() - c.t < self._TTL){
+            self._session = c.d;
+            self._cb.forEach(function(fn){ fn(self._session); });
+            return Promise.resolve(self._session);
+          }
+        }
+      } catch(e){}
+      // Si no hay cache válido — llamada de red
       return fetch('/auth/google/session', { credentials: 'include' })
         .then(function(r){ return r.json(); })
         .then(function(d){
           self._session = d.authenticated ? d.user : null;
+          try { sessionStorage.setItem(self._CACHE_KEY, JSON.stringify({d: self._session, t: Date.now()})); } catch(e){}
           self._cb.forEach(function(fn){ fn(self._session); });
           return self._session;
         })
         .catch(function(){ self._session = null; return null; });
     },
-    login: function(){ window.location.href = '/auth/google/login?redirect=' + encodeURIComponent(window.location.href); },
-    logout: function(){ window.location.href = '/auth/google/logout?redirect=' + encodeURIComponent(window.location.href); },
+    login: function(){ sessionStorage.removeItem(this._CACHE_KEY); window.location.href = '/auth/google/login?redirect=' + encodeURIComponent(window.location.href); },
+    logout: function(){ sessionStorage.removeItem(this._CACHE_KEY); window.location.href = '/auth/google/logout?redirect=' + encodeURIComponent(window.location.href); },
     isAuthenticated: function(){ return !!this._session; },
     getUser: function(){ return this._session; },
     onChange: function(fn){ this._cb.push(fn); }
