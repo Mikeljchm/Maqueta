@@ -975,8 +975,11 @@ layout: none
       <!-- BULGE SPORT -->
       <div class="page" id="page-bulge">
         <div class="page-title-bar">
-          <div class="page-title">BULGE <span>SPORT</span></div>
-          <div class="page-subtitle">Athletes &middot; All sports &middot; No filter</div>
+          <div>
+            <div class="page-title">BULGE <span>SPORT</span></div>
+            <div class="page-subtitle">Athletes &middot; All sports &middot; No filter</div>
+          </div>
+          <button class="section-new-btn" onclick="openNewProfile('_bulge')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New</button>
         </div>
         {% assign all_bulge = site.bulge %}
         {% if all_bulge.size > 0 %}
