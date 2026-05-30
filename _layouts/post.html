@@ -553,7 +553,17 @@
         videosLoaded=true;cb();
       });
     }
-    function loadAt(idx){
+    // Preload cache
+    var preloadCache={};
+    function preloadVideo(url){
+      if(!url||preloadCache[url])return;
+      var pv=document.createElement('video');
+      pv.preload='auto';
+      pv.src=url;
+      pv.load();
+      preloadCache[url]=pv;
+    }
+        function loadAt(idx){
       if(!videos.length)return;
       idx=Math.max(0,Math.min(videos.length-1,idx));
       currentIdx=idx;
@@ -566,7 +576,13 @@
       timeEl.textContent='0:00 / 0:00';
       setPlayIcon(false);
       mainVid.load();bgVid.load();
-      mainVid.play().catch(function(){});bgVid.play().catch(function(){});
+      mainVid.play().catch(function(){});
+      bgVid.play().catch(function(){});
+      // Preload adjacent videos
+      setTimeout(function(){
+        if(videos[currentIdx+1]) preloadVideo(videos[currentIdx+1].url);
+        if(videos[currentIdx-1]) preloadVideo(videos[currentIdx-1].url);
+      }, 800);
     }
     function openAt(srcUrl){
       loadVideos(function(){
