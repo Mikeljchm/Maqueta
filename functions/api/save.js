@@ -13,7 +13,7 @@ export async function onRequestPost({ request, env }) {
     const session = JSON.parse(atob(match[1]));
     if (session.login !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
 
-    const { filePath, title, description, category, poster, date, adult, featured, draft, images, videos, links } = await request.json();
+    const { filePath, title, description, category, poster, date, adult, featured, draft, images, videos, links, cover, banner, bio } = await request.json();
     const GITHUB_TOKEN = env.GITHUB_TOKEN;
     const REPO = 'Mikeljchm/Maqueta';
 
@@ -44,6 +44,9 @@ export async function onRequestPost({ request, env }) {
     if (description !== undefined) setField('description', `"${description.replace(/"/g, '\\"')}"`);
     if (category !== undefined) setField('category', category);
     if (poster !== undefined && poster) setField('poster', poster);
+    if (cover !== undefined && cover) setField('cover', cover);
+    if (banner !== undefined && banner) setField('banner', banner);
+    if (bio !== undefined && bio) setField('bio', '"' + bio.replace(/"/g, '\"') + '"');
     if (date !== undefined && date) setField('date', date);
     if (adult !== undefined) setField('adult', adult ? 'true' : 'false');
     if (featured !== undefined) setField('featured', featured ? 'true' : 'false');
