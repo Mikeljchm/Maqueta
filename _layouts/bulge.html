@@ -560,7 +560,7 @@
     mainVid.addEventListener('timeupdate',function(){if(!mainVid.duration)return;var p=(mainVid.currentTime/mainVid.duration)*100;fill.style.width=p+'%';thumb.style.left=p+'%';timeEl.textContent=fmt(mainVid.currentTime)+' / '+fmt(mainVid.duration);});
     mainVid.addEventListener('play',function(){setPI(true);bgVid.play().catch(function(){});});
     mainVid.addEventListener('pause',function(){setPI(false);bgVid.pause();});
-    mainVid.addEventListener('ended',function(){setPI(false);});
+    mainVid.addEventListener('ended',function(){mainVid.currentTime=0;mainVid.play().catch(function(){});});
     closeBtn.addEventListener('click',close);
     playBtn.addEventListener('click',function(){mainVid.paused?mainVid.play():mainVid.pause();});
     muteBtn.addEventListener('click',function(){mainVid.muted=!mainVid.muted;setMI(mainVid.muted);});
