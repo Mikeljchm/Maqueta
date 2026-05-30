@@ -11,8 +11,7 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
+    <style>
     :root{--bg:#000;--surface:#0d0d0d;--surface-2:#141414;--fire-orange:#FF4500;--fire-yellow:#FFB800;--fire-red:#CC1100;--fire-deep:#8B1A00;--text:#F0EAE0;--text-dim:#888;--text-muted:#444;--border:#1f1f1f;--font-d:'Bebas Neue',Impact,sans-serif;--font-b:'DM Sans',Arial,sans-serif;--ease:cubic-bezier(0.16,1,0.3,1);}
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}html{background:#000;}body{font-family:var(--font-b);background:#000;color:var(--text);-webkit-font-smoothing:antialiased;}
     .top-bar{height:48px;background:#000;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;padding:0 1rem;position:relative;z-index:50;}
@@ -336,12 +335,32 @@
   <div class="toast" id="toast"></div>
 
   <script>
-  const _SB_URL='https://wxyvielyommbsgbwhcbu.supabase.co';
-  const _SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
-  const _sb = supabase.createClient(_SB_URL, _SB_KEY);
+/* ── HW FAN AUTH — Cloudflare Pages ── */
+  const HottAuth = {
+    _session: null,
+    _cb: [],
+    async init() {
+      try {
+        const r = await fetch('/auth/google/session', { credentials: 'include' });
+        const d = await r.json();
+        this._session = d.authenticated ? d.user : null;
+      } catch { this._session = null; }
+      this._cb.forEach(fn => fn(this._session));
+      return this._session;
+    },
+    login() {
+      window.location.href = '/auth/google/login?redirect=' + encodeURIComponent(window.location.href);
+    },
+    logout() {
+      window.location.href = '/auth/google/logout?redirect=' + encodeURIComponent(window.location.href);
+    },
+    isAuthenticated() { return !!this._session; },
+    getUser() { return this._session; },
+    onChange(fn) { this._cb.push(fn); }
+  };
   function openAuthModal(){ document.getElementById('auth-modal').classList.add('open'); }
   function closeAuthModal(){ document.getElementById('auth-modal').classList.remove('open'); }
-  async function signInWithGoogle(){ await _sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: window.location.origin } }); }
+  function signInWithGoogle(){ HottAuth.login(); }
   function unlockAdultContent(){
     const gate = document.getElementById('adult-gate');
     if(gate) gate.style.display = 'none';
@@ -357,9 +376,9 @@
     if(videosWrap){ videosWrap.classList.remove('videos-wrap-blur'); videosWrap.style.filter='none'; videosWrap.style.transform='none'; videosWrap.style.pointerEvents='auto'; }
   }
   (async function(){
-    const { data:{ session } } = await _sb.auth.getSession();
-    if(session) unlockAdultContent();
-    _sb.auth.onAuthStateChange((ev, sess)=>{ if(sess){ unlockAdultContent(); closeAuthModal(); } });
+    const sess = await HottAuth.init();
+    if(sess) unlockAdultContent();
+    HottAuth.onChange(s => { if(s){ unlockAdultContent(); closeAuthModal(); } });
   })();
   </script>
 
@@ -885,9 +904,7 @@
   <script>
   /* ADULT UNLOCK */
   (function(){
-    var SURL='https://wxyvielyommbsgbwhcbu.supabase.co';
-    var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MTI3MjIsImV4cCI6MjA1OTI4ODcyMn0.mUYYHqvJQHqHakXRK8sS6CPSvEJYvpRIB0lPbvUgjCA';
-    var _sb = supabase.createClient(SURL, SKEY);
+    /* HottAuth already initialized above */
 
     function unlock(){
       document.querySelectorAll('.adult-blurred').forEach(function(el){
@@ -902,13 +919,9 @@
       document.querySelectorAll('.adult-gate-grid').forEach(function(el){ el.style.display='none'; });
     }
 
-    // Check Supabase session
-    _sb.auth.getSession().then(function(res){
-      if(res.data && res.data.session) unlock();
-    });
-    _sb.auth.onAuthStateChange(function(event, session){
-      if(session) unlock();
-    });
+    // Check HottAuth session
+    HottAuth.init().then(function(s){ if(s) unlock(); });
+    HottAuth.onChange(function(s){ if(s) unlock(); });
 
     // Check admin cookie
     var m=document.cookie.match(/hw_admin=([^;]+)/);
