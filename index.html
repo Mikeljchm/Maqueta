@@ -2283,13 +2283,22 @@ layout: none
   <script>
   /* ── HW FAN AUTH — Cloudflare Pages ── */
   const HottAuth = {
-    _session: null, _cb: [],
+    _session: null, _cb: [], _CACHE_KEY: 'hw_s', _TTL: 300000,
     async init() {
-      try { const r = await fetch('/auth/google/session',{credentials:'include'}); const d = await r.json(); this._session = d.authenticated ? d.user : null; } catch { this._session = null; }
+      try {
+        const raw = sessionStorage.getItem(this._CACHE_KEY);
+        if(raw){ const c=JSON.parse(raw); if(Date.now()-c.t<this._TTL){ this._session=c.d; this._cb.forEach(fn=>fn(this._session)); return this._session; } }
+      } catch(e){}
+      try {
+        const r = await fetch('/auth/google/session',{credentials:'include'});
+        const d = await r.json();
+        this._session = d.authenticated ? d.user : null;
+        try { sessionStorage.setItem(this._CACHE_KEY, JSON.stringify({d:this._session,t:Date.now()})); } catch(e){}
+      } catch { this._session = null; }
       this._cb.forEach(fn => fn(this._session)); return this._session;
     },
-    login() { window.location.href = '/auth/google/login?redirect=' + encodeURIComponent(window.location.href); },
-    logout() { window.location.href = '/auth/google/logout?redirect=' + encodeURIComponent(window.location.href); },
+    login() { sessionStorage.removeItem(this._CACHE_KEY); window.location.href = '/auth/google/login?redirect=' + encodeURIComponent(window.location.href); },
+    logout() { sessionStorage.removeItem(this._CACHE_KEY); window.location.href = '/auth/google/logout?redirect=' + encodeURIComponent(window.location.href); },
     isAuthenticated() { return !!this._session; },
     getUser() { return this._session; },
     onChange(fn) { this._cb.push(fn); }
