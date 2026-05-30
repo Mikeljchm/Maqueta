@@ -514,7 +514,17 @@
       });
     }
 
-    function loadAt(idx){
+    // Preload cache
+    var preloadCache={};
+    function preloadVideo(url){
+      if(!url||preloadCache[url])return;
+      var pv=document.createElement('video');
+      pv.preload='auto';
+      pv.src=url;
+      pv.load();
+      preloadCache[url]=pv;
+    }
+        function loadAt(idx){
       if(!videos.length)return;
       idx=Math.max(0,Math.min(videos.length-1,idx));
       currentIdx=idx;
