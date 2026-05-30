@@ -45,7 +45,7 @@
     .post-cat{font-size:0.52rem;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-top:0.05rem;}
     .post-date{font-size:0.58rem;color:var(--text-muted);}
     /* BOTTOM NAV */
-    .bottom-nav{height:56px;background:#0a0a0a;border-top:1px solid #222;display:flex;align-items:flex-start;justify-content:space-around;padding-top:0.5rem;position:fixed;bottom:0;left:0;right:0;z-index:50;}
+    .bottom-nav{height:56px;background:#0a0a0a;border-top:1px solid #222;display:flex;align-items:flex-start;justify-content:space-around;padding-top:0.5rem;position:fixed;bottom:0;left:0;right:0;z-index:50;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);}
     .nav-item{display:flex;flex-direction:column;align-items:center;gap:0.2rem;cursor:pointer;padding:0.3rem 0.5rem;border-radius:10px;transition:all 0.25s var(--ease);background:none;border:none;color:#555;min-width:44px;}
     .nav-item svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:all 0.25s var(--ease);}
     .nav-item svg.filled{fill:currentColor;stroke:none;}
@@ -815,6 +815,27 @@
         else if(vid.webkitEnterFullscreen)vid.webkitEnterFullscreen();
       });
     });
+  })();
+  </script>
+
+  <script>
+  /* NAV HIDE ON SCROLL */
+  (function(){
+    var nav = document.getElementById('bottom-nav');
+    if(!nav) return;
+    var lastY = 0, ticking = false;
+    window.addEventListener('scroll', function(){
+      if(!ticking){
+        requestAnimationFrame(function(){
+          var y = window.scrollY;
+          if(y > lastY && y > 80){ nav.style.transform = 'translateY(100%)'; }
+          else { nav.style.transform = 'translateY(0)'; }
+          lastY = y;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, {passive:true});
   })();
   </script>
 </body>
