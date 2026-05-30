@@ -16,7 +16,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg:#000; --surface:#0d0d0d; --surface-2:#141414;
@@ -163,11 +162,21 @@
   const STORY_SLUG = '{{ page.slug }}';
   const STORY_DATA = {{ page.languages | jsonify }};
 
-  /* SUPABASE */
-  const _SB_URL = 'https://wxyvielyommbsgbwhcbu.supabase.co';
-  const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4eXZpZWx5b21tYnNnYndoY2J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMTUwNTcsImV4cCI6MjA5NDc5MTA1N30.b7ibS5_l1d7ZCTgDAc4-8vYCfaegAoNzIifiKXAnUkU';
-  const _sb = supabase.createClient(_SB_URL, _SB_KEY);
+  /* ── HW FAN AUTH — Cloudflare Pages ── */
+  const HottAuth = {
+    _session: null, _cb: [],
+    async init() {
+      try { const r = await fetch('/auth/google/session',{credentials:'include'}); const d = await r.json(); this._session = d.authenticated ? d.user : null; } catch { this._session = null; }
+      this._cb.forEach(fn => fn(this._session)); return this._session;
+    },
+    login() { window.location.href = '/auth/google/login?redirect=' + encodeURIComponent(window.location.href); },
+    logout() { window.location.href = '/auth/google/logout?redirect=' + encodeURIComponent(window.location.href); },
+    isAuthenticated() { return !!this._session; },
+    getUser() { return this._session; },
+    onChange(fn) { this._cb.push(fn); }
+  };
   let currentUser = null;
+  const _SB_URL = ''; const _SB_KEY = ''; /* CF KV pendiente */
 
   async function sbFetch(path, method, body) {
     const opts = { method: method||'GET', headers: { 'apikey': _SB_KEY, 'Authorization': 'Bearer '+_SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
@@ -317,9 +326,9 @@
 
   /* AUTH */
   (async function() {
-    const { data: { session } } = await _sb.auth.getSession();
-    if (session) currentUser = session.user;
-    _sb.auth.onAuthStateChange((ev, sess) => { currentUser = sess ? sess.user : null; });
+    const session = await HottAuth.init();
+    if (session) currentUser = session;
+    HottAuth.onChange(sess => { currentUser = sess || null; });
   })();
 
   /* INIT */
