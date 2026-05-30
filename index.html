@@ -2204,9 +2204,8 @@ layout: none
       input.value = '';
       let userName = null, userAvatar = null;
       if (currentUser) {
-        const meta = currentUser.user_metadata || {};
-        userName = meta.full_name || meta.name || currentUser.email.split('@')[0];
-        userAvatar = meta.avatar_url || meta.picture || null;
+        userName = currentUser.name || currentUser.email.split('@')[0];
+        userAvatar = currentUser.picture || null;
       }
       addLRComment(text, true, userName, userAvatar);
       const postId = 'lr_' + lrCurrentStory.slug;
