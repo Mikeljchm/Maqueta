@@ -105,6 +105,13 @@
     .photo-thumb{position:relative;aspect-ratio:9/16;overflow:hidden;cursor:pointer;background:var(--surface);}
     .photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.3s var(--ease);}
     .photo-thumb:active img{transform:scale(1.05);}
+    /* VIDEOS GRID — same as photos */
+    .videos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}
+    .video-thumb{position:relative;aspect-ratio:9/16;overflow:hidden;cursor:pointer;background:#111;}
+    .video-thumb video{width:100%;height:100%;object-fit:cover;display:block;}
+    .video-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+    .video-thumb-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+    .video-thumb-play svg{width:28px;height:28px;fill:#fff;opacity:0.85;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.8));}
     /* ADULT */
     .adult-blurred img{filter:blur(18px)!important;transform:scale(1.05)!important;}
     .videos-wrap-blur{filter:blur(18px)!important;transform:scale(1.02)!important;pointer-events:none!important;}
@@ -268,7 +275,9 @@
       {% assign vid_poster = vid.poster | default: page.poster | default: "" %}
       {% if vid_url contains 'sendvid.com/embed' %}<div class="video-wrap"><iframe src="https:{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
       {% elsif vid_url contains 'b-cdn.net' or vid_url contains '.mp4' or vid_url contains '.webm' or vid_url contains '.mov' %}
-      <div class="hw-vp" data-hw-player data-poster="{{ vid_poster }}" data-src="{{ vid_url }}" data-title="{{ page.title }}">
+      <div class="video-thumb" onclick="if(window.hwTikTokOpen)window.hwTikTokOpen('{{ vid_url }}')" data-hw-player data-poster="{{ vid_poster }}" data-src="{{ vid_url }}" data-title="{{ page.title }}">
+        {% if vid_poster != "" %}<img src="{{ vid_poster }}" alt="{{ page.title }}" loading="lazy">{% else %}<video preload="metadata" muted playsinline><source src="{{ vid_url }}" type="video/mp4"></video>{% endif %}
+        <div class="video-thumb-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
         <video preload="metadata" playsinline controlsList="nodownload" oncontextmenu="return false"{% if vid_poster != "" %} poster="{{ vid_poster }}"{% endif %}><source src="{{ vid_url }}" type="video/mp4"></video>
         <div class="hw-vp-bigplay"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
         <div class="hw-vp-controls">
