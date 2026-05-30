@@ -260,7 +260,7 @@
     {% if all_photos.size > 0 %}
     <div class="photos-grid adult-blurred" id="photos-grid">
       {% for img in all_photos %}
-      <div class="photo-thumb" data-idx="{{ forloop.index0 }}">
+      <div class="photo-thumb" data-idx="{{ forloop.index0 }}" onclick="hwThumbClick(this)">
         <img src="{{ img }}" alt="{{ page.title }}" loading="lazy">
       </div>
       {% endfor %}
@@ -564,7 +564,7 @@
         el.classList.remove('videos-wrap-blur','adult-blurred');
         el.style.filter='none'; el.style.pointerEvents='auto';
       });
-      document.querySelectorAll('.adult-gate-grid').forEach(function(el){ el.style.display='none'; });
+      document.querySelectorAll('.adult-gate-grid').forEach(function(el){ el.style.display='none'; el.style.pointerEvents='none'; el.style.zIndex='-1'; });
     }
 
     // Check Supabase session
