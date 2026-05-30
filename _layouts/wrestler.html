@@ -281,7 +281,7 @@
 
   <!-- VIDEOS PANEL -->
   <div id="panel-videos" style="display:none;">
-        {% if page.videos and page.videos.size > 0 %}
+    {% if page.videos and page.videos.size > 0 %}
     <div class="videos-grid{% if page.adult %} adult-blurred videos-wrap-blur{% endif %}" id="videos-wrap">
       {% for vid in page.videos %}
       {% assign vid_url = vid.url | default: vid %}
@@ -292,22 +292,21 @@
         {% else %}<video preload="metadata" muted playsinline><source src="{{ vid_url }}" type="video/mp4"></video>{% endif %}
         <div class="video-thumb-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
       </div>
+      {% else %}
+      <div class="video-wrap"><iframe src="{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
       {% endif %}
       {% endfor %}
     </div>
-    {% else %}<div class="video-wrap"><iframe src="{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
-      {% endif %}
-      </div>
-      {% if page.adult %}
-      <div class="adult-gate-grid" id="videos-gate" onclick="openAuthModal()" style="position:absolute;inset:0;background:rgba(0,0,0,0.15);">
-        <div class="adult-gate-icon">&#128520;</div>
-        <div class="adult-gate-title">Adults Only. No Exceptions.</div>
-        <div class="adult-gate-btn">Sign in to unlock &#128293;</div>
-      </div>
-      {% endif %}
+    {% if page.adult %}
+    <div class="adult-gate-grid" id="videos-gate" onclick="openAuthModal()" style="position:absolute;inset:0;background:rgba(0,0,0,0.15);">
+      <div class="adult-gate-icon">&#128520;</div>
+      <div class="adult-gate-title">Adults Only. No Exceptions.</div>
+      <div class="adult-gate-btn">Sign in to unlock &#128293;</div>
     </div>
+    {% endif %}
     {% else %}
     <div style="padding:2rem 1rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">No videos yet</div>
+    {% endif %}
   </div>
 
   <!-- AUTH MODAL -->
