@@ -129,11 +129,13 @@ layout: none
     /* TOP BAR */
     /* TOP STRIP — fixed container for header + pills */
     #top-strip {
+      display:none;
       position:fixed; top:0; left:0; right:0; z-index:50;
       background:#000;
       will-change:transform;
     }
     #top-strip.hidden { transform:translateY(-100%); }
+    #app.visible #top-strip { display:block; }
     .top-bar {
       height:48px;
       display:flex; align-items:center; justify-content:space-between; padding:0 1rem;
@@ -1211,7 +1213,7 @@ layout: none
       const ag = $('age-gate');
       const app = $('app');
       if (ag) { ag.classList.remove('visible'); ag.classList.add('hidden'); }
-      if (app) app.style.display = 'flex';
+      if (app) { app.style.display = 'flex'; app.classList.add('visible'); }
       try { initApp(); } catch(e) { console.warn('initApp:', e); }
     }
 
