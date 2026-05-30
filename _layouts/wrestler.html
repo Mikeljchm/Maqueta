@@ -587,7 +587,7 @@
     });
     mainVid.addEventListener('play',function(){setPlayIcon(true);bgVid.play().catch(function(){});});
     mainVid.addEventListener('pause',function(){setPlayIcon(false);bgVid.pause();});
-    mainVid.addEventListener('ended',function(){setPI(false);});
+    mainVid.addEventListener('ended',function(){mainVid.currentTime=0;mainVid.play().catch(function(){});});
 
     // Controls
     closeBtn.addEventListener('click',close);
