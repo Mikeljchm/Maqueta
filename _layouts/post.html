@@ -301,6 +301,7 @@
       <div class="related-title">More Like This</div>
       <div class="related-grid">
         {% for rp in related %}
+          {% unless rp.adult %}
           {% assign rp_img = "" %}
           {% if rp.images %}{% assign rp_img = rp.images | first %}{% elsif rp.image %}{% assign rp_img = rp.image %}{% endif %}
           {% if rp_img and rp_img.size > 10 %}
@@ -309,6 +310,7 @@
             <span class="related-card-cat">{{ rp.category }}</span>
           </a>
           {% endif %}
+          {% endunless %}
         {% endfor %}
       </div>
     </section>
