@@ -444,6 +444,34 @@
   </script>
 
 
+
+  <script>
+  /* TAB SWITCHER + PHOTO VIEWER INIT */
+  function switchTab(tab){
+    document.querySelectorAll('.media-tab').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('[id^="panel-"]').forEach(function(p){ p.style.display='none'; });
+    var btn = document.querySelector('.media-tab[onclick*="' + tab + '"]');
+    if(btn) btn.classList.add('active');
+    var panel = document.getElementById('panel-' + tab);
+    if(panel) panel.style.display='block';
+  }
+
+  // Init photo viewer on thumbs
+  document.addEventListener('DOMContentLoaded', function(){
+    var thumbs = document.querySelectorAll('.photo-thumb');
+    var imgs = [];
+    thumbs.forEach(function(t){
+      var img = t.querySelector('img');
+      if(img) imgs.push(img.src);
+    });
+    thumbs.forEach(function(t, i){
+      t.addEventListener('click', function(){
+        if(window.openPhotoViewer) window.openPhotoViewer(imgs, i);
+        else if(window.hwViewerOpen) window.hwViewerOpen(imgs, i);
+      });
+    });
+  });
+  </script>
   <script>
   /* SUPABASE SESSION UNLOCK */
   (function(){
