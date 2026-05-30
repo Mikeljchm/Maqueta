@@ -356,7 +356,7 @@ layout: none
     .empty-feed p { color:var(--text-muted); font-size:0.88rem; line-height:1.6; }
 
     /* PAGE TITLE BAR */
-    .page-title-bar { padding:1rem 1rem 0.75rem; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; background:#000; }
+    .page-title-bar { padding:1rem 1rem 0.75rem; border-bottom:1px solid var(--border); background:#000; margin-top:0; }
     .page-title { font-family:var(--font-d); font-size:1.6rem; color:#fff; letter-spacing:0.06em; }
     .page-title span { background:linear-gradient(135deg,var(--fire-yellow),var(--fire-orange)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
     .page-subtitle { font-size:0.62rem; color:var(--text-muted); letter-spacing:0.15em; text-transform:uppercase; margin-top:0.15rem; }
@@ -769,7 +769,7 @@ layout: none
         <!-- Category pills — dynamic from wrestlers -->
         {% assign wrestlers = site.wrestlers %}
         {% if wrestlers.size > 0 %}
-        <div class="cat-pills" style="border-top:none;">
+        <div class="cat-pills" style="border-top:none;position:relative;top:auto;">
           <button class="cat-pill active" data-wcat="all">All</button>
           {% assign w_cats = "" %}
           {% for w in wrestlers %}
@@ -810,7 +810,7 @@ layout: none
         {% assign all_studs = site.studs | concat: site.badboys %}
         {% if all_studs.size > 0 %}
         <!-- Category pills — dynamic from studs -->
-        <div class="cat-pills" style="border-top:none;">
+        <div class="cat-pills" style="border-top:none;position:relative;top:auto;">
           <button class="cat-pill active" data-scat="all">All</button>
           {% assign s_cats = "" %}
           {% for bb in all_studs %}
@@ -970,7 +970,7 @@ layout: none
         </div>
         {% assign all_bulge = site.bulge %}
         {% if all_bulge.size > 0 %}
-        <div class="cat-pills" style="border-top:none;">
+        <div class="cat-pills" style="border-top:none;position:relative;top:auto;">
           <button class="cat-pill active" data-bcat="all">All</button>
           {% assign b_sports = "" %}
           {% for athlete in all_bulge %}
@@ -1270,6 +1270,16 @@ layout: none
         btn.classList.add('active');
         const pg = document.getElementById('page-' + id);
         if (pg) pg.classList.add('active');
+        // Show strip only on home, hide on all other sections
+        var strip = document.getElementById('top-strip');
+        var fab = document.getElementById('new-post-fab');
+        if (id === 'home') {
+          if (strip) { strip.style.display = 'block'; strip.style.transform = 'translateY(0)'; }
+          if (fab) fab.style.display = '';
+        } else {
+          if (strip) strip.style.display = 'none';
+          if (fab) fab.style.display = 'none';
+        }
         /* Reset home feed when going back to home */
         if (id === 'home') {
           currentCat = 'all';
@@ -1291,6 +1301,8 @@ layout: none
         if (navBtn) navBtn.classList.add('active');
         const pg = document.getElementById('page-' + id);
         if (pg) pg.classList.add('active');
+        var strip = document.getElementById('top-strip');
+        if (strip) strip.style.display = 'none';
       });
     });
 
@@ -1397,11 +1409,12 @@ layout: none
 
       function setStripOffset(){
         stripH = strip.offsetHeight;
-        scrollEl.style.paddingTop = Math.max(0, stripH + offsetY) + 'px';
+        // Apply padding only to home page
+        var home = document.getElementById('page-home');
+        if(home) home.style.paddingTop = stripH + 'px';
       }
-      stripH = strip.offsetHeight;
-      scrollEl.style.paddingTop = stripH + 'px';
-      window.addEventListener('resize', function(){ stripH = strip.offsetHeight; setStripOffset(); });
+      setStripOffset();
+      window.addEventListener('resize', setStripOffset);
 
       scrollEl.addEventListener('scroll', function(){
         if(!ticking){
