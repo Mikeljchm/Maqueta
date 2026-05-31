@@ -260,7 +260,7 @@
   <!-- FOTOS PANEL -->
   <div id="panel-photos">
     {% if all_photos.size > 0 %}
-    <script>window.ALL_PHOTOS = {{ all_photos | jsonify }};</script>
+    <script>window.PHOTOS_JSON = "/assets/data/studs/{{ page.slug | default: page.name }}.json";</script>
     <div class="photos-grid{% if page.adult %} adult-blurred{% endif %}" id="photos-grid">
       <div class="adult-gate-grid" id="adult-gate" onclick="openAuthModal()">
         <div class="adult-gate-icon">&#128520;</div>
@@ -275,7 +275,7 @@
     {% endif %}
 
     {% if page.adult_images and page.adult_images.size > 0 %}
-    <script>window.ADULT_PHOTOS = {{ page.adult_images | default: "[]" | jsonify }};</script>
+    <!-- adult photos cargadas desde el mismo JSON -->
     <div class="photos-grid adult-blurred" id="adult-photos-grid">
       <div class="adult-gate-grid" id="adult-gate-2" onclick="openAuthModal()">
         <div class="adult-gate-icon">&#128520;</div>
@@ -567,6 +567,18 @@
 
   function renderPhotos(isUnlock) {
     // Leer siempre fresco desde window — disponible cuando DOMContentLoaded corre
+    // Cargar fotos desde JSON externo — más rápido, no bloquea el HTML
+    if (window.PHOTOS_JSON) {
+      fetch(window.PHOTOS_JSON)
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          _allPhotos = d.photos || [];
+          _adultPhotos = d.adult || [];
+          renderPhotos(_isUnlocked);
+        })
+        .catch(function(){ _allPhotos = []; _adultPhotos = []; });
+      return; // renderPhotos se llama cuando llega el JSON
+    }
     _allPhotos = window.ALL_PHOTOS || [];
     _adultPhotos = window.ADULT_PHOTOS || [];
     if (isUnlock !== undefined) _isUnlocked = isUnlock;
