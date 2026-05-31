@@ -25,6 +25,11 @@ defaults:
       layout: "stud"
   - scope:
       path: ""
+      type: "studs_data"
+    values:
+      layout: "stud-json"
+  - scope:
+      path: ""
       type: "bulge"
     values:
       layout: "bulge"
