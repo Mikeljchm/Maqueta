@@ -340,27 +340,6 @@
     </div>
   </div>
 
-      <div class="video-thumb" data-vid="{{ vid_url }}" onclick="if(window.hwTikTokOpen){window.hwTikTokOpen(this.dataset.vid)}">
-        {% if vid_poster != "" %}<img src="{{ vid_poster }}" alt="{{ page.title }}" loading="lazy">
-        {% else %}<video preload="metadata" muted playsinline><source src="{{ vid_url }}" type="video/mp4"></video>{% endif %}
-        <div class="video-thumb-play"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-      </div>
-      {% else %}
-      <div class="video-wrap"><iframe src="{{ vid_url }}" frameborder="0" allowfullscreen loading="lazy"></iframe></div>
-      {% endif %}
-      {% endfor %}
-    </div>
-    {% if page.adult %}
-    <div class="adult-gate-grid" id="videos-gate" onclick="openAuthModal()" style="position:absolute;inset:0;background:rgba(0,0,0,0.15);">
-      <div class="adult-gate-icon">&#128520;</div>
-      <div class="adult-gate-title">Adults Only. No Exceptions.</div>
-      <div class="adult-gate-btn">Sign in to unlock &#128293;</div>
-    </div>
-    {% endif %}
-    {% else %}
-    <div style="padding:2rem 1rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">No videos yet</div>
-    {% endif %}
-  </div>
 
   <!-- AUTH MODAL -->
   <div class="auth-modal" id="auth-modal">
