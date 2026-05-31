@@ -626,13 +626,16 @@
   }
 
   /* ── PHOTOS PAGINATION ── */
-  var _allPhotos = window.ALL_PHOTOS || [];
-  var _adultPhotos = window.ADULT_PHOTOS || [];
+  var _allPhotos = [];
+  var _adultPhotos = [];
   var _photosPerPage = 12;
   var _photosLoaded = 0;
   var _isUnlocked = false;
 
   function renderPhotos(isUnlock) {
+    // Leer siempre fresco desde window — disponible cuando DOMContentLoaded corre
+    _allPhotos = window.ALL_PHOTOS || [];
+    _adultPhotos = window.ADULT_PHOTOS || [];
     if (isUnlock !== undefined) _isUnlocked = isUnlock;
     var grid = document.getElementById('photos-grid');
     if (!grid) return;
