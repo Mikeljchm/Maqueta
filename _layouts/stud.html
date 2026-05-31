@@ -569,15 +569,18 @@
     // Leer siempre fresco desde window — disponible cuando DOMContentLoaded corre
     // Cargar fotos desde JSON externo — más rápido, no bloquea el HTML
     if (window.PHOTOS_JSON) {
-      fetch(window.PHOTOS_JSON)
+      var jsonUrl = window.PHOTOS_JSON;
+      window.PHOTOS_JSON = null; // evitar recursión
+      fetch(jsonUrl)
         .then(function(r){ return r.json(); })
         .then(function(d){
           _allPhotos = d.photos || [];
           _adultPhotos = d.adult || [];
+          if (isUnlock !== undefined) _isUnlocked = isUnlock;
           renderPhotos(_isUnlocked);
         })
         .catch(function(){ _allPhotos = []; _adultPhotos = []; });
-      return; // renderPhotos se llama cuando llega el JSON
+      return;
     }
     _allPhotos = window.ALL_PHOTOS || [];
     _adultPhotos = window.ADULT_PHOTOS || [];
