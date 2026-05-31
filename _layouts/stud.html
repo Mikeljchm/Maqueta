@@ -106,6 +106,7 @@
     .photos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;position:relative;}
     .photo-thumb{position:relative;aspect-ratio:9/16;overflow:hidden;cursor:pointer;background:var(--surface);}
     .photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.3s var(--ease);}
+    #load-more-btn:active{opacity:0.8;transform:scale(0.97);}
     .photo-thumb:active img{transform:scale(1.05);}
     /* VIDEOS GRID — same as photos */
     .videos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}
@@ -259,27 +260,23 @@
   <!-- FOTOS PANEL -->
   <div id="panel-photos">
     {% if all_photos.size > 0 %}
+    <script>window.ALL_PHOTOS = {{ all_photos | jsonify }};</script>
     <div class="photos-grid adult-blurred" id="photos-grid">
-      {% for img in all_photos %}
-      <div class="photo-thumb" data-idx="{{ forloop.index0 }}" onclick="hwThumbClick(this)">
-        <img src="{{ img }}" alt="{{ page.title }}" loading="lazy">
-      </div>
-      {% endfor %}
       <div class="adult-gate-grid" id="adult-gate" onclick="openAuthModal()">
         <div class="adult-gate-icon">&#128520;</div>
         <div class="adult-gate-title">Adults Only. No Exceptions.</div>
         <div class="adult-gate-btn">Sign in to unlock &#128293;</div>
       </div>
     </div>
+    <div id="load-more-wrap" style="display:none;text-align:center;padding:1rem 0 0.5rem;">
+      <button id="load-more-btn" onclick="loadMorePhotos()" style="background:var(--fire-orange);border:none;border-radius:20px;padding:0.5rem 1.5rem;font-family:var(--font-d);font-size:0.9rem;color:#fff;letter-spacing:0.1em;cursor:pointer;">LOAD MORE</button>
+      <div id="load-more-count" style="font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;"></div>
+    </div>
     {% endif %}
 
     {% if page.adult_images and page.adult_images.size > 0 %}
+    <script>window.ADULT_PHOTOS = {{ page.adult_images | default: "[]" | jsonify }};</script>
     <div class="photos-grid adult-blurred" id="adult-photos-grid">
-      {% for img in page.adult_images %}
-      <div class="photo-thumb" data-idx="{{ forloop.index0 | plus: all_photos.size }}">
-        <img src="{{ img }}" alt="{{ page.title }}" loading="lazy">
-      </div>
-      {% endfor %}
       <div class="adult-gate-grid" id="adult-gate-2" onclick="openAuthModal()">
         <div class="adult-gate-icon">&#128520;</div>
         <div class="adult-gate-title">Adults Only. No Exceptions.</div>
@@ -476,6 +473,7 @@
     document.querySelectorAll('.adult-gate-grid').forEach(function(el){
       el.style.display='none'; el.style.pointerEvents='none'; el.style.zIndex='-1';
     });
+    renderPhotos(true);
   }
 
   /* ── 5. NAV HIDE ON SCROLL ── */
@@ -508,11 +506,107 @@
   window.lvNext=function(){ lvIdx=(lvIdx+1)%lvImgs.length; lvShow(); };
   window.lvPrev=function(){ lvIdx=(lvIdx-1+lvImgs.length)%lvImgs.length; lvShow(); };
 
+  /* ── PHOTOS PAGINATION ── */
+  var _allPhotos = window.ALL_PHOTOS || [];
+  var _adultPhotos = window.ADULT_PHOTOS || [];
+  var _photosPerPage = 12;
+  var _photosLoaded = 0;
+  var _isUnlocked = false;
+
+  function renderPhotos(isUnlock) {
+    if (isUnlock !== undefined) _isUnlocked = isUnlock;
+    var grid = document.getElementById('photos-grid');
+    if (!grid) return;
+
+    // Limpiar thumbs existentes (mantener el gate)
+    var gate = document.getElementById('adult-gate');
+    var thumbs = grid.querySelectorAll('.photo-thumb');
+    thumbs.forEach(function(t){ t.remove(); });
+
+    // Insertar las primeras N fotos antes del gate
+    var end = Math.min(_photosPerPage, _allPhotos.length);
+    _photosLoaded = end;
+    for (var i = 0; i < end; i++) {
+      var div = document.createElement('div');
+      div.className = 'photo-thumb';
+      div.dataset.idx = i;
+      div.onclick = (function(idx){ return function(){ lvOpen(_allPhotos, idx); }; })(i);
+      var img = document.createElement('img');
+      img.src = _allPhotos[i];
+      img.alt = '';
+      img.loading = 'lazy';
+      div.appendChild(img);
+      grid.insertBefore(div, gate);
+    }
+
+    // Mostrar botón load more si hay más
+    var wrap = document.getElementById('load-more-wrap');
+    if (wrap) {
+      if (_photosLoaded < _allPhotos.length) {
+        wrap.style.display = 'block';
+        var cnt = document.getElementById('load-more-count');
+        if (cnt) cnt.textContent = _photosLoaded + ' of ' + _allPhotos.length + ' photos';
+      } else {
+        wrap.style.display = 'none';
+      }
+    }
+
+    // Adult photos si está desbloqueado
+    if (_isUnlocked && _adultPhotos.length > 0) {
+      var agrid = document.getElementById('adult-photos-grid');
+      if (agrid) {
+        var agate = document.getElementById('adult-gate-2');
+        agrid.querySelectorAll('.photo-thumb').forEach(function(t){ t.remove(); });
+        for (var j = 0; j < _adultPhotos.length; j++) {
+          var adiv = document.createElement('div');
+          adiv.className = 'photo-thumb';
+          adiv.dataset.idx = _allPhotos.length + j;
+          adiv.onclick = (function(photos, idx){ return function(){ lvOpen(photos, idx); }; })(_adultPhotos, j);
+          var aimg = document.createElement('img');
+          aimg.src = _adultPhotos[j];
+          aimg.alt = '';
+          aimg.loading = 'lazy';
+          adiv.appendChild(aimg);
+          if (agate) agrid.insertBefore(adiv, agate);
+          else agrid.appendChild(adiv);
+        }
+      }
+    }
+  }
+
+  window.loadMorePhotos = function() {
+    var grid = document.getElementById('photos-grid');
+    if (!grid) return;
+    var gate = document.getElementById('adult-gate');
+    var start = _photosLoaded;
+    var end = Math.min(start + _photosPerPage, _allPhotos.length);
+    for (var i = start; i < end; i++) {
+      var div = document.createElement('div');
+      div.className = 'photo-thumb';
+      div.dataset.idx = i;
+      div.onclick = (function(idx){ return function(){ lvOpen(_allPhotos, idx); }; })(i);
+      var img = document.createElement('img');
+      img.src = _allPhotos[i];
+      img.alt = '';
+      img.loading = 'lazy';
+      div.appendChild(img);
+      grid.insertBefore(div, gate);
+    }
+    _photosLoaded = end;
+    var wrap = document.getElementById('load-more-wrap');
+    if (wrap) {
+      if (_photosLoaded < _allPhotos.length) {
+        var cnt = document.getElementById('load-more-count');
+        if (cnt) cnt.textContent = _photosLoaded + ' of ' + _allPhotos.length + ' photos';
+      } else {
+        wrap.style.display = 'none';
+      }
+    }
+  };
+
   window.hwThumbClick=function(el){
     var idx=parseInt(el.getAttribute('data-idx'))||0;
-    var imgs=[];
-    document.querySelectorAll('.photo-thumb img').forEach(function(img){ if(img.src) imgs.push(img.src); });
-    if(imgs.length) lvOpen(imgs,idx);
+    lvOpen(_allPhotos, idx);
   };
 
   window.switchTab=function(tab){
@@ -537,6 +631,9 @@
     // Edit modal close on backdrop
     var editModal = document.getElementById('edit-modal');
     if(editModal) editModal.addEventListener('click', function(e){ if(e.target===this) closeEditModal(); });
+
+    // Renderizar primeras 12 fotos
+    renderPhotos(false);
 
     // Auth — verificar sesión
     var adminCookie = document.cookie.match(/hw_admin=([^;]+)/);
