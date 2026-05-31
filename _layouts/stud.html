@@ -484,27 +484,30 @@
     }
   }, {passive:true});
 
-  /* ── 6. PHOTO VIEWER ── */
-  var lvImgs=[], lvIdx=0, lvScale=1, lvPinchStart=0, lvSwipeX=0;
-  function lvOpen(imgs, idx){
-    lvImgs=imgs; lvIdx=idx||0; lvScale=1;
-    lvShow();
-    var ov=document.getElementById('lv-overlay'); if(ov){ ov.classList.add('open'); }
+  /* ── 6. PHOTO VIEWER (igual que wrestler) ── */
+  var _viewerImgs=[], _viewerIdx=0;
+  function _lvOpenViewer(imgs, idx){
+    _viewerImgs=imgs; _viewerIdx=idx||0;
+    var viewer=document.getElementById('photo-viewer');
+    var vImg=document.getElementById('viewer-img');
+    var vBg=document.getElementById('viewer-bg');
+    var vCounter=document.getElementById('viewer-counter');
+    var prevBtn=document.getElementById('viewer-prev');
+    var nextBtn=document.getElementById('viewer-next');
+    if(!viewer||!vImg) return;
+    function loadImg(i){ _viewerIdx=i; vImg.src=_viewerImgs[i]; vBg.style.backgroundImage='url('+_viewerImgs[i]+')'; vCounter.textContent=(i+1)+' / '+_viewerImgs.length; prevBtn.classList.toggle('hidden',i===0); nextBtn.classList.toggle('hidden',i===_viewerImgs.length-1); }
+    loadImg(_viewerIdx);
+    viewer.classList.add('open');
     document.body.style.overflow='hidden';
+    document.getElementById('viewer-back').onclick=function(){ viewer.classList.remove('open'); document.body.style.overflow=''; };
+    prevBtn.onclick=function(){ if(_viewerIdx>0) loadImg(_viewerIdx-1); };
+    nextBtn.onclick=function(){ if(_viewerIdx<_viewerImgs.length-1) loadImg(_viewerIdx+1); };
+    /* swipe */
+    var sx=0;
+    var cont=document.getElementById('viewer-container');
+    cont.ontouchstart=function(e){ if(e.touches.length===1) sx=e.touches[0].clientX; };
+    cont.ontouchend=function(e){ if(e.changedTouches.length===1){ var dx=e.changedTouches[0].clientX-sx; if(Math.abs(dx)>60){ if(dx<0&&_viewerIdx<_viewerImgs.length-1) loadImg(_viewerIdx+1); if(dx>0&&_viewerIdx>0) loadImg(_viewerIdx-1); } } };
   }
-  function lvShow(){
-    var img=document.getElementById('lv-img');
-    var bg=document.getElementById('lv-bg');
-    var src=lvImgs[lvIdx];
-    img.src=src; img.style.transform='scale(1)'; lvScale=1;
-    bg.style.backgroundImage='url('+src+')';
-    document.getElementById('lv-count').textContent=(lvIdx+1)+' / '+lvImgs.length;
-    document.getElementById('lv-prev').style.display=lvImgs.length>1?'block':'none';
-    document.getElementById('lv-next').style.display=lvImgs.length>1?'block':'none';
-  }
-  window.lvClose=function(){ var ov=document.getElementById('lv-overlay'); if(ov) ov.classList.remove('open'); document.body.style.overflow=''; };
-  window.lvNext=function(){ lvIdx=(lvIdx+1)%lvImgs.length; lvShow(); };
-  window.lvPrev=function(){ lvIdx=(lvIdx-1+lvImgs.length)%lvImgs.length; lvShow(); };
 
   /* ── PHOTOS PAGINATION ── */
   var _allPhotos = window.ALL_PHOTOS || [];
@@ -530,7 +533,7 @@
       var div = document.createElement('div');
       div.className = 'photo-thumb';
       div.dataset.idx = i;
-      div.onclick = (function(idx){ return function(){ lvOpen(_allPhotos, idx); }; })(i);
+      div.onclick = (function(idx){ return function(){ _lvOpenViewer(_allPhotos, idx); }; })(i);
       var img = document.createElement('img');
       img.src = _allPhotos[i];
       img.alt = '';
@@ -561,7 +564,7 @@
           var adiv = document.createElement('div');
           adiv.className = 'photo-thumb';
           adiv.dataset.idx = _allPhotos.length + j;
-          adiv.onclick = (function(photos, idx){ return function(){ lvOpen(photos, idx); }; })(_adultPhotos, j);
+          adiv.onclick = (function(photos, idx){ return function(){ _lvOpenViewer(photos, idx); }; })(_adultPhotos, j);
           var aimg = document.createElement('img');
           aimg.src = _adultPhotos[j];
           aimg.alt = '';
@@ -584,7 +587,7 @@
       var div = document.createElement('div');
       div.className = 'photo-thumb';
       div.dataset.idx = i;
-      div.onclick = (function(idx){ return function(){ lvOpen(_allPhotos, idx); }; })(i);
+      div.onclick = (function(idx){ return function(){ _lvOpenViewer(_allPhotos, idx); }; })(i);
       var img = document.createElement('img');
       img.src = _allPhotos[i];
       img.alt = '';
@@ -606,7 +609,7 @@
 
   window.hwThumbClick=function(el){
     var idx=parseInt(el.getAttribute('data-idx'))||0;
-    lvOpen(_allPhotos, idx);
+    _lvOpenViewer(_allPhotos, idx);
   };
 
   window.switchTab=function(tab){
@@ -643,28 +646,7 @@
     HottAuth.init().then(function(s){ if(s) unlock(); });
     HottAuth.onChange(function(s){ if(s) unlock(); });
 
-    // Viewer swipe + pinch — ahora que el DOM existe
-    var ov = document.getElementById('lv-overlay');
-    if(ov){
-      ov.addEventListener('touchstart',function(e){
-        if(e.touches.length===2) lvPinchStart=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-        else lvSwipeX=e.touches[0].clientX;
-      },{passive:true});
-      ov.addEventListener('touchmove',function(e){
-        if(e.touches.length===2){
-          var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-          lvScale=Math.min(4,Math.max(1,lvScale*(d/lvPinchStart))); lvPinchStart=d;
-          document.getElementById('lv-img').style.transform='scale('+lvScale+')';
-        }
-      },{passive:true});
-      ov.addEventListener('touchend',function(e){
-        if(e.changedTouches.length===1&&lvScale===1){
-          var dx=e.changedTouches[0].clientX-lvSwipeX;
-          if(Math.abs(dx)>50){ dx<0?window.lvNext():window.lvPrev(); }
-        }
-      },{passive:true});
-      ov.addEventListener('click',function(e){ if(e.target===this) window.lvClose(); });
-    }
+    /* swipe/pinch manejado dentro de _lvOpenViewer */
 
     // Default tab
     var photos=document.getElementById('panel-photos');
@@ -678,16 +660,16 @@
 
 
   <!-- PHOTO VIEWER -->
-  <div id="lv-overlay">
-    <div id="lv-bg"></div>
-    <div id="lv-header">
-      <button onclick="window.lvClose()" id="lv-close">&#10005;</button>
-      <span id="lv-count"></span>
+  <div class="photo-viewer" id="photo-viewer">
+    <div class="viewer-bg" id="viewer-bg"></div>
+    <div class="viewer-topbar">
+      <button class="viewer-back" id="viewer-back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <span class="viewer-counter" id="viewer-counter">1 / 1</span>
     </div>
-    <div id="lv-main">
-      <button onclick="window.lvPrev()" id="lv-prev">&#10094;</button>
-      <img id="lv-img" src="" alt="">
-      <button onclick="window.lvNext()" id="lv-next">&#10095;</button>
+    <button class="viewer-arrow viewer-arrow-prev" id="viewer-prev"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <button class="viewer-arrow viewer-arrow-next" id="viewer-next"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+    <div class="viewer-container" id="viewer-container">
+      <div class="viewer-img-wrap" id="viewer-img-wrap"><img class="viewer-img" id="viewer-img" src="" alt=""></div>
     </div>
   </div>
 
