@@ -260,7 +260,7 @@
   <!-- FOTOS PANEL -->
   <div id="panel-photos">
     {% if all_photos.size > 0 %}
-    <script>window.PHOTOS_JSON = "/assets/data/studs/{{ page.slug | default: page.name }}.json";</script>
+    {% assign stud_slug = page.path | remove: "_studs/" | remove: ".md" %}<script>window.PHOTOS_JSON = "/assets/data/studs/{{ stud_slug }}.json";</script>
     <div class="photos-grid{% if page.adult %} adult-blurred{% endif %}" id="photos-grid">
       <div class="adult-gate-grid" id="adult-gate" onclick="openAuthModal()">
         <div class="adult-gate-icon">&#128520;</div>
