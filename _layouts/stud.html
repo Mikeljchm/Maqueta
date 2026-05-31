@@ -792,5 +792,121 @@
     </div>
   </div>
 
+
+  <script>
+  /* ── TIKTOK VIDEO PLAYER ── */
+  (function(){
+    var overlay = document.getElementById('hw-tiktok');
+    var vid = document.getElementById('hw-tk-vid');
+    var bgVid = document.getElementById('hw-tk-bg-vid');
+    var titleEl = document.getElementById('hw-tk-title');
+    var closeBtn = document.getElementById('hw-tk-close');
+    var playBtn = document.getElementById('hw-tk-play');
+    var playIcon = document.getElementById('hw-tk-play-icon');
+    var muteBtn = document.getElementById('hw-tk-mute');
+    var muteIcon = document.getElementById('hw-tk-mute-icon');
+    var prog = document.getElementById('hw-tk-prog');
+    var fill = document.getElementById('hw-tk-fill');
+    var thumb = document.getElementById('hw-tk-thumb');
+    var timeEl = document.getElementById('hw-tk-time');
+    var hintPrev = document.getElementById('hw-tk-hint-prev');
+    var hintNext = document.getElementById('hw-tk-hint-next');
+    if(!overlay||!vid) return;
+
+    var allVids = [];
+    var curIdx = 0;
+    var isMuted = false;
+    var isDragging = false;
+
+    function fmt(s){ var m=Math.floor(s/60); var sc=Math.floor(s%60); return m+':'+(sc<10?'0':'')+sc; }
+
+    function openVideo(src, idx){
+      // Recoger todos los videos del DOM
+      allVids = Array.from(document.querySelectorAll('.video-thumb')).map(function(t){ return t.dataset.vid; }).filter(Boolean);
+      curIdx = idx !== undefined ? idx : allVids.indexOf(src);
+      if(curIdx < 0) curIdx = 0;
+      loadVideo(curIdx);
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function loadVideo(idx){
+      curIdx = idx;
+      var src = allVids[idx];
+      vid.src = src;
+      bgVid.src = src;
+      vid.play();
+      bgVid.play();
+      if(titleEl) titleEl.textContent = '';
+      hintPrev.style.opacity = idx > 0 ? '1' : '0';
+      hintNext.style.opacity = idx < allVids.length-1 ? '1' : '0';
+    }
+
+    function closeVideo(){
+      vid.pause(); vid.src='';
+      bgVid.pause(); bgVid.src='';
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // Exponer globalmente
+    window.hwTikTokOpen = function(src){
+      var thumbs = Array.from(document.querySelectorAll('.video-thumb'));
+      var idx = thumbs.findIndex(function(t){ return t.dataset.vid === src; });
+      openVideo(src, idx >= 0 ? idx : 0);
+    };
+
+    if(closeBtn) closeBtn.addEventListener('click', closeVideo);
+
+    // Play/pause
+    vid.addEventListener('click', function(){
+      if(vid.paused){ vid.play(); playIcon.setAttribute('points','5 3 19 12 5 21 5 3'); }
+      else { vid.pause(); playIcon.setAttribute('points','6 19 6 5 M18 19 18 5'); }
+    });
+    if(playBtn) playBtn.addEventListener('click', function(){
+      if(vid.paused){ vid.play(); playIcon.setAttribute('points','5 3 19 12 5 21 5 3'); }
+      else { vid.pause(); }
+    });
+
+    // Mute
+    if(muteBtn) muteBtn.addEventListener('click', function(){
+      isMuted = !isMuted;
+      vid.muted = isMuted;
+    });
+
+    // Progress
+    vid.addEventListener('timeupdate', function(){
+      if(!isDragging && vid.duration){
+        var pct = vid.currentTime/vid.duration*100;
+        if(fill) fill.style.width = pct+'%';
+        if(thumb) thumb.style.left = pct+'%';
+        if(timeEl) timeEl.textContent = fmt(vid.currentTime)+' / '+fmt(vid.duration);
+      }
+    });
+
+    if(prog) prog.addEventListener('click', function(e){
+      if(!vid.duration) return;
+      var rect = prog.getBoundingClientRect();
+      var pct = (e.clientX - rect.left) / rect.width;
+      vid.currentTime = pct * vid.duration;
+    });
+
+    // Swipe up/down para siguiente/anterior
+    var touchStartY = 0;
+    overlay.addEventListener('touchstart', function(e){ touchStartY = e.touches[0].clientY; }, {passive:true});
+    overlay.addEventListener('touchend', function(e){
+      var dy = e.changedTouches[0].clientY - touchStartY;
+      if(Math.abs(dy) > 80){
+        if(dy < 0 && curIdx < allVids.length-1) loadVideo(curIdx+1);
+        if(dy > 0 && curIdx > 0) loadVideo(curIdx-1);
+      }
+    }, {passive:true});
+
+    // Hint clicks
+    if(hintNext) hintNext.addEventListener('click', function(){ if(curIdx<allVids.length-1) loadVideo(curIdx+1); });
+    if(hintPrev) hintPrev.addEventListener('click', function(){ if(curIdx>0) loadVideo(curIdx-1); });
+  })();
+  </script>
+
 </body>
 </html>
