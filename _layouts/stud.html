@@ -489,7 +489,7 @@
   function lvOpen(imgs, idx){
     lvImgs=imgs; lvIdx=idx||0; lvScale=1;
     lvShow();
-    document.getElementById('lv-overlay').style.display='flex';
+    var ov=document.getElementById('lv-overlay'); if(ov){ ov.classList.add('open'); }
     document.body.style.overflow='hidden';
   }
   function lvShow(){
@@ -502,7 +502,7 @@
     document.getElementById('lv-prev').style.display=lvImgs.length>1?'block':'none';
     document.getElementById('lv-next').style.display=lvImgs.length>1?'block':'none';
   }
-  window.lvClose=function(){ document.getElementById('lv-overlay').style.display='none'; document.body.style.overflow=''; };
+  window.lvClose=function(){ var ov=document.getElementById('lv-overlay'); if(ov) ov.classList.remove('open'); document.body.style.overflow=''; };
   window.lvNext=function(){ lvIdx=(lvIdx+1)%lvImgs.length; lvShow(); };
   window.lvPrev=function(){ lvIdx=(lvIdx-1+lvImgs.length)%lvImgs.length; lvShow(); };
 
@@ -675,6 +675,21 @@
   });
   </script>
 
+
+
+  <!-- PHOTO VIEWER -->
+  <div id="lv-overlay">
+    <div id="lv-bg"></div>
+    <div id="lv-header">
+      <button onclick="window.lvClose()" id="lv-close">&#10005;</button>
+      <span id="lv-count"></span>
+    </div>
+    <div id="lv-main">
+      <button onclick="window.lvPrev()" id="lv-prev">&#10094;</button>
+      <img id="lv-img" src="" alt="">
+      <button onclick="window.lvNext()" id="lv-next">&#10095;</button>
+    </div>
+  </div>
 
 </body>
 </html>
