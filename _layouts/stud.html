@@ -260,7 +260,7 @@
   <!-- FOTOS PANEL -->
   <div id="panel-photos">
     {% if all_photos.size > 0 %}
-    {% assign stud_slug = page.path | remove: "_studs/" | remove: ".md" %}<script>window.PHOTOS_JSON = "/assets/data/studs/{{ stud_slug }}.json";</script>
+    <script>window.ALL_PHOTOS = {{ all_photos | jsonify }};</script>
     <div class="photos-grid{% if page.adult %} adult-blurred{% endif %}" id="photos-grid">
       <div class="adult-gate-grid" id="adult-gate" onclick="openAuthModal()">
         <div class="adult-gate-icon">&#128520;</div>
@@ -275,7 +275,7 @@
     {% endif %}
 
     {% if page.adult_images and page.adult_images.size > 0 %}
-    <!-- adult photos cargadas desde el mismo JSON -->
+    <script>window.ADULT_PHOTOS = {{ page.adult_images | default: "[]" | jsonify }};</script>
     <div class="photos-grid adult-blurred" id="adult-photos-grid">
       <div class="adult-gate-grid" id="adult-gate-2" onclick="openAuthModal()">
         <div class="adult-gate-icon">&#128520;</div>
@@ -510,7 +510,6 @@
 
   /* ── 4. UNLOCK ── */
   function unlock(){
-    _isUnlocked = true;
     document.querySelectorAll('.adult-blurred').forEach(function(el){
       el.classList.remove('adult-blurred');
       el.style.filter='none'; el.style.transform='none'; el.style.pointerEvents='auto';
@@ -523,8 +522,7 @@
     document.querySelectorAll('.adult-gate-grid').forEach(function(el){
       el.style.display='none'; el.style.pointerEvents='none'; el.style.zIndex='-1';
     });
-    // Si las fotos ya cargaron, re-renderizar con unlock
-    if (_allPhotos.length > 0) renderPhotos(true);
+    renderPhotos(true);
   }
 
   /* ── 5. NAV HIDE ON SCROLL ── */
@@ -570,20 +568,6 @@
   function renderPhotos(isUnlock) {
     // Leer siempre fresco desde window — disponible cuando DOMContentLoaded corre
     // Cargar fotos desde JSON externo — más rápido, no bloquea el HTML
-    if (window.PHOTOS_JSON) {
-      var jsonUrl = window.PHOTOS_JSON;
-      window.PHOTOS_JSON = null; // evitar recursión
-      fetch(jsonUrl)
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          _allPhotos = d.photos || [];
-          _adultPhotos = d.adult || [];
-          // Respetar el estado de unlock actual (puede haber llegado antes o después del fetch)
-          renderPhotos(_isUnlocked);
-        })
-        .catch(function(){ _allPhotos = []; _adultPhotos = []; });
-      return;
-    }
     _allPhotos = window.ALL_PHOTOS || [];
     _adultPhotos = window.ADULT_PHOTOS || [];
     if (isUnlock !== undefined) _isUnlocked = isUnlock;
