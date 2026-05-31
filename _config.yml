@@ -46,6 +46,8 @@ collections:
   studs:
     output: true
     permalink: /studs/:name/
+  studs_data:
+    output: true
   bulge:
     output: true
     permalink: /bulge-sport/:name/
