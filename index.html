@@ -91,116 +91,14 @@ layout: none
       <!-- HOME FEED -->
       <div class="page active" id="page-home">
         <div id="feed-container">
-          {% assign all_posts = site.posts %}
-          {% if all_posts.size > 0 %}
-            {% for post in all_posts %}
-            {% if post.images %}
-              {% assign all_imgs = post.images %}
-            {% elsif post.image %}
-              {% assign all_imgs = post.image | split: '|||' %}
-            {% endif %}
-            <article class="post-card{% if post.adult %} adult-card{% endif %}" data-cat="{{ post.category }}" data-idx="{{ forloop.index0 }}" data-adult="{{ post.adult | default: false }}" data-path="{{ post.path }}" data-title="{{ post.title | escape }}" data-desc="{{ post.description | escape }}" data-category="{{ post.category }}" data-poster="{{ post.poster | default: "" }}" data-date="{{ post.date | date: '%Y-%m-%d' }}" data-images="{{ post.images | jsonify | escape }}" data-videos="{{ post.videos | jsonify | escape }}" data-links="{{ post.links | jsonify | escape }}" data-featured="{{ post.featured | default: false }}" data-draft="{{ post.published | default: true | map: 'false' }}">
-              <div class="card-header">
-                <div class="card-avatar">HW</div>
-                <div class="card-meta">
-                  <a class="card-author" href="{{ post.url }}">JUICY STUD</a>
-                  <div class="card-cat-label">{{ post.category }}</div>
-                </div>
-                <div class="card-date">{{ post.date | date: "%b %d, %Y" }}</div>
-                <button class="admin-edit-btn" onclick="openInlineEdit(this.closest('.post-card'))" title="Edit post">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-              </div>
-
-              {% if all_imgs %}
-              {% assign img_count = all_imgs | size %}
-              <div class="card-media-container" style="position:relative;">
-              {% if img_count == 1 %}
-              <!-- Single photo — whole card links to post -->
-              <a href="{{ post.url }}" class="card-media-wrap">
-                <img class="card-first-photo"
-                  src="{{ all_imgs[0] }}"
-                  alt="{{ post.title }}"
-                  loading="lazy" decoding="async">
-              </a>
-              {% elsif img_count == 2 %}
-              <!-- Two photos — side by side grid -->
-              <a href="{{ post.url }}" class="card-media-wrap">
-                <div class="card-duo-grid">
-                  <img src="{{ all_imgs[0] }}" alt="{{ post.title }}" loading="lazy" decoding="async">
-                  <img src="{{ all_imgs[1] }}" alt="{{ post.title }}" loading="lazy" decoding="async">
-                </div>
-              </a>
-              {% else %}
-              <!-- Multiple — first photo + peek + button -->
-              <div class="card-media-wrap">
-                <a href="{{ post.url }}" style="display:block;">
-                  <img class="card-first-photo"
-                    src="{{ all_imgs[0] }}"
-                    alt="{{ post.title }}"
-                    loading="lazy" decoding="async">
-                  <div class="card-photo-peek">
-                    <img src="{{ all_imgs[1] }}" alt="" loading="lazy" decoding="async">
-                  </div>
-                </a>
-                <a href="{{ post.url }}" class="card-see-all">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </a>
-              </div>
-              {% endif %}
-              {% if post.adult %}
-              <div class="adult-overlay" id="adult-overlay-{{ forloop.index0 }}" onclick="openAuthModal()">
-                <div class="adult-overlay-icon">&#128520;</div>
-                <div class="adult-overlay-text">Adults Only. No Exceptions.</div>
-                <div class="adult-overlay-btn">Sign in to unlock &#128293;</div>
-              </div>
-              {% endif %}
-              </div>
-              {% endif %}
-
-              <div class="card-body">
-                {% if post.title %}
-                <div class="card-title"><a href="{{ post.url }}">{{ post.title }}</a></div>
-                {% endif %}
-                {% if post.description %}
-                <div class="card-desc collapsed" id="desc-{{ forloop.index }}">{{ post.description }}</div>
-                <button class="card-read-more visible" data-desc="desc-{{ forloop.index }}">more</button>
-                {% endif %}
-              </div>
-
-              <div class="card-actions">
-                <button class="card-act-btn comment-toggle-btn" data-id="{{ forloop.index }}">
-                  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                  <span class="comment-count">0</span>
-                </button>
-                <button class="card-act-btn save-btn" data-id="{{ forloop.index }}">
-                  <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
-                  <span class="save-count">0</span>
-                </button>
-                <button class="card-act-btn like-btn" data-id="{{ forloop.index }}">
-                  <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-                  <span class="like-count">0</span>
-                </button>
-                <button class="card-act-btn share-btn" data-url="{{ site.url }}{{ post.url }}">
-                  <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                </button>
-              </div>
-
-              <div class="card-comments" id="comments-{{ forloop.index }}">
-                <div class="comments-list" id="clist-{{ forloop.index }}"></div>
-                <div class="comment-form">
-                  <input class="comment-field" type="text" placeholder="Add a comment..." maxlength="280" data-id="{{ forloop.index }}">
-                  <button class="comment-send" data-id="{{ forloop.index }}">Post</button>
-                </div>
-              </div>
-            </article>
-            {% endfor %}
-          {% else %}
-          <div class="empty-feed">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-            <p>No posts yet.<br>Publish from the admin panel.</p>
+          <!-- Posts cargados dinámicamente desde /assets/data/posts.json -->
+        </div>
+        <div id="feed-sentinel" style="height:60px;display:flex;align-items:center;justify-content:center;">
+          <div id="feed-loader" style="display:none;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--fire-orange)" stroke-width="2" style="animation:spin 1s linear infinite;">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
           </div>
-          {% endif %}
         </div>
         <!-- LOAD MORE BUTTON -->
         <button id="load-more-btn" style="display:none;width:calc(100% - 2rem);margin:0.75rem 1rem 1.5rem;padding:0.85rem;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;color:var(--fire-orange);font-family:var(--font-d);font-size:1rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s var(--ease);">
