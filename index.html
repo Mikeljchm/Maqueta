@@ -271,39 +271,14 @@ layout: none
           </div>
           <button class="section-new-btn" onclick="openNewProfile('_bulge')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New</button>
         </div>
-        {% assign all_bulge = site.bulge %}
-        {% if all_bulge.size > 0 %}
-        <div class="cat-pills" style="border-top:none;position:relative;top:auto;">
-          <button class="cat-pill active" data-bcat="all">All</button>
-          {% assign b_sports = "" %}
-          {% for athlete in all_bulge %}
-            {% unless b_sports contains athlete.sport %}
-              {% assign b_sports = b_sports | append: athlete.sport | append: "," %}
-              <button class="cat-pill" data-bcat="{{ athlete.sport }}">{{ athlete.sport | replace: '-', ' ' | capitalize }}</button>
-            {% endunless %}
-          {% endfor %}
+        <div class="cat-pills" id="bulge-pills" style="border-top:none;position:relative;top:auto;">
+          <button class="cat-pill active" data-bsport="all">All</button>
         </div>
-        <div class="wrestlers-grid" id="bulge-grid">
-          {% for athlete in all_bulge %}
-          <a href="{{ athlete.url }}" class="wrestler-card reveal" data-bsport="{{ athlete.sport }}" style="text-decoration:none;">
-            <div class="wrestler-thumb">
-              {% if athlete.images %}<img src="{{ athlete.images | first }}" alt="{{ athlete.title }}" loading="lazy">
-              {% elsif athlete.photo %}<img src="{{ athlete.photo }}" alt="{{ athlete.title }}" loading="lazy">{% endif %}
-              <div class="wrestler-thumb-overlay">
-                <div class="wrestler-name">{{ athlete.title }}</div>
-                <div class="wrestler-tag">{{ athlete.sport | replace: '-', ' ' | upcase }}</div>
-              </div>
-            </div>
-            {% if athlete.team %}<div class="wrestler-stats"><span class="wstat">{{ athlete.team }}</span></div>{% endif %}
-          </a>
-          {% endfor %}
+        <div class="wrestlers-grid" id="bulge-grid"></div>
+        <div id="bulge-empty" class="ring-empty reveal" style="display:none;">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--fire-orange)" stroke-width="1.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          <p>Athletes coming soon.</p>
         </div>
-        {% else %}
-        <div class="ring-empty reveal">
-          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--fire-orange)" stroke-width="1.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M9 14l1.5 6M15 14l-1.5 6"/></svg>
-          <p>Athletes coming soon.<br>The field is heating up.</p>
-        </div>
-        {% endif %}
       </div>
 
       <!-- MORE -->
