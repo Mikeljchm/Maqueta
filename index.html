@@ -116,24 +116,16 @@ layout: none
           <button class="section-new-btn" onclick="openNewProfile('_wrestlers')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New</button>
         </div>
         <!-- Category pills — dynamic from wrestlers -->
-        {% assign wrestlers = site.wrestlers %}
-        {% if wrestlers.size > 0 %}
-        <div class="cat-pills" style="border-top:none;position:relative;top:auto;">
-          <button class="cat-pill active" data-wcat="all">All</button>
-          {% assign w_cats = "" %}
-          {% for w in wrestlers %}
-            {% unless w_cats contains w.tag %}
-              {% assign w_cats = w_cats | append: w.tag | append: "," %}
-              <button class="cat-pill" data-wcat="{{ w.tag }}">{{ w.tag }}</button>
-            {% endunless %}
-          {% endfor %}
+        <div id="wrestlers-grid-wrap">
+          <div class="cat-pills" id="wrestlers-pills" style="border-top:none;position:relative;top:auto;">
+            <button class="cat-pill active" data-wcat="all">All</button>
+          </div>
+          <div class="wrestlers-grid" id="wrestlers-grid"></div>
+          <div id="wrestlers-empty" class="ring-empty reveal" style="display:none;">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--fire-orange)" stroke-width="1.2"><path d="M12 2l2.4 4.8 5.6.8-4 3.9.9 5.5L12 14.5l-4.9 2.5.9-5.5-4-3.9 5.6-.8z"/></svg>
+            <p>Toy Soldiers profiles coming soon.</p>
+          </div>
         </div>
-        <div class="wrestlers-grid" id="wrestlers-grid">
-          {% for w in wrestlers %}
-          <a href="{{ w.url }}" class="wrestler-card reveal" data-wtag="{{ w.tag }}" style="text-decoration:none;">
-            <div class="wrestler-thumb">
-              {% if w.images %}<img src="{{ w.images | first }}" alt="{{ w.title }}" loading="lazy">
-              {% elsif w.photo %}<img src="{{ w.photo }}" alt="{{ w.title }}" loading="lazy">{% endif %}
               <div class="wrestler-thumb-overlay">
                 <div class="wrestler-name">{{ w.title }}</div>
                 <div class="wrestler-tag">{{ w.tag }}</div>
