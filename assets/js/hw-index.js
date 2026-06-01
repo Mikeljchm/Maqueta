@@ -1,3 +1,122 @@
+/* ── FEED PAGINATION — carga posts desde JSON ── */
+(function(){
+  var ALL_POSTS = [];
+  var LOADED = 0;
+  var PER_PAGE = 12;
+  var LOADING = false;
+  var activeFilter = 'all';
+
+  function buildCard(post, idx) {
+    var imgs = [];
+    if (Array.isArray(post.images) && post.images.length > 0) {
+      imgs = post.images.filter(function(i){ return i && i !== ''; });
+    } else if (post.image && post.image !== '') {
+      imgs = [post.image];
+    }
+
+    var mediaHTML = '';
+    if (imgs.length === 1) {
+      mediaHTML = '<div class="card-media-container"><a href="'+post.url+'" class="card-media-wrap"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"></a>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
+    } else if (imgs.length === 2) {
+      mediaHTML = '<div class="card-media-container"><a href="'+post.url+'" class="card-media-wrap"><div class="card-duo-grid"><img src="'+imgs[0]+'" alt="" loading="lazy" decoding="async"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></a>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
+    } else if (imgs.length > 2) {
+      mediaHTML = '<div class="card-media-container"><div class="card-media-wrap"><a href="'+post.url+'" style="display:block;"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"><div class="card-photo-peek"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></a><a href="'+post.url+'" class="card-see-all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a></div>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
+    }
+
+    var descHTML = post.description ? '<div class="card-desc collapsed" id="desc-'+idx+'">'+escH(post.description)+'</div><button class="card-read-more visible" data-desc="desc-'+idx+'">more</button>' : '';
+    var titleHTML = post.title ? '<div class="card-title"><a href="'+post.url+'">'+escH(post.title)+'</a></div>' : '';
+
+    return '<article class="post-card'+(post.adult ? ' adult-card' : '')+'" data-cat="'+(post.category||'')+'" data-idx="'+idx+'" data-adult="'+(post.adult||false)+'" data-path="'+escH(post.path||'')+'" data-title="'+escH(post.title||'')+'" data-desc="'+escH(post.description||'')+'" data-category="'+(post.category||'')+'" data-poster="'+escH(post.poster||'')+'" data-date="'+(post.date||'')+'" data-images="'+escH(JSON.stringify(post.images||[]))+'" data-videos="'+escH(JSON.stringify(post.videos||[]))+'" data-links="'+escH(JSON.stringify(post.links||[]))+'" data-featured="'+(post.featured||false)+'">'
+      +'<div class="card-header"><div class="card-avatar">JS</div><div class="card-meta"><a class="card-author" href="'+post.url+'">JUICY STUD</a><div class="card-cat-label">'+(post.category||'')+'</div></div><div class="card-date">'+(post.date||'')+'</div></div>'
+      +mediaHTML
+      +'<div class="card-body">'+titleHTML+descHTML+'</div>'
+      +'<div class="card-actions">'
+      +'<button class="card-act-btn comment-toggle-btn" data-id="'+idx+'"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="comment-count">0</span></button>'
+      +'<button class="card-act-btn save-btn" data-id="'+idx+'"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span class="save-count">0</span></button>'
+      +'<button class="card-act-btn like-btn" data-id="'+idx+'"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span class="like-count">0</span></button>'
+      +'<button class="card-act-btn share-btn" data-url="'+post.url+'"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>'
+      +'</div>'
+      +'<div class="card-comments" id="comments-'+idx+'"><div class="comments-list" id="clist-'+idx+'"></div><div class="comment-form"><input class="comment-field" type="text" placeholder="Add a comment..." maxlength="280" data-id="'+idx+'"><button class="comment-send" data-id="'+idx+'">Post</button></div></div>'
+      +'</article>';
+  }
+
+  function adultOverlay(idx) {
+    return '<div class="adult-overlay" id="adult-overlay-'+idx+'" onclick="openAuthModal()"><div class="adult-overlay-icon">&#128520;</div><div class="adult-overlay-text">Adults Only. No Exceptions.</div><div class="adult-overlay-btn">Sign in to unlock &#128293;</div></div>';
+  }
+
+  function escH(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function getFilteredPosts() {
+    if (activeFilter === 'all') return ALL_POSTS;
+    return ALL_POSTS.filter(function(p){ return p.category === activeFilter; });
+  }
+
+  function renderBatch() {
+    var posts = getFilteredPosts();
+    var container = document.getElementById('feed-container');
+    if (!container) return;
+    var batch = posts.slice(LOADED, LOADED + PER_PAGE);
+    batch.forEach(function(post, i) {
+      var card = document.createElement('div');
+      card.innerHTML = buildCard(post, LOADED + i);
+      container.appendChild(card.firstChild);
+    });
+    LOADED += batch.length;
+    var loader = document.getElementById('feed-loader');
+    if (loader) loader.style.display = 'none';
+    LOADING = false;
+
+    // Si no hay más posts ocultar sentinel
+    var sentinel = document.getElementById('feed-sentinel');
+    if (sentinel) sentinel.style.display = LOADED >= posts.length ? 'none' : 'flex';
+  }
+
+  function resetFeed() {
+    LOADED = 0;
+    var container = document.getElementById('feed-container');
+    if (container) container.innerHTML = '';
+    renderBatch();
+  }
+
+  window.setFeedFilter = function(cat) {
+    activeFilter = cat || 'all';
+    resetFeed();
+  };
+
+  // Intersection Observer para infinite scroll
+  function initObserver() {
+    var sentinel = document.getElementById('feed-sentinel');
+    if (!sentinel) return;
+    var observer = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting && !LOADING && LOADED < getFilteredPosts().length) {
+        LOADING = true;
+        var loader = document.getElementById('feed-loader');
+        if (loader) loader.style.display = 'flex';
+        setTimeout(renderBatch, 100);
+      }
+    }, { rootMargin: '200px' });
+    observer.observe(sentinel);
+  }
+
+  // Cargar el JSON y arrancar
+  document.addEventListener('DOMContentLoaded', function() {
+    fetch('/assets/data/posts.json')
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        ALL_POSTS = data || [];
+        renderBatch();
+        initObserver();
+      })
+      .catch(function() {
+        var container = document.getElementById('feed-container');
+        if (container) container.innerHTML = '<div class="empty-feed"><p>No posts yet.</p></div>';
+      });
+  });
+})();
+
   /* AGE GATE — fuera del IIFE para q siempre funcione */
   (function() {
     const ageKey = 'hw_age_ok';
