@@ -71,8 +71,13 @@ export default {
     const path = url.pathname;
 
     // Solo interceptar rutas /auth/google/*
+    // Dejar pasar /api/* a Pages Functions sin interceptar
+    if (path.startsWith('/api/')) {
+      return env.ASSETS.fetch(request);
+    }
+
     if (!path.startsWith('/auth/google/')) {
-      // Todo lo demás va al sitio estático de Cloudflare Pages
+      // Todo lo demás va al sitio estático
       return env.ASSETS.fetch(request);
     }
 
