@@ -547,11 +547,7 @@
   (function() {
     function $(id) { return document.getElementById(id); }
     function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
-    function toast(msg) { const t = $('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }    async function sbFetch(path, method='GET', body) {
-      const opts = { method, headers:{ 'apikey': SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' } };
-      if (body) opts.body = JSON.stringify(body);
-      try { const r = await fetch(SB_URL+path, opts); return r.ok ? r.json() : null; } catch(e) { return null; }
-    }
+    function toast(msg) { const t = $('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
 
     /* LIKES */
     const likedKey = 'hw_liked_v2';
