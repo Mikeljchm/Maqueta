@@ -126,21 +126,6 @@ layout: none
             <p>Toy Soldiers profiles coming soon.</p>
           </div>
         </div>
-              <div class="wrestler-thumb-overlay">
-                <div class="wrestler-name">{{ w.title }}</div>
-                <div class="wrestler-tag">{{ w.tag }}</div>
-              </div>
-            </div>
-            {% if w.bio %}<div class="wrestler-stats"><span class="wstat">{{ w.bio | truncatewords: 8 }}</span></div>{% endif %}
-          </a>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="ring-empty reveal">
-          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--fire-orange)" stroke-width="1.2"><path d="M12 2l2.4 4.8 5.6.8-4 3.9.9 5.5L12 14.5l-4.9 2.5.9-5.5-4-3.9 5.6-.8z"/></svg>
-          <p>Toy Soldiers profiles coming soon.</p>
-        </div>
-        {% endif %}
       </div>
 
       <!-- STUDS -->
