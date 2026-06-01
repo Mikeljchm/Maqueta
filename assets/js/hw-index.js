@@ -333,7 +333,7 @@
       document.querySelectorAll('.share-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           const url = btn.dataset.url || location.href;
-          if (navigator.share) { try { await navigator.share({ url, title:'HOTT WRESTLING' }); } catch(e){} }
+          if (navigator.share) { try { await navigator.share({ url, title:'JUICY STUD' }); } catch(e){} }
           else { await navigator.clipboard.writeText(url).catch(()=>{}); toast('Link copied!'); }
         });
       });
@@ -659,7 +659,7 @@
     document.querySelectorAll('.share-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const url = btn.dataset.url || location.href;
-        if (navigator.share) { try { await navigator.share({url, title:'HOTT WRESTLING'}); } catch(e){} }
+        if (navigator.share) { try { await navigator.share({url, title:'JUICY STUD'}); } catch(e){} }
         else { await navigator.clipboard.writeText(url).catch(()=>{}); toast('Link copied!'); }
       });
     });
