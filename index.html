@@ -134,41 +134,14 @@ layout: none
           <div class="page-title">THE <span>STUDS</span></div>
           <button class="section-new-btn" onclick="openNewProfile('_studs')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New</button>
         </div>
-        {% assign all_studs = site.studs | concat: site.badboys %}
-        {% if all_studs.size > 0 %}
-        <!-- Category pills — dynamic from studs -->
-        <div class="cat-pills" style="border-top:none;position:relative;top:auto;">
+        <div class="cat-pills" id="studs-pills" style="border-top:none;position:relative;top:auto;">
           <button class="cat-pill active" data-scat="all">All</button>
-          {% assign s_cats = "" %}
-          {% for bb in all_studs %}
-            {% unless s_cats contains bb.category %}
-              {% assign s_cats = s_cats | append: bb.category | append: "," %}
-              <button class="cat-pill" data-scat="{{ bb.category }}">{{ bb.category | replace: '-', ' ' | upcase }}</button>
-            {% endunless %}
-          {% endfor %}
         </div>
-        <div class="badboys-list" id="studs-list">
-          {% for bb in all_studs %}
-          <a href="{{ bb.url }}" class="badboy-card reveal" data-scat="{{ bb.category }}" style="text-decoration:none;">
-            <div class="mugshot-wrap">
-              {% if bb.mugshot %}<img src="{{ bb.mugshot }}" alt="{{ bb.title }}" loading="lazy">
-              {% elsif bb.images %}<img src="{{ bb.images | first }}" alt="{{ bb.title }}" loading="lazy">{% endif %}
-              <div class="mugshot-label">{{ bb.category | default: 'STUD' | replace: '-', ' ' | upcase }}</div>
-            </div>
-            <div class="badboy-info">
-              <div class="badboy-name">{{ bb.title }}</div>
-              {% if bb.description %}<div class="badboy-desc">{{ bb.description | truncatewords: 12 }}</div>{% endif %}
-              {% if bb.tags %}<div class="badboy-meta">{% for tag in bb.tags %}<span class="badboy-tag">{{ tag }}</span>{% endfor %}</div>{% endif %}
-            </div>
-          </a>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="badboys-empty reveal">
+        <div class="badboys-list" id="studs-list"></div>
+        <div id="studs-empty" class="badboys-empty reveal" style="display:none;">
           <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--fire-orange)" stroke-width="1.2"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="12" r="3"/><path d="M10 12h4"/></svg>
           <p>Studs section coming soon.</p>
         </div>
-        {% endif %}
       </div>
 
       <!-- LOCKER ROOM -->
