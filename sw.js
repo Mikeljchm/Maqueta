@@ -1,4 +1,4 @@
-/* HOTT WRESTLING — Service Worker v4 */
+/* JUICY STUD — Service Worker v4 */
 const CACHE_STATIC = 'hw-static-v4';
 const CACHE_PAGES  = 'hw-pages-v4';
 const CACHE_IMAGES = 'hw-images-v4';
@@ -81,7 +81,7 @@ self.addEventListener('fetch', e => {
 self.addEventListener('push', e => {
   if (!e.data) return;
   const data = e.data.json();
-  self.registration.showNotification(data.title || 'HOTT WRESTLING', {
+  self.registration.showNotification(data.title || 'JUICY STUD', {
     body: data.body || 'New content available',
     icon: 'https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png',
     badge: 'https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png',
