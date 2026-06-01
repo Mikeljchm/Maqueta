@@ -1,3 +1,92 @@
+
+/* ── PROFILES PAGINATION — wrestlers, studs, bulge ── */
+(function(){
+
+  function buildProfileCard(p, type) {
+    var photo = p.photo || p.image || '';
+    var tag = p.tag || p.sport || '';
+    var bio = p.bio || p.team || '';
+    var imgHTML = photo
+      ? '<img src="'+photo+'" alt="'+escH(p.title||'')+'" loading="lazy">'
+      : '<div style="width:100%;height:100%;background:linear-gradient(135deg,var(--fire-deep),var(--surface-3));display:flex;align-items:center;justify-content:center;"><svg viewBox=\"0 0 24 24\" width=\"32\" height=\"32\" fill=\"var(--fire-orange)\"><path d=\"M12 2s-5 5.5-5 10a5 5 0 0010 0c0-4.5-5-10-5-10z\"/></svg></div>';
+    return '<a href="'+p.url+'" class="wrestler-card reveal" style="text-decoration:none;" data-wtag="'+escH(tag)+'" data-scat="'+escH(tag)+'" data-bsport="'+escH(tag)+'">'
+      +'<div class="wrestler-thumb">'+imgHTML
+      +'<div class="wrestler-thumb-overlay">'
+      +'<div class="wrestler-name">'+escH(p.title||'')+'</div>'
+      +'<div class="wrestler-tag">'+escH(tag)+'</div>'
+      +'</div></div>'
+      +(bio ? '<div class="wrestler-stats"><span class="wstat">'+escH(bio)+'</span></div>' : '')
+      +'</a>';
+  }
+
+  function escH(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function loadProfiles(jsonUrl, gridId, pillsId, emptyId, filterAttr) {
+    var grid = document.getElementById(gridId);
+    var pillsEl = document.getElementById(pillsId);
+    var emptyEl = document.getElementById(emptyId);
+    if (!grid) return;
+
+    fetch(jsonUrl)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        if (!data || data.length === 0) {
+          if (emptyEl) emptyEl.style.display = 'flex';
+          return;
+        }
+
+        // Construir pills de categorías
+        if (pillsEl) {
+          var tags = [...new Set(data.map(function(p){ return p.tag || p.sport || ''; }).filter(Boolean))];
+          tags.forEach(function(tag) {
+            var btn = document.createElement('button');
+            btn.className = 'cat-pill';
+            btn.setAttribute('data-' + filterAttr, tag);
+            btn.textContent = tag;
+            btn.onclick = function() {
+              pillsEl.querySelectorAll('.cat-pill').forEach(function(b){ b.classList.remove('active'); });
+              btn.classList.add('active');
+              var filter = btn.getAttribute('data-' + filterAttr);
+              grid.querySelectorAll('.wrestler-card').forEach(function(card) {
+                var cardTag = card.getAttribute('data-' + filterAttr) || '';
+                card.style.display = (filter === 'all' || cardTag === filter) ? '' : 'none';
+              });
+            };
+            pillsEl.appendChild(btn);
+          });
+
+          // All pill click
+          var allPill = pillsEl.querySelector('[data-' + filterAttr + '="all"]');
+          if (allPill) allPill.onclick = function() {
+            pillsEl.querySelectorAll('.cat-pill').forEach(function(b){ b.classList.remove('active'); });
+            allPill.classList.add('active');
+            grid.querySelectorAll('.wrestler-card').forEach(function(c){ c.style.display = ''; });
+          };
+        }
+
+        // Renderizar cards
+        data.forEach(function(p) {
+          var div = document.createElement('div');
+          div.innerHTML = buildProfileCard(p, filterAttr);
+          grid.appendChild(div.firstChild);
+        });
+      })
+      .catch(function() {
+        if (emptyEl) emptyEl.style.display = 'flex';
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadProfiles('/assets/data/wrestlers.json', 'wrestlers-grid', 'wrestlers-pills', 'wrestlers-empty', 'wtag');
+    loadProfiles('/assets/data/studs.json', 'studs-grid', 'studs-pills', 'studs-empty', 'scat');
+    loadProfiles('/assets/data/bulge.json', 'bulge-grid', 'bulge-pills', 'bulge-empty', 'bsport');
+  });
+
+})();
+
 /* ── FEED PAGINATION — carga posts desde JSON ── */
 (function(){
   var ALL_POSTS = [];
