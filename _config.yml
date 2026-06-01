@@ -62,3 +62,4 @@ include:
   - _worker.js
   - functions
   - assets
+  - _pages
