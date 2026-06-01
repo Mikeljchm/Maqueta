@@ -312,18 +312,17 @@
         });
       });
 
-      /* likes/comments — CF KV pendiente */
-      const SB_URL = ''; const SB_KEY = '';
-
-      async function sbFetch(path, method, body) {
-        const opts = { method: method || 'GET', headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' } };
-        if (body) opts.body = JSON.stringify(body);
+      /* COMMENTS — Cloudflare D1 */
+      async function loadComments(postId, listEl, countBtn) {
         try {
-          const res = await fetch(SB_URL + '/rest/v1/' + path, opts);
-          if (!res.ok) return null;
-          const text = await res.text();
-          return text ? JSON.parse(text) : null;
-        } catch(e) { return null; }
+          const r = await fetch('/api/comments?post_id=' + encodeURIComponent(postId), { credentials: 'include' });
+          const d = await r.json();
+          if (d.comments) {
+            listEl.innerHTML = '';
+            d.comments.forEach(row => addComment(listEl, row.body, false, row.user_name, row.user_avatar));
+            if (countBtn) { const c = countBtn.querySelector('.comment-count'); if(c) c.textContent = d.comments.length||0; }
+          }
+        } catch(e) {}
       }
 
       /* LIKES — handled by independent IIFE below initApp */
@@ -339,19 +338,13 @@
         });
       });
 
-      /* COMMENTS — Supabase */
-      async function loadComments(postId, listEl, countBtn) {
-        const data = await sbFetch('comments?post_id=eq.' + encodeURIComponent(postId) + '&order=created_at.asc&select=text');
-        if (data) {
-          listEl.innerHTML = '';
-          data.forEach(row => addComment(listEl, row.text, false));
-          if (countBtn) countBtn.querySelector('.comment-count').textContent = data.length || 0;
-        }
-      }
 
-      function addComment(list, text, animate) {
+
+      function addComment(list, text, animate, userName, userAvatar) {
         const div = document.createElement('div'); div.className = 'comment-item';
-        div.innerHTML = '<div class="comment-av">HW</div><div class="comment-text">' + text + '</div>';
+        const av = userAvatar ? '<img src="'+userAvatar+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">' : '<div class="comment-av">'+(userName||'HW').charAt(0).toUpperCase()+'</div>';
+        const name = userName ? '<span class="comment-username">'+userName+'</span>' : '';
+        div.innerHTML = av + '<div class="comment-body">'+name+'<div class="comment-text">'+text+'</div></div>';
         if (animate) { div.style.cssText='opacity:0;transform:translateY(5px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
         list.appendChild(div);
       }
@@ -566,14 +559,18 @@
     let likes = {};
 
     async function loadAllLikes() {
-      const data = await sbFetch('likes?select=post_id,count');
-      if (data) { data.forEach(r => { likes[r.post_id] = r.count || 0; }); }
-      document.querySelectorAll('.like-btn[data-id]').forEach(btn => {
+      // Cargar likes por post individualmente cuando se necesite
+      document.querySelectorAll('.like-btn[data-id]').forEach(async btn => {
         const id = btn.dataset.id;
         if (!id || id.includes('{')) return;
-        const countEl = btn.querySelector('.like-count');
-        if (countEl) countEl.textContent = fmt(likes[id]||0);
-        if (liked.has(id)) btn.classList.add('liked');
+        try {
+          const r = await fetch('/api/likes?post_id=' + encodeURIComponent(id), { credentials: 'include' });
+          const d = await r.json();
+          likes[id] = d.count || 0;
+          const countEl = btn.querySelector('.like-count');
+          if (countEl) countEl.textContent = fmt(d.count||0);
+          if (d.liked) { liked.add(id); btn.classList.add('liked'); }
+        } catch(e) {}
       });
     }
 
@@ -589,9 +586,11 @@
         const countEl = btn.querySelector('.like-count');
         if (countEl) countEl.textContent = fmt(newCount);
       });
-      const existing = await sbFetch('likes?post_id=eq.'+encodeURIComponent(id)+'&select=id');
-      if (existing && existing.length > 0) { await sbFetch('likes?post_id=eq.'+encodeURIComponent(id), 'PATCH', {count:newCount}); }
-      else { await sbFetch('likes', 'POST', {post_id:id, count:newCount}); }
+      try {
+        const r = await fetch('/api/likes?post_id=' + encodeURIComponent(id), { method: 'POST', credentials: 'include' });
+        const d = await r.json();
+        if (d.count !== undefined) { likes[id] = d.count; document.querySelectorAll('.like-btn[data-id="'+id+'"]').forEach(b => { const c = b.querySelector('.like-count'); if(c) c.textContent = fmt(d.count); }); }
+      } catch(e) {}
     }
 
     document.querySelectorAll('.like-btn[data-id]').forEach(btn => {
@@ -669,19 +668,24 @@
       });
     });
 
-    /* COMMENTS */
+    /* COMMENTS — D1 */
     async function loadComments(postId, listEl, countBtn) {
-      const data = await sbFetch('comments?post_id=eq.'+encodeURIComponent(postId)+'&order=created_at.asc&select=text');
-      if (data) {
-        listEl.innerHTML = '';
-        data.forEach(row => addComment(listEl, row.text, false));
-        if (countBtn) { const c = countBtn.querySelector('.comment-count'); if(c) c.textContent = data.length||0; }
-      }
+      try {
+        const r = await fetch('/api/comments?post_id=' + encodeURIComponent(postId), { credentials: 'include' });
+        const d = await r.json();
+        if (d.comments) {
+          listEl.innerHTML = '';
+          d.comments.forEach(row => addComment(listEl, row.body, false, row.user_name, row.user_avatar));
+          if (countBtn) { const c = countBtn.querySelector('.comment-count'); if(c) c.textContent = d.comments.length||0; }
+        }
+      } catch(e) {}
     }
 
-    function addComment(list, text, animate) {
+    function addComment(list, text, animate, userName, userAvatar) {
       const div = document.createElement('div'); div.className = 'comment-item';
-      div.innerHTML = '<div class="comment-av">HW</div><div class="comment-text">'+text+'</div>';
+      const av = userAvatar ? '<img src="'+userAvatar+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">' : '<div class="comment-av">'+(userName||'HW').charAt(0).toUpperCase()+'</div>';
+      const name = userName ? '<span class="comment-username">'+userName+'</span>' : '';
+      div.innerHTML = av + '<div class="comment-body">'+name+'<div class="comment-text">'+text+'</div></div>';
       if (animate) { div.style.cssText='opacity:0;transform:translateY(5px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
       list.appendChild(div);
     }
@@ -701,9 +705,14 @@
         const text = input.value.trim(); if (!text) return;
         input.value = '';
         addComment(listEl, text, true);
-        await sbFetch('comments', 'POST', {post_id:id, text});
-        const data = await sbFetch('comments?post_id=eq.'+encodeURIComponent(id)+'&select=id');
-        if (data) { const c = btn.querySelector('.comment-count'); if(c) c.textContent = data.length; }
+        try {
+          const userName = window.currentUser ? (window.currentUser.name || window.currentUser.email.split('@')[0]) : null;
+          const userAvatar = window.currentUser ? (window.currentUser.picture || null) : null;
+          await fetch('/api/comments?post_id=' + encodeURIComponent(id), { method: 'POST', credentials: 'include', headers: {'Content-Type':'application/json'}, body: JSON.stringify({body: text}) });
+          const r = await fetch('/api/comments?post_id=' + encodeURIComponent(id), { credentials: 'include' });
+          const d = await r.json();
+          if (d.comments) { const c = btn.querySelector('.comment-count'); if(c) c.textContent = d.comments.length; }
+        } catch(e) {}
         toast('Posted!');
       }
       send.addEventListener('click', postComment);
@@ -722,10 +731,6 @@
       t.textContent = msg; t.classList.add('show');
       clearTimeout(toastTimer2);
       toastTimer2 = setTimeout(() => t.classList.remove('show'), 2200);
-    }    async function sbFetch(path,method,body){
-      const opts={method:method||'GET',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'}};
-      if(body)opts.body=JSON.stringify(body);
-      try{const r=await fetch(SB_URL+'/rest/v1/'+path,opts);if(!r.ok)return null;const tx=await r.text();return tx?JSON.parse(tx):null;}catch(e){return null;}
     }
 
     /* Fill LR_STORIES here too — works even if initApp crashed */
@@ -953,12 +958,15 @@
         : '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
     }
 
-    /* Locker Room Comments — Supabase */
+    /* Locker Room Comments — D1 */
     async function loadLRComments(storySlug) {
       const listEl = document.getElementById('lr-comments-list');
       listEl.innerHTML = '';
-      const data = await sbFetch('comments?post_id=eq.lr_' + encodeURIComponent(storySlug) + '&order=created_at.asc&select=text,user_name,user_avatar');
-      if (data) data.forEach(row => addLRComment(row.text, false, row.user_name, row.user_avatar));
+      try {
+        const r = await fetch('/api/comments?post_id=lr_' + encodeURIComponent(storySlug), { credentials: 'include' });
+        const d = await r.json();
+        if (d.comments) d.comments.forEach(row => addLRComment(row.body, false, row.user_name, row.user_avatar));
+      } catch(e) {}
     }
 
     function addLRComment(text, animate, userName, userAvatar) {
@@ -985,7 +993,7 @@
       }
       addLRComment(text, true, userName, userAvatar);
       const postId = 'lr_' + lrCurrentStory.slug;
-      await sbFetch('comments', 'POST', { post_id: postId, text, user_name: userName, user_avatar: userAvatar });
+      try { await fetch('/api/comments?post_id=' + encodeURIComponent(postId), { method: 'POST', credentials: 'include', headers: {'Content-Type':'application/json'}, body: JSON.stringify({body: text}) }); } catch(e) {}
       toast('Posted!');
     }
 
