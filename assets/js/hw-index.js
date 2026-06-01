@@ -59,10 +59,21 @@
     var container = document.getElementById('feed-container');
     if (!container) return;
     var batch = posts.slice(LOADED, LOADED + PER_PAGE);
+    var isAdmin = (function(){ try { var m = document.cookie.match(/hw_admin=([^;]+)/); if(!m) return false; var s = JSON.parse(atob(m[1])); return s && s.login === 'Mikeljchm'; } catch(e){ return false; } })();
     batch.forEach(function(post, i) {
       var card = document.createElement('div');
       card.innerHTML = buildCard(post, LOADED + i);
-      container.appendChild(card.firstChild);
+      var articleEl = card.firstChild;
+      if (isAdmin) {
+        var editBtn = document.createElement('button');
+        editBtn.className = 'admin-edit-btn';
+        editBtn.title = 'Edit';
+        editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+        editBtn.onclick = function(){ openInlineEdit(articleEl); };
+        var header = articleEl.querySelector('.card-header');
+        if (header) header.appendChild(editBtn);
+      }
+      container.appendChild(articleEl);
     });
     LOADED += batch.length;
     var loader = document.getElementById('feed-loader');
