@@ -1,3 +1,277 @@
+/* -- COLLECTIONS (Instagram style) -- */
+(function(){
+  var panelOpen = false;
+  var currentPostId = null;
+  var currentPostUrl = null;
+  var currentPostImage = null;
+  var currentPostTitle = null;
+  var userCollections = [];
+  var savedIn = [];
+
+  // CSS
+  var s = document.createElement('style');
+  s.textContent = [
+    '.col-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;backdrop-filter:blur(2px);opacity:0;transition:opacity 0.3s;pointer-events:none;}',
+    '.col-overlay.open{opacity:1;pointer-events:all;}',
+    '.col-panel{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:301;max-height:78vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}',
+    '.col-panel.open{transform:translateY(0);}',
+    '.col-handle{display:flex;justify-content:center;padding:0.7rem 0 0.3rem;flex-shrink:0;cursor:pointer;}',
+    '.col-handle-bar{width:36px;height:4px;background:var(--border);border-radius:2px;}',
+    '.col-ph{display:flex;align-items:center;justify-content:space-between;padding:0.2rem 1rem 0.7rem;border-bottom:1px solid var(--border);flex-shrink:0;}',
+    '.col-ph-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.05em;}',
+    '.col-ph-close{background:none;border:none;color:var(--text-dim);font-size:1.3rem;cursor:pointer;}',
+    '.col-new-btn{display:flex;align-items:center;gap:0.7rem;padding:0.8rem 1rem;border-bottom:1px solid var(--border);cursor:pointer;width:100%;background:none;border-left:none;border-right:none;border-top:none;text-align:left;}',
+    '.col-new-icon{width:52px;height:52px;border-radius:10px;background:var(--surface-3);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--fire-orange);flex-shrink:0;}',
+    '.col-new-label{font-size:0.9rem;font-weight:600;color:var(--text);}',
+    '.col-list{flex:1;overflow-y:auto;}',
+    '.col-item{display:flex;align-items:center;gap:0.7rem;padding:0.7rem 1rem;cursor:pointer;transition:background 0.15s;}',
+    '.col-item:active{background:var(--surface-2);}',
+    '.col-thumb{width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;background:var(--surface-3);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;}',
+    '.col-thumb img{width:100%;height:100%;object-fit:cover;}',
+    '.col-thumb-empty{background:linear-gradient(135deg,var(--fire-deep),var(--surface-3));width:100%;height:100%;grid-column:1/-1;grid-row:1/-1;}',
+    '.col-info{flex:1;}',
+    '.col-name{font-size:0.88rem;font-weight:600;}',
+    '.col-count{font-size:0.72rem;color:var(--text-dim);margin-top:0.1rem;}',
+    '.col-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0;transition:all 0.2s;}',
+    '.col-check.checked{background:var(--fire-orange);border-color:var(--fire-orange);color:#fff;}',
+    '.col-create-form{padding:0.8rem 1rem;border-top:1px solid var(--border);display:flex;gap:0.5rem;flex-shrink:0;}',
+    '.col-create-input{flex:1;background:var(--surface-3);border:1px solid var(--border);border-radius:10px;padding:0.55rem 0.9rem;color:var(--text);font-family:var(--font-b);font-size:0.85rem;outline:none;}',
+    '.col-create-input:focus{border-color:var(--fire-orange);}',
+    '.col-create-btn{background:var(--fire-orange);border:none;color:#fff;padding:0.55rem 1rem;border-radius:10px;font-family:var(--font-d);font-size:0.85rem;cursor:pointer;letter-spacing:0.05em;}',
+    '.save-btn.col-saved svg{fill:var(--fire-orange);stroke:var(--fire-orange);}',
+    /* Collections page */
+    '.my-cols-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;padding:0.5rem 0;}',
+    '.my-col-card{background:var(--surface-2);border-radius:12px;overflow:hidden;cursor:pointer;border:1px solid var(--border);}',
+    '.my-col-card-thumb{width:100%;aspect-ratio:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;background:var(--border);}',
+    '.my-col-card-thumb img{width:100%;height:100%;object-fit:cover;display:block;}',
+    '.my-col-card-thumb .empty-cell{background:var(--surface-3);}',
+    '.my-col-card-info{padding:0.6rem 0.7rem;}',
+    '.my-col-card-name{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.03em;}',
+    '.my-col-card-count{font-size:0.7rem;color:var(--text-dim);margin-top:0.1rem;}',
+    '.my-col-new{border:2px dashed var(--border)!important;background:transparent!important;display:flex;align-items:center;justify-content:center;aspect-ratio:1;cursor:pointer;}',
+    '.my-col-new-inner{text-align:center;color:var(--text-dim);}',
+    '.my-col-new-inner div:first-child{font-size:2rem;margin-bottom:0.3rem;}',
+    '.my-col-new-inner div:last-child{font-size:0.75rem;}'
+  ].join('');
+  document.head.appendChild(s);
+
+  // Crear overlay y panel
+  var overlay = document.createElement('div');
+  overlay.className = 'col-overlay';
+  overlay.addEventListener('click', closeColPanel);
+
+  var panel = document.createElement('div');
+  panel.className = 'col-panel';
+  panel.innerHTML = '<div class="col-handle" id="col-handle"><div class="col-handle-bar"></div></div>'
+    + '<div class="col-ph">'
+    + '<span class="col-ph-title">Save to Collection</span>'
+    + '<button class="col-ph-close" id="col-ph-close">&#10005;</button>'
+    + '</div>'
+    + '<button class="col-new-btn" id="col-new-btn">'
+    + '<div class="col-new-icon">+</div>'
+    + '<div><div class="col-new-label">New collection</div>'
+    + '<div style="font-size:0.72rem;color:var(--text-dim);">Create a new one</div></div>'
+    + '</button>'
+    + '<div class="col-list" id="col-list"></div>'
+    + '<div class="col-create-form" id="col-create-form" style="display:none;">'
+    + '<input class="col-create-input" id="col-create-input" placeholder="Collection name..." maxlength="50">'
+    + '<button class="col-create-btn" id="col-create-btn">CREATE</button>'
+    + '</div>';
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(panel);
+
+  // Swipe down
+  var touchY = 0;
+  document.getElementById('col-handle').addEventListener('touchstart', function(e){ touchY = e.touches[0].clientY; }, {passive:true});
+  document.getElementById('col-handle').addEventListener('touchend', function(e){ if (e.changedTouches[0].clientY - touchY > 60) closeColPanel(); }, {passive:true});
+  document.getElementById('col-ph-close').addEventListener('click', closeColPanel);
+
+  // New collection toggle
+  document.getElementById('col-new-btn').addEventListener('click', function() {
+    var form = document.getElementById('col-create-form');
+    form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+    if (form.style.display === 'flex') document.getElementById('col-create-input').focus();
+  });
+
+  // Create collection
+  document.getElementById('col-create-btn').addEventListener('click', createCollection);
+  document.getElementById('col-create-input').addEventListener('keydown', function(e){ if (e.key === 'Enter') createCollection(); });
+
+  async function createCollection() {
+    var input = document.getElementById('col-create-input');
+    var name = input.value.trim();
+    if (!name) return;
+    try {
+      var r = await fetch('/api/collections?action=create', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name })
+      });
+      var d = await r.json();
+      if (d.ok) {
+        input.value = '';
+        document.getElementById('col-create-form').style.display = 'none';
+        userCollections.unshift({ id: d.id, name: name, count: 0, images: [] });
+        renderColList();
+      }
+    } catch(e) {}
+  }
+
+  function renderColList() {
+    var list = document.getElementById('col-list');
+    list.innerHTML = '';
+    if (!userCollections.length) {
+      list.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--text-dim);font-size:0.85rem;">No collections yet</div>';
+      return;
+    }
+    userCollections.forEach(function(col) {
+      var isSaved = savedIn.indexOf(col.id) >= 0;
+      var item = document.createElement('div');
+      item.className = 'col-item';
+      // Thumb
+      var thumbHTML = '';
+      if (col.images && col.images.length > 0) {
+        thumbHTML = col.images.slice(0,4).map(function(img){ return '<img src="'+img+'" loading="lazy">'; }).join('');
+      } else {
+        thumbHTML = '<div class="col-thumb-empty"></div>';
+      }
+      item.innerHTML = '<div class="col-thumb">' + thumbHTML + '</div>'
+        + '<div class="col-info"><div class="col-name">' + col.name + '</div>'
+        + '<div class="col-count">' + (col.count||0) + ' posts</div></div>'
+        + '<div class="col-check' + (isSaved ? ' checked' : '') + '">' + (isSaved ? '&#10004;' : '') + '</div>';
+      item.addEventListener('click', function() { toggleSave(col.id, item); });
+      list.appendChild(item);
+    });
+  }
+
+  async function toggleSave(colId, itemEl) {
+    if (!currentPostId) return;
+    try {
+      var r = await fetch('/api/collections?action=save', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          col_id: colId,
+          post_id: currentPostId,
+          post_url: currentPostUrl || '',
+          post_image: currentPostImage || '',
+          post_title: currentPostTitle || ''
+        })
+      });
+      var d = await r.json();
+      if (d.ok) {
+        var check = itemEl.querySelector('.col-check');
+        if (d.saved) {
+          savedIn.push(colId);
+          check.className = 'col-check checked';
+          check.innerHTML = '&#10004;';
+          // Actualizar ícono del card
+          updateSaveBtnState(currentPostId, true);
+        } else {
+          savedIn = savedIn.filter(function(id){ return id !== colId; });
+          check.className = 'col-check';
+          check.innerHTML = '';
+          if (!savedIn.length) updateSaveBtnState(currentPostId, false);
+        }
+      }
+    } catch(e) {}
+  }
+
+  function updateSaveBtnState(postId, saved) {
+    document.querySelectorAll('.save-btn[data-id="'+postId+'"]').forEach(function(btn) {
+      btn.classList.toggle('col-saved', saved);
+    });
+  }
+
+  function closeColPanel() {
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    panelOpen = false;
+  }
+
+  window.openCollectionsPanel = async function(postId, postUrl, postImage, postTitle) {
+    // Verificar sesión
+    if (!window.currentUser) {
+      if (typeof openAuthModal === 'function') openAuthModal();
+      return;
+    }
+    currentPostId = postId;
+    currentPostUrl = postUrl || '';
+    currentPostImage = postImage || '';
+    currentPostTitle = postTitle || '';
+    panelOpen = true;
+    overlay.classList.add('open');
+    panel.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    // Cargar colecciones
+    var list = document.getElementById('col-list');
+    list.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-dim);font-size:0.8rem;">Loading...</div>';
+    try {
+      var [rCols, rCheck] = await Promise.all([
+        fetch('/api/collections', { credentials: 'include' }),
+        fetch('/api/collections?action=check', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ post_id: postId })
+        })
+      ]);
+      var dCols = await rCols.json();
+      var dCheck = await rCheck.json();
+      userCollections = dCols.collections || [];
+      savedIn = dCheck.saved_in || [];
+      renderColList();
+    } catch(e) {
+      list.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-dim);">Error loading</div>';
+    }
+  };
+
+  // Render My Collections page
+  window.renderMyCollections = async function(container) {
+    if (!window.currentUser) {
+      container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-dim);">Sign in to see your collections</div>';
+      return;
+    }
+    container.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-dim);font-size:0.8rem;">Loading...</div>';
+    try {
+      var r = await fetch('/api/collections', { credentials: 'include' });
+      var d = await r.json();
+      var cols = d.collections || [];
+      var html = '<div class="my-cols-grid">';
+      cols.forEach(function(col) {
+        var cells = ['','','',''].map(function(_, i) {
+          return col.images && col.images[i]
+            ? '<img src="'+col.images[i]+'" loading="lazy">'
+            : '<div class="empty-cell"></div>';
+        }).join('');
+        html += '<div class="my-col-card" onclick="window.openCollection('+col.id+',\''+col.name+'\')">'
+          + '<div class="my-col-card-thumb">'+cells+'</div>'
+          + '<div class="my-col-card-info">'
+          + '<div class="my-col-card-name">'+col.name.toUpperCase()+'</div>'
+          + '<div class="my-col-card-count">'+(col.count||0)+' posts</div>'
+          + '</div></div>';
+      });
+      html += '<div class="my-col-card my-col-new" onclick="window.openCollectionsPanel(\'__new__\')">'
+        + '<div class="my-col-new-inner"><div>+</div><div>New collection</div></div>'
+        + '</div>';
+      html += '</div>';
+      container.innerHTML = html;
+    } catch(e) {
+      container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-dim);">Error loading</div>';
+    }
+  };
+
+  window.openCollection = function(colId, colName) {
+    // Navegar a la colección — mostrar sus posts
+    // Por ahora mostrar un alert simple
+    // TODO: implementar vista de colección individual
+    alert('Collection: ' + colName);
+  };
+
+})();
+
+
 /* -- COMMENTS PANEL (Instagram style) -- */
 (function(){
   var panelPostId = null;
@@ -833,7 +1107,7 @@ async function votePoll(postId, idx, poll, container) {
       +'<div class="card-body">'+titleHTML+descHTML+'</div>'+'<div class="card-poll" style="padding:0 0.8rem;"></div>'
       +'<div class="card-actions">'
       +'<button class="card-act-btn comment-toggle-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="comment-count">0</span></button>'
-      +'<button class="card-act-btn save-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span class="save-count">0</span></button>'
+      +'<button class="card-act-btn save-btn" data-id="'+(post.path||String(idx))+'" data-url="'+(post.url||'')+'\" data-img="'+(post.poster||post.image||'')+'\" data-title="'+escH(post.title||'')+'\" onclick="window.openCollectionsPanel(\"'+(post.path||String(idx))+'\",\"'+(post.url||'')+'\",\"'+(post.poster||post.image||'')+'\",\"'+escH(post.title||'')+'\")" ><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span class="save-count"></span></button>'
       +'<button class="card-act-btn like-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span class="like-count">0</span></button>'
       +'<button class="card-act-btn share-btn" data-url="'+post.url+'"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>'
       +'</div>'
