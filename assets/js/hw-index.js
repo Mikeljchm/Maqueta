@@ -28,11 +28,15 @@
     var grid = document.getElementById(gridId);
     var pillsEl = document.getElementById(pillsId);
     var emptyEl = document.getElementById(emptyId);
-    if (!grid) return;
+    if (!grid) {
+      console.error('Grid not found:', gridId);
+      return;
+    }
 
     fetch(jsonUrl)
       .then(function(r){ return r.json(); })
       .then(function(data) {
+        console.log('loadProfiles data:', jsonUrl, data ? data.length : 0);
         if (!data || data.length === 0) {
           if (emptyEl) emptyEl.style.display = 'flex';
           return;
@@ -139,6 +143,11 @@
   }
 
   function initProfiles() {
+    // DEBUG — mostrar en el grid si el fetch llega
+    var debugGrid = document.getElementById('wrestlers-grid');
+    if (debugGrid) {
+      debugGrid.innerHTML = '<div style="color:orange;padding:10px;">Loading wrestlers...</div>';
+    }
     loadProfiles('/assets/data/wrestlers.json', 'wrestlers-grid', 'wrestlers-pills', 'wrestlers-empty', 'wtag');
     loadStuds('/assets/data/studs.json', 'studs-list', 'studs-pills', 'studs-empty');
     loadProfiles('/assets/data/bulge.json', 'bulge-grid', 'bulge-pills', 'bulge-empty', 'bsport');
