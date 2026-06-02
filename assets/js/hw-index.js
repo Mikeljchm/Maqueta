@@ -82,6 +82,14 @@
     } else {
       lastTap[id] = now;
       blocked[id] = false;
+      // Navegar al post en single tap después del delay
+      var tapZone = zone;
+      setTimeout(function() {
+        if (!blocked[id] && lastTap[id] === now) {
+          var url = tapZone.getAttribute('data-posturl');
+          if (url) location.href = url;
+        }
+      }, DELAY + 10);
     }
   }, {passive: false, capture: true});
 
@@ -271,11 +279,11 @@
 
     var mediaHTML = '';
     if (imgs.length === 1) {
-      mediaHTML = '<div class="card-media-container dtap-zone" data-postid="'+(post.path||String(idx))+'" data-liked="false"><a href="'+post.url+'" class="card-media-wrap"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"></a>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
+      mediaHTML = '<div class="card-media-container dtap-zone" data-postid="'+(post.path||String(idx))+'" data-posturl="'+post.url+'" data-liked="false"><div class="card-media-wrap" style="cursor:pointer;"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"></div>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
     } else if (imgs.length === 2) {
       mediaHTML = '<div class="card-media-container"><a href="'+post.url+'" class="card-media-wrap"><div class="card-duo-grid"><img src="'+imgs[0]+'" alt="" loading="lazy" decoding="async"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></a>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
     } else if (imgs.length > 2) {
-      mediaHTML = '<div class="card-media-container dtap-zone" data-postid="'+(post.path||String(idx))+'" data-liked="false"><div class="card-media-wrap"><a href="'+post.url+'" style="display:block;"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"><div class="card-photo-peek"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></a><a href="'+post.url+'" class="card-see-all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a></div>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
+      mediaHTML = '<div class="card-media-container dtap-zone" data-postid="'+(post.path||String(idx))+'" data-posturl="'+post.url+'" data-liked="false"><div class="card-media-wrap"><div style="display:block;cursor:pointer;" onclick="location.href=this.closest('.dtap-zone').dataset.posturl"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"><div class="card-photo-peek"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></div><a href="'+post.url+'" class="card-see-all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a></div>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
     }
 
     var descHTML = post.description ? '<div class="card-desc collapsed" id="desc-'+idx+'">'+escH(post.description)+'</div><button class="card-read-more visible" data-desc="desc-'+idx+'">more</button>' : '';
