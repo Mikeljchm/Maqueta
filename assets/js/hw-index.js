@@ -78,15 +78,8 @@
     + '<button class="col-create-btn" id="col-create-btn">CREATE</button>'
     + '</div>';
 
-  function initColPanel() {
-    document.body.appendChild(overlay);
-    document.body.appendChild(panel);
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initColPanel);
-  } else {
-    initColPanel();
-  }
+  document.body.appendChild(overlay);
+  document.body.appendChild(panel);
 
   // Swipe down
   var touchY = 0;
