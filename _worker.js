@@ -65,15 +65,124 @@ function jsonRes(data, extra) {
   });
 }
 
+
+function getSession(request) {
+  const cookies = request.headers.get('Cookie') || '';
+  const match = cookies.match(/hw_fan=([^;]+)/);
+  if (!match) return null;
+  try {
+    const [payload] = match[1].split('.');
+    return JSON.parse(decodeURIComponent(escape(atob(
+      payload.replace(/-/g,'+').replace(/_/g,'/')
+    ))));
+  } catch { return null; }
+}
+
+function apiJson(data, status, headers) {
+  return new Response(JSON.stringify(data), {
+    status: status || 200,
+    headers: { 'Content-Type': 'application/json', ...headers }
+  });
+}
+
+async function handleComments(request, env, corsH) {
+  const url = new URL(request.url);
+  const post_id = url.searchParams.get('post_id');
+  if (!post_id) return apiJson({ error: 'post_id required' }, 400, corsH);
+
+  if (request.method === 'GET') {
+    const { results } = await env.DB.prepare(
+      'SELECT id, user_name, user_avatar, body, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC LIMIT 50'
+    ).bind(post_id).all();
+    return apiJson({ comments: results }, 200, corsH);
+  }
+
+  if (request.method === 'POST') {
+    const session = getSession(request);
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const { body } = await request.json();
+    if (!body || body.trim().length === 0) return apiJson({ error: 'Empty comment' }, 400, corsH);
+    if (body.length > 500) return apiJson({ error: 'Too long' }, 400, corsH);
+    const result = await env.DB.prepare(
+      'INSERT INTO comments (post_id, user_id, user_name, user_avatar, body) VALUES (?, ?, ?, ?, ?)'
+    ).bind(post_id, session.id, session.name || session.email, session.picture || '', body.trim()).run();
+    return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
+  }
+
+  if (request.method === 'DELETE') {
+    const session = getSession(request);
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const comment_id = url.searchParams.get('id');
+    if (!comment_id) return apiJson({ error: 'id required' }, 400, corsH);
+    await env.DB.prepare('DELETE FROM comments WHERE id = ? AND user_id = ?').bind(comment_id, session.id).run();
+    return apiJson({ ok: true }, 200, corsH);
+  }
+
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
+async function handleLikes(request, env, corsH) {
+  const url = new URL(request.url);
+  const post_id = url.searchParams.get('post_id');
+  if (!post_id) return apiJson({ error: 'post_id required' }, 400, corsH);
+
+  if (request.method === 'GET') {
+    const { results } = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM likes WHERE post_id = ?'
+    ).bind(post_id).all();
+    const count = results[0]?.count || 0;
+    const session = getSession(request);
+    let liked = false;
+    if (session) {
+      const { results: userLike } = await env.DB.prepare(
+        'SELECT id FROM likes WHERE post_id = ? AND user_id = ?'
+      ).bind(post_id, session.id).all();
+      liked = userLike.length > 0;
+    }
+    return apiJson({ count, liked }, 200, corsH);
+  }
+
+  if (request.method === 'POST') {
+    const session = getSession(request);
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const { results: existing } = await env.DB.prepare(
+      'SELECT id FROM likes WHERE post_id = ? AND user_id = ?'
+    ).bind(post_id, session.id).all();
+    if (existing.length > 0) {
+      await env.DB.prepare('DELETE FROM likes WHERE post_id = ? AND user_id = ?').bind(post_id, session.id).run();
+    } else {
+      await env.DB.prepare('INSERT INTO likes (post_id, user_id) VALUES (?, ?)').bind(post_id, session.id).run();
+    }
+    const { results } = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM likes WHERE post_id = ?'
+    ).bind(post_id).all();
+    return apiJson({ ok: true, liked: existing.length === 0, count: results[0]?.count || 0 }, 200, corsH);
+  }
+
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
 
     // Solo interceptar rutas /auth/google/*
-    // Dejar pasar /api/* a Pages Functions sin interceptar
+    // Manejar /api/* directamente en el Worker
     if (path.startsWith('/api/')) {
-      return env.ASSETS.fetch(request);
+      const origin = request.headers.get('Origin') || '';
+      const corsH = {
+        'Access-Control-Allow-Origin': origin || 'https://maqueta-8t9.pages.dev',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      };
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { status: 204, headers: corsH });
+      }
+      if (path === '/api/comments') return handleComments(request, env, corsH);
+      if (path === '/api/likes') return handleLikes(request, env, corsH);
+      return new Response('Not found', { status: 404 });
     }
 
     if (!path.startsWith('/auth/google/')) {
