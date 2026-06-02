@@ -260,7 +260,8 @@
   <!-- FOTOS PANEL -->
   <div id="panel-photos">
     {% if all_photos.size > 0 %}
-    <script>window.ALL_PHOTOS = {{ all_photos | jsonify }};</script>
+    {% assign stud_slug = page.path | remove: "_studs/" | remove: ".md" %}
+    <script>window.STUD_JSON = "/assets/data/studs/{{ stud_slug }}.json";</script>
     <div class="photos-grid{% if page.adult %} adult-blurred{% endif %}" id="photos-grid">
       <div class="adult-gate-grid" id="adult-gate" onclick="openAuthModal()">
         <div class="adult-gate-icon">&#128520;</div>
@@ -566,10 +567,6 @@
   var _isUnlocked = false;
 
   function renderPhotos(isUnlock) {
-    // Leer siempre fresco desde window — disponible cuando DOMContentLoaded corre
-    // Cargar fotos desde JSON externo — más rápido, no bloquea el HTML
-    _allPhotos = window.ALL_PHOTOS || [];
-    _adultPhotos = window.ADULT_PHOTOS || [];
     if (isUnlock !== undefined) _isUnlocked = isUnlock;
     var grid = document.getElementById('photos-grid');
     if (!grid) return;
@@ -688,8 +685,17 @@
     var editModal = document.getElementById('edit-modal');
     if(editModal) editModal.addEventListener('click', function(e){ if(e.target===this) closeEditModal(); });
 
-    // Renderizar primeras 12 fotos inmediatamente
-    renderPhotos(false);
+    // Cargar fotos desde JSON externo
+    if (window.STUD_JSON) {
+      fetch(window.STUD_JSON)
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          _allPhotos = d.photos || [];
+          _adultPhotos = d.adult || [];
+          renderPhotos(false);
+        })
+        .catch(function(){});
+    }
     // Si el stud no es adult, quitar blur de fotos normales de inmediato
     {% unless page.adult %}
     var pg = document.getElementById('photos-grid');
