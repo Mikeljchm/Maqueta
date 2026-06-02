@@ -181,9 +181,22 @@ export default {
         return new Response(null, { status: 204, headers: corsH });
       }
       if (path === '/api/debug') {
+        const cookies = request.headers.get('Cookie') || '';
+        const hasFanCookie = cookies.includes('hw_fan=');
+        const session = getSession(request);
+        const hasCookieSecret = !!env.COOKIE_SECRET;
+        // Test D1
+        let dbTest = 'not tested';
+        try {
+          const { results } = await env.DB.prepare('SELECT COUNT(*) as c FROM likes').all();
+          dbTest = 'ok: ' + results[0].c + ' likes';
+        } catch(e) { dbTest = 'error: ' + e.message; }
         return new Response(JSON.stringify({
           hasDB: !!env.DB,
-          envKeys: Object.keys(env).filter(k => k !== 'GOOGLE_CLIENT_SECRET' && k !== 'COOKIE_SECRET')
+          hasCookieSecret,
+          hasFanCookie,
+          session: session ? { id: session.id, name: session.name } : null,
+          dbTest
         }), { headers: { 'Content-Type': 'application/json', ...corsH } });
       }
       if (path === '/api/comments') return handleComments(request, env, corsH);
