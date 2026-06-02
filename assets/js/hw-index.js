@@ -1,3 +1,266 @@
+/* -- COMMENTS PANEL (Instagram style) -- */
+(function(){
+  var panelPostId = null;
+  var panelOpen = false;
+
+  // CSS
+  var s = document.createElement('style');
+  s.textContent = [
+    '.cp-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;backdrop-filter:blur(2px);opacity:0;transition:opacity 0.3s;pointer-events:none;}',
+    '.cp-overlay.open{opacity:1;pointer-events:all;}',
+    '.cp-panel{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:201;max-height:82vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}',
+    '.cp-panel.open{transform:translateY(0);}',
+    '.cp-handle{display:flex;justify-content:center;padding:0.7rem 0 0.3rem;flex-shrink:0;cursor:pointer;}',
+    '.cp-handle-bar{width:36px;height:4px;background:var(--border);border-radius:2px;}',
+    '.cp-header{display:flex;align-items:center;justify-content:space-between;padding:0.2rem 1rem 0.7rem;border-bottom:1px solid var(--border);flex-shrink:0;}',
+    '.cp-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.05em;}',
+    '.cp-count{color:var(--text-dim);font-size:0.8rem;margin-left:0.3rem;}',
+    '.cp-close{background:none;border:none;color:var(--text-dim);font-size:1.3rem;cursor:pointer;padding:0.2rem;}',
+    '.cp-list{flex:1;overflow-y:auto;padding:0.8rem 1rem;display:flex;flex-direction:column;gap:0.9rem;}',
+    '.cp-empty{text-align:center;color:var(--text-dim);font-size:0.85rem;padding:2rem 0;}',
+    '.cp-item{display:flex;gap:0.6rem;align-items:flex-start;}',
+    '.cp-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--fire-deep),var(--fire-red));display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;flex-shrink:0;overflow:hidden;}',
+    '.cp-av img{width:100%;height:100%;object-fit:cover;}',
+    '.cp-body{flex:1;min-width:0;}',
+    '.cp-username{font-size:0.78rem;font-weight:700;color:var(--fire-orange);margin-bottom:0.15rem;}',
+    '.cp-text{font-size:0.85rem;line-height:1.4;word-break:break-word;}',
+    '.cp-sticker{width:72px;border-radius:10px;display:block;}',
+    '.cp-meta{display:flex;gap:0.8rem;margin-top:0.3rem;align-items:center;}',
+    '.cp-time{font-size:0.68rem;color:var(--text-dim);}',
+    '.cp-stray{border-top:1px solid var(--border);padding:0.5rem;flex-shrink:0;display:none;}',
+    '.cp-stray.open{display:block;}',
+    '.cp-stray-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;max-height:120px;overflow-y:auto;}',
+    '.cp-stray-item{aspect-ratio:1;background:var(--surface-3);border-radius:6px;cursor:pointer;position:relative;overflow:hidden;}',
+    '.cp-stray-item video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}',
+    '.cp-stray-item:hover{background:var(--surface-2);}',
+    '.cp-stray-nav{display:flex;justify-content:space-between;align-items:center;margin-top:0.4rem;}',
+    '.cp-stray-btn{background:none;border:1px solid var(--border);color:var(--text-dim);padding:0.2rem 0.7rem;border-radius:6px;font-size:0.7rem;cursor:pointer;}',
+    '.cp-stray-btn:hover{border-color:var(--fire-orange);color:var(--fire-orange);}',
+    '.cp-stray-page{font-size:0.7rem;color:var(--text-dim);}',
+    '.cp-input-area{padding:0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom,0px));border-top:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;flex-shrink:0;}',
+    '.cp-sticker-btn{background:none;border:none;font-size:1.3rem;cursor:pointer;flex-shrink:0;padding:0.2rem;}',
+    '.cp-input{flex:1;background:var(--surface-3);border:1px solid var(--border);border-radius:20px;padding:0.5rem 0.9rem;color:var(--text);font-family:var(--font-b);font-size:0.85rem;outline:none;}',
+    '.cp-input:focus{border-color:var(--fire-orange);}',
+    '.cp-send{background:var(--fire-orange);border:none;color:#fff;padding:0.5rem 1rem;border-radius:20px;font-family:var(--font-d);font-size:0.85rem;cursor:pointer;letter-spacing:0.05em;}'
+  ].join('');
+  document.head.appendChild(s);
+
+  // Crear panel
+  var overlay = document.createElement('div');
+  overlay.className = 'cp-overlay';
+  overlay.addEventListener('click', closePanel);
+
+  var panel = document.createElement('div');
+  panel.className = 'cp-panel';
+  panel.innerHTML = '<div class="cp-handle" id="cp-handle"><div class="cp-handle-bar"></div></div>'
+    + '<div class="cp-header">'
+    + '<div><span class="cp-title">Comments</span><span class="cp-count" id="cp-count"></span></div>'
+    + '<button class="cp-close" id="cp-close">&#10005;</button>'
+    + '</div>'
+    + '<div class="cp-list" id="cp-list"></div>'
+    + '<div class="cp-stray" id="cp-stray">'
+    + '<div class="cp-stray-grid" id="cp-stray-grid"></div>'
+    + '<div class="cp-stray-nav">'
+    + '<button class="cp-stray-btn" id="cp-stray-prev">&#8592; Prev</button>'
+    + '<span class="cp-stray-page" id="cp-stray-page">1 / 16</span>'
+    + '<button class="cp-stray-btn" id="cp-stray-next">Next &#8594;</button>'
+    + '</div></div>'
+    + '<div class="cp-input-area">'
+    + '<button class="cp-sticker-btn" id="cp-sticker-btn">&#128520;</button>'
+    + '<input class="cp-input" id="cp-input" placeholder="Add a comment..." maxlength="500">'
+    + '<button class="cp-send" id="cp-send">POST</button>'
+    + '</div>';
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(panel);
+
+  // Sticker tray
+  var strayPage = 0;
+  var STRAY_TOTAL = 16;
+  var strayOpen = false;
+
+  function loadStrayPage(page) {
+    var grid = document.getElementById('cp-stray-grid');
+    var pageEl = document.getElementById('cp-stray-page');
+    if (!grid) return;
+    grid.innerHTML = '';
+    fetch('/assets/data/stickers_' + page + '.json')
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        strayPage = page;
+        if (pageEl) pageEl.textContent = (page+1) + ' / ' + STRAY_TOTAL;
+        data.forEach(function(url) {
+          var item = document.createElement('div');
+          item.className = 'cp-stray-item';
+          item.innerHTML = '<video src="' + url + '" autoplay loop muted playsinline></video>';
+          item.addEventListener('click', function(){ sendSticker(url); });
+          grid.appendChild(item);
+        });
+      });
+  }
+
+  function sendSticker(url) {
+    if (!panelPostId) return;
+    var marker = '[sticker]' + url + '[/sticker]';
+    fetch('/api/comments?post_id=' + encodeURIComponent(panelPostId), {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: marker })
+    }).then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.ok || d.id) {
+        addToPanel(marker, '', '');
+        updateCount(1);
+        // Cerrar stray
+        var stray = document.getElementById('cp-stray');
+        if (stray) stray.classList.remove('open');
+        strayOpen = false;
+      }
+    }).catch(function(){});
+  }
+
+  document.getElementById('cp-sticker-btn').addEventListener('click', function() {
+    var stray = document.getElementById('cp-stray');
+    strayOpen = !strayOpen;
+    stray.classList.toggle('open', strayOpen);
+    if (strayOpen && !document.getElementById('cp-stray-grid').children.length) {
+      loadStrayPage(0);
+    }
+  });
+
+  document.getElementById('cp-stray-prev').addEventListener('click', function() {
+    if (strayPage > 0) loadStrayPage(strayPage - 1);
+  });
+  document.getElementById('cp-stray-next').addEventListener('click', function() {
+    if (strayPage < STRAY_TOTAL - 1) loadStrayPage(strayPage + 1);
+  });
+
+  // Swipe down para cerrar
+  var touchStartY = 0;
+  document.getElementById('cp-handle').addEventListener('touchstart', function(e) {
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.getElementById('cp-handle').addEventListener('touchend', function(e) {
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    if (dy > 60) closePanel();
+  }, { passive: true });
+
+  document.getElementById('cp-close').addEventListener('click', closePanel);
+
+  function renderComment(text, userName, userAvatar) {
+    var item = document.createElement('div');
+    item.className = 'cp-item';
+    var avContent = userAvatar
+      ? '<img src="' + userAvatar + '">'
+      : (userName || 'J').charAt(0).toUpperCase();
+    var stickerMatch = text ? text.match(/\[sticker\]([^\[]+)\[\/sticker\]/) : null;
+    var bodyContent = stickerMatch
+      ? '<video class="cp-sticker" src="' + stickerMatch[1] + '" autoplay loop muted playsinline></video>'
+      : '<div class="cp-text">' + (text || '') + '</div>';
+    item.innerHTML = '<div class="cp-av">' + avContent + '</div>'
+      + '<div class="cp-body">'
+      + (userName ? '<div class="cp-username">' + userName + '</div>' : '')
+      + bodyContent
+      + '<div class="cp-meta"><span class="cp-time">just now</span></div>'
+      + '</div>';
+    return item;
+  }
+
+  function addToPanel(text, userName, userAvatar) {
+    var list = document.getElementById('cp-list');
+    if (!list) return;
+    var empty = list.querySelector('.cp-empty');
+    if (empty) empty.remove();
+    var item = renderComment(text, userName, userAvatar);
+    list.appendChild(item);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  function updateCount(delta) {
+    var el = document.getElementById('cp-count');
+    if (!el) return;
+    var cur = parseInt(el.textContent.replace(/[^0-9]/g,'')) || 0;
+    el.textContent = ' \u2022 ' + (cur + delta);
+    // Actualizar el botón del card también
+    if (panelPostId) {
+      var btn = document.querySelector('.comment-toggle-btn[data-id="' + panelPostId + '"]');
+      if (btn) {
+        var c = btn.querySelector('.comment-count');
+        if (c) c.textContent = cur + delta;
+      }
+    }
+  }
+
+  // Send comment
+  document.getElementById('cp-send').addEventListener('click', function() {
+    var input = document.getElementById('cp-input');
+    var text = input.value.trim();
+    if (!text || !panelPostId) return;
+    input.value = '';
+    fetch('/api/comments?post_id=' + encodeURIComponent(panelPostId), {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: text })
+    }).then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.ok || d.id) {
+        addToPanel(text, window.currentUser ? (window.currentUser.name || 'You') : 'You',
+          window.currentUser ? window.currentUser.picture : '');
+        updateCount(1);
+      }
+    }).catch(function(){});
+  });
+
+  // Enter para enviar
+  document.getElementById('cp-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('cp-send').click();
+  });
+
+  // Abrir panel
+  window.openCommentsPanel = function(postId) {
+    panelPostId = postId;
+    panelOpen = true;
+    var list = document.getElementById('cp-list');
+    list.innerHTML = '<div class="cp-empty">Loading...</div>';
+    document.getElementById('cp-count').textContent = '';
+    // Cerrar stray si estaba abierto
+    var stray = document.getElementById('cp-stray');
+    if (stray) stray.classList.remove('open');
+    strayOpen = false;
+    overlay.classList.add('open');
+    panel.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    // Cargar comentarios
+    fetch('/api/comments?post_id=' + encodeURIComponent(postId), { credentials: 'include' })
+      .then(function(r){ return r.json(); })
+      .then(function(d) {
+        list.innerHTML = '';
+        if (!d.comments || !d.comments.length) {
+          list.innerHTML = '<div class="cp-empty">No comments yet. Be the first!</div>';
+        } else {
+          d.comments.forEach(function(row) {
+            list.appendChild(renderComment(row.body, row.user_name, row.user_avatar));
+          });
+          list.scrollTop = list.scrollHeight;
+        }
+        document.getElementById('cp-count').textContent = ' \u2022 ' + (d.comments ? d.comments.length : 0);
+      })
+      .catch(function() {
+        list.innerHTML = '<div class="cp-empty">Error loading comments.</div>';
+      });
+  };
+
+  function closePanel() {
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    panelOpen = false;
+    panelPostId = null;
+  }
+
+})();
+
+
 
 /* -- STICKERS EN COMENTARIOS -- */
 (function(){
@@ -574,7 +837,7 @@ async function votePoll(postId, idx, poll, container) {
       +'<button class="card-act-btn like-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span class="like-count">0</span></button>'
       +'<button class="card-act-btn share-btn" data-url="'+post.url+'"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>'
       +'</div>'
-      +'<div class="card-comments" id="comments-'+(post.path||String(idx))+'"><div class="comments-list" id="clist-'+(post.path||String(idx))+'"></div><div class="comment-form"><button class="sticker-btn" data-sticker-id='+(post.path||String(idx))+' title="Stickers">&#128520;</button><input class="comment-field" type="text" placeholder="Add a comment..." maxlength="280" data-id="'+(post.path||String(idx))+'"><button class="comment-send" data-id="'+(post.path||String(idx))+'">Post</button></div></div>'
+
       +'</article>';
   }
 
@@ -1402,21 +1665,15 @@ async function votePoll(postId, idx, poll, container) {
       list.appendChild(div);
     }
 
-    // Event delegation para comment toggle
+    // Event delegation para comment toggle — abre panel
     document.addEventListener('click', function(e) {
       var btn = e.target.closest('.comment-toggle-btn[data-id]');
       if (!btn) return;
       var id = btn.dataset.id;
       if (!id || id.includes('{')) return;
-      var section = document.getElementById('comments-'+id);
-      var listEl = document.getElementById('clist-'+id);
-      if (!section) return;
-      // Cargar comentarios la primera vez
-      if (!section.dataset.loaded) {
-        section.dataset.loaded = '1';
-        if (listEl) loadComments(id, listEl, btn);
+      if (typeof window.openCommentsPanel === 'function') {
+        window.openCommentsPanel(id);
       }
-      section.classList.toggle('open');
     });
 
     // Event delegation para sticker btn
