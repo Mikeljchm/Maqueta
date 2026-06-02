@@ -861,6 +861,7 @@
 
     async function toggleLike(id) {
       if (!id || id.includes('{')) return;
+      toast('ID: ' + id.slice(0,30));
       const wasLiked = liked.has(id);
       if (wasLiked) { liked.delete(id); } else { liked.add(id); }
       localStorage.setItem(likedKey, JSON.stringify([...liked]));
