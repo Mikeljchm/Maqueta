@@ -1,7 +1,0 @@
----
-layout: none
-permalink: /assets/data/bulge.json
----
-[{% for a in site.bulge %}{% unless forloop.first %},{% endunless %}
-{"url":"{{ a.url }}","title":{{ a.title | jsonify }},"sport":"{{ a.sport }}","photo":{{ a.cover | default: "" | jsonify }},"image":{{ a.images | first | default: "" | jsonify }},"team":{{ a.team | default: "" | jsonify }}}{% endfor %}
-]
