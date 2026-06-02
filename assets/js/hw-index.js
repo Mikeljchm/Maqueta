@@ -876,9 +876,12 @@
       } catch(e) {}
     }
 
-    document.querySelectorAll('.like-btn[data-id]').forEach(btn => {
-      if (btn.dataset.id && !btn.dataset.id.includes('{'))
-        btn.addEventListener('click', () => toggleLike(btn.dataset.id));
+    // Event delegation — funciona con cards creados dinámicamente
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.like-btn[data-id]');
+      if (btn && btn.dataset.id && !btn.dataset.id.includes('{')) {
+        toggleLike(btn.dataset.id);
+      }
     });
     loadAllLikes();
 
@@ -973,28 +976,43 @@
       list.appendChild(div);
     }
 
-    document.querySelectorAll('.comment-toggle-btn[data-id]').forEach(btn => {
-      const id = btn.dataset.id;
+    // Event delegation para comment toggle
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.comment-toggle-btn[data-id]');
+      if (!btn) return;
+      var id = btn.dataset.id;
       if (!id || id.includes('{')) return;
-      const section = $('comments-'+id);
-      const listEl = $('clist-'+id);
-      if (!section || !listEl) return;
-      loadComments(id, listEl, btn);
-      btn.addEventListener('click', () => section.classList.toggle('open'));
-      const input = section.querySelector('.comment-field[data-id="'+id+'"]');
-      const send = section.querySelector('.comment-send[data-id="'+id+'"]');
-      if (!input || !send) return;
+      var section = document.getElementById('comments-'+id);
+      var listEl = document.getElementById('clist-'+id);
+      if (!section) return;
+      // Cargar comentarios la primera vez
+      if (!section.dataset.loaded) {
+        section.dataset.loaded = '1';
+        if (listEl) loadComments(id, listEl, btn);
+      }
+      section.classList.toggle('open');
+    });
+
+    // Event delegation para comment send
+    document.addEventListener('click', function(e) {
+      var send = e.target.closest('.comment-send[data-id]');
+      if (!send) return;
+      var id = send.dataset.id;
+      if (!id || id.includes('{')) return;
+      var section = document.getElementById('comments-'+id);
+      var listEl = document.getElementById('clist-'+id);
+      var btn = document.querySelector('.comment-toggle-btn[data-id="'+id+'"]');
+      var input = section ? section.querySelector('.comment-field[data-id="'+id+'"]') : null;
+      if (!input) return;
       async function postComment() {
         const text = input.value.trim(); if (!text) return;
         input.value = '';
-        addComment(listEl, text, true);
+        if (listEl) addComment(listEl, text, true);
         try {
-          const userName = window.currentUser ? (window.currentUser.name || window.currentUser.email.split('@')[0]) : null;
-          const userAvatar = window.currentUser ? (window.currentUser.picture || null) : null;
           await fetch('/api/comments?post_id=' + encodeURIComponent(id), { method: 'POST', credentials: 'include', headers: {'Content-Type':'application/json'}, body: JSON.stringify({body: text}) });
           const r = await fetch('/api/comments?post_id=' + encodeURIComponent(id), { credentials: 'include' });
           const d = await r.json();
-          if (d.comments) { const c = btn.querySelector('.comment-count'); if(c) c.textContent = d.comments.length; }
+          if (d.comments && btn) { const c = btn.querySelector('.comment-count'); if(c) c.textContent = d.comments.length; }
         } catch(e) {}
         toast('Posted!');
       }
