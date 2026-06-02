@@ -233,7 +233,11 @@
     if (loader) loader.style.display = 'none';
     LOADING = false;
     // Cargar likes para los nuevos cards — setTimeout asegura que loadAllLikes ya esté definida
-    setTimeout(function(){ if (typeof window.loadAllLikes === 'function') window.loadAllLikes(); }, 100);
+    setTimeout(function(){
+      if (typeof window.loadAllLikes === 'function') window.loadAllLikes();
+    if (typeof window.loadAllCommentCounts === 'function') window.loadAllCommentCounts();
+      if (typeof window.loadAllCommentCounts === 'function') window.loadAllCommentCounts();
+    }, 100);
 
     // Si no hay más posts ocultar sentinel
     var sentinel = document.getElementById('feed-sentinel');
@@ -859,6 +863,20 @@
       });
     }
 
+    window.loadAllCommentCounts = async function() {
+      document.querySelectorAll('.comment-toggle-btn[data-id]').forEach(async btn => {
+        const id = btn.dataset.id;
+        if (!id || id.includes('{')) return;
+        try {
+          const r = await fetch('/api/comments?post_id=' + encodeURIComponent(id), { credentials: 'include' });
+          const d = await r.json();
+          const count = d.comments ? d.comments.length : 0;
+          const countEl = btn.querySelector('.comment-count');
+          if (countEl) countEl.textContent = count > 0 ? fmt(count) : '0';
+        } catch(e) {}
+      });
+    };
+
     async function toggleLike(id) {
       if (!id || id.includes('{')) return;
       const wasLiked = liked.has(id);
@@ -886,6 +904,7 @@
       }
     });
     if (typeof window.loadAllLikes === 'function') window.loadAllLikes();
+    if (typeof window.loadAllCommentCounts === 'function') window.loadAllCommentCounts();
 
     /* SAVE */
     const savedKey = 'hw_saved';
