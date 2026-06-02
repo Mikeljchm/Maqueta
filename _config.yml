@@ -20,6 +20,11 @@ defaults:
       layout: "wrestler"
   - scope:
       path: ""
+      type: "wrestlers_data"
+    values:
+      layout: "wrestler-json"
+  - scope:
+      path: ""
       type: "studs"
     values:
       layout: "stud"
@@ -43,6 +48,8 @@ collections:
   wrestlers:
     output: true
     permalink: /the-mat/:name/
+  wrestlers_data:
+    output: true
   badboys:
     output: false
   stories:
