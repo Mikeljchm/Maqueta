@@ -1,82 +1,103 @@
-
 /* ── DOUBLE TAP LIKE + EMOJI EXPLOSION ── */
 (function(){
   var EMOJIS = ['❤️','😈','💋','😋','😏','💦','🪶','🍆','🍑','🔥'];
   var lastTap = {};
-  var DELAY = 300;
+  var blocked = {};
+  var DELAY = 280;
 
-  // CSS
   var style = document.createElement('style');
   style.textContent = [
-    '.dtap-zone { position:relative; overflow:hidden; }',
-    '.dtap-emoji { position:absolute; pointer-events:none; font-size:3.5rem; transform:translate(-50%,-50%) scale(0); animation:dtap-pop 0.9s cubic-bezier(0.16,1,0.3,1) forwards; z-index:99; }',
-    '@keyframes dtap-pop {',
-    '  0%   { transform:translate(-50%,-50%) scale(0); opacity:1; }',
-    '  40%  { transform:translate(-50%,-80%) scale(1.3); opacity:1; }',
-    '  100% { transform:translate(-50%,-160%) scale(0.8); opacity:0; }',
-    '}',
-    '.like-btn.liked svg { fill:var(--fire-orange); stroke:var(--fire-orange); }',
-    '.like-btn svg { transition: fill 0.2s, stroke 0.2s, transform 0.15s; }',
-    '.like-btn.like-pop svg { transform: scale(1.4); }'
+    '.dtap-zone{position:relative;overflow:hidden;}',
+    '.dtap-emoji{position:absolute;pointer-events:none;font-size:3.5rem;transform:translate(-50%,-50%) scale(0);animation:dtap-pop 0.9s cubic-bezier(0.16,1,0.3,1) forwards;z-index:99;}',
+    '@keyframes dtap-pop{0%{transform:translate(-50%,-50%) scale(0);opacity:1;}40%{transform:translate(-50%,-80%) scale(1.4);opacity:1;}100%{transform:translate(-50%,-170%) scale(0.8);opacity:0;}}',
+    '.like-btn.liked svg{fill:var(--fire-orange);stroke:var(--fire-orange);}',
+    '.like-btn svg{transition:fill 0.2s,stroke 0.2s,transform 0.15s;}',
+    '.like-btn-emoji{display:inline-block;font-size:1.2rem;animation:like-emoji-pop 1s cubic-bezier(0.16,1,0.3,1) forwards;}',
+    '@keyframes like-emoji-pop{0%{transform:scale(0);opacity:1;}40%{transform:scale(1.6);opacity:1;}70%{transform:scale(1.2);opacity:1;}100%{transform:scale(1);opacity:1;}}'
   ].join('');
   document.head.appendChild(style);
 
-  function spawnEmoji(container, x, y) {
-    var emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+  function pick(){ return EMOJIS[Math.floor(Math.random()*EMOJIS.length)]; }
+
+  function spawnEmoji(zone, x, y, emoji) {
     var el = document.createElement('div');
     el.className = 'dtap-emoji';
-    el.textContent = emoji;
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
-    container.appendChild(el);
-    setTimeout(function(){ el.remove(); }, 900);
+    el.textContent = emoji || pick();
+    el.style.left = x+'px';
+    el.style.top = y+'px';
+    zone.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 950);
   }
 
-  function triggerLike(container) {
-    var postId = container.getAttribute('data-postid');
+  function triggerLike(zone, emoji) {
+    var postId = zone.getAttribute('data-postid');
     if (!postId) return;
-    // Animar el botón like del card
-    var card = container.closest('.post-card');
+    var card = zone.closest('.post-card');
     if (!card) return;
     var likeBtn = card.querySelector('.like-btn');
     if (likeBtn) {
-      likeBtn.classList.add('liked', 'like-pop');
-      setTimeout(function(){ likeBtn.classList.remove('like-pop'); }, 200);
+      var svg = likeBtn.querySelector('svg');
       var countEl = likeBtn.querySelector('.like-count');
-      if (countEl) {
-        var cur = parseInt(countEl.textContent) || 0;
-        countEl.textContent = cur + 1;
+      if (svg) {
+        var span = document.createElement('span');
+        span.className = 'like-btn-emoji';
+        span.textContent = emoji;
+        likeBtn.insertBefore(span, svg);
+        svg.style.display = 'none';
+        setTimeout(function(){
+          span.remove();
+          svg.style.display = '';
+          likeBtn.classList.add('liked');
+        }, 1000);
       }
+      likeBtn.classList.add('liked');
+      if (countEl) countEl.textContent = (parseInt(countEl.textContent)||0) + 1;
     }
-    // Llamar toggleLike si no estaba liked
-    if (container.getAttribute('data-liked') !== 'true') {
-      container.setAttribute('data-liked', 'true');
+    if (zone.getAttribute('data-liked') !== 'true') {
+      zone.setAttribute('data-liked', 'true');
       if (typeof window.toggleLikePublic === 'function') window.toggleLikePublic(postId);
     }
   }
 
-  document.addEventListener('touchend', function(e) {
+  // touchstart capture — detectar doble tap antes que el <a>
+  document.addEventListener('touchstart', function(e) {
     var zone = e.target.closest('.dtap-zone');
     if (!zone) return;
     var id = zone.getAttribute('data-postid') || 'x';
     var now = Date.now();
     if (lastTap[id] && (now - lastTap[id]) < DELAY) {
-      // Double tap
       lastTap[id] = 0;
+      blocked[id] = true;
       e.preventDefault();
+      e.stopPropagation();
       var rect = zone.getBoundingClientRect();
-      var touch = e.changedTouches[0];
-      var x = touch.clientX - rect.left;
-      var y = touch.clientY - rect.top;
-      // Lanzar 3 emojis en posiciones ligeramente diferentes
-      spawnEmoji(zone, x, y);
-      spawnEmoji(zone, x + (Math.random()*40-20), y + (Math.random()*40-20));
-      spawnEmoji(zone, x + (Math.random()*40-20), y + (Math.random()*40-20));
-      triggerLike(zone);
+      var t = e.touches[0];
+      var x = t.clientX - rect.left;
+      var y = t.clientY - rect.top;
+      var emoji = pick();
+      spawnEmoji(zone, x, y, emoji);
+      spawnEmoji(zone, x+(Math.random()*50-25), y+(Math.random()*50-25), pick());
+      spawnEmoji(zone, x+(Math.random()*50-25), y+(Math.random()*50-25), pick());
+      triggerLike(zone, emoji);
     } else {
       lastTap[id] = now;
+      blocked[id] = false;
     }
-  }, { passive: false });
+  }, {passive: false, capture: true});
+
+  // touchend y click capture — bloquar si fue doble tap
+  function blockIfNeeded(e) {
+    var zone = e.target.closest('.dtap-zone');
+    if (!zone) return;
+    var id = zone.getAttribute('data-postid') || 'x';
+    if (blocked[id]) {
+      blocked[id] = false;
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+  document.addEventListener('touchend', blockIfNeeded, {passive: false, capture: true});
+  document.addEventListener('click', blockIfNeeded, {capture: true});
 
 })();
 
