@@ -507,11 +507,11 @@ async function handlePolls(request, env, corsH) {
       const { results: existing } = await env.DB.prepare('SELECT id FROM polls WHERE post_id = ?').bind(post_id).all();
       if (existing.length) {
         await env.DB.prepare('UPDATE polls SET question=?,options=? WHERE post_id=?')
-          .bind(question, JSON.stringify(options.slice(0,4)), post_id).run();
+          .bind(question, JSON.stringify(options), post_id).run();
         await env.DB.prepare('DELETE FROM poll_votes WHERE post_id=?').bind(post_id).run();
       } else {
         await env.DB.prepare('INSERT INTO polls (post_id,question,options) VALUES (?,?,?)')
-          .bind(post_id, question, JSON.stringify(options.slice(0,4))).run();
+          .bind(post_id, question, JSON.stringify(options)).run();
       }
       return apiJson({ ok: true }, 200, corsH);
     }
