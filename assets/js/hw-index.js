@@ -574,7 +574,7 @@ async function votePoll(postId, idx, poll, container) {
       +'<button class="card-act-btn like-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span class="like-count">0</span></button>'
       +'<button class="card-act-btn share-btn" data-url="'+post.url+'"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>'
       +'</div>'
-      +'<div class="card-comments" id="comments-'+(post.path||String(idx))+'"><div class="comments-list" id="clist-'+(post.path||String(idx))+'"></div><div class="comment-form"><input class="comment-field" type="text" placeholder="Add a comment..." maxlength="280" data-id="'+(post.path||String(idx))+'"><button class="comment-send" data-id="'+(post.path||String(idx))+'">Post</button></div></div>'
+      +'<div class="card-comments" id="comments-'+(post.path||String(idx))+'"><div class="comments-list" id="clist-'+(post.path||String(idx))+'"></div><div class="comment-form"><button class="sticker-btn" data-sticker-id='+(post.path||String(idx))+' title="Stickers">&#128522;</button><input class="comment-field" type="text" placeholder="Add a comment..." maxlength="280" data-id="'+(post.path||String(idx))+'"><button class="comment-send" data-id="'+(post.path||String(idx))+'">Post</button></div></div>'
       +'</article>';
   }
 
@@ -1413,6 +1413,14 @@ async function votePoll(postId, idx, poll, container) {
         if (listEl) loadComments(id, listEl, btn);
       }
       section.classList.toggle('open');
+    });
+
+    // Event delegation para sticker btn
+    document.addEventListener('click', function(e) {
+      var sb = e.target.closest('.sticker-btn[data-sticker-id]');
+      if (sb && typeof window.openStickerPanel === 'function') {
+        window.openStickerPanel(sb.getAttribute('data-sticker-id'));
+      }
     });
 
     // Event delegation para comment send
