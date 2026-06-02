@@ -578,14 +578,23 @@ layout: none
 
       <!-- POLL -->
       <div class="edit-field" style="margin-top:0.5rem;">
-        <label class="edit-label">Poll (optional)</label>
-        <input class="edit-input" id="edit-poll-question" placeholder="Ask a question..." style="margin-bottom:0.4rem;">
-        <input class="edit-input" id="edit-poll-opt1" placeholder="Option 1" style="margin-bottom:0.3rem;">
-        <input class="edit-input" id="edit-poll-opt2" placeholder="Option 2" style="margin-bottom:0.3rem;">
-        <input class="edit-input" id="edit-poll-opt3" placeholder="Option 3 (optional)" style="margin-bottom:0.3rem;">
-        <input class="edit-input" id="edit-poll-opt4" placeholder="Option 4 (optional)" style="margin-bottom:0.3rem;">
-        <button onclick="savePoll()" style="background:var(--fire-orange);color:#fff;border:none;padding:0.4rem 1rem;border-radius:8px;font-size:0.8rem;cursor:pointer;margin-top:0.2rem;">Save Poll</button>
-        <span id="poll-status" style="font-size:0.75rem;color:var(--fire-orange);margin-left:0.5rem;"></span>
+        <label class="edit-label">Poll <span style="color:#555;font-size:0.6rem;">(optional)</span></label>
+        <input class="edit-input" id="edit-poll-question" placeholder="Ask a question..." style="margin-bottom:0.5rem;">
+        <div id="poll-opts-container">
+          <div class="poll-opt-row" style="display:flex;gap:0.3rem;margin-bottom:0.3rem;">
+            <input class="edit-input poll-opt-label-input" placeholder="Option 1" style="flex:2;">
+            <input class="edit-input poll-opt-img-input" placeholder="Image URL (optional)" style="flex:3;">
+          </div>
+          <div class="poll-opt-row" style="display:flex;gap:0.3rem;margin-bottom:0.3rem;">
+            <input class="edit-input poll-opt-label-input" placeholder="Option 2" style="flex:2;">
+            <input class="edit-input poll-opt-img-input" placeholder="Image URL (optional)" style="flex:3;">
+          </div>
+        </div>
+        <button onclick="addPollOption()" style="background:var(--surface-3);color:var(--text-dim);border:1px solid var(--border);padding:0.3rem 0.8rem;border-radius:8px;font-size:0.75rem;cursor:pointer;margin-bottom:0.4rem;">+ Add option</button>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;">
+          <button onclick="savePoll()" style="background:var(--fire-orange);color:#fff;border:none;padding:0.4rem 1rem;border-radius:8px;font-size:0.8rem;cursor:pointer;">Save Poll</button>
+          <span id="poll-status" style="font-size:0.75rem;color:var(--fire-orange);"></span>
+        </div>
       </div>
 
       <!-- TOGGLES -->
