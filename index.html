@@ -576,6 +576,18 @@ layout: none
         <textarea class="edit-textarea" id="edit-links-input" placeholder="OnlyFans | https://onlyfans.com/...&#10;Telegram | https://t.me/..." style="min-height:60px;font-size:0.72rem;"></textarea>
       </div>
 
+      <!-- POLL -->
+      <div class="edit-field" style="margin-top:0.5rem;">
+        <label class="edit-label">Poll (optional)</label>
+        <input class="edit-input" id="edit-poll-question" placeholder="Ask a question..." style="margin-bottom:0.4rem;">
+        <input class="edit-input" id="edit-poll-opt1" placeholder="Option 1" style="margin-bottom:0.3rem;">
+        <input class="edit-input" id="edit-poll-opt2" placeholder="Option 2" style="margin-bottom:0.3rem;">
+        <input class="edit-input" id="edit-poll-opt3" placeholder="Option 3 (optional)" style="margin-bottom:0.3rem;">
+        <input class="edit-input" id="edit-poll-opt4" placeholder="Option 4 (optional)" style="margin-bottom:0.3rem;">
+        <button onclick="savePoll()" style="background:var(--fire-orange);color:#fff;border:none;padding:0.4rem 1rem;border-radius:8px;font-size:0.8rem;cursor:pointer;margin-top:0.2rem;">Save Poll</button>
+        <span id="poll-status" style="font-size:0.75rem;color:var(--fire-orange);margin-left:0.5rem;"></span>
+      </div>
+
       <!-- TOGGLES -->
       <div class="edit-toggles">
         <label class="edit-toggle-row">
