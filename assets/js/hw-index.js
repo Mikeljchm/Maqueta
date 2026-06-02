@@ -1,7 +1,7 @@
 
 /* ── DOUBLE TAP LIKE + EMOJI EXPLOSION ── */
 (function(){
-  var EMOJIS = ['\u2764\uFE0F','\uD83D\uDE08','\uD83D\uDC8B','\uD83D\uDE0B','\uD83D\uDE0F','\uD83D\uDCA6','\uD83E\uDEB6','\uD83C\uDF46','\uD83C\uDF51','\uD83D\uDD25'];
+  var EMOJIS = ['❤️','😈','💋','😋','😏','💦','🪶','🍆','🍑','🔥'];
   var lastTap = {};
   var DELAY = 300;
 
