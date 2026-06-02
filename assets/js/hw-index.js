@@ -1818,6 +1818,36 @@ async function votePoll(postId, idx, poll, container) {
     editingCard = null;
   }
 
+  window.savePoll = async function() {
+    if (!editingCard) return;
+    var postId = editingCard.dataset.path;
+    if (!postId) return;
+    var question = document.getElementById('edit-poll-question').value.trim();
+    var opts = [
+      document.getElementById('edit-poll-opt1').value.trim(),
+      document.getElementById('edit-poll-opt2').value.trim(),
+      document.getElementById('edit-poll-opt3').value.trim(),
+      document.getElementById('edit-poll-opt4').value.trim()
+    ].filter(Boolean);
+    var status = document.getElementById('poll-status');
+    if (!question || opts.length < 2) { status.textContent = 'Need question + 2 options'; return; }
+    try {
+      var r = await fetch('/api/polls?post_id=' + encodeURIComponent(postId), {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', question, options: opts })
+      });
+      var d = await r.json();
+      if (d.ok) {
+        status.textContent = 'Poll saved!';
+        // Recargar la encuesta en el card
+        var pollContainer = editingCard.querySelector('.card-poll');
+        if (pollContainer) window.loadPoll(postId, pollContainer);
+      }
+    } catch(e) { status.textContent = 'Error saving poll'; }
+  };
+
   async function saveEdit() {
     if (editMode === 'edit' && !editingCard) return;
     const btn = document.getElementById('edit-save-btn');
