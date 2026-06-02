@@ -40,6 +40,11 @@ defaults:
       layout: "bulge"
   - scope:
       path: ""
+      type: "bulge_data"
+    values:
+      layout: "bulge-json"
+  - scope:
+      path: ""
       type: "stories"
     values:
       layout: "story"
@@ -63,6 +68,8 @@ collections:
   bulge:
     output: true
     permalink: /bulge-sport/:name/
+  bulge_data:
+    output: true
 
 # Copiar al _site/ para Cloudflare Pages
 include:
