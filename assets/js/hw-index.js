@@ -15,9 +15,9 @@
     '.sticker-panel-header{display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.9rem;border-bottom:1px solid var(--border);}',
     '.sticker-panel-title{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.05em;color:var(--fire-orange);}',
     '.sticker-panel-close{background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;}',
-    '.sticker-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:0.6rem;max-height:240px;overflow-y:auto;}',
-    '.sticker-item{aspect-ratio:1;cursor:pointer;border-radius:8px;overflow:hidden;background:var(--surface-3);}',
-    '.sticker-item video{width:100%;height:100%;object-fit:cover;}',
+    '.sticker-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:0.6rem;max-height:260px;overflow-y:auto;}',
+    '.sticker-item{width:100%;padding-bottom:100%;position:relative;cursor:pointer;border-radius:8px;overflow:hidden;background:var(--surface-3);}',
+    '.sticker-item video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}',
     '.sticker-item:hover{background:var(--surface);}',
     '.sticker-panel-nav{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.9rem;border-top:1px solid var(--border);}',
     '.sticker-nav-btn{background:none;border:1px solid var(--border);color:var(--text);padding:0.3rem 0.8rem;border-radius:8px;cursor:pointer;font-size:0.75rem;}',
@@ -574,7 +574,7 @@ async function votePoll(postId, idx, poll, container) {
       +'<button class="card-act-btn like-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span class="like-count">0</span></button>'
       +'<button class="card-act-btn share-btn" data-url="'+post.url+'"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>'
       +'</div>'
-      +'<div class="card-comments" id="comments-'+(post.path||String(idx))+'"><div class="comments-list" id="clist-'+(post.path||String(idx))+'"></div><div class="comment-form"><button class="sticker-btn" data-sticker-id='+(post.path||String(idx))+' title="Stickers">&#128522;</button><input class="comment-field" type="text" placeholder="Add a comment..." maxlength="280" data-id="'+(post.path||String(idx))+'"><button class="comment-send" data-id="'+(post.path||String(idx))+'">Post</button></div></div>'
+      +'<div class="card-comments" id="comments-'+(post.path||String(idx))+'"><div class="comments-list" id="clist-'+(post.path||String(idx))+'"></div><div class="comment-form"><button class="sticker-btn" data-sticker-id='+(post.path||String(idx))+' title="Stickers">&#128520;</button><input class="comment-field" type="text" placeholder="Add a comment..." maxlength="280" data-id="'+(post.path||String(idx))+'"><button class="comment-send" data-id="'+(post.path||String(idx))+'">Post</button></div></div>'
       +'</article>';
   }
 
