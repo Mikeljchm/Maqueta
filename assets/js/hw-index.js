@@ -1,3 +1,80 @@
+
+/* ── POLLS ── */
+(function(){
+  var s = document.createElement('style');
+  s.textContent = [
+    '.poll-container{margin:0.8rem 0;padding:0.8rem;background:var(--surface-2);border-radius:12px;border:1px solid var(--border);}',
+    '.poll-question{font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:0.7rem;letter-spacing:0.03em;}',
+    '.poll-option{position:relative;margin:0.4rem 0;border-radius:8px;overflow:hidden;cursor:pointer;background:var(--surface-3);border:1px solid var(--border);transition:border-color 0.2s;}',
+    '.poll-option:hover{border-color:var(--fire-orange);}',
+    '.poll-option.voted{border-color:var(--fire-orange);}',
+    '.poll-option-bar{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--fire-deep),var(--fire-red));opacity:0.35;transition:width 0.6s cubic-bezier(0.16,1,0.3,1);border-radius:8px;}',
+    '.poll-option-label{position:relative;display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.8rem;font-size:0.85rem;color:var(--text);}',
+    '.poll-option-pct{font-family:var(--font-d);font-size:0.9rem;color:var(--fire-orange);}',
+    '.poll-total{font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;text-align:right;}',
+    '.poll-disabled .poll-option{cursor:default;}',
+    '.poll-disabled .poll-option:hover{border-color:var(--border);}'
+  ].join('');
+  document.head.appendChild(s);
+})();
+
+
+/* ── POLL LOADER ── */
+window.loadPoll = async function(postId, container) {
+  if (!postId || !container) return;
+  try {
+    var r = await fetch('/api/polls?post_id=' + encodeURIComponent(postId), { credentials: 'include' });
+    var d = await r.json();
+    if (!d.poll) return;
+    renderPoll(postId, d.poll, container);
+  } catch(e) {}
+};
+
+function renderPoll(postId, poll, container) {
+  var voted = poll.userVote !== null && poll.userVote !== undefined;
+  var html = '<div class="poll-container' + (voted ? ' poll-disabled' : '') + '" id="poll-' + postId.replace(/[^a-z0-9]/gi,'-') + '">';
+  html += '<div class="poll-question">' + poll.question + '</div>';
+  poll.options.forEach(function(opt, i) {
+    var pct = poll.total > 0 ? Math.round((poll.counts[i] / poll.total) * 100) : 0;
+    var isVoted = poll.userVote === i;
+    html += '<div class="poll-option' + (isVoted ? ' voted' : '') + '" data-idx="' + i + '">';
+    html += '<div class="poll-option-bar" style="width:' + (voted ? pct : 0) + '%"></div>';
+    html += '<div class="poll-option-label"><span>' + opt + (isVoted ? ' ✔' : '') + '</span>';
+    html += voted ? '<span class="poll-option-pct">' + pct + '%</span>' : '';
+    html += '</div></div>';
+  });
+  html += '<div class="poll-total">' + poll.total + ' vote' + (poll.total !== 1 ? 's' : '') + '</div>';
+  html += '</div>';
+  container.innerHTML = html;
+
+  if (!voted) {
+    container.querySelectorAll('.poll-option').forEach(function(opt) {
+      opt.addEventListener('click', function() {
+        var idx = parseInt(opt.getAttribute('data-idx'));
+        votePoll(postId, idx, poll, container);
+      });
+    });
+  }
+}
+
+async function votePoll(postId, idx, poll, container) {
+  try {
+    var r = await fetch('/api/polls?post_id=' + encodeURIComponent(postId), {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'vote', option_idx: idx })
+    });
+    var d = await r.json();
+    if (d.ok) {
+      poll.counts = d.counts;
+      poll.total = d.total;
+      poll.userVote = d.userVote;
+      renderPoll(postId, poll, container);
+    }
+  } catch(e) {}
+}
+
 /* ── HASHTAG SUPPORT ── */
 (function(){
   var hStyle = document.createElement('style');
@@ -333,7 +410,7 @@
     return '<article class="post-card'+(post.adult ? ' adult-card' : '')+'" data-cat="'+(post.category||'')+'" data-idx="'+idx+'" data-adult="'+(post.adult||false)+'" data-path="'+escH(post.path||'')+'" data-title="'+escH(post.title||'')+'" data-desc="'+escH(post.description||'')+'" data-category="'+(post.category||'')+'" data-poster="'+escH(post.poster||'')+'" data-date="'+(post.date||'')+'" data-images="'+escH(JSON.stringify((post.images&&post.images.length>0)?post.images:(post.image?[post.image]:[])))+'" data-videos="'+escH(JSON.stringify(post.videos||[]))+'" data-links="'+escH(JSON.stringify(post.links||[]))+'" data-featured="'+(post.featured||false)+'">'
       +'<div class="card-header"><div class="card-avatar" style="background:linear-gradient(135deg,var(--fire-deep),var(--fire-red));display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="18" height="18" fill="var(--fire-orange)"><path d="M12 2s-5 5.5-5 10a5 5 0 0010 0c0-4.5-5-10-5-10zm0 14a3 3 0 01-3-3c0-2 1.5-4.5 3-7 1.5 2.5 3 5 3 7a3 3 0 01-3 3z"/></svg></div><div class="card-meta"><div class="card-author">'+(post.category ? (post.category.charAt(0).toUpperCase()+post.category.slice(1)) : 'General')+'</div><div class="card-cat-label">JUICY STUD</div></div><div class="card-date">'+(post.date||'')+'</div></div>'
       +mediaHTML
-      +'<div class="card-body">'+titleHTML+descHTML+'</div>'
+      +'<div class="card-body">'+titleHTML+descHTML+'</div>'+'<div class="card-poll" style="padding:0 0.8rem;"></div>'
       +'<div class="card-actions">'
       +'<button class="card-act-btn comment-toggle-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="comment-count">0</span></button>'
       +'<button class="card-act-btn save-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span class="save-count">0</span></button>'
@@ -378,6 +455,12 @@
         if (header) header.appendChild(editBtn);
       }
       container.appendChild(articleEl);
+      // Cargar encuesta si el card tiene poll
+      var pollContainer = articleEl.querySelector('.card-poll');
+      if (pollContainer) {
+        var pId = articleEl.dataset.path || '';
+        if (pId) window.loadPoll(pId, pollContainer);
+      }
     });
     LOADED += batch.length;
     var loader = document.getElementById('feed-loader');
