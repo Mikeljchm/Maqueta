@@ -585,7 +585,7 @@ async function handleCollections(request, env, corsH) {
     // For each collection get first 4 images
     for (var col of results) {
       const { results: imgs } = await env.DB.prepare(
-        'SELECT post_image FROM collection_items WHERE collection_id=? AND post_image<>'' LIMIT 4'
+        'SELECT post_image FROM collection_items WHERE collection_id=? AND post_image<>"" LIMIT 4'
       ).bind(col.id).all();
       col.images = imgs.map(function(i){ return i.post_image; });
     }
