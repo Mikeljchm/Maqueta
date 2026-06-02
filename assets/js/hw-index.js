@@ -1840,6 +1840,18 @@ async function votePoll(postId, idx, poll, container) {
     editingCard = null;
   }
 
+  window.addPollOption = function() {
+    var container = document.getElementById('poll-opts-container');
+    if (!container) return;
+    var n = container.querySelectorAll('.poll-opt-row').length + 1;
+    var row = document.createElement('div');
+    row.className = 'poll-opt-row';
+    row.style.cssText = 'display:flex;gap:0.3rem;margin-bottom:0.3rem;';
+    row.innerHTML = '<input class="edit-input poll-opt-label-input" placeholder="Option ' + n + '" style="flex:2;">'
+      + '<input class="edit-input poll-opt-img-input" placeholder="Image URL (optional)" style="flex:3;">';
+    container.appendChild(row);
+  };
+
   window.savePoll = async function() {
     if (!editingCard) return;
     var postId = editingCard.dataset.path;
