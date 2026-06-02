@@ -18,7 +18,7 @@
     // Convertir #hashtag en span clickeable
     return escaped.replace(/(#[a-zA-Z0-9_À-ɏ]+)/g, function(tag) {
       var clean = tag.slice(1).toLowerCase();
-      return '<span class="post-hashtag" onclick="window.filterByHashtag(''+clean+'')">'+tag+'</span>';
+      return '<span class="post-hashtag" onclick="window.filterByHashtag(\"'+clean+'\")">'+tag+'</span>';
     });
   };
 
