@@ -436,7 +436,23 @@
       prevBtn.classList.toggle('hidden',curIdx===0);
       nextBtn.classList.toggle('hidden',curIdx===imgArr.length-1);
     }
-    function openViewer(idx){loadImg(idx);viewer.classList.add('open');document.body.style.overflow='hidden';}
+    function openViewer(idx){
+      // Usar window._viewerImgs si existe (fotos cargadas dinámicamente)
+      if (window._viewerImgs && window._viewerImgs.length > 0) {
+        curIdx=idx;
+        vImg.src=window._viewerImgs[idx];
+        vBg.style.backgroundImage='url('+window._viewerImgs[idx]+')';
+        vCounter.textContent=(idx+1)+' / '+window._viewerImgs.length;
+        scale=1;posX=0;posY=0;applyTransform(false);
+        prevBtn.classList.toggle('hidden',curIdx===0);
+        nextBtn.classList.toggle('hidden',curIdx===window._viewerImgs.length-1);
+      } else {
+        loadImg(idx);
+      }
+      viewer.classList.add('open');
+      document.body.style.overflow='hidden';
+    }
+    window.openViewer = openViewer;
     function closeViewer(){viewer.classList.remove('open');document.body.style.overflow='';scale=1;posX=0;posY=0;applyTransform(false);}
     function applyTransform(animate){wrap.style.transition=animate?'transform 0.25s ease':'none';wrap.style.transform='translate('+posX+'px,'+posY+'px) scale('+scale+')';}
     function clampPos(){if(scale<=1){posX=0;posY=0;return;}const cw=container.clientWidth,ch=container.clientHeight;const overX=Math.max(0,(cw*scale-cw)/2);const overY=Math.max(0,(ch*scale-ch)/2);posX=Math.max(-overX,Math.min(overX,posX));posY=Math.max(-overY,Math.min(overY,posY));}
@@ -1036,19 +1052,13 @@
         div.appendChild(img);
         (function(photoIdx){
           div.addEventListener('click', function() {
-            // Usar openViewer con el array actual
             var allImgs = window._wrestlerUnlocked
               ? window._wrestlerPhotos.concat(window._wrestlerAdult)
               : window._wrestlerPhotos;
             if (allImgs.length > 0) {
-              // Actualizar el array del viewer y abrir
-              if (typeof loadImg === 'function') {
-                window._viewerImgs = allImgs;
-                loadImg(photoIdx);
-                document.getElementById('photo-viewer').classList.add('open');
-                document.body.style.overflow='hidden';
-              } else if (typeof lvOpen === 'function') {
-                lvOpen(allImgs, photoIdx);
+              window._viewerImgs = allImgs;
+              if (typeof window.openViewer === 'function') {
+                window.openViewer(photoIdx);
               }
             }
           });
