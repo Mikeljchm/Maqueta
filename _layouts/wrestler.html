@@ -1030,11 +1030,14 @@
         img.alt = document.title;
         img.loading = 'lazy';
         div.appendChild(img);
-        div.addEventListener('click', function() {
-          var allImgs = [];
-          document.querySelectorAll('.photo-thumb img').forEach(function(im){ allImgs.push(im.src); });
-          lvOpen(allImgs, _loaded + i);
-        });
+        (function(photoIdx){
+          div.addEventListener('click', function() {
+            var allImgs = _isUnlocked
+              ? _allPhotos.concat(_adultPhotos)
+              : _allPhotos;
+            if (typeof lvOpen === 'function') lvOpen(allImgs, photoIdx);
+          });
+        })(_loaded + i);
         grid.appendChild(div);
       });
 
