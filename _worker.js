@@ -162,6 +162,291 @@ async function handleLikes(request, env, corsH) {
   return apiJson({ error: 'Method not allowed' }, 405, corsH);
 }
 
+
+async function handleSave(request, env, corsH) {
+  const headers = { ...corsH, 'Content-Type': 'application/json' };
+
+  try {
+    const cookie = request.headers.get('Cookie') || '';
+    const match = cookie.match(/hw_admin=([^;]+)/);
+    if (!match) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+    const session = JSON.parse(atob(match[1]));
+    if (session.login !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+
+    const { filePath, title, description, category, poster, date, adult, featured, draft, images, videos, links, cover, banner, bio } = await request.json();
+    const GITHUB_TOKEN = env.GITHUB_TOKEN;
+    const REPO = 'Mikeljchm/Maqueta';
+
+    const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${filePath}`, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'HottWrestling-Admin' }
+    });
+    if (!getRes.ok) return new Response(JSON.stringify({ error: 'File not found' }), { status: 404, headers });
+
+    const fileData = await getRes.json();
+    const sha = fileData.sha;
+    const current = atob(fileData.content.replace(/\n/g, ''));
+
+    // Rebuild frontmatter preserving unknown fields
+    const fmMatch = current.match(/^---\n([\s\S]*?)\n---/);
+    if (!fmMatch) return new Response(JSON.stringify({ error: 'Invalid frontmatter' }), { status: 400, headers });
+
+    let fm = fmMatch[1];
+    const body = current.slice(fmMatch[0].length);
+
+    // Update simple fields
+    const setField = (key, val) => {
+      const re = new RegExp(`^${key}:.*$`, 'm');
+      if (re.test(fm)) { fm = fm.replace(re, `${key}: ${val}`); }
+      else { fm += `\n${key}: ${val}`; }
+    };
+
+    if (title !== undefined) setField('title', `"${title}"`);
+    if (description !== undefined) setField('description', `"${description.replace(/"/g, '\\"')}"`);
+    if (category !== undefined) setField('category', category);
+    if (poster !== undefined && poster) setField('poster', poster);
+    if (cover !== undefined && cover) setField('cover', cover);
+    if (banner !== undefined && banner) setField('banner', banner);
+    if (bio !== undefined && bio) setField('bio', '"' + bio.replace(/"/g, '\"') + '"');
+    if (date !== undefined && date) setField('date', date);
+    if (adult !== undefined) setField('adult', adult ? 'true' : 'false');
+    if (featured !== undefined) setField('featured', featured ? 'true' : 'false');
+    if (draft !== undefined) setField('published', draft ? 'false' : 'true');
+
+    // Update images array
+    if (images && images.length > 0) {
+      const imgYaml = 'images:\n' + images.map(i => `  - ${i}`).join('\n');
+      if (/^images:/m.test(fm)) { fm = fm.replace(/^images:[\s\S]*?(?=\n\w|\n*$)/m, imgYaml); }
+      else { fm += '\n' + imgYaml; }
+    }
+
+    // Update videos array
+    if (videos && videos.length > 0) {
+      const vidYaml = 'videos:\n' + videos.map(v => `  - url: ${v.url}${v.poster ? '\n    poster: ' + v.poster : ''}`).join('\n');
+      if (/^videos:/m.test(fm)) { fm = fm.replace(/^videos:[\s\S]*?(?=\n\w|\n*$)/m, vidYaml); }
+      else { fm += '\n' + vidYaml; }
+    }
+
+    // Update links array
+    if (links && links.length > 0) {
+      const linkYaml = 'links:\n' + links.map(l => `  - label: ${l.label}\n    url: ${l.url}`).join('\n');
+      if (/^links:/m.test(fm)) { fm = fm.replace(/^links:[\s\S]*?(?=\n\w|\n*$)/m, linkYaml); }
+      else { fm += '\n' + linkYaml; }
+    }
+
+    const newContent = `---\n${fm}\n---${body}`;
+    const encoded = btoa(unescape(encodeURIComponent(newContent)));
+
+    const saveRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${filePath}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'HottWrestling-Admin' },
+      body: JSON.stringify({ message: `Edit: ${filePath}`, content: encoded, sha })
+    });
+
+    const saveData = await saveRes.json();
+    if (!saveRes.ok) return new Response(JSON.stringify({ error: saveData.message }), { status: saveRes.status, headers });
+
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
+
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+  }
+}
+
+export async function onRequestOptions() {
+  return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } });
+}
+
+
+async function handleCreate(request, env, corsH) {
+  const headers = { ...corsH, 'Content-Type': 'application/json' };
+
+  try {
+    const cookie = request.headers.get('Cookie') || '';
+    const match = cookie.match(/hw_admin=([^;]+)/);
+    if (!match) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+    const session = JSON.parse(atob(match[1]));
+    if (session.login !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+
+    const { title, description, category, poster, date, adult, featured, draft, images, videos, links } = await request.json();
+
+    if (!title) return new Response(JSON.stringify({ error: 'Title is required' }), { status: 400, headers });
+
+    // Generate slug from title
+    const slug = title.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 60);
+
+    const postDate = date || new Date().toISOString().split('T')[0];
+    const filePath = `_posts/${postDate}-${slug}.md`;
+
+    // Build frontmatter
+    let fm = `title: "${title}"`;
+    fm += `\ncategory: ${category || 'wrestling'}`;
+    fm += `\ndate: ${postDate}`;
+    if (description) fm += `\ndescription: "${description.replace(/"/g, '\\"')}"`;
+    if (poster) fm += `\nposter: ${poster}`;
+    fm += `\nadult: ${adult ? 'true' : 'false'}`;
+    if (featured) fm += `\nfeatured: true`;
+    if (draft) fm += `\npublished: false`;
+
+    if (images && images.length > 0) {
+      fm += `\nimages:`;
+      images.forEach(i => { fm += `\n  - ${i}`; });
+    }
+
+    if (videos && videos.length > 0) {
+      fm += `\nvideos:`;
+      videos.forEach(v => {
+        fm += `\n  - url: ${v.url}`;
+        if (v.poster) fm += `\n    poster: ${v.poster}`;
+      });
+    }
+
+    if (links && links.length > 0) {
+      fm += `\nlinks:`;
+      links.forEach(l => {
+        fm += `\n  - label: ${l.label}`;
+        fm += `\n    url: ${l.url}`;
+      });
+    }
+
+    const content = `---\n${fm}\n---\n`;
+    const encoded = btoa(unescape(encodeURIComponent(content)));
+
+    const GITHUB_TOKEN = env.GITHUB_TOKEN;
+    const REPO = 'Mikeljchm/Maqueta';
+
+    const createRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${filePath}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'HottWrestling-Admin'
+      },
+      body: JSON.stringify({
+        message: `New post: ${title}`,
+        content: encoded
+      })
+    });
+
+    const createData = await createRes.json();
+    if (!createRes.ok) return new Response(JSON.stringify({ error: createData.message }), { status: createRes.status, headers });
+
+    return new Response(JSON.stringify({ ok: true, filePath }), { status: 200, headers });
+
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+  }
+}
+
+
+async function handleDelete(request, env, corsH) {
+  const headers = { ...corsH, 'Content-Type': 'application/json' };
+
+  try {
+    const cookie = request.headers.get('Cookie') || '';
+    const match = cookie.match(/hw_admin=([^;]+)/);
+    if (!match) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+    const session = JSON.parse(atob(match[1]));
+    if (session.login !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+
+    const { filePath } = await request.json();
+    const GITHUB_TOKEN = env.GITHUB_TOKEN;
+    const REPO = 'Mikeljchm/Maqueta';
+
+    // Get current SHA
+    const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${filePath}`, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'HottWrestling-Admin' }
+    });
+    if (!getRes.ok) return new Response(JSON.stringify({ error: 'File not found' }), { status: 404, headers });
+    const fileData = await getRes.json();
+
+    // Delete file
+    const delRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${filePath}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'HottWrestling-Admin' },
+      body: JSON.stringify({ message: `Delete: ${filePath}`, sha: fileData.sha })
+    });
+
+    if (!delRes.ok) {
+      const d = await delRes.json();
+      return new Response(JSON.stringify({ error: d.message }), { status: delRes.status, headers });
+    }
+
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
+
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+  }
+}
+
+
+async function handleCreateProfile(request, env, corsH) {
+  const headers = { ...corsH, 'Content-Type': 'application/json' };
+
+  try {
+    const cookie = request.headers.get('Cookie') || '';
+    const match = cookie.match(/hw_admin=([^;]+)/);
+    if (!match) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+    const session = JSON.parse(atob(match[1]));
+    if (session.login !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+
+    const { title, description, category, cover, banner, bio, adult, images, videos, links, collection } = await request.json();
+
+    if (!title) return new Response(JSON.stringify({ error: 'Title required' }), { status: 400, headers });
+    if (!collection) return new Response(JSON.stringify({ error: 'Collection required' }), { status: 400, headers });
+
+    // Generate slug
+    const slug = title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 60);
+    const filePath = `${collection}/${slug}.md`;
+
+    // Build frontmatter based on collection
+    let fm = `title: "${title}"`;
+    if (category) fm += `\ncategory: ${category}`;
+    if (cover) fm += `\ncover: ${cover}`;
+    if (banner) fm += `\nbanner: ${banner}`;
+    if (bio) fm += `\nbio: "${bio.replace(/"/g, '\\"')}"`;
+    if (description) fm += `\ndescription: "${description.replace(/"/g, '\\"')}"`;
+    fm += `\nadult: ${adult ? 'true' : 'false'}`;
+
+    if (images && images.length > 0) {
+      fm += `\nimages:`;
+      images.forEach(i => { fm += `\n  - ${i}`; });
+    }
+    if (videos && videos.length > 0) {
+      fm += `\nvideos:`;
+      videos.forEach(v => { fm += `\n  - url: ${v.url}`; if(v.poster) fm += `\n    poster: ${v.poster}`; });
+    }
+    if (links && links.length > 0) {
+      fm += `\nlinks:`;
+      links.forEach(l => { fm += `\n  - label: ${l.label}\n    url: ${l.url}`; });
+    }
+
+    const fileContent = `---\n${fm}\n---\n`;
+    const encoded = btoa(unescape(encodeURIComponent(fileContent)));
+    const GITHUB_TOKEN = env.GITHUB_TOKEN;
+    const REPO = 'Mikeljchm/Maqueta';
+
+    const createRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${filePath}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'HottWrestling-Admin' },
+      body: JSON.stringify({ message: `New profile: ${title}`, content: encoded })
+    });
+
+    const createData = await createRes.json();
+    if (!createRes.ok) return new Response(JSON.stringify({ error: createData.message }), { status: createRes.status, headers });
+
+    return new Response(JSON.stringify({ ok: true, filePath }), { status: 200, headers });
+
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+  }
+}
+
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -201,6 +486,10 @@ export default {
       }
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
+      if (path === '/api/save') return handleSave(request, env, corsH);
+      if (path === '/api/create') return handleCreate(request, env, corsH);
+      if (path === '/api/delete') return handleDelete(request, env, corsH);
+      if (path === '/api/create-profile') return handleCreateProfile(request, env, corsH);
       return new Response('Not found', { status: 404 });
     }
 
