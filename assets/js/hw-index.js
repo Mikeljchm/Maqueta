@@ -1823,12 +1823,13 @@ async function votePoll(postId, idx, poll, container) {
     var postId = editingCard.dataset.path;
     if (!postId) return;
     var question = document.getElementById('edit-poll-question').value.trim();
-    var opts = [
-      document.getElementById('edit-poll-opt1').value.trim(),
-      document.getElementById('edit-poll-opt2').value.trim(),
-      document.getElementById('edit-poll-opt3').value.trim(),
-      document.getElementById('edit-poll-opt4').value.trim()
-    ].filter(Boolean);
+    // Leer todas las opciones dinámicamente
+    var opts = [];
+    document.querySelectorAll('.poll-opt-row').forEach(function(row) {
+      var label = row.querySelector('.poll-opt-label-input').value.trim();
+      var image = row.querySelector('.poll-opt-img-input').value.trim();
+      if (label) opts.push(image ? { label: label, image: image } : label);
+    });
     var status = document.getElementById('poll-status');
     if (!question || opts.length < 2) { status.textContent = 'Need question + 2 options'; return; }
     try {
