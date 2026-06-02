@@ -180,6 +180,12 @@ export default {
       if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: corsH });
       }
+      if (path === '/api/debug') {
+        return new Response(JSON.stringify({
+          hasDB: !!env.DB,
+          envKeys: Object.keys(env).filter(k => k !== 'GOOGLE_CLIENT_SECRET' && k !== 'COOKIE_SECRET')
+        }), { headers: { 'Content-Type': 'application/json', ...corsH } });
+      }
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
       return new Response('Not found', { status: 404 });
