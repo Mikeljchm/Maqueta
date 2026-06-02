@@ -1052,14 +1052,15 @@
         div.appendChild(img);
         (function(photoIdx){
           div.addEventListener('click', function() {
-            var allImgs = window._wrestlerUnlocked
-              ? window._wrestlerPhotos.concat(window._wrestlerAdult)
-              : window._wrestlerPhotos;
-            if (allImgs.length > 0) {
-              window._viewerImgs = allImgs;
-              if (typeof window.openViewer === 'function') {
-                window.openViewer(photoIdx);
-              }
+            window._viewerImgs = window._wrestlerPhotos;
+            var viewer = document.getElementById('photo-viewer');
+            if (viewer && window._viewerImgs && window._viewerImgs.length > 0) {
+              var idx = Math.min(photoIdx, window._viewerImgs.length - 1);
+              document.getElementById('viewer-img').src = window._viewerImgs[idx];
+              document.getElementById('viewer-bg').style.backgroundImage = 'url(' + window._viewerImgs[idx] + ')';
+              document.getElementById('viewer-counter').textContent = (idx+1) + ' / ' + window._viewerImgs.length;
+              viewer.classList.add('open');
+              document.body.style.overflow = 'hidden';
             }
           });
         })(_loaded + i);
