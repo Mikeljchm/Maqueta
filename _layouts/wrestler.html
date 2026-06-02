@@ -950,17 +950,7 @@
     }
   },{passive:true});
 
-  // Init photo thumbs
-  document.addEventListener('DOMContentLoaded',function(){
-    document.querySelectorAll('.photo-thumb').forEach(function(t,i){
-      t.style.cursor='pointer';
-      t.addEventListener('click',function(){
-        var imgs=[];
-        document.querySelectorAll('.photo-thumb img').forEach(function(img){ imgs.push(img.src); });
-        lvOpen(imgs,i);
-      });
-    });
-  });
+  // Photo thumb clicks handled by pagination script
 
   // Tab switcher
   function switchTab(tab){
