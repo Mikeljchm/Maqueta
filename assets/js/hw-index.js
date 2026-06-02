@@ -138,11 +138,16 @@
       .catch(function() { if (emptyEl) emptyEl.style.display = 'flex'; });
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
+  function initProfiles() {
     loadProfiles('/assets/data/wrestlers.json', 'wrestlers-grid', 'wrestlers-pills', 'wrestlers-empty', 'wtag');
     loadStuds('/assets/data/studs.json', 'studs-list', 'studs-pills', 'studs-empty');
     loadProfiles('/assets/data/bulge.json', 'bulge-grid', 'bulge-pills', 'bulge-empty', 'bsport');
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initProfiles);
+  } else {
+    initProfiles();
+  }
 
 })();
 
@@ -260,7 +265,7 @@
     observer.observe(sentinel);
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
+  function initFeed() {
     fetch('/assets/data/posts.json')
       .then(function(r){ return r.json(); })
       .then(function(data) {
@@ -272,7 +277,12 @@
         var container = document.getElementById('feed-container');
         if (container) container.innerHTML = '<div class="empty-feed"><p>No posts yet.</p></div>';
       });
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFeed);
+  } else {
+    initFeed();
+  }
 })();
 
   /* AGE GATE — fuera del IIFE para q siempre funcione */
