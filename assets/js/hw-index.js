@@ -1107,7 +1107,7 @@ async function votePoll(postId, idx, poll, container) {
       +'<div class="card-body">'+titleHTML+descHTML+'</div>'+'<div class="card-poll" style="padding:0 0.8rem;"></div>'
       +'<div class="card-actions">'
       +'<button class="card-act-btn comment-toggle-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="comment-count">0</span></button>'
-      +'<button class="card-act-btn save-btn" data-id="'+(post.path||String(idx))+'" data-url="'+(post.url||'')+'\" data-img="'+(post.poster||post.image||'')+'\" data-title="'+escH(post.title||'')+'\" onclick="window.openCollectionsPanel(\"'+(post.path||String(idx))+'\",\"'+(post.url||'')+'\",\"'+(post.poster||post.image||'')+'\",\"'+escH(post.title||'')+'\")" ><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span class="save-count"></span></button>'
+      +'<button class="card-act-btn save-btn" data-id="'+(post.path||String(idx))+'" data-url="'+(post.url||'')+'" data-img="'+(post.poster||post.image||'')+'" data-title="'+escH(post.title||'')+'"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span class="save-count"></span></button>'
       +'<button class="card-act-btn like-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span class="like-count">0</span></button>'
       +'<button class="card-act-btn share-btn" data-url="'+post.url+'"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>'
       +'</div>'
@@ -1947,6 +1947,21 @@ async function votePoll(postId, idx, poll, container) {
       if (!id || id.includes('{')) return;
       if (typeof window.openCommentsPanel === 'function') {
         window.openCommentsPanel(id);
+      }
+    });
+
+    // Event delegation para save-btn (collections)
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.save-btn[data-id]');
+      if (btn) {
+        var id = btn.getAttribute('data-id');
+        var url = btn.getAttribute('data-url') || '';
+        var img = btn.getAttribute('data-img') || '';
+        var title = btn.getAttribute('data-title') || '';
+        if (typeof window.openCollectionsPanel === 'function') {
+          window.openCollectionsPanel(id, url, img, title);
+        }
+        return;
       }
     });
 
