@@ -875,8 +875,9 @@
       try {
         const r = await fetch('/api/likes?post_id=' + encodeURIComponent(id), { method: 'POST', credentials: 'include' });
         const d = await r.json();
+        toast('Resp: ' + JSON.stringify(d).slice(0,40));
         if (d.count !== undefined) { likes[id] = d.count; document.querySelectorAll('.like-btn[data-id="'+id+'"]').forEach(b => { const c = b.querySelector('.like-count'); if(c) c.textContent = fmt(d.count); }); }
-      } catch(e) {}
+      } catch(e) { toast('Error: ' + e.message); }
     }
 
     // Event delegation — funciona con cards creados dinámicamente
