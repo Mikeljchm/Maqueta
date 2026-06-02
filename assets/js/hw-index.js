@@ -1,3 +1,52 @@
+/* ── HASHTAG SUPPORT ── */
+(function(){
+  var hStyle = document.createElement('style');
+  hStyle.textContent = [
+    '.post-hashtag{color:var(--fire-orange);font-weight:600;cursor:pointer;text-decoration:none;}',
+    '.post-hashtag:hover{text-decoration:underline;}'
+  ].join('');
+  document.head.appendChild(hStyle);
+
+  window.hashtagify = function(text) {
+    if (!text) return '';
+    // Escapar HTML primero excepto los hashtags
+    var escaped = String(text)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+    // Convertir #hashtag en span clickeable
+    return escaped.replace(/(#[a-zA-Z0-9_À-ɏ]+)/g, function(tag) {
+      var clean = tag.slice(1).toLowerCase();
+      return '<span class="post-hashtag" onclick="window.filterByHashtag(''+clean+'')">'+tag+'</span>';
+    });
+  };
+
+  window.filterByHashtag = function(tag) {
+    // Intentar filtrar por categoría primero
+    var pills = document.querySelectorAll('.cat-pill[data-cat]');
+    var matched = false;
+    pills.forEach(function(pill) {
+      if (pill.getAttribute('data-cat') === tag) {
+        pill.click();
+        matched = true;
+        // Scroll al top del feed
+        var feed = document.getElementById('feed-container');
+        if (feed) feed.scrollIntoView({behavior:'smooth'});
+      }
+    });
+    // Si no hay pill exacta, filtrar el feed por tag libre
+    if (!matched) {
+      if (typeof window.setFeedFilter === 'function') {
+        window.setFeedFilter(tag);
+      }
+      // Scroll al top
+      var feed = document.getElementById('feed-container');
+      if (feed) feed.scrollIntoView({behavior:'smooth'});
+    }
+  };
+})();
+
 /* ── DOUBLE TAP LIKE + EMOJI EXPLOSION ── */
 (function(){
   var EMOJIS = ['❤️','😈','💋','😋','😏','💦','🪶','🍆','🍑','🔥'];
@@ -278,7 +327,7 @@
       mediaHTML = '<div class="card-media-container dtap-zone" data-postid="'+(post.path||String(idx))+'" data-posturl="'+post.url+'" data-liked="false"><div class="card-media-wrap"><a href="'+post.url+'" style="display:block;"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"><div class="card-photo-peek"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></a><a href="'+post.url+'" class="card-see-all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a></div>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
     }
 
-    var descHTML = post.description ? '<div class="card-desc collapsed" id="desc-'+idx+'">'+escH(post.description)+'</div><button class="card-read-more visible" data-desc="desc-'+idx+'">more</button>' : '';
+    var descHTML = post.description ? '<div class="card-desc collapsed" id="desc-'+idx+'">'+hashtagify(post.description)+'</div><button class="card-read-more visible" data-desc="desc-'+idx+'">more</button>' : '';
     var titleHTML = post.title ? '<div class="card-title"><a href="'+post.url+'">'+escH(post.title)+'</a></div>' : '';
 
     return '<article class="post-card'+(post.adult ? ' adult-card' : '')+'" data-cat="'+(post.category||'')+'" data-idx="'+idx+'" data-adult="'+(post.adult||false)+'" data-path="'+escH(post.path||'')+'" data-title="'+escH(post.title||'')+'" data-desc="'+escH(post.description||'')+'" data-category="'+(post.category||'')+'" data-poster="'+escH(post.poster||'')+'" data-date="'+(post.date||'')+'" data-images="'+escH(JSON.stringify(post.images||[]))+'" data-videos="'+escH(JSON.stringify(post.videos||[]))+'" data-links="'+escH(JSON.stringify(post.links||[]))+'" data-featured="'+(post.featured||false)+'">'
