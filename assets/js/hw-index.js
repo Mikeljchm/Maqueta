@@ -1,4 +1,85 @@
 
+/* ── DOUBLE TAP LIKE + EMOJI EXPLOSION ── */
+(function(){
+  var EMOJIS = ['\u2764\uFE0F','\uD83D\uDE08','\uD83D\uDC8B','\uD83D\uDE0B','\uD83D\uDE0F','\uD83D\uDCA6','\uD83E\uDEB6','\uD83C\uDF46','\uD83C\uDF51','\uD83D\uDD25'];
+  var lastTap = {};
+  var DELAY = 300;
+
+  // CSS
+  var style = document.createElement('style');
+  style.textContent = [
+    '.dtap-zone { position:relative; overflow:hidden; }',
+    '.dtap-emoji { position:absolute; pointer-events:none; font-size:3.5rem; transform:translate(-50%,-50%) scale(0); animation:dtap-pop 0.9s cubic-bezier(0.16,1,0.3,1) forwards; z-index:99; }',
+    '@keyframes dtap-pop {',
+    '  0%   { transform:translate(-50%,-50%) scale(0); opacity:1; }',
+    '  40%  { transform:translate(-50%,-80%) scale(1.3); opacity:1; }',
+    '  100% { transform:translate(-50%,-160%) scale(0.8); opacity:0; }',
+    '}',
+    '.like-btn.liked svg { fill:var(--fire-orange); stroke:var(--fire-orange); }',
+    '.like-btn svg { transition: fill 0.2s, stroke 0.2s, transform 0.15s; }',
+    '.like-btn.like-pop svg { transform: scale(1.4); }'
+  ].join('');
+  document.head.appendChild(style);
+
+  function spawnEmoji(container, x, y) {
+    var emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+    var el = document.createElement('div');
+    el.className = 'dtap-emoji';
+    el.textContent = emoji;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    container.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 900);
+  }
+
+  function triggerLike(container) {
+    var postId = container.getAttribute('data-postid');
+    if (!postId) return;
+    // Animar el botón like del card
+    var card = container.closest('.post-card');
+    if (!card) return;
+    var likeBtn = card.querySelector('.like-btn');
+    if (likeBtn) {
+      likeBtn.classList.add('liked', 'like-pop');
+      setTimeout(function(){ likeBtn.classList.remove('like-pop'); }, 200);
+      var countEl = likeBtn.querySelector('.like-count');
+      if (countEl) {
+        var cur = parseInt(countEl.textContent) || 0;
+        countEl.textContent = cur + 1;
+      }
+    }
+    // Llamar toggleLike si no estaba liked
+    if (container.getAttribute('data-liked') !== 'true') {
+      container.setAttribute('data-liked', 'true');
+      if (typeof window.toggleLikePublic === 'function') window.toggleLikePublic(postId);
+    }
+  }
+
+  document.addEventListener('touchend', function(e) {
+    var zone = e.target.closest('.dtap-zone');
+    if (!zone) return;
+    var id = zone.getAttribute('data-postid') || 'x';
+    var now = Date.now();
+    if (lastTap[id] && (now - lastTap[id]) < DELAY) {
+      // Double tap
+      lastTap[id] = 0;
+      e.preventDefault();
+      var rect = zone.getBoundingClientRect();
+      var touch = e.changedTouches[0];
+      var x = touch.clientX - rect.left;
+      var y = touch.clientY - rect.top;
+      // Lanzar 3 emojis en posiciones ligeramente diferentes
+      spawnEmoji(zone, x, y);
+      spawnEmoji(zone, x + (Math.random()*40-20), y + (Math.random()*40-20));
+      spawnEmoji(zone, x + (Math.random()*40-20), y + (Math.random()*40-20));
+      triggerLike(zone);
+    } else {
+      lastTap[id] = now;
+    }
+  }, { passive: false });
+
+})();
+
 /* ── PROFILES PAGINATION — wrestlers, studs, bulge ── */
 (function(){
 
@@ -169,11 +250,11 @@
 
     var mediaHTML = '';
     if (imgs.length === 1) {
-      mediaHTML = '<div class="card-media-container"><a href="'+post.url+'" class="card-media-wrap"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"></a>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
+      mediaHTML = '<div class="card-media-container dtap-zone" data-postid="'+(post.path||String(idx))+'" data-liked="false"><a href="'+post.url+'" class="card-media-wrap"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"></a>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
     } else if (imgs.length === 2) {
       mediaHTML = '<div class="card-media-container"><a href="'+post.url+'" class="card-media-wrap"><div class="card-duo-grid"><img src="'+imgs[0]+'" alt="" loading="lazy" decoding="async"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></a>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
     } else if (imgs.length > 2) {
-      mediaHTML = '<div class="card-media-container"><div class="card-media-wrap"><a href="'+post.url+'" style="display:block;"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"><div class="card-photo-peek"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></a><a href="'+post.url+'" class="card-see-all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a></div>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
+      mediaHTML = '<div class="card-media-container dtap-zone" data-postid="'+(post.path||String(idx))+'" data-liked="false"><div class="card-media-wrap"><a href="'+post.url+'" style="display:block;"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"><div class="card-photo-peek"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></a><a href="'+post.url+'" class="card-see-all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a></div>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
     }
 
     var descHTML = post.description ? '<div class="card-desc collapsed" id="desc-'+idx+'">'+escH(post.description)+'</div><button class="card-read-more visible" data-desc="desc-'+idx+'">more</button>' : '';
@@ -877,6 +958,10 @@
       });
     };
 
+    window.toggleLikePublic = async function(id) {
+      if (!id || id.includes('{')) return;
+      return toggleLike(id);
+    };
     async function toggleLike(id) {
       if (!id || id.includes('{')) return;
       const wasLiked = liked.has(id);
