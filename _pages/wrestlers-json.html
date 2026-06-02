@@ -1,7 +1,0 @@
----
-layout: none
-permalink: /assets/data/wrestlers.json
----
-[{% for w in site.wrestlers %}{% unless forloop.first %},{% endunless %}
-{"url":"{{ w.url }}","title":{{ w.title | jsonify }},"tag":"{{ w.tag }}","photo":{{ w.photo | default: "" | jsonify }},"image":{{ w.images | first | default: "" | jsonify }},"bio":{{ w.bio | default: "" | truncatewords: 8 | jsonify }}}{% endfor %}
-]
