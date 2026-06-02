@@ -260,66 +260,6 @@
     observer.observe(sentinel);
   }
 
-  // Cargar el JSON y arrancar
-  function loadStuds(jsonUrl, listId, pillsId, emptyId) {
-    var list = document.getElementById(listId);
-    var pillsEl = document.getElementById(pillsId);
-    var emptyEl = document.getElementById(emptyId);
-    if (!list) return;
-    fetch(jsonUrl)
-      .then(function(r){ return r.json(); })
-      .then(function(data) {
-        if (!data || data.length === 0) {
-          if (emptyEl) emptyEl.style.display = 'flex';
-          return;
-        }
-        // Pills
-        if (pillsEl) {
-          var cats = [...new Set(data.map(function(s){ return s.tag||''; }).filter(Boolean))];
-          cats.forEach(function(cat) {
-            var btn = document.createElement('button');
-            btn.className = 'cat-pill';
-            btn.setAttribute('data-scat', cat);
-            btn.textContent = cat.replace(/-/g,' ').toUpperCase();
-            btn.onclick = function() {
-              pillsEl.querySelectorAll('.cat-pill').forEach(function(b){ b.classList.remove('active'); });
-              btn.classList.add('active');
-              list.querySelectorAll('.badboy-card').forEach(function(card) {
-                card.style.display = (card.getAttribute('data-scat') === cat) ? '' : 'none';
-              });
-            };
-            pillsEl.appendChild(btn);
-          });
-          var allPill = pillsEl.querySelector('[data-scat="all"]');
-          if (allPill) allPill.onclick = function() {
-            pillsEl.querySelectorAll('.cat-pill').forEach(function(b){ b.classList.remove('active'); });
-            allPill.classList.add('active');
-            list.querySelectorAll('.badboy-card').forEach(function(c){ c.style.display = ''; });
-          };
-        }
-        // Cards
-        data.forEach(function(s) {
-          var photo = s.photo || s.image || '';
-          var tag = s.tag || '';
-          var div = document.createElement('a');
-          div.href = s.url;
-          div.className = 'badboy-card reveal';
-          div.setAttribute('data-scat', tag);
-          div.style.textDecoration = 'none';
-          div.innerHTML = '<div class="mugshot-wrap">'
-            +(photo ? '<img src="'+escH(photo)+'" alt="'+escH(s.title||'')+'" loading="lazy">' : '')
-            +'<div class="mugshot-label">'+escH(tag || 'STUD').replace(/-/g,' ').toUpperCase()+'</div>'
-            +'</div>'
-            +'<div class="badboy-info">'
-            +'<div class="badboy-name">'+escH(s.title||'')+'</div>'
-            +(s.bio ? '<div class="badboy-desc">'+escH(s.bio)+'</div>' : '')
-            +'</div>';
-          list.appendChild(div);
-        });
-      })
-      .catch(function() { if (emptyEl) emptyEl.style.display = 'flex'; });
-  }
-
   document.addEventListener('DOMContentLoaded', function() {
     fetch('/assets/data/posts.json')
       .then(function(r){ return r.json(); })
