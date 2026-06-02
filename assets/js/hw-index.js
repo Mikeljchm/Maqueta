@@ -159,7 +159,9 @@ async function votePoll(postId, idx, poll, container) {
     '.dtap-emoji{position:absolute;pointer-events:none;font-size:3.5rem;transform:translate(-50%,-50%) scale(0);animation:dtap-pop 0.9s cubic-bezier(0.16,1,0.3,1) forwards;z-index:99;}',
     '@keyframes dtap-pop{0%{transform:translate(-50%,-50%) scale(0);opacity:1;}40%{transform:translate(-50%,-80%) scale(1.4);opacity:1;}100%{transform:translate(-50%,-170%) scale(0.8);opacity:0;}}',
     '.like-btn.liked svg{fill:var(--fire-orange);stroke:var(--fire-orange);}',
-    '.like-btn svg{transition:fill 0.2s,stroke 0.2s,transform 0.15s;}',
+    '.like-btn svg{transition:fill 0.25s,stroke 0.25s;}',
+    '.like-btn.like-pop svg{animation:like-pop 0.45s cubic-bezier(0.16,1,0.3,1) forwards;}',
+    '@keyframes like-pop{0%{transform:scale(1);}15%{transform:scale(0.75);}50%{transform:scale(1.45);}75%{transform:scale(1.15);}100%{transform:scale(1);}}',
     '.like-btn-emoji{display:inline-block;font-size:1.2rem;animation:like-emoji-pop 1s cubic-bezier(0.16,1,0.3,1) forwards;}',
     '@keyframes like-emoji-pop{0%{transform:scale(0);opacity:1;}40%{transform:scale(1.6);opacity:1;}70%{transform:scale(1.2);opacity:1;}100%{transform:scale(1);opacity:1;}}'
   ].join('');
@@ -1146,6 +1148,12 @@ async function votePoll(postId, idx, poll, container) {
       likes[id] = newCount;
       document.querySelectorAll('.like-btn[data-id="'+id+'"]').forEach(btn => {
         btn.classList.toggle('liked', !wasLiked);
+        if (!wasLiked) {
+          btn.classList.remove('like-pop');
+          void btn.querySelector('svg') && btn.querySelector('svg').offsetWidth;
+          btn.classList.add('like-pop');
+          setTimeout(function(){ btn.classList.remove('like-pop'); }, 450);
+        }
         const countEl = btn.querySelector('.like-count');
         if (countEl) countEl.textContent = fmt(newCount);
       });
