@@ -1,3 +1,136 @@
+
+/* -- STICKERS EN COMENTARIOS -- */
+(function(){
+  var TOTAL_PAGES = 16;
+  var currentPage = 0;
+  var stickers = [];
+  var panelOpen = false;
+  var activePostId = null;
+
+  var style = document.createElement('style');
+  style.textContent = [
+    '.sticker-btn{background:none;border:none;cursor:pointer;padding:0.3rem;color:var(--text-dim);font-size:1.1rem;vertical-align:middle;}',
+    '.sticker-btn:hover{color:var(--fire-orange);}',
+    '.sticker-panel{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);width:min(360px,95vw);background:var(--surface-2);border:1px solid var(--border);border-radius:16px;z-index:999;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.6);}',
+    '.sticker-panel-header{display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.9rem;border-bottom:1px solid var(--border);}',
+    '.sticker-panel-title{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.05em;color:var(--fire-orange);}',
+    '.sticker-panel-close{background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;}',
+    '.sticker-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:0.6rem;max-height:240px;overflow-y:auto;}',
+    '.sticker-item{aspect-ratio:1;cursor:pointer;border-radius:8px;overflow:hidden;background:var(--surface-3);}',
+    '.sticker-item video{width:100%;height:100%;object-fit:cover;}',
+    '.sticker-item:hover{background:var(--surface);}',
+    '.sticker-panel-nav{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.9rem;border-top:1px solid var(--border);}',
+    '.sticker-nav-btn{background:none;border:1px solid var(--border);color:var(--text);padding:0.3rem 0.8rem;border-radius:8px;cursor:pointer;font-size:0.75rem;}',
+    '.sticker-nav-btn:hover{border-color:var(--fire-orange);color:var(--fire-orange);}',
+    '.sticker-page-info{font-size:0.75rem;color:var(--text-dim);}',
+    '.comment-sticker{max-width:80px;border-radius:8px;display:block;}'
+  ].join('');
+  document.head.appendChild(style);
+
+  // Crear panel una sola vez
+  var panel = document.createElement('div');
+  panel.className = 'sticker-panel';
+  panel.style.display = 'none';
+  panel.innerHTML = '<div class="sticker-panel-header">'
+    + '<span class="sticker-panel-title">STICKERS</span>'
+    + '<button class="sticker-panel-close" onclick="window.closeStickerPanel()">&#10005;</button>'
+    + '</div>'
+    + '<div class="sticker-grid" id="sticker-grid"></div>'
+    + '<div class="sticker-panel-nav">'
+    + '<button class="sticker-nav-btn" onclick="window.stickerPrev()">&#8592; Prev</button>'
+    + '<span class="sticker-page-info" id="sticker-page-info">1 / ' + TOTAL_PAGES + '</span>'
+    + '<button class="sticker-nav-btn" onclick="window.stickerNext()">Next &#8594;</button>'
+    + '</div>';
+  document.body.appendChild(panel);
+
+  function loadPage(page) {
+    var grid = document.getElementById('sticker-grid');
+    var info = document.getElementById('sticker-page-info');
+    if (!grid) return;
+    grid.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-dim);font-size:0.8rem;">Loading...</div>';
+    fetch('/assets/data/stickers_' + page + '.json')
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        stickers = data;
+        currentPage = page;
+        if (info) info.textContent = (page+1) + ' / ' + TOTAL_PAGES;
+        grid.innerHTML = '';
+        data.forEach(function(url) {
+          var item = document.createElement('div');
+          item.className = 'sticker-item';
+          item.innerHTML = '<video src="' + url + '" autoplay loop muted playsinline></video>';
+          item.addEventListener('click', function() {
+            sendSticker(url);
+          });
+          grid.appendChild(item);
+        });
+      })
+      .catch(function() {
+        grid.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-dim);">Error loading</div>';
+      });
+  }
+
+  function sendSticker(url) {
+    if (!activePostId) return;
+    // Enviar como comentario con URL del sticker
+    var marker = '[sticker]' + url + '[/sticker]';
+    fetch('/api/comments?post_id=' + encodeURIComponent(activePostId), {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: marker })
+    }).then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.ok || d.id) {
+        // Agregar al DOM
+        var listEl = document.getElementById('clist-' + activePostId);
+        if (!listEl) {
+          // Buscar por selector más flexible
+          var btn = document.querySelector('.comment-toggle-btn[data-id="' + activePostId + '"]');
+          if (btn) {
+            var card = btn.closest('.post-card');
+            if (card) listEl = card.querySelector('.comments-list');
+          }
+        }
+        if (listEl) {
+          var div = document.createElement('div');
+          div.className = 'comment-item';
+          div.innerHTML = '<video class="comment-sticker" src="' + url + '" autoplay loop muted playsinline></video>';
+          listEl.appendChild(div);
+        }
+        window.closeStickerPanel();
+      }
+    }).catch(function(){});
+  }
+
+  window.openStickerPanel = function(postId) {
+    activePostId = postId;
+    panel.style.display = 'block';
+    panelOpen = true;
+    loadPage(0);
+  };
+
+  window.closeStickerPanel = function() {
+    panel.style.display = 'none';
+    panelOpen = false;
+  };
+
+  window.stickerNext = function() {
+    if (currentPage < TOTAL_PAGES - 1) loadPage(currentPage + 1);
+  };
+
+  window.stickerPrev = function() {
+    if (currentPage > 0) loadPage(currentPage - 1);
+  };
+
+  // Cerrar al tocar fuera
+  document.addEventListener('click', function(e) {
+    if (panelOpen && !panel.contains(e.target) && !e.target.closest('.sticker-btn')) {
+      window.closeStickerPanel();
+    }
+  });
+})();
+
 /* -- POLLS v2 -- */
 (function(){
   var s = document.createElement('style');
