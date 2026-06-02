@@ -232,8 +232,8 @@
     var loader = document.getElementById('feed-loader');
     if (loader) loader.style.display = 'none';
     LOADING = false;
-    // Cargar likes para los nuevos cards
-    if (typeof loadAllLikes === 'function') loadAllLikes();
+    // Cargar likes para los nuevos cards — setTimeout asegura que loadAllLikes ya esté definida
+    setTimeout(function(){ if (typeof window.loadAllLikes === 'function') window.loadAllLikes(); }, 100);
 
     // Si no hay más posts ocultar sentinel
     var sentinel = document.getElementById('feed-sentinel');
@@ -843,7 +843,7 @@
     let liked = new Set(JSON.parse(localStorage.getItem(likedKey)||'[]'));
     let likes = {};
 
-    async function loadAllLikes() {
+    window.loadAllLikes = async function loadAllLikes() {
       // Cargar likes por post individualmente cuando se necesite
       document.querySelectorAll('.like-btn[data-id]').forEach(async btn => {
         const id = btn.dataset.id;
@@ -861,7 +861,6 @@
 
     async function toggleLike(id) {
       if (!id || id.includes('{')) return;
-      toast('ID: ' + id.slice(0,30));
       const wasLiked = liked.has(id);
       if (wasLiked) { liked.delete(id); } else { liked.add(id); }
       localStorage.setItem(likedKey, JSON.stringify([...liked]));
@@ -875,9 +874,8 @@
       try {
         const r = await fetch('/api/likes?post_id=' + encodeURIComponent(id), { method: 'POST', credentials: 'include' });
         const d = await r.json();
-        toast('Resp: ' + JSON.stringify(d).slice(0,40));
         if (d.count !== undefined) { likes[id] = d.count; document.querySelectorAll('.like-btn[data-id="'+id+'"]').forEach(b => { const c = b.querySelector('.like-count'); if(c) c.textContent = fmt(d.count); }); }
-      } catch(e) { toast('Error: ' + e.message); }
+      } catch(e) {}
     }
 
     // Event delegation — funciona con cards creados dinámicamente
@@ -887,7 +885,7 @@
         toggleLike(btn.dataset.id);
       }
     });
-    loadAllLikes();
+    if (typeof window.loadAllLikes === 'function') window.loadAllLikes();
 
     /* SAVE */
     const savedKey = 'hw_saved';
