@@ -1,0 +1,4 @@
+---
+layout: none
+---
+{% assign all_photos = "" | split: "" %}{% if page.photo and page.photo != "" %}{% assign all_photos = all_photos | push: page.photo %}{% endif %}{% if page.images %}{% for img in page.images %}{% if img and img != "" %}{% assign all_photos = all_photos | push: img %}{% endif %}{% endfor %}{% endif %}{% assign all_photos = all_photos | uniq | compact %}{"photos":{{ all_photos | jsonify }},"adult":{{ page.adult_images | default: "[]" | jsonify }},"videos":{{ page.videos | default: "[]" | jsonify }}}
