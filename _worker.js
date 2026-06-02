@@ -447,6 +447,100 @@ async function handleCreateProfile(request, env, corsH) {
 }
 
 
+
+async function handlePolls(request, env, corsH) {
+  const url = new URL(request.url);
+  const post_id = url.searchParams.get('post_id');
+  if (!post_id) return apiJson({ error: 'post_id required' }, 400, corsH);
+
+  // Crear tablas si no existen
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS polls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id TEXT NOT NULL,
+    question TEXT NOT NULL,
+    options TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS poll_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id TEXT NOT NULL,
+    option_idx INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    UNIQUE(post_id, user_id)
+  )`).run();
+
+  if (request.method === 'GET') {
+    // Obtener encuesta y votos
+    const { results: pollRows } = await env.DB.prepare(
+      'SELECT * FROM polls WHERE post_id = ? LIMIT 1'
+    ).bind(post_id).all();
+    if (!pollRows.length) return apiJson({ poll: null }, 200, corsH);
+    const poll = pollRows[0];
+    const options = JSON.parse(poll.options);
+    // Contar votos por opción
+    const { results: votes } = await env.DB.prepare(
+      'SELECT option_idx, COUNT(*) as count FROM poll_votes WHERE post_id = ? GROUP BY option_idx'
+    ).bind(post_id).all();
+    const counts = new Array(options.length).fill(0);
+    votes.forEach(v => { counts[v.option_idx] = v.count; });
+    const total = counts.reduce((a,b) => a+b, 0);
+    // Ver si el usuario ya votó
+    const session = getSession(request);
+    let userVote = null;
+    if (session) {
+      const { results: uv } = await env.DB.prepare(
+        'SELECT option_idx FROM poll_votes WHERE post_id = ? AND user_id = ?'
+      ).bind(post_id, session.id).all();
+      if (uv.length) userVote = uv[0].option_idx;
+    }
+    return apiJson({ poll: { question: poll.question, options, counts, total, userVote }}, 200, corsH);
+  }
+
+  if (request.method === 'POST') {
+    const session = getSession(request);
+    const body = await request.json();
+    // Admin puede crear/actualizar encuesta
+    const adminCookie = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
+    if (body.action === 'create' && adminCookie) {
+      const { question, options } = body;
+      if (!question || !options || options.length < 2) return apiJson({ error: 'Invalid poll' }, 400, corsH);
+      const { results: existing } = await env.DB.prepare('SELECT id FROM polls WHERE post_id = ?').bind(post_id).all();
+      if (existing.length) {
+        await env.DB.prepare('UPDATE polls SET question=?,options=? WHERE post_id=?')
+          .bind(question, JSON.stringify(options.slice(0,4)), post_id).run();
+        await env.DB.prepare('DELETE FROM poll_votes WHERE post_id=?').bind(post_id).run();
+      } else {
+        await env.DB.prepare('INSERT INTO polls (post_id,question,options) VALUES (?,?,?)')
+          .bind(post_id, question, JSON.stringify(options.slice(0,4))).run();
+      }
+      return apiJson({ ok: true }, 200, corsH);
+    }
+    // Usuario vota
+    if (body.action === 'vote') {
+      if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+      const { option_idx } = body;
+      if (option_idx === undefined) return apiJson({ error: 'option_idx required' }, 400, corsH);
+      try {
+        await env.DB.prepare('INSERT INTO poll_votes (post_id,option_idx,user_id) VALUES (?,?,?)')
+          .bind(post_id, option_idx, session.id).run();
+      } catch(e) {
+        // Ya votó — no hacer nada
+      }
+      // Devolver resultados actualizados
+      const { results: votes } = await env.DB.prepare(
+        'SELECT option_idx, COUNT(*) as count FROM poll_votes WHERE post_id = ? GROUP BY option_idx'
+      ).bind(post_id).all();
+      const { results: pollRows } = await env.DB.prepare('SELECT options FROM polls WHERE post_id=?').bind(post_id).all();
+      const options = JSON.parse(pollRows[0].options);
+      const counts = new Array(options.length).fill(0);
+      votes.forEach(v => { counts[v.option_idx] = v.count; });
+      return apiJson({ ok: true, counts, total: counts.reduce((a,b)=>a+b,0), userVote: option_idx }, 200, corsH);
+    }
+    return apiJson({ error: 'Invalid action' }, 400, corsH);
+  }
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -486,6 +580,7 @@ export default {
       }
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
+      if (path === '/api/polls') return handlePolls(request, env, corsH);
       if (path === '/api/save') return handleSave(request, env, corsH);
       if (path === '/api/create') return handleCreate(request, env, corsH);
       if (path === '/api/delete') return handleDelete(request, env, corsH);
