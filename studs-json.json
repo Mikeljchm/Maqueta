@@ -1,0 +1,7 @@
+---
+layout: none
+permalink: /assets/data/studs.json
+---
+[{% assign all_studs = site.studs | concat: site.badboys %}{% for s in all_studs %}{% unless forloop.first %},{% endunless %}
+{"url":"{{ s.url }}","title":{{ s.title | jsonify }},"tag":"{{ s.tag | default: s.category | default: "" }}","photo":{{ s.mugshot | default: s.photo | default: "" | jsonify }},"image":{{ s.images | first | default: "" | jsonify }},"bio":{{ s.bio | default: s.description | default: "" | truncatewords: 8 | jsonify }}}{% endfor %}
+]
