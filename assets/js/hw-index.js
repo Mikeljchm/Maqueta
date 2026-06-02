@@ -1,25 +1,29 @@
-
-/* ── POLLS ── */
+/* -- POLLS v2 -- */
 (function(){
   var s = document.createElement('style');
   s.textContent = [
-    '.poll-container{margin:0.8rem 0;padding:0.8rem;background:var(--surface-2);border-radius:12px;border:1px solid var(--border);}',
-    '.poll-question{font-family:var(--font-d);font-size:1rem;color:var(--text);margin-bottom:0.7rem;letter-spacing:0.03em;}',
-    '.poll-option{position:relative;margin:0.4rem 0;border-radius:8px;overflow:hidden;cursor:pointer;background:var(--surface-3);border:1px solid var(--border);transition:border-color 0.2s;}',
-    '.poll-option:hover{border-color:var(--fire-orange);}',
-    '.poll-option.voted{border-color:var(--fire-orange);}',
-    '.poll-option-bar{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--fire-deep),var(--fire-red));opacity:0.35;transition:width 0.6s cubic-bezier(0.16,1,0.3,1);border-radius:8px;}',
-    '.poll-option-label{position:relative;display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.8rem;font-size:0.85rem;color:var(--text);}',
-    '.poll-option-pct{font-family:var(--font-d);font-size:0.9rem;color:var(--fire-orange);}',
-    '.poll-total{font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;text-align:right;}',
-    '.poll-disabled .poll-option{cursor:default;}',
-    '.poll-disabled .poll-option:hover{border-color:var(--border);}'
+    '.poll-container{margin:0;padding:0.9rem 1rem;border-top:1px solid var(--border);}',
+    '.poll-question{font-family:var(--font-d);font-size:1rem;letter-spacing:0.04em;margin-bottom:0.7rem;color:var(--text);}',
+    '.poll-opt{display:flex;align-items:center;margin:0.4rem 0;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color 0.2s;}',
+    '.poll-opt:hover{border-color:var(--fire-orange);}',
+    '.poll-opt.winner{border-color:var(--fire-orange);}',
+    '.poll-opt.my-vote{border-color:var(--fire-red);}',
+    '.poll-opt-img{width:52px;height:52px;object-fit:cover;flex-shrink:0;}',
+    '.poll-opt-placeholder{width:52px;height:52px;flex-shrink:0;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;}',
+    '.poll-opt-body{flex:1;padding:0.45rem 0.5rem;}',
+    '.poll-opt-label{font-size:0.85rem;font-weight:600;}',
+    '.poll-opt-track{height:4px;background:var(--surface-3);border-radius:2px;margin-top:0.35rem;overflow:hidden;}',
+    '.poll-opt-fill{height:100%;background:linear-gradient(90deg,var(--fire-orange),var(--fire-red));border-radius:2px;transition:width 0.8s cubic-bezier(0.16,1,0.3,1);}',
+    '.poll-opt-pct{font-family:var(--font-d);font-size:0.9rem;color:var(--fire-orange);padding-right:0.7rem;flex-shrink:0;}',
+    '.poll-total{font-size:0.7rem;color:var(--text-dim);text-align:right;margin-top:0.35rem;}',
+    '.poll-collage{width:100%;display:grid;gap:2px;}',
+    '.poll-collage img{width:100%;aspect-ratio:1;object-fit:cover;display:block;}',
+    '.poll-disabled .poll-opt{cursor:default;}',
+    '.poll-disabled .poll-opt:hover{border-color:var(--border);}'
   ].join('');
   document.head.appendChild(s);
 })();
 
-
-/* ── POLL LOADER ── */
 window.loadPoll = async function(postId, container) {
   if (!postId || !container) return;
   try {
@@ -32,26 +36,49 @@ window.loadPoll = async function(postId, container) {
 
 function renderPoll(postId, poll, container) {
   var voted = poll.userVote !== null && poll.userVote !== undefined;
-  var html = '<div class="poll-container' + (voted ? ' poll-disabled' : '') + '" id="poll-' + postId.replace(/[^a-z0-9]/gi,'-') + '">';
-  html += '<div class="poll-question">' + poll.question + '</div>';
+  var total = poll.total || 0;
+  var imgs = poll.options.map(function(o){ return (o && o.image) ? o.image : ''; }).filter(Boolean);
+  var collageHTML = '';
+  if (imgs.length > 0) {
+    var cols = imgs.length === 1 ? 1 : 2;
+    collageHTML = '<div class="poll-collage" style="grid-template-columns:repeat(' + cols + ',1fr);">';
+    imgs.forEach(function(src){ collageHTML += '<img src="' + src + '" loading="lazy">'; });
+    collageHTML += '</div>';
+  }
+  var optsHTML = '';
   poll.options.forEach(function(opt, i) {
-    var pct = poll.total > 0 ? Math.round((poll.counts[i] / poll.total) * 100) : 0;
-    var isVoted = poll.userVote === i;
-    html += '<div class="poll-option' + (isVoted ? ' voted' : '') + '" data-idx="' + i + '">';
-    html += '<div class="poll-option-bar" style="width:' + (voted ? pct : 0) + '%"></div>';
-    html += '<div class="poll-option-label"><span>' + opt + (isVoted ? ' ✔' : '') + '</span>';
-    html += voted ? '<span class="poll-option-pct">' + pct + '%</span>' : '';
-    html += '</div></div>';
+    var count = poll.counts[i] || 0;
+    var pct = total > 0 ? Math.round((count / total) * 100) : 0;
+    var maxCount = Math.max.apply(null, poll.counts);
+    var isWinner = voted && poll.counts[i] === maxCount && maxCount > 0;
+    var isMyVote = poll.userVote === i;
+    var cls = isWinner ? ' winner' : '';
+    if (isMyVote) cls += ' my-vote';
+    var label = (opt && opt.label) ? opt.label : (typeof opt === 'string' ? opt : '');
+    var imgSrc = (opt && opt.image) ? opt.image : '';
+    var imgHTML = imgSrc
+      ? '<img class="poll-opt-img" src="' + imgSrc + '" loading="lazy">'
+      : '<div class="poll-opt-placeholder">&#128100;</div>';
+    optsHTML += '<div class="poll-opt' + cls + '" data-idx="' + i + '">'
+      + imgHTML
+      + '<div class="poll-opt-body">'
+      + '<div class="poll-opt-label">' + label + (isMyVote ? ' &#10004;' : '') + '</div>'
+      + (voted ? '<div class="poll-opt-track"><div class="poll-opt-fill" style="width:' + pct + '%"></div></div>' : '')
+      + '</div>'
+      + (voted ? '<div class="poll-opt-pct">' + pct + '%</div>' : '')
+      + '</div>';
   });
-  html += '<div class="poll-total">' + poll.total + ' vote' + (poll.total !== 1 ? 's' : '') + '</div>';
-  html += '</div>';
+  var html = collageHTML
+    + '<div class="poll-container' + (voted ? ' poll-disabled' : '') + '">'
+    + '<div class="poll-question">' + poll.question + '</div>'
+    + optsHTML
+    + '<div class="poll-total">' + total + ' vote' + (total !== 1 ? 's' : '') + '</div>'
+    + '</div>';
   container.innerHTML = html;
-
   if (!voted) {
-    container.querySelectorAll('.poll-option').forEach(function(opt) {
+    container.querySelectorAll('.poll-opt').forEach(function(opt) {
       opt.addEventListener('click', function() {
-        var idx = parseInt(opt.getAttribute('data-idx'));
-        votePoll(postId, idx, poll, container);
+        votePoll(postId, parseInt(opt.getAttribute('data-idx')), poll, container);
       });
     });
   }
@@ -60,20 +87,15 @@ function renderPoll(postId, poll, container) {
 async function votePoll(postId, idx, poll, container) {
   try {
     var r = await fetch('/api/polls?post_id=' + encodeURIComponent(postId), {
-      method: 'POST',
-      credentials: 'include',
+      method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'vote', option_idx: idx })
     });
     var d = await r.json();
-    if (d.ok) {
-      poll.counts = d.counts;
-      poll.total = d.total;
-      poll.userVote = d.userVote;
-      renderPoll(postId, poll, container);
-    }
+    if (d.ok) { poll.counts = d.counts; poll.total = d.total; poll.userVote = d.userVote; renderPoll(postId, poll, container); }
   } catch(e) {}
 }
+
 
 /* ── HASHTAG SUPPORT ── */
 (function(){
