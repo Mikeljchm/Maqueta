@@ -541,6 +541,111 @@ async function handlePolls(request, env, corsH) {
   return apiJson({ error: 'Method not allowed' }, 405, corsH);
 }
 
+
+async function handleCollections(request, env, corsH) {
+  // Crear tablas si no existen
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS collections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS collection_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    collection_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    post_id TEXT NOT NULL,
+    post_url TEXT,
+    post_image TEXT,
+    post_title TEXT,
+    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(collection_id, post_id)
+  )`).run();
+
+  const session = getSession(request);
+  if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+  const uid = session.id;
+  const url = new URL(request.url);
+  const action = url.searchParams.get('action');
+
+  if (request.method === 'GET') {
+    if (action === 'items') {
+      // Get items of a collection
+      const col_id = url.searchParams.get('col_id');
+      if (!col_id) return apiJson({ error: 'col_id required' }, 400, corsH);
+      const { results } = await env.DB.prepare(
+        'SELECT * FROM collection_items WHERE collection_id=? AND user_id=? ORDER BY added_at DESC'
+      ).bind(col_id, uid).all();
+      return apiJson({ items: results }, 200, corsH);
+    }
+    // Get all collections for user
+    const { results } = await env.DB.prepare(
+      'SELECT c.*, COUNT(ci.id) as count FROM collections c LEFT JOIN collection_items ci ON c.id=ci.collection_id WHERE c.user_id=? GROUP BY c.id ORDER BY c.created_at DESC'
+    ).bind(uid).all();
+    // For each collection get first 4 images
+    for (var col of results) {
+      const { results: imgs } = await env.DB.prepare(
+        'SELECT post_image FROM collection_items WHERE collection_id=? AND post_image!='' LIMIT 4'
+      ).bind(col.id).all();
+      col.images = imgs.map(function(i){ return i.post_image; });
+    }
+    return apiJson({ collections: results }, 200, corsH);
+  }
+
+  if (request.method === 'POST') {
+    const body = await request.json();
+
+    if (action === 'create') {
+      const { name } = body;
+      if (!name) return apiJson({ error: 'name required' }, 400, corsH);
+      const result = await env.DB.prepare(
+        'INSERT INTO collections (user_id, name) VALUES (?, ?)'
+      ).bind(uid, name.trim()).run();
+      return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
+    }
+
+    if (action === 'save') {
+      const { col_id, post_id, post_url, post_image, post_title } = body;
+      if (!col_id || !post_id) return apiJson({ error: 'col_id and post_id required' }, 400, corsH);
+      // Check ownership
+      const { results: own } = await env.DB.prepare(
+        'SELECT id FROM collections WHERE id=? AND user_id=?'
+      ).bind(col_id, uid).all();
+      if (!own.length) return apiJson({ error: 'Not your collection' }, 403, corsH);
+      try {
+        await env.DB.prepare(
+          'INSERT INTO collection_items (collection_id, user_id, post_id, post_url, post_image, post_title) VALUES (?,?,?,?,?,?)'
+        ).bind(col_id, uid, post_id, post_url||'', post_image||'', post_title||'').run();
+        return apiJson({ ok: true, saved: true }, 200, corsH);
+      } catch(e) {
+        // Already saved — remove it (toggle)
+        await env.DB.prepare(
+          'DELETE FROM collection_items WHERE collection_id=? AND user_id=? AND post_id=?'
+        ).bind(col_id, uid, post_id).run();
+        return apiJson({ ok: true, saved: false }, 200, corsH);
+      }
+    }
+
+    if (action === 'delete') {
+      const { col_id } = body;
+      if (!col_id) return apiJson({ error: 'col_id required' }, 400, corsH);
+      await env.DB.prepare('DELETE FROM collection_items WHERE collection_id=? AND user_id=?').bind(col_id, uid).run();
+      await env.DB.prepare('DELETE FROM collections WHERE id=? AND user_id=?').bind(col_id, uid).run();
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    if (action === 'check') {
+      // Check if post is saved in any collection
+      const { post_id } = body;
+      const { results } = await env.DB.prepare(
+        'SELECT collection_id FROM collection_items WHERE user_id=? AND post_id=?'
+      ).bind(uid, post_id).all();
+      return apiJson({ saved_in: results.map(function(r){ return r.collection_id; }) }, 200, corsH);
+    }
+  }
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -581,6 +686,7 @@ export default {
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
       if (path === '/api/polls') return handlePolls(request, env, corsH);
+      if (path === '/api/collections') return handleCollections(request, env, corsH);
       if (path === '/api/save') return handleSave(request, env, corsH);
       if (path === '/api/create') return handleCreate(request, env, corsH);
       if (path === '/api/delete') return handleDelete(request, env, corsH);
