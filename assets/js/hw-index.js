@@ -1028,7 +1028,11 @@ async function votePoll(postId, idx, poll, container) {
         const div = document.createElement('div'); div.className = 'comment-item';
         const av = userAvatar ? '<img src="'+userAvatar+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">' : '<div class="comment-av">'+(userName||'HW').charAt(0).toUpperCase()+'</div>';
         const name = userName ? '<span class="comment-username">'+userName+'</span>' : '';
-        div.innerHTML = av + '<div class="comment-body">'+name+'<div class="comment-text">'+text+'</div></div>';
+        var stickerMatch = text ? text.match(/\[sticker\](.*?)\[\/sticker\]/) : null;
+        var bodyContent = stickerMatch
+          ? '<video class="comment-sticker" src="'+stickerMatch[1]+'" autoplay loop muted playsinline style="max-width:80px;border-radius:8px;display:block;"></video>'
+          : '<div class="comment-text">'+text+'</div>';
+        div.innerHTML = av + '<div class="comment-body">'+name+bodyContent+'</div>';
         if (animate) { div.style.cssText='opacity:0;transform:translateY(5px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
         list.appendChild(div);
       }
