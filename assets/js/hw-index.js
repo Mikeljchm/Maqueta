@@ -1606,18 +1606,7 @@ async function votePoll(postId, idx, poll, container) {
       }
     }
 
-    document.querySelectorAll('.save-btn[data-id]').forEach(btn => {
-      const id = btn.dataset.id;
-      if (!id || id.includes('{')) return;
-      if (savedIds.has(id)) btn.classList.add('saved');
-      btn.addEventListener('click', () => {
-        if (savedIds.has(id)) { savedIds.delete(id); toast('Removed'); }
-        else { savedIds.add(id); toast('Saved!'); }
-        btn.classList.toggle('saved', savedIds.has(id));
-        localStorage.setItem(savedKey, JSON.stringify([...savedIds]));
-        renderSavedGrid();
-      });
-    });
+    // save-btn handled by collections event delegation below
 
     /* Render saved when navigating to More */
     document.querySelectorAll('.nav-item[data-page="more"]').forEach(btn => {
