@@ -1669,11 +1669,13 @@ async function votePoll(postId, idx, poll, container) {
     // Event delegation para save-btn (collections)
     document.addEventListener('click', function(e) {
       var btn = e.target.closest('.save-btn[data-id]');
+      toast('click: ' + (btn ? 'btn found id=' + btn.getAttribute('data-id').slice(0,15) : 'no btn'));
       if (btn) {
         var id = btn.getAttribute('data-id');
         var url = btn.getAttribute('data-url') || '';
         var img = btn.getAttribute('data-img') || '';
         var title = btn.getAttribute('data-title') || '';
+        toast('panel: ' + (typeof window.openCollectionsPanel));
         if (typeof window.openCollectionsPanel === 'function') {
           window.openCollectionsPanel(id, url, img, title);
         }
