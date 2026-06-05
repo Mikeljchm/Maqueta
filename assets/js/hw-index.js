@@ -3109,7 +3109,8 @@ async function votePoll(postId, idx, poll, container) {
     '.act-post-title{font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:0.2rem;}',
     '.act-post-meta{font-size:0.7rem;color:var(--text-dim);}',
     '.act-comment-body{font-size:0.75rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0.15rem;}',
-    '.act-chev{color:var(--text-muted);flex-shrink:0;}'
+    '.act-chev{color:var(--text-muted);flex-shrink:0;}',
+    '.act-comment-body video,.act-comment-sticker{max-width:52px;height:52px;border-radius:6px;display:block;object-fit:cover;}'
   ].join('');
   document.head.appendChild(as);
 
@@ -3209,7 +3210,7 @@ async function votePoll(postId, idx, poll, container) {
         + postThumb(post)
         + '<div class="act-post-info">'
         + '<div class="act-post-title">'+title+'</div>'
-        + '<div class="act-comment-body">'+escapeHtml(row.body)+'</div>'
+        + '<div class="act-comment-body">'+renderCommentBody(row.body)+'</div>'
         + '<div class="act-post-meta">'+date+'</div>'
         + '</div>'
         + '<svg class="act-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>'
@@ -3219,6 +3220,15 @@ async function votePoll(postId, idx, poll, container) {
 
   function escapeHtml(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderCommentBody(body) {
+    var s = String(body||'');
+    var m = s.match(/\[sticker\]([^\[]+)\[\/sticker\]/);
+    if (m) {
+      return '<video class="act-comment-sticker" src="'+m[1]+'" autoplay loop muted playsinline></video>';
+    }
+    return escapeHtml(s);
   }
 
   async function loadTab(type) {
@@ -3254,6 +3264,7 @@ async function votePoll(postId, idx, poll, container) {
 
 })();
 })();
+
 
 
 
