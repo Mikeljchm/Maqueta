@@ -632,8 +632,20 @@ async function votePoll(postId, idx, poll, container) {
     }
   }, {passive: false, capture: true});
 
-  // touchend y click capture — bloquar si fue doble tap
-  function blockIfNeeded(e) {
+  // touchend capture — bloquear navegación si fue doble tap
+  document.addEventListener('touchend', function(e) {
+    var zone = e.target.closest('.dtap-zone');
+    if (!zone) return;
+    var id = zone.getAttribute('data-postid') || 'x';
+    if (blocked[id]) {
+      e.preventDefault();
+      e.stopPropagation();
+      // NO limpiamos blocked aquí — click llega después y lo limpia
+    }
+  }, {passive: false, capture: true});
+
+  // click capture — bloquear y limpiar flag
+  document.addEventListener('click', function(e) {
     var zone = e.target.closest('.dtap-zone');
     if (!zone) return;
     var id = zone.getAttribute('data-postid') || 'x';
@@ -642,9 +654,7 @@ async function votePoll(postId, idx, poll, container) {
       e.preventDefault();
       e.stopPropagation();
     }
-  }
-  document.addEventListener('touchend', blockIfNeeded, {passive: false, capture: true});
-  document.addEventListener('click', blockIfNeeded, {capture: true});
+  }, {capture: true});
 
 })();
 
@@ -1754,53 +1764,76 @@ async function votePoll(postId, idx, poll, container) {
     {e:'🏆', label:'Champion'}
   ];
 
-  /* CSS */
+  /* CSS — picker vive en body con position:fixed */
   var rs = document.createElement('style');
   rs.textContent = [
-    '.react-btn{position:relative;}',
-    '.react-btn .react-icon{font-size:1.1rem;line-height:1;}',
+    '.react-btn .react-icon{font-size:1.05rem;line-height:1;}',
     '.react-btn .react-count{font-size:0.72rem;min-width:1ch;}',
-    '.react-picker{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) scale(0.7);transform-origin:bottom center;background:var(--surface-2);border:1px solid var(--border);border-radius:40px;padding:0.4rem 0.55rem;display:flex;gap:0.15rem;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.18s,transform 0.22s cubic-bezier(0.16,1,0.3,1);white-space:nowrap;}',
-    '.react-picker.open{opacity:1;pointer-events:all;transform:translateX(-50%) scale(1);}',
-    '.react-opt{display:flex;flex-direction:column;align-items:center;gap:0.1rem;cursor:pointer;padding:0.3rem 0.35rem;border-radius:20px;transition:background 0.15s,transform 0.15s;}',
-    '.react-opt:active{background:var(--surface-3);transform:scale(1.25);}',
-    '.react-opt-emoji{font-size:1.5rem;line-height:1.1;}',
-    '.react-opt-label{font-size:0.42rem;color:var(--text-dim);letter-spacing:0.04em;text-transform:uppercase;}'
+    '.react-btn.reacted{color:var(--fire-orange);}',
+    '.react-picker{position:fixed;background:var(--surface-2);border:1px solid var(--border);',
+    'border-radius:40px;padding:0.4rem 0.55rem;display:flex;gap:0.1rem;z-index:500;',
+    'opacity:0;pointer-events:none;transition:opacity 0.15s,transform 0.2s cubic-bezier(0.16,1,0.3,1);',
+    'transform:scale(0.75);transform-origin:bottom center;white-space:nowrap;',
+    'box-shadow:0 4px 24px rgba(0,0,0,0.5);}',
+    '.react-picker.open{opacity:1;pointer-events:all;transform:scale(1);}',
+    '.react-opt{display:flex;flex-direction:column;align-items:center;gap:0.08rem;',
+    'cursor:pointer;padding:0.3rem 0.35rem;border-radius:20px;',
+    'transition:background 0.12s,transform 0.12s;-webkit-tap-highlight-color:transparent;}',
+    '.react-opt.selected{background:var(--surface-3);}',
+    '.react-opt:active{transform:scale(1.3);}',
+    '.react-opt-emoji{font-size:1.45rem;line-height:1.1;pointer-events:none;}',
+    '.react-opt-label{font-size:0.42rem;color:var(--text-dim);letter-spacing:0.04em;',
+    'text-transform:uppercase;pointer-events:none;}'
   ].join('');
   document.head.appendChild(rs);
 
-  /* Per-post reaction state: reacts[postId] = {my: 'emoji'|null, counts:{emoji:n}} */
+  /* State per post */
   var reacts = {};
 
-  /* Build picker DOM once, reuse by moving it */
+  /* Single picker DOM — stays in body, positioned with fixed coords */
   var picker = document.createElement('div');
   picker.className = 'react-picker';
-  picker.setAttribute('role','listbox');
-  REACTIONS.forEach(function(r){
+  picker.setAttribute('role', 'listbox');
+  REACTIONS.forEach(function(r) {
     var opt = document.createElement('div');
     opt.className = 'react-opt';
     opt.setAttribute('data-emoji', r.e);
-    opt.innerHTML = '<span class="react-opt-emoji">'+r.e+'</span><span class="react-opt-label">'+r.label+'</span>';
+    opt.innerHTML = '<div class="react-opt-emoji">'+r.e+'</div><div class="react-opt-label">'+r.label+'</div>';
     picker.appendChild(opt);
   });
   document.body.appendChild(picker);
 
-  var pickerOwner = null; /* which .react-btn currently owns the picker */
-  var pressTimer = null;
+  var pickerOwner = null;
+  var pressTimer  = null;
+  var pickerCloseTimer = null;
+
+  function positionPicker(btn) {
+    var rect = btn.getBoundingClientRect();
+    var pw = picker.offsetWidth || 320;
+    /* Center on button, clamp to viewport */
+    var left = rect.left + rect.width/2 - pw/2;
+    left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
+    var top = rect.top - picker.offsetHeight - 10;
+    if (top < 8) top = rect.bottom + 6;
+    picker.style.left = left + 'px';
+    picker.style.top  = top  + 'px';
+  }
 
   function openPicker(btn) {
-    if (pickerOwner === btn && picker.classList.contains('open')) return;
-    /* Re-parent picker to the button so it positions relative to it */
-    btn.appendChild(picker);
+    clearTimeout(pickerCloseTimer);
     pickerOwner = btn;
-    /* Highlight user's current reaction */
+    /* Highlight current reaction */
     var postId = btn.getAttribute('data-id');
     var myEmoji = reacts[postId] && reacts[postId].my;
-    picker.querySelectorAll('.react-opt').forEach(function(opt){
-      opt.style.background = opt.getAttribute('data-emoji') === myEmoji ? 'var(--surface-3)' : '';
+    picker.querySelectorAll('.react-opt').forEach(function(opt) {
+      opt.classList.toggle('selected', opt.getAttribute('data-emoji') === myEmoji);
     });
-    requestAnimationFrame(function(){
-      requestAnimationFrame(function(){ picker.classList.add('open'); });
+    /* Position before showing (needs to be in DOM at opacity:0 first) */
+    picker.style.left = '-9999px';
+    picker.style.top  = '-9999px';
+    picker.classList.add('open');
+    requestAnimationFrame(function() {
+      positionPicker(btn);
     });
   }
 
@@ -1809,32 +1842,42 @@ async function votePoll(postId, idx, poll, container) {
     pickerOwner = null;
   }
 
-  /* Close when tapping outside */
-  document.addEventListener('touchstart', function(e){
-    if (!picker.classList.contains('open')) return;
-    if (!picker.contains(e.target) && !e.target.closest('.react-btn')) closePicker();
-  }, {passive:true});
-  document.addEventListener('mousedown', function(e){
-    if (!picker.classList.contains('open')) return;
-    if (!picker.contains(e.target) && !e.target.closest('.react-btn')) closePicker();
-  });
-
-  /* Long-press + tap logic on react-btn (delegation) */
-  document.addEventListener('touchstart', function(e){
+  /* ── Touch handling ──
+     Strategy: touchstart starts long-press timer.
+     touchend: if timer still running → short tap → toggle.
+     If target is INSIDE picker → let picker's own touchend handle selection.
+  */
+  document.addEventListener('touchstart', function(e) {
     var btn = e.target.closest('.react-btn[data-id]');
-    if (!btn) return;
+    if (!btn) {
+      /* Tap outside: close picker */
+      if (picker.classList.contains('open') && !picker.contains(e.target)) {
+        closePicker();
+      }
+      return;
+    }
+    /* Don't start timer if tap is on picker (react-opt) */
+    if (picker.contains(e.target)) return;
     clearTimeout(pressTimer);
-    pressTimer = setTimeout(function(){
+    pressTimer = setTimeout(function() {
       pressTimer = null;
       openPicker(btn);
-    }, 500);
-  }, {passive:true});
+    }, 480);
+  }, {passive: true});
 
-  document.addEventListener('touchend', function(e){
+  document.addEventListener('touchend', function(e) {
+    /* If tap landed on a react-opt, handle selection — don't toggle picker */
+    var opt = e.target.closest('.react-opt[data-emoji]');
+    if (opt) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+      handleSelection(opt);
+      return;
+    }
     var btn = e.target.closest('.react-btn[data-id]');
     if (!btn) return;
     if (pressTimer !== null) {
-      /* Short tap — toggle picker */
+      /* Short tap on button itself — toggle */
       clearTimeout(pressTimer);
       pressTimer = null;
       if (picker.classList.contains('open') && pickerOwner === btn) {
@@ -1843,20 +1886,38 @@ async function votePoll(postId, idx, poll, container) {
         openPicker(btn);
       }
     }
-    /* Long-press already opened picker — don't close */
-  }, {passive:true});
+    /* Long-press opened picker — keep open */
+  }, {passive: true});
 
-  document.addEventListener('touchmove', function(){
-    clearTimeout(pressTimer); pressTimer = null;
-  }, {passive:true});
+  document.addEventListener('touchmove', function() {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }, {passive: true});
 
-  /* Picker selection */
-  picker.addEventListener('click', async function(e){
+  /* Mouse fallback (desktop) */
+  document.addEventListener('click', function(e) {
     var opt = e.target.closest('.react-opt[data-emoji]');
-    if (!opt || !pickerOwner) return;
-    var btn = pickerOwner;
+    if (opt) { handleSelection(opt); return; }
+    var btn = e.target.closest('.react-btn[data-id]');
+    if (btn) {
+      if (picker.classList.contains('open') && pickerOwner === btn) {
+        closePicker();
+      } else {
+        openPicker(btn);
+      }
+      return;
+    }
+    if (picker.classList.contains('open') && !picker.contains(e.target)) {
+      closePicker();
+    }
+  });
+
+  /* ── Selection handler ── */
+  async function handleSelection(opt) {
+    if (!pickerOwner) return;
+    var btn    = pickerOwner;
     var postId = btn.getAttribute('data-id');
-    var emoji = opt.getAttribute('data-emoji');
+    var emoji  = opt.getAttribute('data-emoji');
     closePicker();
 
     if (!window.currentUser) {
@@ -1864,80 +1925,87 @@ async function votePoll(postId, idx, poll, container) {
       return;
     }
 
-    var prev = reacts[postId] && reacts[postId].my;
+    /* Init state */
+    if (!reacts[postId]) reacts[postId] = {my: null, counts: {}};
+    var prev = reacts[postId].my;
+
     /* Optimistic update */
-    if (!reacts[postId]) reacts[postId] = {my:null, counts:{}};
     if (prev) {
-      reacts[postId].counts[prev] = Math.max(0, (reacts[postId].counts[prev]||1) - 1);
+      reacts[postId].counts[prev] = Math.max(0, (reacts[postId].counts[prev] || 1) - 1);
     }
     if (emoji === prev) {
-      /* Toggling same reaction off */
-      reacts[postId].my = null;
+      reacts[postId].my = null;           /* toggle off same emoji */
     } else {
       reacts[postId].my = emoji;
-      reacts[postId].counts[emoji] = (reacts[postId].counts[emoji]||0) + 1;
+      reacts[postId].counts[emoji] = (reacts[postId].counts[emoji] || 0) + 1;
     }
     updateBtnDisplay(btn, postId);
 
-    /* Persist to D1 */
+    /* Persist */
     try {
-      await fetch('/api/reactions', {
+      var payload = {post_id: postId, reaction: emoji === prev ? null : emoji};
+      var r = await fetch('/api/reactions', {
         method: 'POST',
         credentials: 'include',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({post_id: postId, reaction: emoji === prev ? null : emoji})
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
       });
-      /* Refresh counts from server */
-      await loadReaction(postId, btn);
-    } catch(e) {}
-  });
+      var d = await r.json();
+      /* Sync with server response */
+      if (d.counts !== undefined) {
+        reacts[postId].counts = d.counts;
+        reacts[postId].my = d.my !== undefined ? d.my : reacts[postId].my;
+        updateBtnDisplay(btn, postId);
+      }
+    } catch(err) {}
+  }
 
-  /* Update button display from reacts[postId] */
+  /* ── Display helpers ── */
   function updateBtnDisplay(btn, postId) {
     var state = reacts[postId];
-    var icon = btn.querySelector('.react-icon');
+    var icon  = btn.querySelector('.react-icon');
     var count = btn.querySelector('.react-count');
+    var total = totalCount(state);
     if (!state || !state.my) {
-      if (icon) icon.textContent = '🔥';
-      if (count) count.textContent = totalCount(state) > 0 ? totalCount(state) : '';
-      btn.style.color = '';
+      if (icon)  icon.textContent = '🔥';
+      if (count) count.textContent = total > 0 ? total : '';
+      btn.classList.remove('reacted');
     } else {
-      if (icon) icon.textContent = state.my;
-      if (count) count.textContent = totalCount(state) > 0 ? totalCount(state) : '';
-      btn.style.color = 'var(--fire-orange)';
+      if (icon)  icon.textContent = state.my;
+      if (count) count.textContent = total > 0 ? total : '';
+      btn.classList.add('reacted');
     }
   }
 
   function totalCount(state) {
     if (!state || !state.counts) return 0;
-    return Object.values(state.counts).reduce(function(a,b){ return a+b; }, 0);
+    return Object.values(state.counts).reduce(function(a, b) { return a + b; }, 0);
   }
 
-  /* Load reactions for a single post from API */
+  /* ── Load from API ── */
   async function loadReaction(postId, btn) {
     try {
-      var r = await fetch('/api/reactions?post_id='+encodeURIComponent(postId), {credentials:'include'});
+      var r = await fetch('/api/reactions?post_id=' + encodeURIComponent(postId), {credentials: 'include'});
       var d = await r.json();
-      if (!reacts[postId]) reacts[postId] = {my:null, counts:{}};
+      if (!reacts[postId]) reacts[postId] = {my: null, counts: {}};
       reacts[postId].counts = d.counts || {};
-      reacts[postId].my = d.my || null;
+      reacts[postId].my     = d.my   || null;
       if (btn) updateBtnDisplay(btn, postId);
     } catch(e) {}
   }
 
-  /* Load all visible react-btns */
   window.loadAllReactions = async function() {
-    document.querySelectorAll('.react-btn[data-id]').forEach(async function(btn){
+    document.querySelectorAll('.react-btn[data-id]').forEach(async function(btn) {
       var postId = btn.getAttribute('data-id');
       if (!postId || postId.includes('{')) return;
       await loadReaction(postId, btn);
     });
   };
 
-  /* Also call when feed finishes rendering */
-  var _orig_markSaved = window._markSavedBtns;
+  /* Hook into feed render cycle */
+  var _orig = window._markSavedBtns;
   window._markSavedBtns = function() {
-    if (_orig_markSaved) _orig_markSaved();
+    if (_orig) _orig();
     window.loadAllReactions();
   };
 
@@ -3136,6 +3204,7 @@ async function votePoll(postId, idx, poll, container) {
   })();
 
 })();
+
 
 
 
