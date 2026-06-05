@@ -719,6 +719,41 @@ async function handleReactions(request, env, corsH) {
   return apiJson({ error: 'Method not allowed' }, 405, corsH);
 }
 
+
+async function handleProfile(request, env, corsH) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_profiles (
+    user_id TEXT PRIMARY KEY,
+    username TEXT UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+
+  const session = getSession(request);
+  if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+
+  if (request.method === 'GET') {
+    const { results } = await env.DB.prepare(
+      'SELECT username FROM user_profiles WHERE user_id=?'
+    ).bind(session.id).all();
+    return apiJson({ username: results[0]?.username || null }, 200, corsH);
+  }
+
+  if (request.method === 'POST') {
+    const body = await request.json();
+    const username = (body.username || '').replace(/[^a-zA-Z0-9_]/g,'').slice(0,30);
+    if (!username) return apiJson({ error: 'Invalid username' }, 400, corsH);
+    try {
+      await env.DB.prepare(
+        'INSERT INTO user_profiles (user_id, username) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET username=excluded.username'
+      ).bind(session.id, username).run();
+      return apiJson({ ok: true, username }, 200, corsH);
+    } catch(e) {
+      /* Username taken (UNIQUE constraint) */
+      return apiJson({ error: 'Username taken' }, 409, corsH);
+    }
+  }
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -759,6 +794,7 @@ export default {
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
       if (path === '/api/polls') return handlePolls(request, env, corsH);
+      if (path === '/api/profile') return handleProfile(request, env, corsH);
       if (path === '/api/reactions') return handleReactions(request, env, corsH);
       if (path === '/api/collections') return handleCollections(request, env, corsH);
       if (path === '/api/save') return handleSave(request, env, corsH);
@@ -871,4 +907,5 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
 
