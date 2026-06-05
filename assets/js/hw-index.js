@@ -2843,7 +2843,240 @@ async function votePoll(postId, idx, poll, container) {
     };
   })();
 
+
+/* ── PROFILE PAGE ── */
+(function(){
+  'use strict';
+
+  /* CSS */
+  var ps = document.createElement('style');
+  ps.textContent = [
+    '.prof-topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1rem 0.5rem;position:sticky;top:0;background:var(--bg);z-index:10;}',
+    '.prof-topbar-title{font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.1em;}',
+    '.prof-menu-btn{background:none;border:none;color:var(--text);padding:0.4rem;cursor:pointer;border-radius:8px;}',
+    '.prof-dropdown{display:none;position:absolute;top:3.2rem;right:0.75rem;background:var(--surface-2);border:1px solid var(--border);border-radius:14px;min-width:220px;z-index:50;box-shadow:0 8px 32px rgba(0,0,0,0.5);overflow:hidden;}',
+    '.prof-dropdown.open{display:block;}',
+    '.prof-dd-item{display:flex;align-items:center;justify-content:space-between;padding:0.8rem 1rem;font-size:0.85rem;color:var(--text);text-decoration:none;cursor:pointer;background:none;border:none;width:100%;text-align:left;transition:background 0.15s;}',
+    '.prof-dd-item:active{background:var(--surface-3);}',
+    '.prof-dd-divider{height:1px;background:var(--border);}',
+    '.prof-dd-signout{color:#cc4444;}',
+    '.prof-toggle{position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;}',
+    '.prof-toggle input{opacity:0;width:0;height:0;position:absolute;}',
+    '.prof-toggle-track{position:absolute;inset:0;background:var(--surface-3);border-radius:11px;transition:background 0.2s;cursor:pointer;}',
+    '.prof-toggle-track::before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform 0.2s;}',
+    '.prof-toggle input:checked + .prof-toggle-track{background:var(--fire-orange);}',
+    '.prof-toggle input:checked + .prof-toggle-track::before{transform:translateX(16px);}',
+    '.prof-header{display:flex;align-items:center;gap:1rem;padding:0.75rem 1rem 0.5rem;}',
+    '.prof-avatar-wrap{width:64px;height:64px;border-radius:50%;overflow:hidden;background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;border:2px solid var(--border);}',
+    '.prof-avatar-wrap img{width:100%;height:100%;object-fit:cover;}',
+    '.prof-info{flex:1;min-width:0;}',
+    '.prof-fullname{font-family:var(--font-d);font-size:1rem;letter-spacing:0.05em;}',
+    '.prof-username-wrap{display:flex;align-items:center;gap:0.4rem;margin-top:0.2rem;}',
+    '.prof-username{font-size:0.75rem;color:var(--text-dim);}',
+    '.prof-username-edit-btn{background:none;border:none;color:var(--text-dim);padding:0.1rem;cursor:pointer;display:flex;}',
+    '.prof-username-input-wrap{display:flex;gap:0.4rem;margin-top:0.3rem;}',
+    '.prof-username-input{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:0.3rem 0.6rem;font-size:0.8rem;font-family:var(--font-b);}',
+    '.prof-username-save{background:var(--fire-orange);color:#fff;border:none;border-radius:8px;padding:0.3rem 0.7rem;font-size:0.75rem;cursor:pointer;font-family:var(--font-d);letter-spacing:0.05em;}',
+    '.prof-badge{display:inline-block;margin-top:0.3rem;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.2rem 0.55rem;border-radius:20px;font-family:var(--font-d);}',
+    '.badge-rookie{background:var(--surface-3);color:var(--text-dim);}',
+    '.badge-regular{background:#1a3a1a;color:#4caf50;}',
+    '.badge-soldier{background:#1a1a3a;color:#6c8fff;}',
+    '.badge-vip{background:#3a1a00;color:var(--fire-orange);}',
+    '.prof-stats{display:flex;align-items:center;padding:0.5rem 1rem 0.75rem;gap:0;}',
+    '.prof-stat{flex:1;text-align:center;}',
+    '.prof-stat-n{display:block;font-family:var(--font-d);font-size:1.1rem;color:var(--text);}',
+    '.prof-stat-l{font-size:0.62rem;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;}',
+    '.prof-stat-div{width:1px;height:28px;background:var(--border);}',
+    '.prof-signin-card{margin:1rem;background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;text-align:center;}',
+    '.prof-signin-icon{margin-bottom:0.75rem;}',
+    '.prof-signin-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.06em;margin-bottom:0.35rem;}',
+    '.prof-signin-sub{font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;line-height:1.4;}',
+    '.prof-signin-btn{background:var(--fire-orange);color:#fff;border:none;border-radius:10px;padding:0.65rem 1.5rem;font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;}',
+    '.prof-section{padding:0 0 0.5rem;}',
+    '.prof-section-title{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);padding:0.75rem 1rem 0.4rem;}',
+    '.prof-row{display:flex;align-items:center;gap:0.75rem;padding:0.7rem 1rem;background:none;border:none;color:var(--text);width:100%;text-align:left;cursor:pointer;text-decoration:none;transition:background 0.15s;font-family:var(--font-b);font-size:0.875rem;}',
+    '.prof-row:active{background:var(--surface-2);}',
+    '.prof-row-icon{width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-dim);}',
+    '.prof-row-text{flex:1;}',
+    '.prof-row-chev{color:var(--text-muted);flex-shrink:0;}',
+    '.prof-row-divider{height:1px;background:var(--border);margin:0 1rem;}'
+  ].join('');
+  document.head.appendChild(ps);
+
+  /* ── Dropdown menu ── */
+  var menuBtn  = document.getElementById('prof-menu-btn');
+  var dropdown = document.getElementById('prof-dropdown');
+
+  if (menuBtn && dropdown) {
+    menuBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', function() {
+      dropdown.classList.remove('open');
+    });
+  }
+
+  /* Sign Out button in dropdown */
+  var ddSignOut = document.getElementById('prof-dd-signout');
+  if (ddSignOut) ddSignOut.addEventListener('click', function() {
+    if (typeof signOut === 'function') signOut();
+    else if (typeof HottAuth !== 'undefined') HottAuth.logout();
+  });
+
+  /* Adult Content toggle — sync with applyAdultBlur */
+  var adultToggle = document.getElementById('toggle-adult');
+  if (adultToggle) {
+    /* Set initial state from current user */
+    adultToggle.checked = !!window.currentUser;
+    adultToggle.addEventListener('change', function() {
+      if (typeof applyAdultBlur === 'function') applyAdultBlur();
+    });
+  }
+
+  /* Notifications toggle — OneSignal */
+  var notifToggle = document.getElementById('toggle-notif');
+  if (notifToggle) {
+    notifToggle.addEventListener('change', function() {
+      if (window.OneSignal) {
+        if (this.checked) window.OneSignal.User.PushSubscription.optIn();
+        else window.OneSignal.User.PushSubscription.optOut();
+      }
+    });
+  }
+
+  /* ── Username editable ── */
+  var usernameDisplay  = document.getElementById('prof-username-display');
+  var usernameWrap     = document.getElementById('prof-username-wrap');
+  var usernameInputWrap= document.getElementById('prof-username-input-wrap');
+  var usernameInput    = document.getElementById('prof-username-input');
+  var usernameSave     = document.getElementById('prof-username-save');
+  var editBtn          = document.getElementById('prof-username-edit-btn');
+
+  function showUsernameInput() {
+    if (usernameWrap) usernameWrap.style.display = 'none';
+    if (usernameInputWrap) usernameInputWrap.style.display = 'flex';
+    if (usernameInput) { usernameInput.value = (usernameDisplay && usernameDisplay.textContent.replace('@','')) || ''; usernameInput.focus(); }
+  }
+  function hideUsernameInput() {
+    if (usernameWrap) usernameWrap.style.display = 'flex';
+    if (usernameInputWrap) usernameInputWrap.style.display = 'none';
+  }
+
+  if (editBtn) editBtn.addEventListener('click', showUsernameInput);
+  if (usernameSave) usernameSave.addEventListener('click', async function() {
+    var val = usernameInput ? usernameInput.value.trim().replace(/[^a-zA-Z0-9_]/g,'') : '';
+    if (!val) { hideUsernameInput(); return; }
+    try {
+      var r = await fetch('/api/profile', {
+        method: 'POST', credentials: 'include',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username: val})
+      });
+      var d = await r.json();
+      if (d.ok) {
+        if (usernameDisplay) usernameDisplay.textContent = '@' + val;
+        hideUsernameInput();
+      }
+    } catch(e) { hideUsernameInput(); }
+  });
+
+  /* ── Profile page init when tab becomes active ── */
+  function loadProfilePage() {
+    var user = window.currentUser;
+    var signinCard  = document.getElementById('prof-signin-card');
+    var myStuff     = document.getElementById('prof-my-stuff');
+    var stats       = document.getElementById('prof-stats');
+    var badge       = document.getElementById('prof-badge');
+    var unWrap      = document.getElementById('prof-username-wrap');
+
+    if (user) {
+      if (signinCard) signinCard.style.display = 'none';
+      if (myStuff)    myStuff.style.display = '';
+      if (stats)      stats.style.display = '';
+      if (unWrap)     unWrap.style.display = 'flex';
+
+      /* Badge by # of liked posts */
+      if (badge) {
+        var likedCount = 0;
+        try { likedCount = JSON.parse(localStorage.getItem('hw_liked_v2')||'[]').length; } catch(e){}
+        var level = likedCount < 5 ? 'Rookie' : likedCount < 20 ? 'Regular' : likedCount < 50 ? 'Soldier' : 'VIP';
+        var cls   = likedCount < 5 ? 'badge-rookie' : likedCount < 20 ? 'badge-regular' : likedCount < 50 ? 'badge-soldier' : 'badge-vip';
+        badge.textContent = level;
+        badge.className = 'prof-badge ' + cls;
+        badge.style.display = '';
+      }
+
+      /* Stats */
+      var savedSet = [];
+      try { savedSet = JSON.parse(localStorage.getItem('hw_liked_v2')||'[]'); } catch(e){}
+      var statLikes = document.getElementById('stat-likes');
+      if (statLikes) statLikes.textContent = savedSet.length;
+
+      /* Load collections count */
+      fetch('/api/collections', {credentials:'include'}).then(function(r){ return r.json(); }).then(function(d){
+        var cols = d.collections || [];
+        var statCols = document.getElementById('stat-collections');
+        if (statCols) statCols.textContent = cols.length;
+        /* Count total saved items */
+        var totalSaved = cols.reduce(function(a,b){ return a + (b.count||0); }, 0);
+        var statSaved = document.getElementById('stat-saved');
+        if (statSaved) statSaved.textContent = totalSaved;
+        /* Render collections */
+        var c2 = document.getElementById('my-collections-container');
+        if (c2 && typeof window.renderMyCollections === 'function') window.renderMyCollections(c2);
+      }).catch(function(){});
+
+      /* Load username */
+      fetch('/api/profile', {credentials:'include'}).then(function(r){ return r.json(); }).then(function(d){
+        if (d.username && usernameDisplay) usernameDisplay.textContent = '@' + d.username;
+      }).catch(function(){});
+
+    } else {
+      if (signinCard) signinCard.style.display = '';
+      if (myStuff)    myStuff.style.display = 'none';
+      if (stats)      stats.style.display = 'none';
+      if (unWrap)     unWrap.style.display = 'none';
+      if (badge)      badge.style.display = 'none';
+    }
+
+    /* Sync adult toggle with login state */
+    if (adultToggle) adultToggle.checked = !!user;
+  }
+
+  /* Hook into More/Profile nav click */
+  document.querySelectorAll('.nav-item[data-page="more"]').forEach(function(btn) {
+    btn.addEventListener('click', loadProfilePage);
+  });
+
+  /* My Collections row */
+  var rowCols = document.getElementById('prof-row-collections');
+  if (rowCols) rowCols.addEventListener('click', function() {
+    var c2 = document.getElementById('my-collections-container');
+    if (c2 && typeof window.renderMyCollections === 'function') window.renderMyCollections(c2);
+  });
+
+  /* Liked Posts row — scroll to home and filter liked */
+  var rowLiked = document.getElementById('prof-row-liked');
+  if (rowLiked) rowLiked.addEventListener('click', function() {
+    document.querySelector('.nav-item[data-page="home"]').click();
+  });
+
+  /* Re-run on auth change */
+  if (typeof HottAuth !== 'undefined') {
+    HottAuth.onChange(function() {
+      if (document.getElementById('page-more') && document.getElementById('page-more').classList.contains('active')) {
+        loadProfilePage();
+      }
+    });
+  }
+
+  /* Also expose for external call */
+  window.loadProfilePage = loadProfilePage;
+
 })();
+})();
+
 
 
 
