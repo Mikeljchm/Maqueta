@@ -1608,9 +1608,15 @@ async function votePoll(postId, idx, poll, container) {
 
     // save-btn handled by collections event delegation below
 
-    /* Render saved when navigating to More */
+    /* Render saved + collections when navigating to More */
     document.querySelectorAll('.nav-item[data-page="more"]').forEach(btn => {
-      btn.addEventListener('click', renderSavedGrid);
+      btn.addEventListener('click', function() {
+        renderSavedGrid();
+        var c = document.getElementById('my-collections-container');
+        if (c && typeof window.renderMyCollections === 'function') {
+          window.renderMyCollections(c);
+        }
+      });
     });
     document.querySelectorAll('.menu-item[data-nav]').forEach(item => {
       item.addEventListener('click', () => {
@@ -2166,6 +2172,22 @@ async function votePoll(postId, idx, poll, container) {
     });
   }
 
+  /* Restaurar estado col-saved en los botones al cargar el feed — 1 sola request */
+  async function restoreSavedStates() {
+    if (!window.currentUser) return;
+    try {
+      var r = await fetch('/api/collections?action=saved_posts', { credentials: 'include' });
+      var d = await r.json();
+      var ids = new Set(d.post_ids || []);
+      window._savedPostIds = ids;
+      document.querySelectorAll('.save-btn[data-id]').forEach(function(btn) {
+        if (ids.has(btn.getAttribute('data-id'))) {
+          btn.classList.add('col-saved');
+        }
+      });
+    } catch(e) {}
+  }
+
   /* Init auth — después del render para no bloquear */
   document.addEventListener('DOMContentLoaded', async function initAuth() {
     const session = await HottAuth.init();
@@ -2175,14 +2197,26 @@ async function votePoll(postId, idx, poll, container) {
     }
     applyAdultBlur();
 
+    // Restaurar estados guardados una vez que el usuario está autenticado
+    if (session) {
+      // Esperar a que el feed esté renderizado antes de restaurar estados
+      setTimeout(restoreSavedStates, 1200);
+    }
+
     HottAuth.onChange(s => {
       if (s) {
         currentUser = s; window.currentUser = s;
         updateAuthUI(currentUser);
         closeAuthModal();
+        // Restaurar al hacer login también
+        setTimeout(restoreSavedStates, 800);
       } else {
         currentUser = null; window.currentUser = null;
         updateAuthUI(null);
+        // Limpiar estados al hacer logout
+        document.querySelectorAll('.save-btn.col-saved').forEach(function(btn) {
+          btn.classList.remove('col-saved');
+        });
         document.body.classList.remove('is-admin');
       }
       applyAdultBlur();
@@ -2713,3 +2747,4 @@ async function votePoll(postId, idx, poll, container) {
   };
 
 })();
+
