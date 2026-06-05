@@ -711,6 +711,17 @@
     let saved=new Set(JSON.parse(localStorage.getItem(savedKey)||'[]'));
     if(saved.has(POST_ID))$('save-btn').classList.add('saved');
     $('save-btn').addEventListener('click',()=>{
+    // Usar collections si está disponible
+    if (typeof window.openCollectionsPanel === 'function') {
+      var img = document.querySelector('.post-hero img, .post-media img');
+      window.openCollectionsPanel(
+        POST_ID,
+        window.location.href,
+        img ? img.src : '',
+        document.title
+      );
+      return;
+    }
       saved.has(POST_ID)?saved.delete(POST_ID):saved.add(POST_ID);
       $('save-btn').classList.toggle('saved',saved.has(POST_ID));
       localStorage.setItem(savedKey,JSON.stringify([...saved]));
