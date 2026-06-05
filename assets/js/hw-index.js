@@ -2739,12 +2739,135 @@ async function votePoll(postId, idx, poll, container) {
     }
   };
 
-  window.openCollection = function(colId, colName) {
-    // Navegar a la colección — mostrar sus posts
-    // Por ahora mostrar un alert simple
-    // TODO: implementar vista de colección individual
-    alert('Collection: ' + colName);
-  };
+  /* ── COLLECTION VIEW PANEL ── */
+  (function(){
+    // CSS del panel de vista de colección
+    var sv = document.createElement('style');
+    sv.textContent = [
+      '.cv-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;opacity:0;transition:opacity 0.3s;pointer-events:none;}',
+      '.cv-overlay.open{opacity:1;pointer-events:all;}',
+      '.cv-panel{position:fixed;inset:0;background:var(--bg);z-index:401;transform:translateX(100%);transition:transform 0.38s cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column;}',
+      '.cv-panel.open{transform:translateX(0);}',
+      '.cv-header{display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem 0.75rem;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface);}',
+      '.cv-back{background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}',
+      '.cv-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}',
+      '.cv-title{font-family:var(--font-d);font-size:1.15rem;letter-spacing:0.06em;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.cv-count{font-size:0.7rem;color:var(--text-dim);letter-spacing:0.08em;flex-shrink:0;}',
+      '.cv-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.75rem;}',
+      '.cv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}',
+      '.cv-item{aspect-ratio:1;overflow:hidden;background:var(--surface-2);cursor:pointer;position:relative;}',
+      '.cv-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.2s;}',
+      '.cv-item:active img{transform:scale(0.96);}',
+      '.cv-item-no-img{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--surface-3);}',
+      '.cv-item-no-img svg{width:28px;height:28px;stroke:var(--text-muted);fill:none;stroke-width:1.5;}',
+      '.cv-item-title{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.75));padding:0.4rem 0.4rem 0.3rem;font-size:0.58rem;color:#fff;letter-spacing:0.05em;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}',
+      '.cv-empty{text-align:center;padding:3rem 1rem;color:var(--text-dim);font-size:0.85rem;}',
+      '.cv-loading{text-align:center;padding:2.5rem;color:var(--text-dim);font-size:0.8rem;}',
+      '.cv-delete-btn{margin:0.5rem 0.75rem 0;background:none;border:1px solid var(--border);color:var(--text-dim);padding:0.5rem 1rem;border-radius:10px;font-size:0.75rem;cursor:pointer;width:calc(100% - 1.5rem);text-align:left;transition:border-color 0.2s,color 0.2s;}',
+      '.cv-delete-btn:active{border-color:#cc3333;color:#cc3333;}'
+    ].join('');
+    document.head.appendChild(sv);
+
+    var cvOverlay = document.createElement('div');
+    cvOverlay.className = 'cv-overlay';
+    cvOverlay.addEventListener('click', closeCV);
+
+    var cvPanel = document.createElement('div');
+    cvPanel.className = 'cv-panel';
+    cvPanel.innerHTML = ''
+      + '<div class="cv-header">'
+      + '<button class="cv-back" id="cv-back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>'
+      + '<div class="cv-title" id="cv-title">Collection</div>'
+      + '<div class="cv-count" id="cv-count"></div>'
+      + '</div>'
+      + '<button class="cv-delete-btn" id="cv-delete-btn"><svg viewBox="0 0 24 24" width="13" height="13" style="margin-right:0.35rem;vertical-align:-1px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>Delete collection'
+      + '<div class="cv-body"><div class="cv-loading" id="cv-body-inner">Loading...</div></div>';
+
+    document.body.appendChild(cvOverlay);
+    document.body.appendChild(cvPanel);
+
+    document.getElementById('cv-back').addEventListener('click', closeCV);
+
+    // Swipe right to close
+    var swipeStartX = 0;
+    cvPanel.addEventListener('touchstart', function(e){ swipeStartX = e.touches[0].clientX; }, {passive:true});
+    cvPanel.addEventListener('touchend', function(e){
+      if (e.changedTouches[0].clientX - swipeStartX > 70) closeCV();
+    }, {passive:true});
+
+    function closeCV() {
+      cvPanel.classList.remove('open');
+      cvOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('cv-delete-btn').addEventListener('click', async function() {
+      var colId = cvPanel.dataset.colId;
+      var colName = document.getElementById('cv-title').textContent;
+      if (!colId) return;
+      if (!confirm('Delete "' + colName + '"? This cannot be undone.')) return;
+      try {
+        var r = await fetch('/api/collections?action=delete', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ col_id: parseInt(colId) })
+        });
+        var d = await r.json();
+        if (d.ok) {
+          closeCV();
+          // Re-render My Collections
+          var c = document.getElementById('my-collections-container');
+          if (c && typeof window.renderMyCollections === 'function') window.renderMyCollections(c);
+          // Clear saved states for deleted collection (re-fetch)
+          if (typeof restoreSavedStates === 'function') restoreSavedStates();
+        }
+      } catch(e) {}
+    });
+
+    window.openCollection = async function(colId, colName) {
+      cvPanel.dataset.colId = colId;
+      document.getElementById('cv-title').textContent = colName;
+      document.getElementById('cv-count').textContent = '';
+      var inner = cvPanel.querySelector('.cv-body');
+      inner.innerHTML = '<div class="cv-loading">Loading...</div>';
+
+      cvOverlay.classList.add('open');
+      cvPanel.classList.add('open');
+      document.body.style.overflow = 'hidden';
+
+      try {
+        var r = await fetch('/api/collections?action=items&col_id=' + encodeURIComponent(colId), { credentials: 'include' });
+        var d = await r.json();
+        var items = d.items || [];
+        document.getElementById('cv-count').textContent = items.length + ' post' + (items.length !== 1 ? 's' : '');
+
+        if (!items.length) {
+          inner.innerHTML = '<div class="cv-empty">Nothing saved here yet.<br>Tap the bookmark on any post.</div>';
+          return;
+        }
+
+        var html = '<div class="cv-grid">';
+        items.forEach(function(item) {
+          var href = item.post_url || '#';
+          var img = item.post_image || '';
+          var title = item.post_title || '';
+          html += '<div class="cv-item" onclick="window.location.href='' + href + ''">';
+          if (img) {
+            html += '<img src="' + img + '" loading="lazy" alt="">';
+          } else {
+            html += '<div class="cv-item-no-img"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>';
+          }
+          if (title) html += '<div class="cv-item-title">' + title + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+        inner.innerHTML = html;
+      } catch(e) {
+        inner.innerHTML = '<div class="cv-empty">Error loading. Try again.</div>';
+      }
+    };
+  })();
 
 })();
+
 
