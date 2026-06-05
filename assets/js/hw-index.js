@@ -1674,6 +1674,8 @@ async function votePoll(postId, idx, poll, container) {
         var url = btn.getAttribute('data-url') || '';
         var img = btn.getAttribute('data-img') || '';
         var title = btn.getAttribute('data-title') || '';
+        var panelEl = document.querySelector('.col-panel');
+        toast('fn='+(typeof window.openCollectionsPanel)+' panel='+(panelEl?'yes':'no')+' user='+(window.currentUser?'yes':'no'));
         if (typeof window.openCollectionsPanel === 'function') {
           window.openCollectionsPanel(id, url, img, title);
         }
