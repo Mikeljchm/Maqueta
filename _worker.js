@@ -754,6 +754,31 @@ async function handleProfile(request, env, corsH) {
   return apiJson({ error: 'Method not allowed' }, 405, corsH);
 }
 
+
+async function handleActivity(request, env, corsH) {
+  const session = getSession(request);
+  if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+
+  const url  = new URL(request.url);
+  const type = url.searchParams.get('type'); /* likes | comments */
+
+  if (type === 'likes') {
+    const { results } = await env.DB.prepare(
+      'SELECT post_id FROM likes WHERE user_id=? ORDER BY rowid DESC LIMIT 100'
+    ).bind(session.id).all();
+    return apiJson({ post_ids: results.map(function(r){ return r.post_id; }) }, 200, corsH);
+  }
+
+  if (type === 'comments') {
+    const { results } = await env.DB.prepare(
+      'SELECT post_id, body, created_at FROM comments WHERE user_id=? ORDER BY created_at DESC LIMIT 100'
+    ).bind(session.id).all();
+    return apiJson({ comments: results }, 200, corsH);
+  }
+
+  return apiJson({ error: 'type required: likes|comments' }, 400, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -794,6 +819,7 @@ export default {
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
       if (path === '/api/polls') return handlePolls(request, env, corsH);
+      if (path === '/api/activity') return handleActivity(request, env, corsH);
       if (path === '/api/profile') return handleProfile(request, env, corsH);
       if (path === '/api/reactions') return handleReactions(request, env, corsH);
       if (path === '/api/collections') return handleCollections(request, env, corsH);
@@ -907,5 +933,6 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
 
 
