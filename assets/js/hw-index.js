@@ -2158,18 +2158,18 @@ async function votePoll(postId, idx, poll, container) {
   document.addEventListener('DOMContentLoaded', async function initAuth() {
     const session = await HottAuth.init();
     if (session) {
-      currentUser = session;
+      currentUser = session; window.currentUser = session;
       updateAuthUI(currentUser);
     }
     applyAdultBlur();
 
     HottAuth.onChange(s => {
       if (s) {
-        currentUser = s;
+        currentUser = s; window.currentUser = s;
         updateAuthUI(currentUser);
         closeAuthModal();
       } else {
-        currentUser = null;
+        currentUser = null; window.currentUser = null;
         updateAuthUI(null);
         document.body.classList.remove('is-admin');
       }
