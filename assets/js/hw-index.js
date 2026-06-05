@@ -2433,8 +2433,11 @@ async function votePoll(postId, idx, poll, container) {
     document.body.style.overflow = 'hidden';
   }
 
-  document.getElementById('edit-modal').addEventListener('click', function(e) {
-    if (e.target === this) closeEditModal();
+  document.addEventListener('DOMContentLoaded', function() {
+    var editModal = document.getElementById('edit-modal');
+    if (editModal) editModal.addEventListener('click', function(e) {
+      if (e.target === this) closeEditModal();
+    });
   });
 
 /* -- COLLECTIONS (Instagram style) -- */
