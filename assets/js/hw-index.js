@@ -933,6 +933,8 @@ async function votePoll(postId, idx, poll, container) {
         ALL_POSTS = data || [];
         renderBatch();
         initObserver();
+        // Marcar botones guardados una vez el feed esté listo
+        if (typeof window._markSavedBtns === 'function') window._markSavedBtns();
       })
       .catch(function() {
         var container = document.getElementById('feed-container');
@@ -2172,7 +2174,7 @@ async function votePoll(postId, idx, poll, container) {
     });
   }
 
-  /* Restaurar estado col-saved en los botones al cargar el feed — 1 sola request */
+  /* Restaurar estado col-saved en los botones — 1 sola request al servidor */
   async function restoreSavedStates() {
     if (!window.currentUser) return;
     try {
@@ -2180,13 +2182,23 @@ async function votePoll(postId, idx, poll, container) {
       var d = await r.json();
       var ids = new Set(d.post_ids || []);
       window._savedPostIds = ids;
-      document.querySelectorAll('.save-btn[data-id]').forEach(function(btn) {
-        if (ids.has(btn.getAttribute('data-id'))) {
-          btn.classList.add('col-saved');
-        }
-      });
+      _applyIdsToButtons(ids);
     } catch(e) {}
   }
+
+  function _applyIdsToButtons(ids) {
+    if (!ids || !ids.size) return;
+    document.querySelectorAll('.save-btn[data-id]').forEach(function(btn) {
+      if (ids.has(btn.getAttribute('data-id'))) btn.classList.add('col-saved');
+    });
+  }
+
+  // Exponer para que el feed IIFE llame después de renderizar
+  window._markSavedBtns = function() {
+    if (window._savedPostIds && window._savedPostIds.size) {
+      _applyIdsToButtons(window._savedPostIds);
+    }
+  };
 
   /* Init auth — después del render para no bloquear */
   document.addEventListener('DOMContentLoaded', async function initAuth() {
@@ -2197,10 +2209,15 @@ async function votePoll(postId, idx, poll, container) {
     }
     applyAdultBlur();
 
-    // Restaurar estados guardados una vez que el usuario está autenticado
+    // Restaurar estados guardados + colecciones al autenticarse
     if (session) {
-      // Esperar a que el feed esté renderizado antes de restaurar estados
-      setTimeout(restoreSavedStates, 1200);
+      // Restaurar save-btn states (se reintenta cuando el feed renderice)
+      setTimeout(restoreSavedStates, 600);
+      // Auto-cargar My Collections en la sección More
+      setTimeout(function() {
+        var c = document.getElementById('my-collections-container');
+        if (c && typeof window.renderMyCollections === 'function') window.renderMyCollections(c);
+      }, 700);
     }
 
     HottAuth.onChange(s => {
@@ -2764,7 +2781,17 @@ async function votePoll(postId, idx, poll, container) {
       '.cv-empty{text-align:center;padding:3rem 1rem;color:var(--text-dim);font-size:0.85rem;}',
       '.cv-loading{text-align:center;padding:2.5rem;color:var(--text-dim);font-size:0.8rem;}',
       '.cv-delete-btn{margin:0.5rem 0.75rem 0;background:none;border:1px solid var(--border);color:var(--text-dim);padding:0.5rem 1rem;border-radius:10px;font-size:0.75rem;cursor:pointer;width:calc(100% - 1.5rem);text-align:left;transition:border-color 0.2s,color 0.2s;}',
-      '.cv-delete-btn:active{border-color:#cc3333;color:#cc3333;}'
+      '.cv-delete-btn:active{border-color:#cc3333;color:#cc3333;}',
+      /* hwConfirm modal */
+      '.hw-confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;display:flex;align-items:center;justify-content:center;padding:1.5rem;opacity:0;transition:opacity 0.2s;}',
+      '.hw-confirm-overlay.open{opacity:1;}',
+      '.hw-confirm-box{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:1.5rem 1.25rem 1.25rem;width:100%;max-width:320px;transform:scale(0.95);transition:transform 0.2s cubic-bezier(0.16,1,0.3,1);}',
+      '.hw-confirm-overlay.open .hw-confirm-box{transform:scale(1);}',
+      '.hw-confirm-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.05em;margin-bottom:0.4rem;}',
+      '.hw-confirm-msg{font-size:0.8rem;color:var(--text-dim);margin-bottom:1.25rem;line-height:1.4;}',
+      '.hw-confirm-btns{display:flex;gap:0.6rem;}',
+      '.hw-confirm-cancel{flex:1;background:var(--surface-3);border:1px solid var(--border);color:var(--text);padding:0.65rem;border-radius:10px;font-family:var(--font-b);font-size:0.85rem;cursor:pointer;}',
+      '.hw-confirm-ok{flex:1;background:#cc3333;border:none;color:#fff;padding:0.65rem;border-radius:10px;font-family:var(--font-d);font-size:0.85rem;cursor:pointer;letter-spacing:0.04em;}'
     ].join('');
     document.head.appendChild(sv);
 
@@ -2785,6 +2812,32 @@ async function votePoll(postId, idx, poll, container) {
 
     document.body.appendChild(cvOverlay);
     document.body.appendChild(cvPanel);
+
+    // Custom confirm modal (replaces native confirm())
+    var hcOverlay = document.createElement('div');
+    hcOverlay.className = 'hw-confirm-overlay';
+    hcOverlay.innerHTML = '<div class="hw-confirm-box">'
+      + '<div class="hw-confirm-title" id="hc-title"></div>'
+      + '<div class="hw-confirm-msg" id="hc-msg"></div>'
+      + '<div class="hw-confirm-btns">'
+      + '<button class="hw-confirm-cancel" id="hc-cancel">Cancel</button>'
+      + '<button class="hw-confirm-ok" id="hc-ok">Delete</button>'
+      + '</div></div>';
+    document.body.appendChild(hcOverlay);
+    var _hcCallback = null;
+    document.getElementById('hc-cancel').addEventListener('click', function() {
+      hcOverlay.classList.remove('open'); _hcCallback = null;
+    });
+    document.getElementById('hc-ok').addEventListener('click', function() {
+      hcOverlay.classList.remove('open');
+      if (typeof _hcCallback === 'function') { var cb = _hcCallback; _hcCallback = null; cb(); }
+    });
+    function hwConfirm(title, msg, cb) {
+      document.getElementById('hc-title').textContent = title;
+      document.getElementById('hc-msg').textContent = msg;
+      _hcCallback = cb;
+      hcOverlay.classList.add('open');
+    }
 
     document.getElementById('cv-back').addEventListener('click', closeCV);
 
@@ -2810,12 +2863,12 @@ async function votePoll(postId, idx, poll, container) {
       document.body.style.overflow = '';
     }
 
-    document.getElementById('cv-delete-btn').addEventListener('click', async function() {
+    document.getElementById('cv-delete-btn').addEventListener('click', function() {
       var colId = cvPanel.dataset.colId;
       var colName = document.getElementById('cv-title').textContent;
       if (!colId) return;
-      if (!confirm('Delete "' + colName + '"? This cannot be undone.')) return;
-      try {
+      hwConfirm('Delete "' + colName + '"?', 'This cannot be undone.', async function() {
+        try {
         var r = await fetch('/api/collections?action=delete', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -2823,14 +2876,13 @@ async function votePoll(postId, idx, poll, container) {
         });
         var d = await r.json();
         if (d.ok) {
-          closeCV();
-          // Re-render My Collections
-          var c = document.getElementById('my-collections-container');
-          if (c && typeof window.renderMyCollections === 'function') window.renderMyCollections(c);
-          // Clear saved states for deleted collection (re-fetch)
-          if (typeof restoreSavedStates === 'function') restoreSavedStates();
-        }
-      } catch(e) {}
+            closeCV();
+            var c = document.getElementById('my-collections-container');
+            if (c && typeof window.renderMyCollections === 'function') window.renderMyCollections(c);
+            if (typeof restoreSavedStates === 'function') restoreSavedStates();
+          }
+        } catch(e) {}
+      });
     });
 
     window.openCollection = async function(colId, colName) {
@@ -2879,6 +2931,7 @@ async function votePoll(postId, idx, poll, container) {
   })();
 
 })();
+
 
 
 
