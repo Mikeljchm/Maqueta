@@ -1666,18 +1666,30 @@ async function votePoll(postId, idx, poll, container) {
       }
     });
 
-    // Event delegation para save-btn (collections)
+    // Event delegation para save-btn (collections) — touchend capture para mobile
+    document.addEventListener('touchend', function(e) {
+      var btn = e.target.closest('.save-btn[data-id]');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var id = btn.getAttribute('data-id');
+      var postUrl = btn.getAttribute('data-url') || '';
+      var img = btn.getAttribute('data-img') || '';
+      var title = btn.getAttribute('data-title') || '';
+      if (typeof window.openCollectionsPanel === 'function') {
+        window.openCollectionsPanel(id, postUrl, img, title);
+      }
+    }, {passive: false, capture: true});
+    // Fallback click para desktop
     document.addEventListener('click', function(e) {
       var btn = e.target.closest('.save-btn[data-id]');
-      if (btn) {
-        var id = btn.getAttribute('data-id');
-        var url = btn.getAttribute('data-url') || '';
-        var img = btn.getAttribute('data-img') || '';
-        var title = btn.getAttribute('data-title') || '';
-        if (typeof window.openCollectionsPanel === 'function') {
-          window.openCollectionsPanel(id, url, img, title);
-        }
-        return;
+      if (!btn) return;
+      var id = btn.getAttribute('data-id');
+      var postUrl = btn.getAttribute('data-url') || '';
+      var img = btn.getAttribute('data-img') || '';
+      var title = btn.getAttribute('data-title') || '';
+      if (typeof window.openCollectionsPanel === 'function') {
+        window.openCollectionsPanel(id, postUrl, img, title);
       }
     });
 
