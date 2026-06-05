@@ -634,7 +634,7 @@ async function sbFetch(path, method, body) {
 
     /* Render saved when navigating to More */
     document.querySelectorAll('.nav-item[data-page="more"]').forEach(btn => {
-      btn.addEventListener('click', renderSavedGrid);
+  btn.addEventListener('click', function() { renderSavedGrid(); var c=document.getElementById('my-collections-container'); if(c&&typeof window.renderMyCollections==='function') window.renderMyCollections(c); });
     });
     document.querySelectorAll('.menu-item[data-nav]').forEach(item => {
       item.addEventListener('click', () => {
