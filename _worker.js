@@ -653,6 +653,72 @@ async function handleCollections(request, env, corsH) {
   return apiJson({ error: 'Method not allowed' }, 405, corsH);
 }
 
+
+async function handleReactions(request, env, corsH) {
+  /* Ensure table exists */
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS reactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    reaction TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(post_id, user_id)
+  )`).run();
+
+  const url = new URL(request.url);
+  const post_id = url.searchParams.get('post_id');
+  if (!post_id) return apiJson({ error: 'post_id required' }, 400, corsH);
+
+  if (request.method === 'GET') {
+    /* Return counts per reaction + current user's reaction */
+    const { results } = await env.DB.prepare(
+      'SELECT reaction, COUNT(*) as n FROM reactions WHERE post_id=? GROUP BY reaction'
+    ).bind(post_id).all();
+    const counts = {};
+    results.forEach(function(r){ counts[r.reaction] = r.n; });
+
+    const session = getSession(request);
+    let my = null;
+    if (session) {
+      const { results: mine } = await env.DB.prepare(
+        'SELECT reaction FROM reactions WHERE post_id=? AND user_id=?'
+      ).bind(post_id, session.id).all();
+      if (mine.length) my = mine[0].reaction;
+    }
+    return apiJson({ counts, my }, 200, corsH);
+  }
+
+  if (request.method === 'POST') {
+    const session = getSession(request);
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const body = await request.json();
+    const reaction = body.reaction; /* null = remove */
+
+    if (!reaction) {
+      /* Remove user's reaction */
+      await env.DB.prepare(
+        'DELETE FROM reactions WHERE post_id=? AND user_id=?'
+      ).bind(post_id, session.id).run();
+      return apiJson({ ok: true, my: null }, 200, corsH);
+    }
+
+    /* Upsert — one reaction per user per post */
+    await env.DB.prepare(
+      'INSERT INTO reactions (post_id, user_id, reaction) VALUES (?,?,?) ON CONFLICT(post_id,user_id) DO UPDATE SET reaction=excluded.reaction, created_at=CURRENT_TIMESTAMP'
+    ).bind(post_id, session.id, reaction).run();
+
+    /* Return fresh counts */
+    const { results } = await env.DB.prepare(
+      'SELECT reaction, COUNT(*) as n FROM reactions WHERE post_id=? GROUP BY reaction'
+    ).bind(post_id).all();
+    const counts = {};
+    results.forEach(function(r){ counts[r.reaction] = r.n; });
+    return apiJson({ ok: true, my: reaction, counts }, 200, corsH);
+  }
+
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -693,6 +759,7 @@ export default {
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
       if (path === '/api/polls') return handlePolls(request, env, corsH);
+      if (path === '/api/reactions') return handleReactions(request, env, corsH);
       if (path === '/api/collections') return handleCollections(request, env, corsH);
       if (path === '/api/save') return handleSave(request, env, corsH);
       if (path === '/api/create') return handleCreate(request, env, corsH);
@@ -804,3 +871,4 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
