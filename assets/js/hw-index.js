@@ -1670,6 +1670,7 @@ async function votePoll(postId, idx, poll, container) {
     document.addEventListener('click', function(e) {
       var btn = e.target.closest('.save-btn[data-id]');
       if (btn) {
+        toast('save click: ' + btn.getAttribute('data-id').slice(0,20) + ' user=' + (window.currentUser ? window.currentUser.name : 'null'));
         var id = btn.getAttribute('data-id');
         var url = btn.getAttribute('data-url') || '';
         var img = btn.getAttribute('data-img') || '';
