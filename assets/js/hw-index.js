@@ -984,7 +984,7 @@ async function votePoll(postId, idx, poll, container) {
       const t = $('toast'); if(!t) return;
       t.textContent = msg; t.classList.add('show');
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
     }
 
     /* PWA FIX — nav disappears when returning from post */
@@ -1670,7 +1670,6 @@ async function votePoll(postId, idx, poll, container) {
     document.addEventListener('click', function(e) {
       var btn = e.target.closest('.save-btn[data-id]');
       if (btn) {
-        toast('save click: ' + btn.getAttribute('data-id').slice(0,20) + ' user=' + (window.currentUser ? window.currentUser.name : 'null'));
         var id = btn.getAttribute('data-id');
         var url = btn.getAttribute('data-url') || '';
         var img = btn.getAttribute('data-img') || '';
