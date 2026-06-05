@@ -2788,6 +2788,15 @@ async function votePoll(postId, idx, poll, container) {
 
     document.getElementById('cv-back').addEventListener('click', closeCV);
 
+    // Click delegation for cv-item (data-href)
+    cvPanel.addEventListener('click', function(e) {
+      var item = e.target.closest('.cv-item[data-href]');
+      if (item) {
+        var href = item.getAttribute('data-href');
+        if (href && href !== '#') window.location.href = href;
+      }
+    });
+
     // Swipe right to close
     var swipeStartX = 0;
     cvPanel.addEventListener('touchstart', function(e){ swipeStartX = e.touches[0].clientX; }, {passive:true});
@@ -2851,7 +2860,8 @@ async function votePoll(postId, idx, poll, container) {
           var href = item.post_url || '#';
           var img = item.post_image || '';
           var title = item.post_title || '';
-          html += '<div class="cv-item" onclick="window.location.href='' + href + ''">';
+          html += '<div class="cv-item" data-href="' + href + '">';
+
           if (img) {
             html += '<img src="' + img + '" loading="lazy" alt="">';
           } else {
@@ -2869,5 +2879,6 @@ async function votePoll(postId, idx, poll, container) {
   })();
 
 })();
+
 
 
