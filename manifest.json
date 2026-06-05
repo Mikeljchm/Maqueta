@@ -1,23 +1,66 @@
 {
-  "name": "JUICY STUD",
+  "name": "HOTT WRESTLING",
   "short_name": "HOTT",
   "description": "The hottest wrestling content. No filters, no censorship.",
-  "start_url": "/",
+  "start_url": "https://hottwrestling.com",
   "scope": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#FF4500",
   "orientation": "portrait-primary",
-  "categories": ["entertainment", "sports"],
+  "categories": [
+    "entertainment",
+    "sports"
+  ],
   "icons": [
-    { "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png", "sizes": "72x72", "type": "image/png", "purpose": "any" },
-    { "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png", "sizes": "96x96", "type": "image/png", "purpose": "any" },
-    { "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png", "sizes": "128x128", "type": "image/png", "purpose": "any" },
-    { "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
-    { "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
-    { "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
-    { "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ],
   "shortcuts": [
     {
@@ -25,14 +68,24 @@
       "short_name": "Wrestlers",
       "description": "Wrestler profiles",
       "url": "/?section=wrestlers",
-      "icons": [{ "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "Studs",
       "short_name": "Studs",
       "description": "Hot studs",
       "url": "/?section=badboys",
-      "icons": [{ "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "https://images2.imgbox.com/a6/b9/tfJsnAfF_o.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ],
   "screenshots": [
@@ -45,5 +98,6 @@
     }
   ],
   "prefer_related_applications": false,
-  "related_applications": []
+  "related_applications": [],
+  "id": "hottwrestling"
 }
