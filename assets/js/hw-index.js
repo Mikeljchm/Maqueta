@@ -545,7 +545,7 @@ async function votePoll(postId, idx, poll, container) {
 
 /* ── DOUBLE TAP LIKE + EMOJI EXPLOSION ── */
 (function(){
-  var EMOJIS = ['❤️','😈','💋','😋','😏','💦','🪶','🍆','🍑','🔥'];
+  var EMOJIS = ['❤️','😈','💋','😋','😏','💦','🫦','🍆','🍑','🔥'];
   var lastTap = {};
   var blocked = {};
   var DELAY = 280;
@@ -836,6 +836,7 @@ async function votePoll(postId, idx, poll, container) {
       +'<button class="card-act-btn comment-toggle-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="comment-count">0</span></button>'
       +'<button class="card-act-btn save-btn" data-id="'+(post.path||String(idx))+'" data-url="'+(post.url||'')+'" data-img="'+(post.poster||post.image||'')+'" data-title="'+escH(post.title||'')+'"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span class="save-count"></span></button>'
       +'<button class="card-act-btn like-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span class="like-count">0</span></button>'
+      +'<button class="card-act-btn react-btn" data-id="'+(post.path||String(idx))+'" aria-label="React"><span class="react-icon">&#128293;</span><span class="react-count"></span></button>'
       +'<button class="card-act-btn share-btn" data-url="'+post.url+'"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>'
       +'</div>'
 
@@ -933,8 +934,9 @@ async function votePoll(postId, idx, poll, container) {
         ALL_POSTS = data || [];
         renderBatch();
         initObserver();
-        // Marcar botones guardados una vez el feed esté listo
+        // Marcar botones guardados + cargar reacciones una vez el feed esté listo
         if (typeof window._markSavedBtns === 'function') window._markSavedBtns();
+        if (typeof window.loadAllReactions === 'function') window.loadAllReactions();
       })
       .catch(function() {
         var container = document.getElementById('feed-container');
@@ -1737,6 +1739,209 @@ async function votePoll(postId, idx, poll, container) {
     });
 
   })();
+
+/* ── REACTIONS — fire emoji picker ── */
+(function(){
+  'use strict';
+
+  var REACTIONS = [
+    {e:'🔥', label:'Hot'},
+    {e:'👀', label:'Watching'},
+    {e:'💪', label:'Alpha'},
+    {e:'🍑', label:'Bulge'},
+    {e:'😈', label:'Stud'},
+    {e:'🥵', label:'Tense'},
+    {e:'🏆', label:'Champion'}
+  ];
+
+  /* CSS */
+  var rs = document.createElement('style');
+  rs.textContent = [
+    '.react-btn{position:relative;}',
+    '.react-btn .react-icon{font-size:1.1rem;line-height:1;}',
+    '.react-btn .react-count{font-size:0.72rem;min-width:1ch;}',
+    '.react-picker{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) scale(0.7);transform-origin:bottom center;background:var(--surface-2);border:1px solid var(--border);border-radius:40px;padding:0.4rem 0.55rem;display:flex;gap:0.15rem;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.18s,transform 0.22s cubic-bezier(0.16,1,0.3,1);white-space:nowrap;}',
+    '.react-picker.open{opacity:1;pointer-events:all;transform:translateX(-50%) scale(1);}',
+    '.react-opt{display:flex;flex-direction:column;align-items:center;gap:0.1rem;cursor:pointer;padding:0.3rem 0.35rem;border-radius:20px;transition:background 0.15s,transform 0.15s;}',
+    '.react-opt:active{background:var(--surface-3);transform:scale(1.25);}',
+    '.react-opt-emoji{font-size:1.5rem;line-height:1.1;}',
+    '.react-opt-label{font-size:0.42rem;color:var(--text-dim);letter-spacing:0.04em;text-transform:uppercase;}'
+  ].join('');
+  document.head.appendChild(rs);
+
+  /* Per-post reaction state: reacts[postId] = {my: 'emoji'|null, counts:{emoji:n}} */
+  var reacts = {};
+
+  /* Build picker DOM once, reuse by moving it */
+  var picker = document.createElement('div');
+  picker.className = 'react-picker';
+  picker.setAttribute('role','listbox');
+  REACTIONS.forEach(function(r){
+    var opt = document.createElement('div');
+    opt.className = 'react-opt';
+    opt.setAttribute('data-emoji', r.e);
+    opt.innerHTML = '<span class="react-opt-emoji">'+r.e+'</span><span class="react-opt-label">'+r.label+'</span>';
+    picker.appendChild(opt);
+  });
+  document.body.appendChild(picker);
+
+  var pickerOwner = null; /* which .react-btn currently owns the picker */
+  var pressTimer = null;
+
+  function openPicker(btn) {
+    if (pickerOwner === btn && picker.classList.contains('open')) return;
+    /* Re-parent picker to the button so it positions relative to it */
+    btn.appendChild(picker);
+    pickerOwner = btn;
+    /* Highlight user's current reaction */
+    var postId = btn.getAttribute('data-id');
+    var myEmoji = reacts[postId] && reacts[postId].my;
+    picker.querySelectorAll('.react-opt').forEach(function(opt){
+      opt.style.background = opt.getAttribute('data-emoji') === myEmoji ? 'var(--surface-3)' : '';
+    });
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){ picker.classList.add('open'); });
+    });
+  }
+
+  function closePicker() {
+    picker.classList.remove('open');
+    pickerOwner = null;
+  }
+
+  /* Close when tapping outside */
+  document.addEventListener('touchstart', function(e){
+    if (!picker.classList.contains('open')) return;
+    if (!picker.contains(e.target) && !e.target.closest('.react-btn')) closePicker();
+  }, {passive:true});
+  document.addEventListener('mousedown', function(e){
+    if (!picker.classList.contains('open')) return;
+    if (!picker.contains(e.target) && !e.target.closest('.react-btn')) closePicker();
+  });
+
+  /* Long-press + tap logic on react-btn (delegation) */
+  document.addEventListener('touchstart', function(e){
+    var btn = e.target.closest('.react-btn[data-id]');
+    if (!btn) return;
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(function(){
+      pressTimer = null;
+      openPicker(btn);
+    }, 500);
+  }, {passive:true});
+
+  document.addEventListener('touchend', function(e){
+    var btn = e.target.closest('.react-btn[data-id]');
+    if (!btn) return;
+    if (pressTimer !== null) {
+      /* Short tap — toggle picker */
+      clearTimeout(pressTimer);
+      pressTimer = null;
+      if (picker.classList.contains('open') && pickerOwner === btn) {
+        closePicker();
+      } else {
+        openPicker(btn);
+      }
+    }
+    /* Long-press already opened picker — don't close */
+  }, {passive:true});
+
+  document.addEventListener('touchmove', function(){
+    clearTimeout(pressTimer); pressTimer = null;
+  }, {passive:true});
+
+  /* Picker selection */
+  picker.addEventListener('click', async function(e){
+    var opt = e.target.closest('.react-opt[data-emoji]');
+    if (!opt || !pickerOwner) return;
+    var btn = pickerOwner;
+    var postId = btn.getAttribute('data-id');
+    var emoji = opt.getAttribute('data-emoji');
+    closePicker();
+
+    if (!window.currentUser) {
+      if (typeof openAuthModal === 'function') openAuthModal();
+      return;
+    }
+
+    var prev = reacts[postId] && reacts[postId].my;
+    /* Optimistic update */
+    if (!reacts[postId]) reacts[postId] = {my:null, counts:{}};
+    if (prev) {
+      reacts[postId].counts[prev] = Math.max(0, (reacts[postId].counts[prev]||1) - 1);
+    }
+    if (emoji === prev) {
+      /* Toggling same reaction off */
+      reacts[postId].my = null;
+    } else {
+      reacts[postId].my = emoji;
+      reacts[postId].counts[emoji] = (reacts[postId].counts[emoji]||0) + 1;
+    }
+    updateBtnDisplay(btn, postId);
+
+    /* Persist to D1 */
+    try {
+      await fetch('/api/reactions', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({post_id: postId, reaction: emoji === prev ? null : emoji})
+      });
+      /* Refresh counts from server */
+      await loadReaction(postId, btn);
+    } catch(e) {}
+  });
+
+  /* Update button display from reacts[postId] */
+  function updateBtnDisplay(btn, postId) {
+    var state = reacts[postId];
+    var icon = btn.querySelector('.react-icon');
+    var count = btn.querySelector('.react-count');
+    if (!state || !state.my) {
+      if (icon) icon.textContent = '🔥';
+      if (count) count.textContent = totalCount(state) > 0 ? totalCount(state) : '';
+      btn.style.color = '';
+    } else {
+      if (icon) icon.textContent = state.my;
+      if (count) count.textContent = totalCount(state) > 0 ? totalCount(state) : '';
+      btn.style.color = 'var(--fire-orange)';
+    }
+  }
+
+  function totalCount(state) {
+    if (!state || !state.counts) return 0;
+    return Object.values(state.counts).reduce(function(a,b){ return a+b; }, 0);
+  }
+
+  /* Load reactions for a single post from API */
+  async function loadReaction(postId, btn) {
+    try {
+      var r = await fetch('/api/reactions?post_id='+encodeURIComponent(postId), {credentials:'include'});
+      var d = await r.json();
+      if (!reacts[postId]) reacts[postId] = {my:null, counts:{}};
+      reacts[postId].counts = d.counts || {};
+      reacts[postId].my = d.my || null;
+      if (btn) updateBtnDisplay(btn, postId);
+    } catch(e) {}
+  }
+
+  /* Load all visible react-btns */
+  window.loadAllReactions = async function() {
+    document.querySelectorAll('.react-btn[data-id]').forEach(async function(btn){
+      var postId = btn.getAttribute('data-id');
+      if (!postId || postId.includes('{')) return;
+      await loadReaction(postId, btn);
+    });
+  };
+
+  /* Also call when feed finishes rendering */
+  var _orig_markSaved = window._markSavedBtns;
+  window._markSavedBtns = function() {
+    if (_orig_markSaved) _orig_markSaved();
+    window.loadAllReactions();
+  };
+
+})();
 
   /* LOCKER ROOM — separate IIFE, always runs */
   (function() {
@@ -2931,6 +3136,7 @@ async function votePoll(postId, idx, poll, container) {
   })();
 
 })();
+
 
 
 
