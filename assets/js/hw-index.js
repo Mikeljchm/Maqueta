@@ -2783,8 +2783,8 @@ async function votePoll(postId, idx, poll, container) {
       '.cv-delete-btn{margin:0.5rem 0.75rem 0;background:none;border:1px solid var(--border);color:var(--text-dim);padding:0.5rem 1rem;border-radius:10px;font-size:0.75rem;cursor:pointer;width:calc(100% - 1.5rem);text-align:left;transition:border-color 0.2s,color 0.2s;}',
       '.cv-delete-btn:active{border-color:#cc3333;color:#cc3333;}',
       /* hwConfirm modal */
-      '.hw-confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;display:flex;align-items:center;justify-content:center;padding:1.5rem;opacity:0;transition:opacity 0.2s;}',
-      '.hw-confirm-overlay.open{opacity:1;}',
+      '.hw-confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;display:flex;align-items:center;justify-content:center;padding:1.5rem;opacity:0;pointer-events:none;transition:opacity 0.2s;}',
+      '.hw-confirm-overlay.open{opacity:1;pointer-events:all;}',
       '.hw-confirm-box{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:1.5rem 1.25rem 1.25rem;width:100%;max-width:320px;transform:scale(0.95);transition:transform 0.2s cubic-bezier(0.16,1,0.3,1);}',
       '.hw-confirm-overlay.open .hw-confirm-box{transform:scale(1);}',
       '.hw-confirm-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.05em;margin-bottom:0.4rem;}',
@@ -2931,6 +2931,7 @@ async function votePoll(postId, idx, poll, container) {
   })();
 
 })();
+
 
 
 
