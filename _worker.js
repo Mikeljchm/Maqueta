@@ -578,6 +578,13 @@ async function handleCollections(request, env, corsH) {
       ).bind(col_id, uid).all();
       return apiJson({ items: results }, 200, corsH);
     }
+    if (action === 'saved_posts') {
+      // Return all post_ids saved by user across ALL collections — single query
+      const { results: sp } = await env.DB.prepare(
+        'SELECT DISTINCT post_id FROM collection_items WHERE user_id=?'
+      ).bind(uid).all();
+      return apiJson({ post_ids: sp.map(function(r){ return r.post_id; }) }, 200, corsH);
+    }
     // Get all collections for user
     const { results } = await env.DB.prepare(
       'SELECT c.*, COUNT(ci.id) as count FROM collections c LEFT JOIN collection_items ci ON c.id=ci.collection_id WHERE c.user_id=? GROUP BY c.id ORDER BY c.created_at DESC'
