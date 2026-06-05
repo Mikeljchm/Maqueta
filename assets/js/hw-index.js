@@ -543,119 +543,20 @@ async function votePoll(postId, idx, poll, container) {
   };
 })();
 
-/* ── DOUBLE TAP LIKE + EMOJI EXPLOSION ── */
+/* ── LIKE BUTTON STYLES ── */
 (function(){
-  var EMOJIS = ['❤️','😈','💋','😋','😏','💦','🫦','🍆','🍑','🔥'];
-  var lastTap = {};
-  var blocked = {};
-  var DELAY = 280;
-
-  var style = document.createElement('style');
-  style.textContent = [
-    '.dtap-zone{position:relative;overflow:hidden;}',
-    '.dtap-emoji{position:absolute;pointer-events:none;font-size:3.5rem;transform:translate(-50%,-50%) scale(0);animation:dtap-pop 0.9s cubic-bezier(0.16,1,0.3,1) forwards;z-index:99;}',
-    '@keyframes dtap-pop{0%{transform:translate(-50%,-50%) scale(0);opacity:1;}40%{transform:translate(-50%,-80%) scale(1.4);opacity:1;}100%{transform:translate(-50%,-170%) scale(0.8);opacity:0;}}',
-    '.like-btn.liked svg{fill:var(--fire-orange);stroke:var(--fire-orange);}',
+  var s = document.createElement('style');
+  s.textContent = [
+    /* Llama SVG — estado liked */
+    '.like-btn.liked .like-heart{display:none;}',
+    '.like-btn .like-flame{display:none;}',
+    '.like-btn.liked .like-flame{display:inline;}',
+    '.like-btn.liked{color:var(--fire-orange);}',
     '.like-btn svg{transition:fill 0.25s,stroke 0.25s;}',
-    '.like-btn.like-pop svg{animation:like-pop 0.45s cubic-bezier(0.16,1,0.3,1) forwards;}',
-    '@keyframes like-pop{0%{transform:scale(1);}15%{transform:scale(0.75);}50%{transform:scale(1.45);}75%{transform:scale(1.15);}100%{transform:scale(1);}}',
-    '.like-btn-emoji{display:inline-block;font-size:1.2rem;animation:like-emoji-pop 1s cubic-bezier(0.16,1,0.3,1) forwards;}',
-    '@keyframes like-emoji-pop{0%{transform:scale(0);opacity:1;}40%{transform:scale(1.6);opacity:1;}70%{transform:scale(1.2);opacity:1;}100%{transform:scale(1);opacity:1;}}'
+    '.like-btn.like-pop{animation:like-pop 0.45s cubic-bezier(0.16,1,0.3,1);}',
+    '@keyframes like-pop{0%{transform:scale(1);}15%{transform:scale(0.75);}50%{transform:scale(1.45);}75%{transform:scale(1.15);}100%{transform:scale(1);}}'
   ].join('');
-  document.head.appendChild(style);
-
-  function pick(){ return EMOJIS[Math.floor(Math.random()*EMOJIS.length)]; }
-
-  function spawnEmoji(zone, x, y, emoji) {
-    var el = document.createElement('div');
-    el.className = 'dtap-emoji';
-    el.textContent = emoji || pick();
-    el.style.left = x+'px';
-    el.style.top = y+'px';
-    zone.appendChild(el);
-    setTimeout(function(){ el.remove(); }, 950);
-  }
-
-  function triggerLike(zone, emoji) {
-    var postId = zone.getAttribute('data-postid');
-    if (!postId) return;
-    var card = zone.closest('.post-card');
-    if (!card) return;
-    var likeBtn = card.querySelector('.like-btn');
-    if (likeBtn) {
-      var svg = likeBtn.querySelector('svg');
-      var countEl = likeBtn.querySelector('.like-count');
-      if (svg) {
-        var span = document.createElement('span');
-        span.className = 'like-btn-emoji';
-        span.textContent = emoji;
-        likeBtn.insertBefore(span, svg);
-        svg.style.display = 'none';
-        setTimeout(function(){
-          span.remove();
-          svg.style.display = '';
-          likeBtn.classList.add('liked');
-        }, 1000);
-      }
-      likeBtn.classList.add('liked');
-      if (countEl) countEl.textContent = (parseInt(countEl.textContent)||0) + 1;
-    }
-    if (zone.getAttribute('data-liked') !== 'true') {
-      zone.setAttribute('data-liked', 'true');
-      if (typeof window.toggleLikePublic === 'function') window.toggleLikePublic(postId);
-    }
-  }
-
-  // touchstart capture — detectar doble tap antes que el <a>
-  document.addEventListener('touchstart', function(e) {
-    var zone = e.target.closest('.dtap-zone');
-    if (!zone) return;
-    var id = zone.getAttribute('data-postid') || 'x';
-    var now = Date.now();
-    if (lastTap[id] && (now - lastTap[id]) < DELAY) {
-      lastTap[id] = 0;
-      blocked[id] = true;
-      e.preventDefault();
-      e.stopPropagation();
-      var rect = zone.getBoundingClientRect();
-      var t = e.touches[0];
-      var x = t.clientX - rect.left;
-      var y = t.clientY - rect.top;
-      var emoji = pick();
-      spawnEmoji(zone, x, y, emoji);
-      spawnEmoji(zone, x+(Math.random()*50-25), y+(Math.random()*50-25), pick());
-      spawnEmoji(zone, x+(Math.random()*50-25), y+(Math.random()*50-25), pick());
-      triggerLike(zone, emoji);
-    } else {
-      lastTap[id] = now;
-      blocked[id] = false;
-    }
-  }, {passive: false, capture: true});
-
-  // touchend capture — bloquear navegación si fue doble tap
-  document.addEventListener('touchend', function(e) {
-    var zone = e.target.closest('.dtap-zone');
-    if (!zone) return;
-    var id = zone.getAttribute('data-postid') || 'x';
-    if (blocked[id]) {
-      e.preventDefault();
-      e.stopPropagation();
-      // NO limpiamos blocked aquí — click llega después y lo limpia
-    }
-  }, {passive: false, capture: true});
-
-  // click capture — bloquear y limpiar flag
-  document.addEventListener('click', function(e) {
-    var zone = e.target.closest('.dtap-zone');
-    if (!zone) return;
-    var id = zone.getAttribute('data-postid') || 'x';
-    if (blocked[id]) {
-      blocked[id] = false;
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }, {capture: true});
-
+  document.head.appendChild(s);
 })();
 
 /* ── PROFILES PAGINATION — wrestlers, studs, bulge ── */
@@ -828,11 +729,11 @@ async function votePoll(postId, idx, poll, container) {
 
     var mediaHTML = '';
     if (imgs.length === 1) {
-      mediaHTML = '<div class="card-media-container dtap-zone" data-postid="'+(post.path||String(idx))+'" data-posturl="'+post.url+'" data-liked="false"><a href="'+post.url+'" class="card-media-wrap"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"></a>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
+      mediaHTML = '<div class="card-media-container"><a href="'+post.url+'" class="card-media-wrap"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"></a>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
     } else if (imgs.length === 2) {
       mediaHTML = '<div class="card-media-container"><a href="'+post.url+'" class="card-media-wrap"><div class="card-duo-grid"><img src="'+imgs[0]+'" alt="" loading="lazy" decoding="async"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></a>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
     } else if (imgs.length > 2) {
-      mediaHTML = '<div class="card-media-container dtap-zone" data-postid="'+(post.path||String(idx))+'" data-posturl="'+post.url+'" data-liked="false"><div class="card-media-wrap"><a href="'+post.url+'" style="display:block;"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"><div class="card-photo-peek"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></a><a href="'+post.url+'" class="card-see-all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a></div>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
+      mediaHTML = '<div class="card-media-container"><div class="card-media-wrap"><a href="'+post.url+'" style="display:block;"><img class="card-first-photo" src="'+imgs[0]+'" alt="'+escH(post.title)+'" loading="lazy" decoding="async"><div class="card-photo-peek"><img src="'+imgs[1]+'" alt="" loading="lazy" decoding="async"></div></a><a href="'+post.url+'" class="card-see-all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a></div>'+(post.adult ? adultOverlay(idx) : '')+'</div>';
     }
 
     var descHTML = post.description ? '<div class="card-desc collapsed" id="desc-'+idx+'">'+hashtagify(post.description)+'</div><button class="card-read-more visible" data-desc="desc-'+idx+'">more</button>' : '';
@@ -845,8 +746,7 @@ async function votePoll(postId, idx, poll, container) {
       +'<div class="card-actions">'
       +'<button class="card-act-btn comment-toggle-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="comment-count">0</span></button>'
       +'<button class="card-act-btn save-btn" data-id="'+(post.path||String(idx))+'" data-url="'+(post.url||'')+'" data-img="'+(post.poster||post.image||'')+'" data-title="'+escH(post.title||'')+'"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg><span class="save-count"></span></button>'
-      +'<button class="card-act-btn like-btn" data-id="'+(post.path||String(idx))+'"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span class="like-count">0</span></button>'
-      +'<button class="card-act-btn react-btn" data-id="'+(post.path||String(idx))+'" aria-label="React"><span class="react-icon">&#128293;</span><span class="react-count"></span></button>'
+      +'<button class="card-act-btn like-btn" data-id="'+(post.path||String(idx))+'"><svg class="like-heart" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><svg class="like-flame" viewBox="0 0 24 24" width="21" height="21" fill="var(--fire-orange)" stroke="none"><path d="M12 2s-5 5.5-5 10a5 5 0 0010 0c0-4.5-5-10-5-10zm0 14a3 3 0 01-3-3c0-2 1.5-4.5 3-7 1.5 2.5 3 5 3 7a3 3 0 01-3 3z"/></svg><span class="like-count">0</span></button>'
       +'<button class="card-act-btn share-btn" data-url="'+post.url+'"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>'
       +'</div>'
 
@@ -946,7 +846,7 @@ async function votePoll(postId, idx, poll, container) {
         initObserver();
         // Marcar botones guardados + cargar reacciones una vez el feed esté listo
         if (typeof window._markSavedBtns === 'function') window._markSavedBtns();
-        if (typeof window.loadAllReactions === 'function') window.loadAllReactions();
+
       })
       .catch(function() {
         var container = document.getElementById('feed-container');
@@ -1565,7 +1465,7 @@ async function votePoll(postId, idx, poll, container) {
         btn.classList.toggle('liked', !wasLiked);
         if (!wasLiked) {
           btn.classList.remove('like-pop');
-          void btn.querySelector('svg') && btn.querySelector('svg').offsetWidth;
+          void btn.offsetWidth;
           btn.classList.add('like-pop');
           setTimeout(function(){ btn.classList.remove('like-pop'); }, 450);
         }
@@ -1750,266 +1650,6 @@ async function votePoll(postId, idx, poll, container) {
 
   })();
 
-/* ── REACTIONS — fire emoji picker ── */
-(function(){
-  'use strict';
-
-  var REACTIONS = [
-    {e:'🔥', label:'Hot'},
-    {e:'👀', label:'Watching'},
-    {e:'💪', label:'Alpha'},
-    {e:'🍑', label:'Bulge'},
-    {e:'😈', label:'Stud'},
-    {e:'🥵', label:'Tense'},
-    {e:'🏆', label:'Champion'}
-  ];
-
-  /* CSS — picker vive en body con position:fixed */
-  var rs = document.createElement('style');
-  rs.textContent = [
-    '.react-btn .react-icon{font-size:1.05rem;line-height:1;}',
-    '.react-btn .react-count{font-size:0.72rem;min-width:1ch;}',
-    '.react-btn.reacted{color:var(--fire-orange);}',
-    '.react-picker{position:fixed;background:var(--surface-2);border:1px solid var(--border);',
-    'border-radius:40px;padding:0.4rem 0.55rem;display:flex;gap:0.1rem;z-index:500;',
-    'opacity:0;pointer-events:none;transition:opacity 0.15s,transform 0.2s cubic-bezier(0.16,1,0.3,1);',
-    'transform:scale(0.75);transform-origin:bottom center;white-space:nowrap;',
-    'box-shadow:0 4px 24px rgba(0,0,0,0.5);}',
-    '.react-picker.open{opacity:1;pointer-events:all;transform:scale(1);}',
-    '.react-opt{display:flex;flex-direction:column;align-items:center;gap:0.08rem;',
-    'cursor:pointer;padding:0.3rem 0.35rem;border-radius:20px;',
-    'transition:background 0.12s,transform 0.12s;-webkit-tap-highlight-color:transparent;}',
-    '.react-opt.selected{background:var(--surface-3);}',
-    '.react-opt:active{transform:scale(1.3);}',
-    '.react-opt-emoji{font-size:1.45rem;line-height:1.1;pointer-events:none;}',
-    '.react-opt-label{font-size:0.42rem;color:var(--text-dim);letter-spacing:0.04em;',
-    'text-transform:uppercase;pointer-events:none;}'
-  ].join('');
-  document.head.appendChild(rs);
-
-  /* State per post */
-  var reacts = {};
-
-  /* Single picker DOM — stays in body, positioned with fixed coords */
-  var picker = document.createElement('div');
-  picker.className = 'react-picker';
-  picker.setAttribute('role', 'listbox');
-  REACTIONS.forEach(function(r) {
-    var opt = document.createElement('div');
-    opt.className = 'react-opt';
-    opt.setAttribute('data-emoji', r.e);
-    opt.innerHTML = '<div class="react-opt-emoji">'+r.e+'</div><div class="react-opt-label">'+r.label+'</div>';
-    picker.appendChild(opt);
-  });
-  document.body.appendChild(picker);
-
-  var pickerOwner = null;
-  var pressTimer  = null;
-  var pickerCloseTimer = null;
-
-  function positionPicker(btn) {
-    var rect = btn.getBoundingClientRect();
-    var pw = picker.offsetWidth || 320;
-    /* Center on button, clamp to viewport */
-    var left = rect.left + rect.width/2 - pw/2;
-    left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
-    var top = rect.top - picker.offsetHeight - 10;
-    if (top < 8) top = rect.bottom + 6;
-    picker.style.left = left + 'px';
-    picker.style.top  = top  + 'px';
-  }
-
-  function openPicker(btn) {
-    clearTimeout(pickerCloseTimer);
-    pickerOwner = btn;
-    /* Highlight current reaction */
-    var postId = btn.getAttribute('data-id');
-    var myEmoji = reacts[postId] && reacts[postId].my;
-    picker.querySelectorAll('.react-opt').forEach(function(opt) {
-      opt.classList.toggle('selected', opt.getAttribute('data-emoji') === myEmoji);
-    });
-    /* Position before showing (needs to be in DOM at opacity:0 first) */
-    picker.style.left = '-9999px';
-    picker.style.top  = '-9999px';
-    picker.classList.add('open');
-    requestAnimationFrame(function() {
-      positionPicker(btn);
-    });
-  }
-
-  function closePicker() {
-    picker.classList.remove('open');
-    pickerOwner = null;
-  }
-
-  /* ── Touch handling ──
-     Strategy: touchstart starts long-press timer.
-     touchend: if timer still running → short tap → toggle.
-     If target is INSIDE picker → let picker's own touchend handle selection.
-  */
-  document.addEventListener('touchstart', function(e) {
-    var btn = e.target.closest('.react-btn[data-id]');
-    if (!btn) {
-      /* Tap outside: close picker */
-      if (picker.classList.contains('open') && !picker.contains(e.target)) {
-        closePicker();
-      }
-      return;
-    }
-    /* Don't start timer if tap is on picker (react-opt) */
-    if (picker.contains(e.target)) return;
-    clearTimeout(pressTimer);
-    pressTimer = setTimeout(function() {
-      pressTimer = null;
-      openPicker(btn);
-    }, 480);
-  }, {passive: true});
-
-  document.addEventListener('touchend', function(e) {
-    /* If tap landed on a react-opt, handle selection — don't toggle picker */
-    var opt = e.target.closest('.react-opt[data-emoji]');
-    if (opt) {
-      clearTimeout(pressTimer);
-      pressTimer = null;
-      handleSelection(opt);
-      return;
-    }
-    var btn = e.target.closest('.react-btn[data-id]');
-    if (!btn) return;
-    if (pressTimer !== null) {
-      /* Short tap on button itself — toggle */
-      clearTimeout(pressTimer);
-      pressTimer = null;
-      if (picker.classList.contains('open') && pickerOwner === btn) {
-        closePicker();
-      } else {
-        openPicker(btn);
-      }
-    }
-    /* Long-press opened picker — keep open */
-  }, {passive: true});
-
-  document.addEventListener('touchmove', function() {
-    clearTimeout(pressTimer);
-    pressTimer = null;
-  }, {passive: true});
-
-  /* Mouse fallback (desktop) */
-  document.addEventListener('click', function(e) {
-    var opt = e.target.closest('.react-opt[data-emoji]');
-    if (opt) { handleSelection(opt); return; }
-    var btn = e.target.closest('.react-btn[data-id]');
-    if (btn) {
-      if (picker.classList.contains('open') && pickerOwner === btn) {
-        closePicker();
-      } else {
-        openPicker(btn);
-      }
-      return;
-    }
-    if (picker.classList.contains('open') && !picker.contains(e.target)) {
-      closePicker();
-    }
-  });
-
-  /* ── Selection handler ── */
-  async function handleSelection(opt) {
-    if (!pickerOwner) return;
-    var btn    = pickerOwner;
-    var postId = btn.getAttribute('data-id');
-    var emoji  = opt.getAttribute('data-emoji');
-    closePicker();
-
-    if (!window.currentUser) {
-      if (typeof openAuthModal === 'function') openAuthModal();
-      return;
-    }
-
-    /* Init state */
-    if (!reacts[postId]) reacts[postId] = {my: null, counts: {}};
-    var prev = reacts[postId].my;
-
-    /* Optimistic update */
-    if (prev) {
-      reacts[postId].counts[prev] = Math.max(0, (reacts[postId].counts[prev] || 1) - 1);
-    }
-    if (emoji === prev) {
-      reacts[postId].my = null;           /* toggle off same emoji */
-    } else {
-      reacts[postId].my = emoji;
-      reacts[postId].counts[emoji] = (reacts[postId].counts[emoji] || 0) + 1;
-    }
-    updateBtnDisplay(btn, postId);
-
-    /* Persist */
-    try {
-      var payload = {post_id: postId, reaction: emoji === prev ? null : emoji};
-      var r = await fetch('/api/reactions', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-      });
-      var d = await r.json();
-      /* Sync with server response */
-      if (d.counts !== undefined) {
-        reacts[postId].counts = d.counts;
-        reacts[postId].my = d.my !== undefined ? d.my : reacts[postId].my;
-        updateBtnDisplay(btn, postId);
-      }
-    } catch(err) {}
-  }
-
-  /* ── Display helpers ── */
-  function updateBtnDisplay(btn, postId) {
-    var state = reacts[postId];
-    var icon  = btn.querySelector('.react-icon');
-    var count = btn.querySelector('.react-count');
-    var total = totalCount(state);
-    if (!state || !state.my) {
-      if (icon)  icon.textContent = '🔥';
-      if (count) count.textContent = total > 0 ? total : '';
-      btn.classList.remove('reacted');
-    } else {
-      if (icon)  icon.textContent = state.my;
-      if (count) count.textContent = total > 0 ? total : '';
-      btn.classList.add('reacted');
-    }
-  }
-
-  function totalCount(state) {
-    if (!state || !state.counts) return 0;
-    return Object.values(state.counts).reduce(function(a, b) { return a + b; }, 0);
-  }
-
-  /* ── Load from API ── */
-  async function loadReaction(postId, btn) {
-    try {
-      var r = await fetch('/api/reactions?post_id=' + encodeURIComponent(postId), {credentials: 'include'});
-      var d = await r.json();
-      if (!reacts[postId]) reacts[postId] = {my: null, counts: {}};
-      reacts[postId].counts = d.counts || {};
-      reacts[postId].my     = d.my   || null;
-      if (btn) updateBtnDisplay(btn, postId);
-    } catch(e) {}
-  }
-
-  window.loadAllReactions = async function() {
-    document.querySelectorAll('.react-btn[data-id]').forEach(async function(btn) {
-      var postId = btn.getAttribute('data-id');
-      if (!postId || postId.includes('{')) return;
-      await loadReaction(postId, btn);
-    });
-  };
-
-  /* Hook into feed render cycle */
-  var _orig = window._markSavedBtns;
-  window._markSavedBtns = function() {
-    if (_orig) _orig();
-    window.loadAllReactions();
-  };
-
-})();
 
   /* LOCKER ROOM — separate IIFE, always runs */
   (function() {
@@ -3204,6 +2844,7 @@ async function votePoll(postId, idx, poll, container) {
   })();
 
 })();
+
 
 
 
