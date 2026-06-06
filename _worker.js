@@ -870,11 +870,14 @@ async function handlePoints(request, env, corsH) {
 async function handleConfessions(request, env, corsH) {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS confessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT DEFAULT '',
     body TEXT NOT NULL,
     category TEXT DEFAULT 'confession',
     status TEXT DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`).run();
+  /* Agregar columna title si ya existe la tabla sin ella */
+  try { await env.DB.prepare("ALTER TABLE confessions ADD COLUMN title TEXT DEFAULT ''").run(); } catch(e){}
 
   const url    = new URL(request.url);
   const isAdmin = (function(){
@@ -889,12 +892,12 @@ async function handleConfessions(request, env, corsH) {
     if (status === 'pending') {
       if (!isAdmin) return apiJson({ error: 'Forbidden' }, 403, corsH);
       const { results } = await env.DB.prepare(
-        "SELECT id, body, category, created_at FROM confessions WHERE status='pending' ORDER BY created_at ASC"
+        "SELECT id, title, body, category, created_at FROM confessions WHERE status='pending' ORDER BY created_at ASC"
       ).all();
       return apiJson({ confessions: results }, 200, corsH);
     }
     const { results } = await env.DB.prepare(
-      "SELECT id, body, category, created_at FROM confessions WHERE status='approved' ORDER BY created_at DESC LIMIT 50"
+      "SELECT id, title, body, category, created_at FROM confessions WHERE status='approved' ORDER BY created_at DESC LIMIT 50"
     ).all();
     return apiJson({ confessions: results }, 200, corsH);
   }
@@ -909,9 +912,10 @@ async function handleConfessions(request, env, corsH) {
       if (text.length > 1000) return apiJson({ error: 'Too long' }, 400, corsH);
       const cat = ['confession','fantasy','experience','rumor'].includes(body.category)
         ? body.category : 'confession';
+      const title = (body.title || '').trim().slice(0, 100);
       await env.DB.prepare(
-        "INSERT INTO confessions (body, category) VALUES (?, ?)"
-      ).bind(text, cat).run();
+        "INSERT INTO confessions (title, body, category) VALUES (?, ?, ?)"
+      ).bind(title, text, cat).run();
       return apiJson({ ok: true }, 200, corsH);
     }
 
@@ -1094,6 +1098,7 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
 
 
 
