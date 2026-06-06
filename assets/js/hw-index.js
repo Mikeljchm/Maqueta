@@ -819,7 +819,35 @@ async function votePoll(postId, idx, poll, container) {
 
   window.setFeedFilter = function(cat) {
     activeFilter = cat || 'all';
+    var tb = document.getElementById('trending-bar');
+    if (tb) tb.style.display = 'none';
     resetFeed();
+  };
+
+  /* Renderizar una lista custom de posts (para Trending) */
+  window._renderTrendingFeed = function(posts) {
+    var container = document.getElementById('feed-container');
+    if (!container) return;
+    container.innerHTML = '';
+    if (!posts.length) {
+      container.innerHTML = '<div style="padding:2.5rem;text-align:center;color:var(--text-dim);font-size:0.85rem;">No trending posts right now. Check back later!</div>';
+      return;
+    }
+    /* Reutilizar buildCard para cada post */
+    posts.forEach(function(post, i) {
+      var card = document.createElement('div');
+      card.innerHTML = buildCard(post, i);
+      container.appendChild(card.firstChild);
+    });
+    /* Cargar likes/counts */
+    setTimeout(function(){
+      if (typeof window.loadAllLikes === 'function') window.loadAllLikes();
+      if (typeof window.loadAllCommentCounts === 'function') window.loadAllCommentCounts();
+      if (typeof window._markSavedBtns === 'function') window._markSavedBtns();
+    }, 100);
+    /* Ocultar sentinel — trending no tiene infinite scroll */
+    var sentinel = document.getElementById('feed-sentinel');
+    if (sentinel) sentinel.style.display = 'none';
   };
 
   // Intersection Observer para infinite scroll
@@ -3263,7 +3291,122 @@ async function votePoll(postId, idx, poll, container) {
   if (!window.ALL_POSTS) window.ALL_POSTS = [];
 
 })();
+
+/* ── TRENDING ── */
+(function(){
+  'use strict';
+
+  /* CSS para trd-pills */
+  var ts = document.createElement('style');
+  ts.textContent = [
+    '.trd-pill{display:inline-block;padding:0.3rem 0.85rem;margin-right:0.4rem;border-radius:20px;',
+    'background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);',
+    'font-size:0.72rem;letter-spacing:0.06em;cursor:pointer;transition:all 0.2s;white-space:nowrap;',
+    'font-family:var(--font-b);}',
+    '.trd-pill.active{background:var(--fire-orange);border-color:var(--fire-orange);color:#fff;}',
+    '#trending-bar{scrollbar-width:none;}',
+    '#trending-bar::-webkit-scrollbar{display:none;}'
+  ].join('');
+  document.head.appendChild(ts);
+
+  var trendingBar  = document.getElementById('trending-bar');
+  var activeTrdType = 'hot';
+  var TRENDING_IDS  = [];   /* post_ids del servidor en orden */
+  var loading       = false;
+
+  /* Reordenar ALL_POSTS según array de post_ids del servidor */
+  function getTrendingPosts() {
+    if (!window.ALL_POSTS || !TRENDING_IDS.length) return [];
+    var map = {};
+    window.ALL_POSTS.forEach(function(p){ map[p.path] = p; });
+    var ordered = [];
+    TRENDING_IDS.forEach(function(id){
+      if (map[id]) ordered.push(map[id]);
+    });
+    /* Append posts not in trending at the end (por si hay pocos) */
+    if (ordered.length < 5) {
+      window.ALL_POSTS.forEach(function(p){
+        if (!TRENDING_IDS.includes(p.path)) ordered.push(p);
+      });
+    }
+    return ordered;
+  }
+
+  async function loadTrending(type) {
+    if (loading) return;
+    loading = true;
+    activeTrdType = type;
+
+    /* Highlight pill */
+    if (trendingBar) {
+      trendingBar.querySelectorAll('.trd-pill').forEach(function(p){
+        p.classList.toggle('active', p.getAttribute('data-trd') === type);
+      });
+    }
+
+    /* Mostrar spinner en el feed */
+    var container = document.getElementById('feed-container');
+    if (container) container.innerHTML = '<div style="padding:2.5rem;text-align:center;color:var(--text-dim);font-size:0.85rem;">Loading trending...</div>';
+
+    try {
+      var r = await fetch('/api/trending?type=' + type);
+      var d = await r.json();
+      TRENDING_IDS = d.post_ids || [];
+    } catch(e) {
+      TRENDING_IDS = [];
+    }
+
+    loading = false;
+
+    /* Renderizar usando la misma maquinaria del feed */
+    if (typeof window._renderTrendingFeed === 'function') {
+      window._renderTrendingFeed(getTrendingPosts());
+    }
+  }
+
+  /* Exponer para que el IIFE del feed lo pueda usar */
+  window._getTrendingPosts = getTrendingPosts;
+
+  /* Cat-pill Trending click */
+  document.addEventListener('DOMContentLoaded', function() {
+    /* Cat pill click */
+    var catPills = document.getElementById('cat-pills');
+    if (catPills) {
+      catPills.addEventListener('click', function(e) {
+        var pill = e.target.closest('.cat-pill[data-cat="trending"]');
+        if (!pill) {
+          /* Otra pill — ocultar trending bar */
+          if (trendingBar) trendingBar.style.display = 'none';
+          return;
+        }
+        /* Activar trending */
+        catPills.querySelectorAll('.cat-pill').forEach(function(p){ p.classList.remove('active'); });
+        pill.classList.add('active');
+        if (trendingBar) trendingBar.style.display = '';
+        /* setFeedFilter con modo trending especial */
+        if (typeof window.setTrendingFilter === 'function') window.setTrendingFilter('hot');
+      });
+    }
+
+    /* Trd-pill clicks */
+    if (trendingBar) {
+      trendingBar.addEventListener('click', function(e) {
+        var pill = e.target.closest('.trd-pill[data-trd]');
+        if (!pill) return;
+        var type = pill.getAttribute('data-trd');
+        loadTrending(type);
+      });
+    }
+  });
+
+  /* Inicializar al cargar trending type */
+  window.setTrendingFilter = function(type) {
+    loadTrending(type || 'hot');
+  };
+
 })();
+})();
+
 
 
 
