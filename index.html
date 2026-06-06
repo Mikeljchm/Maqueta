@@ -161,6 +161,33 @@ layout: none
           <div class="lr-sub">Where the real action happens.<br>Close the door. Start reading.</div>
         </div>
 
+        <!-- CONFESSIONS -->
+        <div class="conf-bar">
+          <button class="conf-share-btn" id="conf-share-btn">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            Share Your Story
+          </button>
+        </div>
+        <div class="conf-feed" id="conf-feed">
+          <div class="conf-loading">Loading stories...</div>
+        </div>
+
+        <!-- Submit panel -->
+        <div class="conf-overlay" id="conf-overlay"></div>
+        <div class="conf-panel" id="conf-panel">
+          <div class="conf-panel-handle"></div>
+          <div class="conf-panel-title">Share Anonymously</div>
+          <select class="conf-select" id="conf-cat">
+            <option value="confession">&#128172; Confession</option>
+            <option value="fantasy">&#128293; Fantasy</option>
+            <option value="experience">&#9989; Experience</option>
+            <option value="rumor">&#128483; Rumor</option>
+          </select>
+          <textarea class="conf-textarea" id="conf-textarea" maxlength="1000" placeholder="Share your confession, fantasy or experience... 100% anonymous"></textarea>
+          <button class="conf-submit-btn" id="conf-submit-btn">Submit Story</button>
+          <div class="conf-anon-note">&#128274; Your identity is never stored</div>
+        </div>
+
         <!-- Category pills — dynamic from Jekyll -->
         <div class="lr-pills" id="lr-pills">
           <button class="lr-pill active" data-lcat="all">All</button>
@@ -641,6 +668,7 @@ layout: none
 
 </body>
 </html>
+
 
 
 
