@@ -74,6 +74,7 @@ layout: none
       </header>
       <div class="cat-pills" id="cat-pills">
           <button class="cat-pill active" data-cat="all">All</button>
+          <button class="cat-pill" data-cat="trending">&#128293; Trending</button>
           <button class="cat-pill" data-cat="wrestling">Wrestling</button>
           <button class="cat-pill" data-cat="military">Military</button>
           <button class="cat-pill" data-cat="bulge">Bulge</button>
@@ -81,10 +82,9 @@ layout: none
           <button class="cat-pill" data-cat="fan">Fan Files</button>
           <button class="cat-pill" data-cat="hall">Hall of Flame</button>
           <button class="cat-pill" data-cat="audio">Audio</button>
-        <button class="cat-pill" data-cat="trending">&#128293; Trending</button>
       </div>
-      <!-- Trending sub-selector -->
-      <div id="trending-bar" style="display:none;overflow-x:auto;white-space:nowrap;padding:0.35rem 0.75rem 0;-webkit-overflow-scrolling:touch;">
+      <!-- Trending sub-selector: overflow:hidden + max-height para transición suave -->
+      <div id="trending-bar" style="max-height:0;overflow:hidden;transition:max-height 0.28s cubic-bezier(0.16,1,0.3,1),padding 0.28s;padding:0 0.75rem;white-space:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
         <button class="trd-pill active" data-trd="hot">&#128293; Hot Today</button>
         <button class="trd-pill" data-trd="saved">&#11088; Most Saved</button>
         <button class="trd-pill" data-trd="new">&#128640; New This Week</button>
@@ -641,5 +641,6 @@ layout: none
 
 </body>
 </html>
+
 
 
