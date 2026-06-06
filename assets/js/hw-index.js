@@ -205,7 +205,9 @@
     }).then(function(r){ return r.json(); })
     .then(function(d) {
       if (d.ok || d.id) {
-        addToPanel(text, window.currentUser ? (window.currentUser.name || 'You') : 'You',
+        var _uName = window.currentUser ? (window.currentUser.name || 'You') : 'You';
+    var _uBadge = window.currentUser && window.currentUser.badge ? window.currentUser.badge + ' ' : '';
+    addToPanel(text, _uBadge + _uName,
           window.currentUser ? window.currentUser.picture : '');
         updateCount(1);
       }
@@ -2116,6 +2118,27 @@ async function votePoll(postId, idx, poll, container) {
     });
   }
 
+  /* Cargar puntos y badge del usuario desde D1 */
+  async function fetchUserPoints(userId) {
+    if (!userId) return;
+    try {
+      var r = await fetch('/api/points?user_id=' + encodeURIComponent(userId));
+      var d = await r.json();
+      if (window.currentUser) {
+        window.currentUser.points = d.points || 0;
+        window.currentUser.badge  = d.badge  || '🔰';
+        window.currentUser.level  = d.level  || 'Rookie';
+      }
+      /* Actualizar badge en perfil si está visible */
+      var profBadge = document.getElementById('prof-badge');
+      if (profBadge && profBadge.style.display !== 'none') {
+        profBadge.textContent = (d.badge || '') + ' ' + (d.level || '');
+        var cls = {Rookie:'badge-rookie',Regular:'badge-regular',Soldier:'badge-soldier',VIP:'badge-vip'};
+        profBadge.className = 'prof-badge ' + (cls[d.level] || 'badge-rookie');
+      }
+    } catch(e) {}
+  }
+
   /* Restaurar estado col-saved en los botones — 1 sola request al servidor */
   async function restoreSavedStates() {
     if (!window.currentUser) return;
@@ -2148,6 +2171,8 @@ async function votePoll(postId, idx, poll, container) {
     if (session) {
       currentUser = session; window.currentUser = session;
       updateAuthUI(currentUser);
+      /* Cargar puntos y badge del usuario */
+      fetchUserPoints(session.id);
     }
     applyAdultBlur();
 
@@ -2167,6 +2192,7 @@ async function votePoll(postId, idx, poll, container) {
         currentUser = s; window.currentUser = s;
         updateAuthUI(currentUser);
         closeAuthModal();
+        fetchUserPoints(s.id);
         // Restaurar al hacer login también
         setTimeout(restoreSavedStates, 800);
       } else {
@@ -3025,14 +3051,13 @@ async function votePoll(postId, idx, poll, container) {
       if (stats)      stats.style.display = '';
       if (unWrap)     unWrap.style.display = 'flex';
 
-      /* Badge by # of liked posts */
+      /* Badge desde puntos D1 */
       if (badge) {
-        var likedCount = 0;
-        try { likedCount = JSON.parse(localStorage.getItem('hw_liked_v2')||'[]').length; } catch(e){}
-        var level = likedCount < 5 ? 'Rookie' : likedCount < 20 ? 'Regular' : likedCount < 50 ? 'Soldier' : 'VIP';
-        var cls   = likedCount < 5 ? 'badge-rookie' : likedCount < 20 ? 'badge-regular' : likedCount < 50 ? 'badge-soldier' : 'badge-vip';
-        badge.textContent = level;
-        badge.className = 'prof-badge ' + cls;
+        var lvl = (user && user.level) || 'Rookie';
+        var bdg = (user && user.badge) || '🔰';
+        var clsMap = {Rookie:'badge-rookie',Regular:'badge-regular',Soldier:'badge-soldier',VIP:'badge-vip'};
+        badge.textContent = bdg + ' ' + lvl;
+        badge.className = 'prof-badge ' + (clsMap[lvl] || 'badge-rookie');
         badge.style.display = '';
       }
 
@@ -3422,6 +3447,7 @@ async function votePoll(postId, idx, poll, container) {
 
 })();
 })();
+
 
 
 
