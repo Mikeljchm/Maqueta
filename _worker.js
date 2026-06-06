@@ -866,6 +866,77 @@ async function handlePoints(request, env, corsH) {
   return apiJson({ error: 'Method not allowed' }, 405, corsH);
 }
 
+
+async function handleConfessions(request, env, corsH) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS confessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    body TEXT NOT NULL,
+    category TEXT DEFAULT 'confession',
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+
+  const url    = new URL(request.url);
+  const isAdmin = (function(){
+    const cookies = request.headers.get('Cookie') || '';
+    const m = cookies.match(/hw_admin=([^;]+)/);
+    if (!m) return false;
+    try { const s = JSON.parse(atob(m[1])); return s && s.login === 'Mikeljchm'; } catch(e){ return false; }
+  })();
+
+  if (request.method === 'GET') {
+    const status = url.searchParams.get('status');
+    if (status === 'pending') {
+      if (!isAdmin) return apiJson({ error: 'Forbidden' }, 403, corsH);
+      const { results } = await env.DB.prepare(
+        "SELECT id, body, category, created_at FROM confessions WHERE status='pending' ORDER BY created_at ASC"
+      ).all();
+      return apiJson({ confessions: results }, 200, corsH);
+    }
+    const { results } = await env.DB.prepare(
+      "SELECT id, body, category, created_at FROM confessions WHERE status='approved' ORDER BY created_at DESC LIMIT 50"
+    ).all();
+    return apiJson({ confessions: results }, 200, corsH);
+  }
+
+  if (request.method === 'POST') {
+    const body = await request.json();
+    const action = body.action;
+
+    if (action === 'submit') {
+      const text = (body.body || '').trim();
+      if (!text) return apiJson({ error: 'Empty' }, 400, corsH);
+      if (text.length > 1000) return apiJson({ error: 'Too long' }, 400, corsH);
+      const cat = ['confession','fantasy','experience','rumor'].includes(body.category)
+        ? body.category : 'confession';
+      await env.DB.prepare(
+        "INSERT INTO confessions (body, category) VALUES (?, ?)"
+      ).bind(text, cat).run();
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    if (action === 'approve') {
+      if (!isAdmin) return apiJson({ error: 'Forbidden' }, 403, corsH);
+      await env.DB.prepare(
+        "UPDATE confessions SET status='approved' WHERE id=?"
+      ).bind(parseInt(body.id)).run();
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    if (action === 'reject') {
+      if (!isAdmin) return apiJson({ error: 'Forbidden' }, 403, corsH);
+      await env.DB.prepare(
+        "DELETE FROM confessions WHERE id=?"
+      ).bind(parseInt(body.id)).run();
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    return apiJson({ error: 'Unknown action' }, 400, corsH);
+  }
+
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -906,6 +977,7 @@ export default {
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
       if (path === '/api/polls') return handlePolls(request, env, corsH);
+      if (path === '/api/confessions') return handleConfessions(request, env, corsH);
       if (path === '/api/points') return handlePoints(request, env, corsH);
       if (path === '/api/trending') return handleTrending(request, env, corsH);
       if (path === '/api/activity') return handleActivity(request, env, corsH);
@@ -1022,6 +1094,7 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
 
 
 
