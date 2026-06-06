@@ -2225,12 +2225,20 @@ async function votePoll(postId, idx, poll, container) {
       document.body.classList.add('is-admin');
       /* Agregar botón Confessions al panel admin */
       var s = document.createElement('style');
-      s.textContent = '.conf-admin-fab{display:none;position:fixed;bottom:calc(var(--nav-h,56px) + var(--safe-bottom,0px) + 4.5rem);right:1rem;background:#6c3fc7;color:#fff;border:none;border-radius:20px;padding:0.5rem 1rem;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.06em;cursor:pointer;z-index:101;box-shadow:0 4px 16px rgba(108,63,199,0.4);}.is-admin .conf-admin-fab{display:flex;align-items:center;gap:0.4rem;}.conf-admin-sheet{position:fixed;inset:0;background:var(--bg);z-index:600;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}.conf-admin-sheet.open{transform:translateX(0);}.conf-admin-header{display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}.conf-admin-back{background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}.conf-admin-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}.conf-admin-htitle{font-family:var(--font-d);font-size:1rem;letter-spacing:0.07em;}.conf-admin-body{flex:1;overflow-y:auto;padding:0.75rem;}';
+      s.textContent = '.conf-admin-fab{display:none;position:fixed;bottom:calc(var(--nav-h,56px) + var(--safe-bottom,0px) + 7.5rem);right:1rem;background:#6c3fc7;color:#fff;border:none;border-radius:20px;padding:0.5rem 1rem;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.06em;cursor:pointer;z-index:101;box-shadow:0 4px 16px rgba(108,63,199,0.4);}.is-admin .conf-admin-fab{display:flex;align-items:center;gap:0.4rem;}.conf-admin-badge{background:#ff3b5c;color:#fff;border-radius:50%;width:17px;height:17px;font-size:0.6rem;display:flex;align-items:center;justify-content:center;font-family:var(--font-b);font-weight:700;flex-shrink:0;margin-left:0.2rem;}' + '.conf-admin-sheet{position:fixed;inset:0;background:var(--bg);z-index:600;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}.conf-admin-sheet.open{transform:translateX(0);}.conf-admin-header{display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}.conf-admin-back{background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}.conf-admin-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}.conf-admin-htitle{font-family:var(--font-d);font-size:1rem;letter-spacing:0.07em;}.conf-admin-body{flex:1;overflow-y:auto;padding:0.75rem;}';
       document.head.appendChild(s);
       /* FAB */
       var fab = document.createElement('button');
       fab.className = 'conf-admin-fab';
-      fab.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Confessions';
+      fab.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Confessions<span class="conf-admin-badge" id="conf-pending-badge" style="display:none"></span>';
+      /* Cargar conteo de pendientes */
+      fetch('/api/confessions?status=pending', {credentials:'include'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var n = (d.confessions||[]).length;
+          var badge = document.getElementById('conf-pending-badge');
+          if (badge && n > 0) { badge.textContent = n > 9 ? '9+' : n; badge.style.display = 'flex'; }
+        }).catch(function(){});
       document.body.appendChild(fab);
       /* Sheet */
       var sheet = document.createElement('div');
@@ -2243,6 +2251,8 @@ async function votePoll(postId, idx, poll, container) {
       fab.addEventListener('click', function() {
         sheet.classList.add('open');
         document.body.style.overflow = 'hidden';
+        var badge = document.getElementById('conf-pending-badge');
+        if (badge) badge.style.display = 'none';
         if (typeof window.loadPendingConfessions === 'function') {
           window.loadPendingConfessions(document.getElementById('conf-admin-body'));
         }
@@ -3630,8 +3640,30 @@ async function votePoll(postId, idx, poll, container) {
   });
 
   /* ── Submit panel ── */
-  var overlay   = document.getElementById('conf-overlay');
-  var panel     = document.getElementById('conf-panel');
+  /* Crear overlay y panel en body para que position:fixed funcione correctamente */
+  var overlay = document.createElement('div');
+  overlay.className = 'conf-overlay';
+  overlay.id = 'conf-overlay';
+  document.body.appendChild(overlay);
+
+  var panel = document.createElement('div');
+  panel.className = 'conf-panel';
+  panel.id = 'conf-panel';
+  panel.innerHTML =
+    '<div class="conf-panel-handle"></div>'
+    + '<div class="conf-panel-title">Share Anonymously</div>'
+    + '<select class="conf-select" id="conf-cat">'
+    + '<option value="confession">&#128172; Confession</option>'
+    + '<option value="fantasy">&#128293; Fantasy</option>'
+    + '<option value="experience">&#9989; Experience</option>'
+    + '<option value="rumor">&#128483; Rumor</option>'
+    + '</select>'
+    + '<input class="conf-title-input" id="conf-title" type="text" maxlength="100" placeholder="Title (optional)">'
+    + '<textarea class="conf-textarea" id="conf-textarea" maxlength="1000" placeholder="Share your confession, fantasy or experience... 100% anonymous"></textarea>'
+    + '<button class="conf-submit-btn" id="conf-submit-btn">Submit Story</button>'
+    + '<div class="conf-anon-note">&#128274; Your identity is never stored</div>';
+  document.body.appendChild(panel);
+
   var shareBtn  = document.getElementById('conf-share-btn');
   var submitBtn = document.getElementById('conf-submit-btn');
   var textarea  = document.getElementById('conf-textarea');
@@ -3822,6 +3854,7 @@ async function votePoll(postId, idx, poll, container) {
 
 })();
 })();
+
 
 
 
