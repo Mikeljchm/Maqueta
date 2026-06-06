@@ -779,6 +779,33 @@ async function handleActivity(request, env, corsH) {
   return apiJson({ error: 'type required: likes|comments' }, 400, corsH);
 }
 
+
+async function handleTrending(request, env, corsH) {
+  const url  = new URL(request.url);
+  const type = url.searchParams.get('type') || 'hot';
+
+  let results;
+  if (type === 'hot') {
+    const r = await env.DB.prepare(
+      "SELECT post_id, COUNT(*) as count FROM likes WHERE created_at > datetime('now','-24 hours') GROUP BY post_id ORDER BY count DESC LIMIT 20"
+    ).all();
+    results = r.results;
+  } else if (type === 'saved') {
+    const r = await env.DB.prepare(
+      'SELECT post_id, COUNT(*) as count FROM collection_items GROUP BY post_id ORDER BY count DESC LIMIT 20'
+    ).all();
+    results = r.results;
+  } else {
+    /* new: posts with any likes/comments in last 7 days, ordered by total activity */
+    const r = await env.DB.prepare(
+      "SELECT post_id, COUNT(*) as count FROM likes WHERE created_at > datetime('now','-7 days') GROUP BY post_id ORDER BY count DESC LIMIT 20"
+    ).all();
+    results = r.results;
+  }
+
+  return apiJson({ post_ids: (results||[]).map(function(r){ return r.post_id; }) }, 200, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -819,6 +846,7 @@ export default {
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
       if (path === '/api/polls') return handlePolls(request, env, corsH);
+      if (path === '/api/trending') return handleTrending(request, env, corsH);
       if (path === '/api/activity') return handleActivity(request, env, corsH);
       if (path === '/api/profile') return handleProfile(request, env, corsH);
       if (path === '/api/reactions') return handleReactions(request, env, corsH);
@@ -933,6 +961,7 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
 
 
 
