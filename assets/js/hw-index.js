@@ -820,7 +820,7 @@ async function votePoll(postId, idx, poll, container) {
   window.setFeedFilter = function(cat) {
     activeFilter = cat || 'all';
     var tb = document.getElementById('trending-bar');
-    if (tb) tb.style.display = 'none';
+    if (tb) { tb.style.maxHeight = '0'; tb.style.padding = '0 0.75rem'; }
     resetFeed();
   };
 
@@ -3376,13 +3376,17 @@ async function votePoll(postId, idx, poll, container) {
         var pill = e.target.closest('.cat-pill[data-cat="trending"]');
         if (!pill) {
           /* Otra pill — ocultar trending bar */
-          if (trendingBar) trendingBar.style.display = 'none';
+          if (trendingBar) { trendingBar.style.maxHeight = '0'; trendingBar.style.padding = '0 0.75rem'; adjustFeedPadding(); }
           return;
         }
         /* Activar trending */
         catPills.querySelectorAll('.cat-pill').forEach(function(p){ p.classList.remove('active'); });
         pill.classList.add('active');
-        if (trendingBar) trendingBar.style.display = '';
+        if (trendingBar) {
+          trendingBar.style.maxHeight = '44px';
+          trendingBar.style.padding = '0.35rem 0.75rem 0.25rem';
+        }
+        adjustFeedPadding();
         /* setFeedFilter con modo trending especial */
         if (typeof window.setTrendingFilter === 'function') window.setTrendingFilter('hot');
       });
@@ -3399,6 +3403,18 @@ async function votePoll(postId, idx, poll, container) {
     }
   });
 
+  /* Ajustar padding del feed según altura real del top-strip */
+  function adjustFeedPadding() {
+    var topStrip = document.getElementById('top-strip');
+    var feedPage = document.getElementById('page-home');
+    if (!topStrip || !feedPage) return;
+    /* Dar un frame para que el max-height ya animó */
+    requestAnimationFrame(function() {
+      feedPage.style.paddingTop = topStrip.offsetHeight + 'px';
+    });
+  }
+  window.adjustFeedPadding = adjustFeedPadding;
+
   /* Inicializar al cargar trending type */
   window.setTrendingFilter = function(type) {
     loadTrending(type || 'hot');
@@ -3406,6 +3422,7 @@ async function votePoll(postId, idx, poll, container) {
 
 })();
 })();
+
 
 
 
