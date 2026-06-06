@@ -106,6 +106,7 @@ async function handleComments(request, env, corsH) {
     const result = await env.DB.prepare(
       'INSERT INTO comments (post_id, user_id, user_name, user_avatar, body) VALUES (?, ?, ?, ?, ?)'
     ).bind(post_id, session.id, session.name || session.email, session.picture || '', body.trim()).run();
+    await addPoints(env, session.id, 2);
     return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
   }
 
@@ -152,6 +153,7 @@ async function handleLikes(request, env, corsH) {
       await env.DB.prepare('DELETE FROM likes WHERE post_id = ? AND user_id = ?').bind(post_id, session.id).run();
     } else {
       await env.DB.prepare('INSERT INTO likes (post_id, user_id) VALUES (?, ?)').bind(post_id, session.id).run();
+      await addPoints(env, session.id, 1);
     }
     const { results } = await env.DB.prepare(
       'SELECT COUNT(*) as count FROM likes WHERE post_id = ?'
@@ -623,6 +625,7 @@ async function handleCollections(request, env, corsH) {
         await env.DB.prepare(
           'INSERT INTO collection_items (collection_id, user_id, post_id, post_url, post_image, post_title) VALUES (?,?,?,?,?,?)'
         ).bind(col_id, uid, post_id, post_url||'', post_image||'', post_title||'').run();
+        await addPoints(env, uid, 1);
         return apiJson({ ok: true, saved: true }, 200, corsH);
       } catch(e) {
         // Already saved — remove it (toggle)
@@ -806,6 +809,63 @@ async function handleTrending(request, env, corsH) {
   return apiJson({ post_ids: (results||[]).map(function(r){ return r.post_id; }) }, 200, corsH);
 }
 
+
+function getBadge(points) {
+  if (points >= 501) return { badge: '👿', level: 'VIP' };
+  if (points >= 201) return { badge: '🔥', level: 'Soldier' };
+  if (points >= 51)  return { badge: '⭐', level: 'Regular' };
+  return { badge: '🔰', level: 'Rookie' };
+}
+
+async function addPoints(env, userId, amount) {
+  try {
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_points (
+      user_id TEXT PRIMARY KEY,
+      points INTEGER DEFAULT 0,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    await env.DB.prepare(
+      'INSERT INTO user_points (user_id, points) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET points = points + ?, updated_at = CURRENT_TIMESTAMP'
+    ).bind(userId, amount, amount).run();
+  } catch(e) {}
+}
+
+async function handlePoints(request, env, corsH) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_points (
+    user_id TEXT PRIMARY KEY,
+    points INTEGER DEFAULT 0,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+
+  const url = new URL(request.url);
+
+  if (request.method === 'GET') {
+    const userId = url.searchParams.get('user_id');
+    if (!userId) return apiJson({ error: 'user_id required' }, 400, corsH);
+    const { results } = await env.DB.prepare(
+      'SELECT points FROM user_points WHERE user_id = ?'
+    ).bind(userId).all();
+    const pts = results[0]?.points || 0;
+    return apiJson({ points: pts, ...getBadge(pts) }, 200, corsH);
+  }
+
+  if (request.method === 'POST') {
+    const session = getSession(request);
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const body = await request.json();
+    if (body.action !== 'add') return apiJson({ error: 'action must be add' }, 400, corsH);
+    const amount = Math.min(Math.max(parseInt(body.amount) || 0, 0), 100);
+    await addPoints(env, session.id, amount);
+    const { results } = await env.DB.prepare(
+      'SELECT points FROM user_points WHERE user_id = ?'
+    ).bind(session.id).all();
+    const pts = results[0]?.points || 0;
+    return apiJson({ ok: true, points: pts, ...getBadge(pts) }, 200, corsH);
+  }
+
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -846,6 +906,7 @@ export default {
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
       if (path === '/api/polls') return handlePolls(request, env, corsH);
+      if (path === '/api/points') return handlePoints(request, env, corsH);
       if (path === '/api/trending') return handleTrending(request, env, corsH);
       if (path === '/api/activity') return handleActivity(request, env, corsH);
       if (path === '/api/profile') return handleProfile(request, env, corsH);
@@ -961,6 +1022,7 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
 
 
 
