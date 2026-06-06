@@ -3521,7 +3521,26 @@ async function votePoll(postId, idx, poll, container) {
     '.conf-admin-body{font-size:0.82rem;line-height:1.5;margin-bottom:0.6rem;color:var(--text);}',
     '.conf-admin-actions{display:flex;gap:0.5rem;}',
     '.conf-approve-btn{flex:1;background:#1a3a1a;border:1px solid #4ade80;color:#4ade80;border-radius:8px;padding:0.45rem;font-size:0.75rem;cursor:pointer;font-family:var(--font-d);letter-spacing:0.05em;}',
-    '.conf-reject-btn{flex:1;background:#3a1a1a;border:1px solid #cc4444;color:#cc4444;border-radius:8px;padding:0.45rem;font-size:0.75rem;cursor:pointer;font-family:var(--font-d);letter-spacing:0.05em;}'
+    '.conf-reject-btn{flex:1;background:#3a1a1a;border:1px solid #cc4444;color:#cc4444;border-radius:8px;padding:0.45rem;font-size:0.75rem;cursor:pointer;font-family:var(--font-d);letter-spacing:0.05em;}',
+    /* Title input */
+    '.conf-title-input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.6rem 0.85rem;font-size:0.85rem;font-family:var(--font-b);margin-bottom:0.75rem;box-sizing:border-box;}',
+    '.conf-title-input:focus{outline:none;border-color:var(--fire-orange);}',
+    /* Card preview */
+    '.conf-card-title{font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.04em;margin-bottom:0.45rem;}',
+    '.conf-body-preview{font-size:0.85rem;line-height:1.55;color:var(--text);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:0.6rem;}',
+    '.conf-read-btn{background:none;border:none;color:var(--fire-orange);font-size:0.75rem;cursor:pointer;padding:0;font-family:var(--font-b);letter-spacing:0.04em;}',
+    /* Reader panel */
+    '.conf-reader{position:fixed;inset:0;background:var(--bg);z-index:400;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}',
+    '.conf-reader.open{transform:translateX(0);}',
+    '.conf-reader-header{display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem 0.75rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}',
+    '.conf-reader-back{background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}',
+    '.conf-reader-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}',
+    '.conf-reader-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1.25rem 1rem 3rem;}',
+    '.conf-reader-category{margin-bottom:0.85rem;}',
+    '.conf-reader-title{font-family:var(--font-d);font-size:1.3rem;letter-spacing:0.05em;line-height:1.25;margin-bottom:1rem;}',
+    '.conf-reader-date{font-size:0.7rem;color:var(--text-muted);margin-bottom:1.5rem;}',
+    '.conf-reader-text{font-size:0.92rem;line-height:1.7;color:var(--text-dim);white-space:pre-wrap;word-break:break-word;}',
+    '.conf-reader-footer{padding:1rem 1rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;flex-shrink:0;}'
   ].join('');
   document.head.appendChild(cs);
 
@@ -3551,18 +3570,22 @@ async function votePoll(postId, idx, poll, container) {
   function renderFeed(confessions) {
     var feed = document.getElementById('conf-feed');
     if (!feed) return;
+    window._confCache = confessions; /* cache para el reader */
     if (!confessions.length) {
       feed.innerHTML = '<div class="conf-empty">No stories yet.<br>Be the first to share.</div>';
       return;
     }
     var liked = getLiked();
-    feed.innerHTML = confessions.map(function(c) {
-      var isLiked = liked.has(String(c.id));
-      return '<div class="conf-card" data-conf-id="'+c.id+'">'
-        + '<div class="conf-card-top">'+catBadge(c.category||'confession')+'<span class="conf-date">'+timeAgo(c.created_at)+'</span></div>'
-        + '<div class="conf-body">'+escH(c.body)+'</div>'
+    feed.innerHTML = confessions.map(function(cf) {
+      var isLiked = liked.has(String(cf.id));
+      var hasMore = cf.body && cf.body.length > 180;
+      return '<div class="conf-card" data-conf-id="'+cf.id+'" style="cursor:pointer;">'
+        + '<div class="conf-card-top">'+catBadge(cf.category||'confession')+'<span class="conf-date">'+timeAgo(cf.created_at)+'</span></div>'
+        + (cf.title ? '<div class="conf-card-title">'+escH(cf.title)+'</div>' : '')
+        + '<div class="conf-body-preview">'+escH(cf.body)+'</div>'
+        + (hasMore ? '<button class="conf-read-btn">Read full story &rsaquo;</button>' : '')
         + '<div class="conf-actions">'
-        + '<button class="conf-like-btn'+(isLiked?' liked':'') +'" data-conf-id="'+c.id+'">'
+        + '<button class="conf-like-btn'+(isLiked?' liked':'')+' " data-conf-id="'+cf.id+'">'
         + '<svg viewBox="0 0 24 24" width="14" height="14" fill="'+(isLiked?'#ff3b5c':'none')+'" stroke="'+(isLiked?'#ff3b5c':'currentColor')+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
         + '</button>'
         + '</div>'
@@ -3628,6 +3651,73 @@ async function votePoll(postId, idx, poll, container) {
     document.body.style.overflow = '';
   }
 
+  /* Reader panel — slide in from right */
+  var reader = document.createElement('div');
+  reader.className = 'conf-reader';
+  reader.innerHTML =
+    '<div class="conf-reader-header">'
+    + '<button class="conf-reader-back" id="conf-reader-back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>'
+    + '<div style="flex:1;"></div>'
+    + '<span id="conf-reader-badge"></span>'
+    + '</div>'
+    + '<div class="conf-reader-body">'
+    + '<div class="conf-reader-category" id="conf-reader-cat"></div>'
+    + '<div class="conf-reader-title" id="conf-reader-title"></div>'
+    + '<div class="conf-reader-date" id="conf-reader-date"></div>'
+    + '<div class="conf-reader-text" id="conf-reader-text"></div>'
+    + '</div>'
+    + '<div class="conf-reader-footer">'
+    + '<button class="conf-like-btn" id="conf-reader-like"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>'
+    + '</div>';
+  document.body.appendChild(reader);
+
+  var readerConfId = null;
+
+  function openReader(conf) {
+    readerConfId = String(conf.id);
+    var catEl  = document.getElementById('conf-reader-cat');
+    var titleEl= document.getElementById('conf-reader-title');
+    var dateEl = document.getElementById('conf-reader-date');
+    var textEl = document.getElementById('conf-reader-text');
+    var likeBtn= document.getElementById('conf-reader-like');
+    if (catEl)   catEl.innerHTML  = catBadge(conf.category||'confession');
+    if (titleEl) titleEl.textContent = conf.title || '';
+    if (dateEl)  dateEl.textContent  = timeAgo(conf.created_at);
+    if (textEl)  textEl.textContent  = conf.body || '';
+    /* Like state */
+    var liked = getLiked();
+    var isLiked = liked.has(readerConfId);
+    if (likeBtn) {
+      likeBtn.setAttribute('data-conf-id', readerConfId);
+      likeBtn.classList.toggle('liked', isLiked);
+      var svg = likeBtn.querySelector('svg');
+      if (svg) { svg.setAttribute('fill', isLiked?'#ff3b5c':'none'); svg.setAttribute('stroke', isLiked?'#ff3b5c':'currentColor'); }
+    }
+    reader.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeReader() {
+    reader.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('conf-reader-back').addEventListener('click', closeReader);
+  /* Swipe right to close reader */
+  var rSwipeX = 0;
+  reader.addEventListener('touchstart', function(e){ rSwipeX = e.touches[0].clientX; }, {passive:true});
+  reader.addEventListener('touchend',   function(e){ if (e.changedTouches[0].clientX - rSwipeX > 70) closeReader(); }, {passive:true});
+
+  /* Open reader on card click (but not like button) */
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.conf-like-btn')) return;
+    var card = e.target.closest('.conf-card[data-conf-id]');
+    if (!card) return;
+    var id = card.getAttribute('data-conf-id');
+    var conf = window._confCache && window._confCache.find(function(x){ return String(x.id)===id; });
+    if (conf) openReader(conf);
+  });
+
   if (shareBtn) shareBtn.addEventListener('click', openPanel);
   if (overlay)  overlay.addEventListener('click', closePanel);
 
@@ -3647,12 +3737,15 @@ async function votePoll(postId, idx, poll, container) {
       var r = await fetch('/api/confessions', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ action:'submit', body: text, category: catSel ? catSel.value : 'confession' })
+        body: JSON.stringify({ action:'submit', body: text,
+          title: document.getElementById('conf-title') ? document.getElementById('conf-title').value.trim() : '',
+          category: catSel ? catSel.value : 'confession' })
       });
       var d = await r.json();
       if (d.ok) {
         closePanel();
         if (textarea) textarea.value = '';
+        var ti = document.getElementById('conf-title'); if (ti) ti.value = '';
         /* Show toast */
         var toast = document.getElementById('toast');
         if (toast) {
@@ -3729,6 +3822,7 @@ async function votePoll(postId, idx, poll, container) {
 
 })();
 })();
+
 
 
 
