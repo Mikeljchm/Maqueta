@@ -2223,6 +2223,34 @@ async function votePoll(postId, idx, poll, container) {
     const session = getAdminSession();
     if (session && session.login === ADMIN_LOGIN) {
       document.body.classList.add('is-admin');
+      /* Agregar botón Confessions al panel admin */
+      var s = document.createElement('style');
+      s.textContent = '.conf-admin-fab{display:none;position:fixed;bottom:calc(var(--nav-h,56px) + var(--safe-bottom,0px) + 4.5rem);right:1rem;background:#6c3fc7;color:#fff;border:none;border-radius:20px;padding:0.5rem 1rem;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.06em;cursor:pointer;z-index:101;box-shadow:0 4px 16px rgba(108,63,199,0.4);}.is-admin .conf-admin-fab{display:flex;align-items:center;gap:0.4rem;}.conf-admin-sheet{position:fixed;inset:0;background:var(--bg);z-index:600;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}.conf-admin-sheet.open{transform:translateX(0);}.conf-admin-header{display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}.conf-admin-back{background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}.conf-admin-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}.conf-admin-htitle{font-family:var(--font-d);font-size:1rem;letter-spacing:0.07em;}.conf-admin-body{flex:1;overflow-y:auto;padding:0.75rem;}';
+      document.head.appendChild(s);
+      /* FAB */
+      var fab = document.createElement('button');
+      fab.className = 'conf-admin-fab';
+      fab.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Confessions';
+      document.body.appendChild(fab);
+      /* Sheet */
+      var sheet = document.createElement('div');
+      sheet.className = 'conf-admin-sheet';
+      sheet.innerHTML = '<div class="conf-admin-header">'
+        + '<button class="conf-admin-back" id="conf-admin-back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>'
+        + '<div class="conf-admin-htitle">Pending Confessions</div></div>'
+        + '<div class="conf-admin-body" id="conf-admin-body"></div>';
+      document.body.appendChild(sheet);
+      fab.addEventListener('click', function() {
+        sheet.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        if (typeof window.loadPendingConfessions === 'function') {
+          window.loadPendingConfessions(document.getElementById('conf-admin-body'));
+        }
+      });
+      document.getElementById('conf-admin-back').addEventListener('click', function() {
+        sheet.classList.remove('open');
+        document.body.style.overflow = '';
+      });
     }
     // Show login button only if ?admin=true in URL
     if (new URLSearchParams(window.location.search).get('admin') === 'true') {
@@ -3446,7 +3474,262 @@ async function votePoll(postId, idx, poll, container) {
   };
 
 })();
+
+/* ── CONFESSIONS — Locker Room Anonymous Stories ── */
+(function(){
+  'use strict';
+
+  /* CSS */
+  var cs = document.createElement('style');
+  cs.textContent = [
+    /* Bar */
+    '.conf-bar{padding:0.75rem 1rem 0.5rem;display:flex;justify-content:flex-end;}',
+    '.conf-share-btn{display:flex;align-items:center;gap:0.45rem;background:var(--fire-orange);color:#fff;border:none;border-radius:20px;padding:0.5rem 1.1rem;font-family:var(--font-d);font-size:0.8rem;letter-spacing:0.06em;cursor:pointer;transition:transform 0.15s;}',
+    '.conf-share-btn:active{transform:scale(0.95);}',
+    /* Feed */
+    '.conf-feed{padding:0 0.85rem 1rem;}',
+    '.conf-loading{padding:1.5rem;text-align:center;color:var(--text-dim);font-size:0.82rem;}',
+    '.conf-empty{padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;line-height:1.5;}',
+    /* Card */
+    '.conf-card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:0.75rem;}',
+    '.conf-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;}',
+    '.conf-badge{font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.2rem 0.6rem;border-radius:20px;font-family:var(--font-d);}',
+    '.conf-badge-confession{background:#1a0a2e;color:#c084fc;}',
+    '.conf-badge-fantasy{background:#1a0a00;color:var(--fire-orange);}',
+    '.conf-badge-experience{background:#0a1a0a;color:#4ade80;}',
+    '.conf-badge-rumor{background:#1a1a0a;color:#facc15;}',
+    '.conf-date{font-size:0.65rem;color:var(--text-muted);}',
+    '.conf-body{font-size:0.88rem;line-height:1.55;color:var(--text);margin-bottom:0.75rem;}',
+    '.conf-actions{display:flex;gap:0.5rem;justify-content:flex-end;}',
+    '.conf-like-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:0.3rem 0.75rem;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;gap:0.35rem;transition:all 0.2s;font-family:var(--font-b);}',
+    '.conf-like-btn.liked{color:#ff3b5c;border-color:#ff3b5c;}',
+    /* Submit panel */
+    '.conf-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;opacity:0;pointer-events:none;transition:opacity 0.25s;}',
+    '.conf-overlay.open{opacity:1;pointer-events:all;}',
+    '.conf-panel{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);z-index:301;padding:0.5rem 1.25rem 2rem;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}',
+    '.conf-panel.open{transform:translateY(0);}',
+    '.conf-panel-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem;}',
+    '.conf-panel-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.07em;margin-bottom:0.85rem;}',
+    '.conf-select{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.6rem 0.85rem;font-size:0.85rem;font-family:var(--font-b);margin-bottom:0.75rem;-webkit-appearance:none;}',
+    '.conf-textarea{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.75rem;font-size:0.85rem;font-family:var(--font-b);resize:none;height:120px;line-height:1.5;margin-bottom:0.75rem;box-sizing:border-box;}',
+    '.conf-textarea:focus{outline:none;border-color:var(--fire-orange);}',
+    '.conf-submit-btn{width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:12px;padding:0.75rem;font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.07em;cursor:pointer;margin-bottom:0.6rem;transition:opacity 0.2s;}',
+    '.conf-submit-btn:disabled{opacity:0.5;}',
+    '.conf-anon-note{text-align:center;font-size:0.7rem;color:var(--text-muted);letter-spacing:0.06em;}',
+    /* Admin moderation */
+    '.conf-admin-card{background:var(--surface-3);border:1px solid var(--border);border-radius:12px;padding:0.85rem;margin-bottom:0.6rem;}',
+    '.conf-admin-body{font-size:0.82rem;line-height:1.5;margin-bottom:0.6rem;color:var(--text);}',
+    '.conf-admin-actions{display:flex;gap:0.5rem;}',
+    '.conf-approve-btn{flex:1;background:#1a3a1a;border:1px solid #4ade80;color:#4ade80;border-radius:8px;padding:0.45rem;font-size:0.75rem;cursor:pointer;font-family:var(--font-d);letter-spacing:0.05em;}',
+    '.conf-reject-btn{flex:1;background:#3a1a1a;border:1px solid #cc4444;color:#cc4444;border-radius:8px;padding:0.45rem;font-size:0.75rem;cursor:pointer;font-family:var(--font-d);letter-spacing:0.05em;}'
+  ].join('');
+  document.head.appendChild(cs);
+
+  /* ── Helpers ── */
+  var LIKED_KEY = 'hw_conf_liked';
+  function getLiked() {
+    try { return new Set(JSON.parse(localStorage.getItem(LIKED_KEY)||'[]')); } catch(e){ return new Set(); }
+  }
+  function saveLiked(set) {
+    try { localStorage.setItem(LIKED_KEY, JSON.stringify([...set])); } catch(e){}
+  }
+
+  function timeAgo(dateStr) {
+    var diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+    if (diff < 60)   return 'just now';
+    if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+    return Math.floor(diff/86400) + 'd ago';
+  }
+
+  function catBadge(cat) {
+    var labels = {confession:'Confession',fantasy:'Fantasy',experience:'Experience',rumor:'Rumor'};
+    return '<span class="conf-badge conf-badge-'+cat+'">'+(labels[cat]||cat)+'</span>';
+  }
+
+  /* ── Render feed ── */
+  function renderFeed(confessions) {
+    var feed = document.getElementById('conf-feed');
+    if (!feed) return;
+    if (!confessions.length) {
+      feed.innerHTML = '<div class="conf-empty">No stories yet.<br>Be the first to share.</div>';
+      return;
+    }
+    var liked = getLiked();
+    feed.innerHTML = confessions.map(function(c) {
+      var isLiked = liked.has(String(c.id));
+      return '<div class="conf-card" data-conf-id="'+c.id+'">'
+        + '<div class="conf-card-top">'+catBadge(c.category||'confession')+'<span class="conf-date">'+timeAgo(c.created_at)+'</span></div>'
+        + '<div class="conf-body">'+escH(c.body)+'</div>'
+        + '<div class="conf-actions">'
+        + '<button class="conf-like-btn'+(isLiked?' liked':'') +'" data-conf-id="'+c.id+'">'
+        + '<svg viewBox="0 0 24 24" width="14" height="14" fill="'+(isLiked?'#ff3b5c':'none')+'" stroke="'+(isLiked?'#ff3b5c':'currentColor')+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+        + '</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function escH(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  }
+
+  /* ── Load confessions ── */
+  async function loadConfessions() {
+    var feed = document.getElementById('conf-feed');
+    if (!feed) return;
+    try {
+      var r = await fetch('/api/confessions');
+      var d = await r.json();
+      renderFeed(d.confessions || []);
+    } catch(e) {
+      if (feed) feed.innerHTML = '<div class="conf-empty">Could not load stories.</div>';
+    }
+  }
+
+  /* ── Like toggle (localStorage, no login needed) ── */
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.conf-like-btn[data-conf-id]');
+    if (!btn) return;
+    var id = String(btn.getAttribute('data-conf-id'));
+    var liked = getLiked();
+    var svg = btn.querySelector('svg');
+    if (liked.has(id)) {
+      liked.delete(id);
+      btn.classList.remove('liked');
+      if (svg) { svg.setAttribute('fill','none'); svg.setAttribute('stroke','currentColor'); }
+    } else {
+      liked.add(id);
+      btn.classList.add('liked');
+      if (svg) { svg.setAttribute('fill','#ff3b5c'); svg.setAttribute('stroke','#ff3b5c'); }
+    }
+    saveLiked(liked);
+  });
+
+  /* ── Submit panel ── */
+  var overlay   = document.getElementById('conf-overlay');
+  var panel     = document.getElementById('conf-panel');
+  var shareBtn  = document.getElementById('conf-share-btn');
+  var submitBtn = document.getElementById('conf-submit-btn');
+  var textarea  = document.getElementById('conf-textarea');
+  var catSel    = document.getElementById('conf-cat');
+
+  function openPanel() {
+    if (!panel) return;
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if (textarea) textarea.focus();
+  }
+  function closePanel() {
+    if (!panel) return;
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  if (shareBtn) shareBtn.addEventListener('click', openPanel);
+  if (overlay)  overlay.addEventListener('click', closePanel);
+
+  /* Swipe down to close */
+  var swipeY = 0;
+  if (panel) {
+    panel.addEventListener('touchstart', function(e){ swipeY = e.touches[0].clientY; }, {passive:true});
+    panel.addEventListener('touchend',   function(e){ if (e.changedTouches[0].clientY - swipeY > 60) closePanel(); }, {passive:true});
+  }
+
+  if (submitBtn) submitBtn.addEventListener('click', async function() {
+    var text = textarea ? textarea.value.trim() : '';
+    if (!text) return;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+    try {
+      var r = await fetch('/api/confessions', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'submit', body: text, category: catSel ? catSel.value : 'confession' })
+      });
+      var d = await r.json();
+      if (d.ok) {
+        closePanel();
+        if (textarea) textarea.value = '';
+        /* Show toast */
+        var toast = document.getElementById('toast');
+        if (toast) {
+          toast.textContent = 'Story submitted! Pending review.';
+          toast.classList.add('show');
+          setTimeout(function(){ toast.classList.remove('show'); }, 3000);
+        }
+      }
+    } catch(e) {}
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Story';
+  });
+
+  /* ── Admin: load pending confessions ── */
+  window.loadPendingConfessions = async function(container) {
+    if (!container) return;
+    container.innerHTML = '<div style="padding:1rem;color:var(--text-dim);font-size:0.82rem;">Loading...</div>';
+    try {
+      var r = await fetch('/api/confessions?status=pending', {credentials:'include'});
+      var d = await r.json();
+      var items = d.confessions || [];
+      if (!items.length) {
+        container.innerHTML = '<div style="padding:1rem;color:var(--text-dim);font-size:0.82rem;">No pending confessions.</div>';
+        return;
+      }
+      container.innerHTML = items.map(function(item) {
+        return '<div class="conf-admin-card" id="conf-admin-'+item.id+'">'
+          + catBadge(item.category)
+          + '<div class="conf-admin-body">'+escH(item.body)+'</div>'
+          + '<div class="conf-admin-actions">'
+          + '<button class="conf-approve-btn" data-conf-approve="'+item.id+'">Approve</button>'
+          + '<button class="conf-reject-btn" data-conf-reject="'+item.id+'">Reject</button>'
+          + '</div></div>';
+      }).join('');
+    } catch(e) {
+      container.innerHTML = '<div style="padding:1rem;color:#cc4444;font-size:0.82rem;">Error loading.</div>';
+    }
+  };
+
+  /* Approve / Reject delegation */
+  document.addEventListener('click', async function(e) {
+    var approveBtn = e.target.closest('[data-conf-approve]');
+    var rejectBtn  = e.target.closest('[data-conf-reject]');
+    var id = approveBtn ? approveBtn.getAttribute('data-conf-approve')
+           : rejectBtn  ? rejectBtn.getAttribute('data-conf-reject') : null;
+    var action = approveBtn ? 'approve' : rejectBtn ? 'reject' : null;
+    if (!id || !action) return;
+    try {
+      var r = await fetch('/api/confessions', {
+        method: 'POST', credentials: 'include',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ action: action, id: parseInt(id) })
+      });
+      var d = await r.json();
+      if (d.ok) {
+        var card = document.getElementById('conf-admin-'+id);
+        if (card) card.remove();
+        if (action === 'approve') loadConfessions();
+      }
+    } catch(e) {}
+  });
+
+  /* ── Load on page-audio activation ── */
+  document.querySelectorAll('.nav-item[data-page="audio"]').forEach(function(btn) {
+    btn.addEventListener('click', loadConfessions);
+  });
+  /* Also load if audio page is already active on load */
+  document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('page-audio') &&
+        document.getElementById('page-audio').classList.contains('active')) {
+      loadConfessions();
+    }
+  });
+
 })();
+})();
+
 
 
 
