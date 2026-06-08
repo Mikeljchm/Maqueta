@@ -3853,7 +3853,256 @@ async function votePoll(postId, idx, poll, container) {
   });
 
 })();
+
+/* ── BATTLES — Wrestler voting system ── */
+(function(){
+  'use strict';
+
+  /* CSS */
+  var bs = document.createElement('style');
+  bs.textContent = [
+    /* Tabs */
+    '.wrest-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:0;flex-shrink:0;}',
+    '.wrest-tab{flex:1;padding:0.65rem;background:none;border:none;color:var(--text-dim);font-family:var(--font-d);font-size:0.8rem;letter-spacing:0.1em;cursor:pointer;border-bottom:2px solid transparent;transition:color 0.2s,border-color 0.2s;}',
+    '.wrest-tab.active{color:var(--fire-orange);border-bottom-color:var(--fire-orange);}',
+    '.bat-loading{padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;}',
+    '.bat-empty{padding:3rem 1rem;text-align:center;color:var(--text-dim);font-size:0.85rem;line-height:1.5;}',
+    /* Battle card */
+    '.bat-card{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1rem;}',
+    '.bat-title{font-family:var(--font-d);font-size:0.8rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);padding:0.6rem 1rem 0;text-align:center;}',
+    '.bat-fighters{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.5rem;padding:0.75rem 0.75rem 0.5rem;}',
+    '.bat-fighter{display:flex;flex-direction:column;align-items:center;gap:0.4rem;}',
+    '.bat-fighter-img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;background:var(--surface-3);}',
+    '.bat-fighter-name{font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.07em;text-align:center;line-height:1.2;}',
+    '.bat-vs{font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.1em;color:var(--fire-orange);text-align:center;}',
+    /* Bars */
+    '.bat-bars{padding:0 0.75rem 0.25rem;}',
+    '.bat-bar-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.5rem;margin-bottom:0.35rem;}',
+    '.bat-bar-wrap{height:8px;border-radius:4px;background:var(--surface-3);overflow:hidden;}',
+    '.bat-bar-fill{height:100%;border-radius:4px;transition:width 0.8s cubic-bezier(0.16,1,0.3,1);}',
+    '.bat-bar-fill-1{background:linear-gradient(90deg,var(--fire-orange),var(--fire-yellow));}',
+    '.bat-bar-fill-2{background:linear-gradient(90deg,#6c8fff,#a78bfa);}',
+    '.bat-bar-pct{font-family:var(--font-d);font-size:0.7rem;color:var(--text-dim);min-width:2.5ch;text-align:center;}',
+    '.bat-total{text-align:center;font-size:0.65rem;color:var(--text-muted);padding-bottom:0.5rem;letter-spacing:0.06em;}',
+    /* Vote buttons */
+    '.bat-btns{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;padding:0.5rem 0.75rem 0.85rem;}',
+    '.bat-vote-btn{background:var(--surface-3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.55rem;font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.06em;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+    '.bat-vote-btn:active{transform:scale(0.96);}',
+    '.bat-vote-btn.voted{border-color:var(--fire-orange);color:var(--fire-orange);}',
+    '.bat-signin{text-align:center;font-size:0.75rem;color:var(--text-dim);padding:0.5rem 0.75rem 0.85rem;}',
+    /* Admin form */
+    '.bat-admin-form{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:1rem;}',
+    '.bat-admin-form input{width:100%;background:var(--surface-3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:0.55rem 0.75rem;font-size:0.82rem;font-family:var(--font-b);margin-bottom:0.5rem;box-sizing:border-box;}',
+    '.bat-admin-form input:focus{outline:none;border-color:var(--fire-orange);}',
+    '.bat-create-btn{width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:10px;padding:0.65rem;font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;margin-top:0.25rem;}'
+  ].join('');
+  document.head.appendChild(bs);
+
+  /* ── Tab switching ── */
+  var currentTab = 'profiles';
+  var battlesLoaded = false;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.wrest-tab[data-wtab]').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var wtab = tab.getAttribute('data-wtab');
+        document.querySelectorAll('.wrest-tab').forEach(function(t){ t.classList.remove('active'); });
+        tab.classList.add('active');
+        currentTab = wtab;
+        var gridWrap    = document.getElementById('wrestlers-grid-wrap');
+        var battlesWrap = document.getElementById('battles-wrap');
+        var newBtn      = document.getElementById('wrestlers-new-btn');
+        if (wtab === 'profiles') {
+          if (gridWrap)    gridWrap.style.display = '';
+          if (battlesWrap) battlesWrap.style.display = 'none';
+          if (newBtn)      newBtn.style.display = '';
+        } else {
+          if (gridWrap)    gridWrap.style.display = 'none';
+          if (battlesWrap) battlesWrap.style.display = '';
+          if (newBtn)      newBtn.style.display = 'none';
+          if (!battlesLoaded) { battlesLoaded = true; loadBattles(); }
+          else loadBattles(); /* refresh on each visit */
+        }
+      });
+    });
+  });
+
+  /* ── Render helpers ── */
+  function pct(v, total) {
+    if (!total) return 0;
+    return Math.round(v / total * 100);
+  }
+  function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
+
+  function renderBattleCard(b) {
+    var voted    = b.userVote !== null && b.userVote !== undefined;
+    var p1       = pct(b.v1, b.total);
+    var p2       = pct(b.v2, b.total);
+    var isUser1  = b.userVote === 0;
+    var isUser2  = b.userVote === 1;
+    var totalStr = b.total ? fmt(b.total) + ' vote' + (b.total !== 1 ? 's' : '') : 'No votes yet';
+
+    var html = '<div class="bat-card" data-bat-id="'+b.id+'">'
+      + '<div class="bat-title">'+escH(b.title)+'</div>'
+      + '<div class="bat-fighters">'
+        + '<div class="bat-fighter">'
+          + '<img class="bat-fighter-img" src="'+b.wrestler1_image+'" loading="lazy" alt="'+escH(b.wrestler1_name)+'">'
+          + '<div class="bat-fighter-name">'+escH(b.wrestler1_name)+'</div>'
+        + '</div>'
+        + '<div class="bat-vs">&#9876;</div>'
+        + '<div class="bat-fighter">'
+          + '<img class="bat-fighter-img" src="'+b.wrestler2_image+'" loading="lazy" alt="'+escH(b.wrestler2_name)+'">'
+          + '<div class="bat-fighter-name">'+escH(b.wrestler2_name)+'</div>'
+        + '</div>'
+      + '</div>';
+
+    /* Siempre mostrar barras si ya votó o si hay votos */
+    if (voted || b.total > 0) {
+      html += '<div class="bat-bars">'
+        + '<div class="bat-bar-row">'
+          + '<div class="bat-bar-wrap" style="direction:rtl"><div class="bat-bar-fill bat-bar-fill-1" style="width:0%" data-target="'+p1+'%"></div></div>'
+          + '<div class="bat-bar-pct" id="bat-p1-'+b.id+'">'+p1+'%</div>'
+          + '<div class="bat-bar-wrap"><div class="bat-bar-fill bat-bar-fill-2" style="width:0%" data-target="'+p2+'%"></div></div>'
+        + '</div>'
+        + '<div class="bat-total">'+totalStr+'</div>'
+      + '</div>';
+    }
+
+    if (!voted) {
+      if (window.currentUser) {
+        html += '<div class="bat-btns">'
+          + '<button class="bat-vote-btn" data-bat-id="'+b.id+'" data-wrestler="1">&#9733; '+escH(b.wrestler1_name)+'</button>'
+          + '<button class="bat-vote-btn" data-bat-id="'+b.id+'" data-wrestler="2">&#9733; '+escH(b.wrestler2_name)+'</button>'
+        + '</div>';
+      } else {
+        html += '<div class="bat-signin">Sign in to vote</div>';
+      }
+    } else {
+      html += '<div class="bat-btns">'
+        + '<button class="bat-vote-btn'+(isUser1?' voted':'')+'" disabled>'+escH(b.wrestler1_name)+(isUser1?' &#10003;':'')+'</button>'
+        + '<button class="bat-vote-btn'+(isUser2?' voted':'')+'" disabled>'+escH(b.wrestler2_name)+(isUser2?' &#10003;':'')+'</button>'
+      + '</div>';
+    }
+
+    html += '</div>';
+    return html;
+  }
+
+  function animateBars(container) {
+    container.querySelectorAll('.bat-bar-fill[data-target]').forEach(function(bar) {
+      var target = bar.getAttribute('data-target');
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){ bar.style.width = target; });
+      });
+    });
+  }
+
+  function escH(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* ── Load & render battles ── */
+  window.loadBattles = async function() {
+    var feed = document.getElementById('battles-feed');
+    if (!feed) return;
+    feed.innerHTML = '<div class="bat-loading">Loading battles...</div>';
+    try {
+      var r = await fetch('/api/battles', {credentials:'include'});
+      var d = await r.json();
+      var battles = d.battles || [];
+
+      /* Admin: mostrar formulario New Battle arriba */
+      var adminForm = '';
+      if (document.body.classList.contains('is-admin')) {
+        adminForm = '<div class="bat-admin-form">'
+          + '<div style="font-family:var(--font-d);font-size:0.8rem;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:0.6rem;">NEW BATTLE</div>'
+          + '<input id="bat-f-title"       placeholder="Battle title (e.g. Championship Match)">'
+          + '<input id="bat-f-w1name"      placeholder="Wrestler 1 name">'
+          + '<input id="bat-f-w1img"       placeholder="Wrestler 1 image URL">'
+          + '<input id="bat-f-w2name"      placeholder="Wrestler 2 name">'
+          + '<input id="bat-f-w2img"       placeholder="Wrestler 2 image URL">'
+          + '<button class="bat-create-btn" id="bat-create-btn">&#9876; Create Battle</button>'
+          + '</div>';
+      }
+
+      if (!battles.length) {
+        feed.innerHTML = adminForm + '<div class="bat-empty">No battles yet.<br>Check back soon!</div>';
+      } else {
+        feed.innerHTML = adminForm + battles.map(renderBattleCard).join('');
+        animateBars(feed);
+      }
+
+      /* Bind create btn */
+      var createBtn = document.getElementById('bat-create-btn');
+      if (createBtn) {
+        createBtn.addEventListener('click', async function() {
+          var title  = (document.getElementById('bat-f-title')  ||{}).value||'';
+          var w1name = (document.getElementById('bat-f-w1name') ||{}).value||'';
+          var w1img  = (document.getElementById('bat-f-w1img')  ||{}).value||'';
+          var w2name = (document.getElementById('bat-f-w2name') ||{}).value||'';
+          var w2img  = (document.getElementById('bat-f-w2img')  ||{}).value||'';
+          if (!title||!w1name||!w1img||!w2name||!w2img) return;
+          createBtn.disabled = true;
+          try {
+            var r2 = await fetch('/api/battles', {
+              method:'POST', credentials:'include',
+              headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({action:'create',title,wrestler1_name:w1name,wrestler1_image:w1img,wrestler2_name:w2name,wrestler2_image:w2img})
+            });
+            var d2 = await r2.json();
+            if (d2.ok) window.loadBattles();
+          } catch(e){}
+          createBtn.disabled = false;
+        });
+      }
+
+    } catch(e) {
+      if (feed) feed.innerHTML = '<div class="bat-empty">Could not load battles.</div>';
+    }
+  };
+
+  /* ── Vote delegation ── */
+  document.addEventListener('click', async function(e) {
+    var btn = e.target.closest('.bat-vote-btn[data-bat-id][data-wrestler]');
+    if (!btn || btn.disabled) return;
+    if (!window.currentUser) { if (typeof openAuthModal==='function') openAuthModal(); return; }
+    btn.disabled = true;
+    var batId    = btn.getAttribute('data-bat-id');
+    var wrestler = btn.getAttribute('data-wrestler');
+    try {
+      var r = await fetch('/api/battles', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({action:'vote', id: parseInt(batId), wrestler: parseInt(wrestler)})
+      });
+      var d = await r.json();
+      if (d.ok) {
+        /* Actualizar card sin re-fetch */
+        var card = document.querySelector('.bat-card[data-bat-id="'+batId+'"]');
+        if (card) {
+          /* Re-renderizar solo esa card */
+          var fakeB = {
+            id: batId,
+            title: card.querySelector('.bat-title') ? card.querySelector('.bat-title').textContent : '',
+            wrestler1_name: card.querySelectorAll('.bat-fighter-name')[0] ? card.querySelectorAll('.bat-fighter-name')[0].textContent : '',
+            wrestler1_image: card.querySelectorAll('.bat-fighter-img')[0] ? card.querySelectorAll('.bat-fighter-img')[0].src : '',
+            wrestler2_name: card.querySelectorAll('.bat-fighter-name')[1] ? card.querySelectorAll('.bat-fighter-name')[1].textContent : '',
+            wrestler2_image: card.querySelectorAll('.bat-fighter-img')[1] ? card.querySelectorAll('.bat-fighter-img')[1].src : '',
+            v1: d.v1, v2: d.v2, total: d.total, userVote: d.userVote
+          };
+          var tmp = document.createElement('div');
+          tmp.innerHTML = renderBattleCard(fakeB);
+          card.parentNode.replaceChild(tmp.firstChild, card);
+          var newCard = document.querySelector('.bat-card[data-bat-id="'+batId+'"]');
+          if (newCard) animateBars(newCard);
+        }
+      }
+    } catch(e){ btn.disabled = false; }
+  });
+
 })();
+})();
+
 
 
 
