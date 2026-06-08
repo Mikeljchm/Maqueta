@@ -763,28 +763,38 @@ async function handleProfile(request, env, corsH) {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_profiles (
     user_id TEXT PRIMARY KEY,
     username TEXT UNIQUE,
+    bio TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`).run();
+  try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN bio TEXT DEFAULT ''").run(); } catch(e){}
 
   const session = getSession(request);
   if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
 
   if (request.method === 'GET') {
     const { results } = await env.DB.prepare(
-      'SELECT username FROM user_profiles WHERE user_id=?'
+      'SELECT username, bio FROM user_profiles WHERE user_id=?'
     ).bind(session.id).all();
-    return apiJson({ username: results[0]?.username || null }, 200, corsH);
+    return apiJson({ username: results[0]?.username || null, bio: results[0]?.bio || '' }, 200, corsH);
   }
 
   if (request.method === 'POST') {
     const body = await request.json();
     const username = (body.username || '').replace(/[^a-zA-Z0-9_]/g,'').slice(0,30);
-    if (!username) return apiJson({ error: 'Invalid username' }, 400, corsH);
+    const bio = typeof body.bio === 'string' ? body.bio.trim().slice(0,120) : null;
+    if (!username && bio === null) return apiJson({ error: 'Nothing to update' }, 400, corsH);
     try {
-      await env.DB.prepare(
-        'INSERT INTO user_profiles (user_id, username) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET username=excluded.username'
-      ).bind(session.id, username).run();
-      return apiJson({ ok: true, username }, 200, corsH);
+      if (username) {
+        await env.DB.prepare(
+          'INSERT INTO user_profiles (user_id, username) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET username=excluded.username'
+        ).bind(session.id, username).run();
+      }
+      if (bio !== null) {
+        await env.DB.prepare(
+          'INSERT INTO user_profiles (user_id, bio) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET bio=excluded.bio'
+        ).bind(session.id, bio).run();
+      }
+      return apiJson({ ok: true, username: username||null, bio: bio }, 200, corsH);
     } catch(e) {
       /* Username taken (UNIQUE constraint) */
       return apiJson({ error: 'Username taken' }, 409, corsH);
@@ -1369,6 +1379,7 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
 
 
 
