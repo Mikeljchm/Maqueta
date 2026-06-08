@@ -128,6 +128,16 @@ async function handleComments(request, env, corsH) {
     }
     results.forEach(function(r){ r.reply_count = replyCounts[r.id] || 0; });
 
+    /* Like counts para cada comentario */
+    if (ids.length) {
+      const { results: lc } = await env.DB.prepare(
+        'SELECT comment_id, COUNT(*) as cnt FROM comment_likes WHERE comment_id IN ('+ids.map(function(){return '?';}).join(',')+'​) GROUP BY comment_id'
+      ).bind(...ids).all().catch(function(){ return {results:[]}; });
+      const likeCounts = {};
+      (lc||[]).forEach(function(r){ likeCounts[r.comment_id] = r.cnt; });
+      results.forEach(function(r){ r.like_count = likeCounts[r.id] || 0; });
+    }
+
     return apiJson({ comments: results }, 200, corsH);
   }
 
@@ -1220,6 +1230,32 @@ async function handleUserPosts(request, env, corsH) {
   return apiJson({ error: 'Method not allowed' }, 405, corsH);
 }
 
+
+async function handleCommentLikes(request, env, corsH) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS comment_likes (
+    comment_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    UNIQUE(comment_id, user_id)
+  )`).run();
+
+  if (request.method === 'POST') {
+    const session = getSession(request);
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const body = await request.json();
+    const comment_id = parseInt(body.comment_id);
+    const action = body.action; /* 'like' | 'unlike' */
+    if (!comment_id) return apiJson({ error: 'comment_id required' }, 400, corsH);
+    if (action === 'unlike') {
+      await env.DB.prepare('DELETE FROM comment_likes WHERE comment_id=? AND user_id=?').bind(comment_id, session.id).run();
+    } else {
+      try { await env.DB.prepare('INSERT INTO comment_likes (comment_id,user_id) VALUES (?,?)').bind(comment_id, session.id).run(); } catch(e){}
+    }
+    const { results } = await env.DB.prepare('SELECT COUNT(*) as n FROM comment_likes WHERE comment_id=?').bind(comment_id).all();
+    return apiJson({ ok: true, count: results[0]?.n || 0 }, 200, corsH);
+  }
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -1259,6 +1295,7 @@ export default {
       }
       if (path === '/api/posts') return handleUserPosts(request, env, corsH);
       if (path === '/api/battles') return handleBattles(request, env, corsH);
+      if (path === '/api/comment-likes') return handleCommentLikes(request, env, corsH);
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
       if (path === '/api/polls') return handlePolls(request, env, corsH);
