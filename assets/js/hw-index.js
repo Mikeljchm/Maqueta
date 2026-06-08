@@ -42,7 +42,11 @@
     '.cp-sticker-btn{background:none;border:none;font-size:1.3rem;cursor:pointer;flex-shrink:0;padding:0.2rem;}',
     '.cp-input{flex:1;background:var(--surface-3);border:1px solid var(--border);border-radius:20px;padding:0.5rem 0.9rem;color:var(--text);font-family:var(--font-b);font-size:0.85rem;outline:none;}',
     '.cp-input:focus{border-color:var(--fire-orange);}',
-    '.cp-send{background:var(--fire-orange);border:none;color:#fff;padding:0.5rem 1rem;border-radius:20px;font-family:var(--font-d);font-size:0.85rem;cursor:pointer;letter-spacing:0.05em;}'
+    '.cp-send{background:var(--fire-orange);border:none;color:#fff;padding:0.5rem 1rem;border-radius:20px;font-family:var(--font-d);font-size:0.85rem;cursor:pointer;letter-spacing:0.05em;}',
+    '.cp-sticker-preview{display:none;align-items:center;gap:0.5rem;padding:0.4rem 1rem 0;flex-shrink:0;}',
+    '.cp-sticker-preview.visible{display:flex;}',
+    '.cp-sticker-preview video{width:56px;height:56px;border-radius:8px;object-fit:cover;}',
+    '.cp-sticker-preview-remove{background:none;border:none;color:var(--text-muted);font-size:1rem;cursor:pointer;padding:0.1rem 0.3rem;line-height:1;}'
   ].join('');
   document.head.appendChild(s);
 
@@ -66,6 +70,10 @@
     + '<span class="cp-stray-page" id="cp-stray-page">1 / 16</span>'
     + '<button class="cp-stray-btn" id="cp-stray-next">Next &#8594;</button>'
     + '</div></div>'
+    + '<div class="cp-sticker-preview" id="cp-sticker-preview">'
+    + '<video id="cp-sticker-preview-video" autoplay loop muted playsinline></video>'
+    + '<button class="cp-sticker-preview-remove" id="cp-sticker-preview-remove">&#10005;</button>'
+    + '</div>'
     + '<div class="cp-input-area">'
     + '<button class="cp-sticker-btn" id="cp-sticker-btn">&#128520;</button>'
     + '<input class="cp-input" id="cp-input" placeholder="Add a comment..." maxlength="500">'
@@ -100,25 +108,34 @@
       });
   }
 
+  var pendingSticker = null;
+
   function sendSticker(url) {
-    if (!panelPostId) return;
-    var marker = '[sticker]' + url + '[/sticker]';
-    fetch('/api/comments?post_id=' + encodeURIComponent(panelPostId), {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: marker })
-    }).then(function(r){ return r.json(); })
-    .then(function(d) {
-      if (d.ok || d.id) {
-        addToPanel(marker, '', '');
-        updateCount(1);
-        // Cerrar stray
-        var stray = document.getElementById('cp-stray');
-        if (stray) stray.classList.remove('open');
-        strayOpen = false;
-      }
-    }).catch(function(){});
+    pendingSticker = url;
+    /* Mostrar preview */
+    var preview = document.getElementById('cp-sticker-preview');
+    var video   = document.getElementById('cp-sticker-preview-video');
+    if (preview && video) {
+      video.src = url;
+      preview.classList.add('visible');
+    }
+    /* Cerrar stray */
+    var stray = document.getElementById('cp-stray');
+    if (stray) stray.classList.remove('open');
+    strayOpen = false;
+    /* Focus al input para que pueda escribir texto */
+    var input = document.getElementById('cp-input');
+    if (input) input.focus();
   }
+
+  /* Botón X del preview — quitar sticker pendiente */
+  document.getElementById('cp-sticker-preview-remove').addEventListener('click', function() {
+    pendingSticker = null;
+    var preview = document.getElementById('cp-sticker-preview');
+    if (preview) preview.classList.remove('visible');
+    var video = document.getElementById('cp-sticker-preview-video');
+    if (video) video.src = '';
+  });
 
   document.getElementById('cp-sticker-btn').addEventListener('click', function() {
     var stray = document.getElementById('cp-stray');
@@ -195,20 +212,34 @@
   // Send comment
   document.getElementById('cp-send').addEventListener('click', function() {
     var input = document.getElementById('cp-input');
-    var text = input.value.trim();
-    if (!text || !panelPostId) return;
+    var text  = input.value.trim();
+    /* Necesita al menos texto O sticker */
+    if (!text && !pendingSticker) return;
+    if (!panelPostId) return;
+
+    /* Construir body: texto primero, sticker al final si existe */
+    var body = text;
+    if (pendingSticker) body = (text ? text + ' ' : '') + '[sticker]' + pendingSticker + '[/sticker]';
+
     input.value = '';
+    /* Limpiar preview */
+    var stk = pendingSticker;
+    pendingSticker = null;
+    var preview = document.getElementById('cp-sticker-preview');
+    if (preview) preview.classList.remove('visible');
+    var vid = document.getElementById('cp-sticker-preview-video');
+    if (vid) vid.src = '';
+
     fetch('/api/comments?post_id=' + encodeURIComponent(panelPostId), {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: text })
+      body: JSON.stringify({ body: body })
     }).then(function(r){ return r.json(); })
     .then(function(d) {
       if (d.ok || d.id) {
-        var _uName = window.currentUser ? (window.currentUser.name || 'You') : 'You';
-    var _uBadge = window.currentUser && window.currentUser.badge ? window.currentUser.badge + ' ' : '';
-    addToPanel(text, _uBadge + _uName,
-          window.currentUser ? window.currentUser.picture : '');
+        var _uName  = window.currentUser ? (window.currentUser.name || 'You') : 'You';
+        var _uBadge = window.currentUser && window.currentUser.badge ? window.currentUser.badge + ' ' : '';
+        addToPanel(body, _uBadge + _uName, window.currentUser ? window.currentUser.picture : '');
         updateCount(1);
       }
     }).catch(function(){});
@@ -4507,6 +4538,7 @@ async function votePoll(postId, idx, poll, container) {
 
 })();
 })();
+
 
 
 
