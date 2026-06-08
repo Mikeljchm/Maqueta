@@ -87,7 +87,9 @@ function apiJson(data, status, headers) {
 
 
 function containsLink(text) {
-  return /https?:\/\/|www\.|\.(com|net|org|io|co|xyz|tv|me|gg|ly|link|app|site|web|info|biz|us|uk|ru|de|br|mx)(\/|\s|$)/i.test(text);
+  /* Permitir stickers — quitar el contenido [sticker]...[/sticker] antes de chequear */
+  var stripped = String(text||'').replace(/\[sticker\][^\[]*\[\/sticker\]/g, '');
+  return /https?:\/\/|www\.|\.(com|net|org|io|co|xyz|tv|me|gg|ly|link|app|site|web|info|biz|us|uk|ru|de|br|mx)(\/|\s|$)/i.test(stripped);
 }
 
 async function handleComments(request, env, corsH) {
@@ -1339,6 +1341,7 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
 
 
 
