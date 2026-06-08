@@ -941,6 +941,103 @@ async function handleConfessions(request, env, corsH) {
   return apiJson({ error: 'Method not allowed' }, 405, corsH);
 }
 
+
+async function handleBattles(request, env, corsH) {
+  /* Crear tabla battles */
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS battles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    wrestler1_name TEXT NOT NULL,
+    wrestler1_image TEXT NOT NULL,
+    wrestler2_name TEXT NOT NULL,
+    wrestler2_image TEXT NOT NULL,
+    status TEXT DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+
+  /* Ensure poll_votes exists (reutilizar) */
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS poll_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id TEXT NOT NULL,
+    option_idx INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    UNIQUE(post_id, user_id)
+  )`).run();
+
+  const isAdmin = (function(){
+    const m = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
+    if (!m) return false;
+    try { const s = JSON.parse(atob(m[1])); return s && s.login === 'Mikeljchm'; } catch(e){ return false; }
+  })();
+
+  if (request.method === 'GET') {
+    const { results: battles } = await env.DB.prepare(
+      "SELECT * FROM battles WHERE status='active' ORDER BY created_at DESC"
+    ).all();
+
+    /* Para cada batalla obtener votos y voto del usuario */
+    const session = getSession(request);
+    const enriched = await Promise.all(battles.map(async function(b) {
+      const postId = 'battle_' + b.id;
+      const { results: votes } = await env.DB.prepare(
+        'SELECT option_idx, COUNT(*) as count FROM poll_votes WHERE post_id=? GROUP BY option_idx'
+      ).bind(postId).all();
+      const v1 = (votes.find(function(v){ return v.option_idx === 0; }) || {count:0}).count;
+      const v2 = (votes.find(function(v){ return v.option_idx === 1; }) || {count:0}).count;
+      let userVote = null;
+      if (session) {
+        const { results: uv } = await env.DB.prepare(
+          'SELECT option_idx FROM poll_votes WHERE post_id=? AND user_id=?'
+        ).bind(postId, session.id).all();
+        if (uv.length) userVote = uv[0].option_idx;
+      }
+      return Object.assign({}, b, { v1, v2, total: v1+v2, userVote });
+    }));
+    return apiJson({ battles: enriched }, 200, corsH);
+  }
+
+  if (request.method === 'POST') {
+    const body = await request.json();
+
+    if (body.action === 'create') {
+      if (!isAdmin) return apiJson({ error: 'Forbidden' }, 403, corsH);
+      const { title, wrestler1_name, wrestler1_image, wrestler2_name, wrestler2_image } = body;
+      if (!title || !wrestler1_name || !wrestler1_image || !wrestler2_name || !wrestler2_image)
+        return apiJson({ error: 'Missing fields' }, 400, corsH);
+      await env.DB.prepare(
+        'INSERT INTO battles (title,wrestler1_name,wrestler1_image,wrestler2_name,wrestler2_image) VALUES (?,?,?,?,?)'
+      ).bind(title, wrestler1_name, wrestler1_image, wrestler2_name, wrestler2_image).run();
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    if (body.action === 'vote') {
+      const session = getSession(request);
+      if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+      const battleId = parseInt(body.id);
+      const wrestler = parseInt(body.wrestler); /* 1 o 2 → option_idx 0 o 1 */
+      if (!battleId || (wrestler !== 1 && wrestler !== 2)) return apiJson({ error: 'Invalid' }, 400, corsH);
+      const postId = 'battle_' + battleId;
+      const optionIdx = wrestler - 1;
+      try {
+        await env.DB.prepare(
+          'INSERT INTO poll_votes (post_id,option_idx,user_id) VALUES (?,?,?)'
+        ).bind(postId, optionIdx, session.id).run();
+      } catch(e) { /* Ya votó */ }
+      /* Devolver resultados actualizados */
+      const { results: votes } = await env.DB.prepare(
+        'SELECT option_idx, COUNT(*) as count FROM poll_votes WHERE post_id=? GROUP BY option_idx'
+      ).bind(postId).all();
+      const v1 = (votes.find(function(v){ return v.option_idx === 0; }) || {count:0}).count;
+      const v2 = (votes.find(function(v){ return v.option_idx === 1; }) || {count:0}).count;
+      return apiJson({ ok: true, v1, v2, total: v1+v2, userVote: optionIdx }, 200, corsH);
+    }
+
+    return apiJson({ error: 'Unknown action' }, 400, corsH);
+  }
+
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -978,6 +1075,7 @@ export default {
           dbTest
         }), { headers: { 'Content-Type': 'application/json', ...corsH } });
       }
+      if (path === '/api/battles') return handleBattles(request, env, corsH);
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
       if (path === '/api/polls') return handlePolls(request, env, corsH);
@@ -1098,6 +1196,7 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
 
 
 
