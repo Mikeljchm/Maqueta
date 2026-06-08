@@ -4,6 +4,9 @@
   var panelPostId  = null;
   var panelOpen    = false;
   var replyingTo   = null; /* {id, userName} del comentario padre */
+  var LIKED_COMMENTS = new Set();
+  try { LIKED_COMMENTS = new Set(JSON.parse(localStorage.getItem('hw_liked_comments')||'[]')); } catch(e){}
+  function saveLikedComments(){ try{ localStorage.setItem('hw_liked_comments',JSON.stringify([...LIKED_COMMENTS])); }catch(e){} }
   var pendingSticker = null;
   var strayOpen    = false;
 
@@ -34,6 +37,10 @@
     '.cp-time{font-size:0.65rem;color:var(--text-muted);}',
     '.cp-reply-btn{background:none;border:none;font-size:0.7rem;color:var(--text-dim);cursor:pointer;padding:0;font-family:var(--font-b);letter-spacing:0.04em;transition:color 0.15s;}',
     '.cp-reply-btn:active{color:var(--fire-orange);}',
+    '.cp-like-btn{background:none;border:none;display:inline-flex;align-items:center;gap:0.25rem;font-size:0.7rem;color:var(--text-dim);cursor:pointer;padding:0;font-family:var(--font-b);transition:color 0.15s;}',
+    '.cp-like-btn svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:fill 0.15s,stroke 0.15s;}',
+    '.cp-like-btn.liked{color:#ff3b5c;}',
+    '.cp-like-btn.liked svg{fill:#ff3b5c;stroke:#ff3b5c;}',
     /* Replies thread */
     '.cp-replies-wrap{margin-left:2.4rem;}',
     '.cp-view-replies-btn{background:none;border:none;color:var(--fire-orange);font-size:0.75rem;font-family:var(--font-b);cursor:pointer;padding:0.3rem 0;display:flex;align-items:center;gap:0.35rem;letter-spacing:0.03em;}',
@@ -224,6 +231,10 @@
         + '<div class="cp-meta">'
           + '<span class="cp-time">' + timeAgo(row.created_at) + '</span>'
           + replyBtnHtml
+          + (row.id ? '<button class="cp-like-btn'+(LIKED_COMMENTS.has(String(row.id))?' liked':'')
+            + '" data-comment-like="'+row.id+'">'  
+            + '<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+            + '</button>' : '')
         + '</div>'
       + '</div>';
 
@@ -292,6 +303,20 @@
       })
       .catch(function(){ repliesList.innerHTML = ''; });
   }
+
+  /* ── Delegation: Like comment ── */
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.cp-like-btn[data-comment-like]');
+    if (!btn) return;
+    var id = String(btn.getAttribute('data-comment-like'));
+    if (LIKED_COMMENTS.has(id)) {
+      LIKED_COMMENTS.delete(id); btn.classList.remove('liked');
+    } else {
+      LIKED_COMMENTS.add(id); btn.classList.add('liked');
+      btn.style.transform='scale(1.4)'; setTimeout(function(){ btn.style.transform=''; },180);
+    }
+    saveLikedComments();
+  });
 
   /* ── Delegation: Reply button ── */
   document.addEventListener('click', function(e) {
