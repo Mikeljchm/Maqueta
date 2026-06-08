@@ -128,16 +128,6 @@ async function handleComments(request, env, corsH) {
     }
     results.forEach(function(r){ r.reply_count = replyCounts[r.id] || 0; });
 
-    /* Like counts para cada comentario */
-    if (ids.length) {
-      const { results: lc } = await env.DB.prepare(
-        'SELECT comment_id, COUNT(*) as cnt FROM comment_likes WHERE comment_id IN ('+ids.map(function(){return '?';}).join(',')+'​) GROUP BY comment_id'
-      ).bind(...ids).all().catch(function(){ return {results:[]}; });
-      const likeCounts = {};
-      (lc||[]).forEach(function(r){ likeCounts[r.comment_id] = r.cnt; });
-      results.forEach(function(r){ r.like_count = likeCounts[r.id] || 0; });
-    }
-
     return apiJson({ comments: results }, 200, corsH);
   }
 
@@ -1104,10 +1094,12 @@ async function handleUserPosts(request, env, corsH) {
     user_name TEXT NOT NULL,
     user_avatar TEXT DEFAULT '',
     body TEXT NOT NULL,
+    image_url TEXT DEFAULT '',
     report_count INTEGER DEFAULT 0,
     hidden INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`).run();
+  try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN image_url TEXT DEFAULT ''").run(); } catch(e){}
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS post_reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     post_id INTEGER NOT NULL,
@@ -1136,7 +1128,7 @@ async function handleUserPosts(request, env, corsH) {
     /* Feed global — solo posts no ocultos */
     if (!action && !userId) {
       const { results } = await env.DB.prepare(
-        'SELECT id,user_id,user_name,user_avatar,body,report_count,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT 50'
+        'SELECT id,user_id,user_name,user_avatar,body,image_url,report_count,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT 50'
       ).all();
       return apiJson({ posts: results }, 200, corsH);
     }
@@ -1175,9 +1167,10 @@ async function handleUserPosts(request, env, corsH) {
       if (text.length > 500) return apiJson({ error: 'Max 500 characters.' }, 400, corsH);
       if (containsLink(text)) return apiJson({ error: 'Links are not allowed in posts.' }, 400, corsH);
 
+      const image_url = (body.image_url || '').trim().slice(0, 500);
       const result = await env.DB.prepare(
-        'INSERT INTO user_posts (user_id,user_name,user_avatar,body) VALUES (?,?,?,?)'
-      ).bind(session.id, session.name||session.email, session.picture||'', text).run();
+        'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url) VALUES (?,?,?,?,?)'
+      ).bind(session.id, session.name||session.email, session.picture||'', text, image_url).run();
       await addPoints(env, session.id, 1);
       return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
     }
@@ -1231,29 +1224,35 @@ async function handleUserPosts(request, env, corsH) {
 }
 
 
-async function handleCommentLikes(request, env, corsH) {
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS comment_likes (
-    comment_id INTEGER NOT NULL,
-    user_id TEXT NOT NULL,
-    UNIQUE(comment_id, user_id)
-  )`).run();
+async function handleUpload(request, env, corsH) {
+  const session = getSession(request);
+  if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
 
-  if (request.method === 'POST') {
-    const session = getSession(request);
-    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
-    const body = await request.json();
-    const comment_id = parseInt(body.comment_id);
-    const action = body.action; /* 'like' | 'unlike' */
-    if (!comment_id) return apiJson({ error: 'comment_id required' }, 400, corsH);
-    if (action === 'unlike') {
-      await env.DB.prepare('DELETE FROM comment_likes WHERE comment_id=? AND user_id=?').bind(comment_id, session.id).run();
-    } else {
-      try { await env.DB.prepare('INSERT INTO comment_likes (comment_id,user_id) VALUES (?,?)').bind(comment_id, session.id).run(); } catch(e){}
-    }
-    const { results } = await env.DB.prepare('SELECT COUNT(*) as n FROM comment_likes WHERE comment_id=?').bind(comment_id).all();
-    return apiJson({ ok: true, count: results[0]?.n || 0 }, 200, corsH);
+  const key = env.BUNNY_STORAGE_KEY;
+  if (!key) return apiJson({ error: 'Storage not configured' }, 500, corsH);
+
+  const contentType = request.headers.get('Content-Type') || 'image/webp';
+  const arrayBuffer = await request.arrayBuffer();
+  if (!arrayBuffer.byteLength) return apiJson({ error: 'Empty file' }, 400, corsH);
+  if (arrayBuffer.byteLength > 10 * 1024 * 1024) return apiJson({ error: 'Max 10MB' }, 400, corsH);
+
+  const ext = contentType.includes('jpeg') ? 'jpg' : 'webp';
+  const filename = session.id.replace(/[^a-zA-Z0-9]/g,'').slice(0,16) + '_' + Date.now() + '.' + ext;
+  const storageUrl = 'https://ny.storage.bunnycdn.com/hottwrestling/user-posts/' + filename;
+
+  const res = await fetch(storageUrl, {
+    method: 'PUT',
+    headers: { 'AccessKey': key, 'Content-Type': contentType },
+    body: arrayBuffer
+  });
+
+  if (!res.ok) {
+    const txt = await res.text();
+    return apiJson({ error: 'Upload failed: ' + txt }, 500, corsH);
   }
-  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+
+  const cdnUrl = 'https://hottwrestling.b-cdn.net/user-posts/' + filename;
+  return apiJson({ ok: true, url: cdnUrl }, 200, corsH);
 }
 
 export default {
@@ -1293,9 +1292,9 @@ export default {
           dbTest
         }), { headers: { 'Content-Type': 'application/json', ...corsH } });
       }
+      if (path === '/api/upload') return handleUpload(request, env, corsH);
       if (path === '/api/posts') return handleUserPosts(request, env, corsH);
       if (path === '/api/battles') return handleBattles(request, env, corsH);
-      if (path === '/api/comment-likes') return handleCommentLikes(request, env, corsH);
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
       if (path === '/api/polls') return handlePolls(request, env, corsH);
