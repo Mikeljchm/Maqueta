@@ -120,9 +120,14 @@ layout: none
             <div class="page-title">THE <span>WRESTLERS</span></div>
             <div class="page-subtitle">Wrestlers &middot; Updated weekly</div>
           </div>
-          <button class="section-new-btn" onclick="openNewProfile('_wrestlers')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New</button>
+          <button class="section-new-btn" id="wrestlers-new-btn" onclick="openNewProfile('_wrestlers')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New</button>
         </div>
-        <!-- Category pills — dynamic from wrestlers -->
+        <!-- TABS: Profiles | Battles -->
+        <div class="wrest-tabs">
+          <button class="wrest-tab active" data-wtab="profiles">Profiles</button>
+          <button class="wrest-tab" data-wtab="battles">&#9876; Battles</button>
+        </div>
+        <!-- PROFILES tab -->
         <div id="wrestlers-grid-wrap">
           <div class="cat-pills" id="wrestlers-pills" style="border-top:none;position:relative;top:auto;">
             <button class="cat-pill active" data-wcat="all">All</button>
@@ -132,6 +137,10 @@ layout: none
             <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--fire-orange)" stroke-width="1.2"><path d="M12 2l2.4 4.8 5.6.8-4 3.9.9 5.5L12 14.5l-4.9 2.5.9-5.5-4-3.9 5.6-.8z"/></svg>
             <p>Wrestler profiles coming soon.</p>
           </div>
+        </div>
+        <!-- BATTLES tab -->
+        <div id="battles-wrap" style="display:none;padding:0.75rem;">
+          <div id="battles-feed"><div class="bat-loading">Loading battles...</div></div>
         </div>
       </div>
 
@@ -655,6 +664,7 @@ layout: none
 
 </body>
 </html>
+
 
 
 
