@@ -4432,15 +4432,22 @@ async function votePoll(postId, idx, poll, container) {
     '.sec-comment-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}',
     /* Posts feed */
     '.posts-wrap{padding:0.75rem;}',
-    '.posts-compose{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:0.85rem;margin-bottom:1rem;}',
-    '.posts-compose-top{display:flex;gap:0.6rem;align-items:flex-start;}',
-    '.posts-compose-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--surface-3);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}',
-    '.posts-compose-avatar img{width:100%;height:100%;object-fit:cover;}',
-    '.posts-compose-textarea{flex:1;background:none;border:none;color:var(--text);font-family:var(--font-b);font-size:0.87rem;resize:none;height:72px;line-height:1.5;outline:none;placeholder-color:var(--text-muted);}',
-    '.posts-compose-footer{display:flex;align-items:center;justify-content:space-between;margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid var(--border);}',
-    '.posts-compose-rules{font-size:0.65rem;color:var(--text-muted);line-height:1.4;flex:1;padding-right:0.75rem;}',
-    '.posts-compose-send{background:var(--fire-orange);color:#fff;border:none;border-radius:20px;padding:0.45rem 1.1rem;font-family:var(--font-d);font-size:0.78rem;letter-spacing:0.06em;cursor:pointer;flex-shrink:0;}',
-    '.posts-compose-send:disabled{opacity:0.5;}',
+    /* Post compose sheet */
+    '.posts-new-btn{display:flex;align-items:center;gap:0.5rem;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:0.4rem 0.9rem 0.4rem 0.7rem;font-size:0.78rem;font-family:var(--font-b);cursor:pointer;margin:0 0 0.85rem;transition:border-color 0.2s,color 0.2s;}',
+    '.posts-new-btn:active{border-color:var(--fire-orange);color:var(--fire-orange);}',
+    '.posts-new-btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}',
+    '.posts-sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;opacity:0;pointer-events:none;transition:opacity 0.25s;}',
+    '.posts-sheet-overlay.open{opacity:1;pointer-events:all;}',
+    '.posts-sheet{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);z-index:301;padding:0.5rem 1.1rem calc(1.5rem + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);}',
+    '.posts-sheet.open{transform:translateY(0);}',
+    '.posts-sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 0.85rem;}',
+    '.posts-sheet-title{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;margin-bottom:0.75rem;}',
+    '.posts-sheet-ta{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:0.75rem;font-size:0.87rem;font-family:var(--font-b);resize:none;height:100px;outline:none;line-height:1.5;box-sizing:border-box;margin-bottom:0.5rem;}',
+    '.posts-sheet-ta:focus{border-color:var(--fire-orange);}',
+    '.posts-sheet-footer{display:flex;align-items:center;justify-content:space-between;}',
+    '.posts-sheet-rules{font-size:0.6rem;color:var(--text-muted);flex:1;padding-right:0.75rem;line-height:1.35;}',
+    '.posts-sheet-send{background:var(--fire-orange);color:#fff;border:none;border-radius:20px;padding:0.5rem 1.25rem;font-family:var(--font-d);font-size:0.8rem;letter-spacing:0.06em;cursor:pointer;}',
+    '.posts-sheet-send:disabled{opacity:0.5;}',
     '.posts-signin-note{text-align:center;padding:1rem;color:var(--text-dim);font-size:0.82rem;}',
     /* Post card */
     '.post-card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.75rem;}',
@@ -4591,58 +4598,67 @@ async function votePoll(postId, idx, poll, container) {
       var user  = window.currentUser;
 
       /* Compose box */
-      var composeHtml = '';
-      if (user) {
-        var avSrc = user.picture
-          ? '<img src="'+user.picture+'" loading="lazy" alt="">'
-          : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
-        composeHtml = '<div class="posts-compose">'
-          + '<div class="posts-compose-top">'
-            + '<div class="posts-compose-avatar">'+avSrc+'</div>'
-            + '<textarea class="posts-compose-textarea" id="posts-compose-ta" placeholder="What&#39;s on your mind?" maxlength="500"></textarea>'
-          + '</div>'
-          + '<div class="posts-compose-footer">'
-            + '<div class="posts-compose-rules">No links &bull; No hate against religion &bull; Keep it real &bull; Violations = ban</div>'
-            + '<button class="posts-compose-send" id="posts-compose-send">Post</button>'
-          + '</div>'
-        + '</div>';
-      } else {
-        composeHtml = '<div class="posts-signin-note">Sign in to post your thoughts.</div>';
-      }
+      /* Botón de nuevo post + sheet */
+      var newBtnHtml = user
+        ? '<button class="posts-new-btn" id="posts-new-btn">'
+          + '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
+          + 'New post</button>'
+        : '<div class="posts-signin-note">Sign in to post your thoughts.</div>';
 
       if (!posts.length) {
-        container.innerHTML = composeHtml + '<div class="posts-empty">No posts yet. Be the first!</div>';
+        container.innerHTML = newBtnHtml + '<div class="posts-empty">No posts yet. Be the first!</div>';
       } else {
-        container.innerHTML = composeHtml + posts.map(renderPost).join('');
+        container.innerHTML = newBtnHtml + posts.map(renderPost).join('');
       }
 
-      /* Bind send */
-      var sendBtn = document.getElementById('posts-compose-send');
-      var ta      = document.getElementById('posts-compose-ta');
-      if (sendBtn && ta) {
-        sendBtn.addEventListener('click', async function() {
-          var text = ta.value.trim();
-          if (!text) return;
-          sendBtn.disabled = true;
-          try {
-            var r2 = await fetch('/api/posts', {
-              method: 'POST', credentials: 'include',
-              headers: {'Content-Type':'application/json'},
-              body: JSON.stringify({action:'post', body: text})
-            });
-            var d2 = await r2.json();
-            if (d2.ok) {
-              ta.value = '';
+      /* Sheet de compose — crear una sola vez en body */
+      if (!document.getElementById('posts-sheet')) {
+        var shOverlay = document.createElement('div');
+        shOverlay.className = 'posts-sheet-overlay'; shOverlay.id = 'posts-sheet-overlay';
+        var sheet = document.createElement('div');
+        sheet.className = 'posts-sheet'; sheet.id = 'posts-sheet';
+        sheet.innerHTML = '<div class="posts-sheet-handle"></div>'
+          + '<div class="posts-sheet-title">New Post</div>'
+          + '<textarea class="posts-sheet-ta" id="posts-sheet-ta" placeholder="What&#39;s on your mind?" maxlength="500"></textarea>'
+          + '<div class="posts-sheet-footer">'
+            + '<div class="posts-sheet-rules">No links &bull; No religion hate &bull; Keep it real &bull; Violations = ban</div>'
+            + '<button class="posts-sheet-send" id="posts-sheet-send">Post</button>'
+          + '</div>';
+        document.body.appendChild(shOverlay);
+        document.body.appendChild(sheet);
+        function openPostSheet(){ shOverlay.classList.add('open'); sheet.classList.add('open'); document.body.style.overflow='hidden'; var ta2=document.getElementById('posts-sheet-ta'); if(ta2) ta2.focus(); }
+        function closePostSheet(){ shOverlay.classList.remove('open'); sheet.classList.remove('open'); document.body.style.overflow=''; }
+        shOverlay.addEventListener('click', closePostSheet);
+        /* Swipe down */
+        var shY=0;
+        sheet.addEventListener('touchstart',function(e){shY=e.touches[0].clientY;},{passive:true});
+        sheet.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-shY>60)closePostSheet();},{passive:true});
+        document.getElementById('posts-sheet-send').addEventListener('click', async function(){
+          var ta2=document.getElementById('posts-sheet-ta');
+          var text=ta2?ta2.value.trim():'';
+          if(!text) return;
+          var sendBtn2=document.getElementById('posts-sheet-send');
+          sendBtn2.disabled=true;
+          try{
+            var r2=await fetch('/api/posts',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'post',body:text})});
+            var d2=await r2.json();
+            if(d2.ok){
+              if(ta2) ta2.value='';
+              closePostSheet();
               window.loadPostsFeed(container);
             } else {
-              /* Mostrar error */
-              var toast = document.getElementById('toast');
-              if (toast) { toast.textContent = d2.error||'Error'; toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 3000); }
+              var toast=document.getElementById('toast');
+              if(toast){toast.textContent=d2.error||'Error';toast.classList.add('show');setTimeout(function(){toast.classList.remove('show');},3000);}
             }
-          } catch(e){}
-          sendBtn.disabled = false;
+          }catch(e){}
+          sendBtn2.disabled=false;
         });
+        window._openPostSheet = openPostSheet;
       }
+
+      /* Bind new post button */
+      var newBtn = document.getElementById('posts-new-btn');
+      if(newBtn) newBtn.addEventListener('click', function(){ if(window._openPostSheet) window._openPostSheet(); });
 
     } catch(e) {
       container.innerHTML = '<div class="posts-empty">Could not load posts.</div>';
