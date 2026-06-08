@@ -59,8 +59,8 @@
     '.cp-input:focus{border-color:var(--fire-orange);}',
     '.cp-send{background:var(--fire-orange);border:none;color:#fff;padding:0.5rem 1rem;border-radius:20px;font-family:var(--font-d);font-size:0.85rem;cursor:pointer;letter-spacing:0.05em;}',
     /* Sticker tray */
-    '.cp-stray{position:absolute;bottom:100%;left:0;right:0;background:var(--surface-2);border-top:1px solid var(--border);padding:0.75rem 1rem;max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);pointer-events:none;}',
-    '.cp-stray.open{transform:translateY(0);pointer-events:all;}',
+    '.cp-stray{background:var(--surface-2);border-top:1px solid var(--border);padding:0 1rem;max-height:0;overflow:hidden;display:flex;flex-direction:column;gap:0.5rem;transition:max-height 0.3s cubic-bezier(0.16,1,0.3,1),padding 0.3s;flex-shrink:0;}',
+    '.cp-stray.open{max-height:220px;padding:0.75rem 1rem;overflow-y:auto;}',
     '.cp-stray-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;}',
     '.cp-stray-item{cursor:pointer;border-radius:8px;overflow:hidden;aspect-ratio:1;}',
     '.cp-stray-item video{width:100%;height:100%;object-fit:cover;display:block;}',
@@ -84,6 +84,14 @@
     + '<button class="cp-close" id="cp-close">&#10005;</button>'
     + '</div>'
     + '<div class="cp-list" id="cp-list"></div>'
+    + '<div class="cp-stray" id="cp-stray">'
+    + '<div class="cp-stray-nav">'
+    + '<button class="sticker-nav-btn" id="cp-sticker-prev">&#8592; Prev</button>'
+    + '<span class="sticker-page-info" id="cp-sticker-page">1 / 16</span>'
+    + '<button class="sticker-nav-btn" id="cp-sticker-next">Next &#8594;</button>'
+    + '</div>'
+    + '<div class="cp-stray-grid" id="cp-stray-grid"></div>'
+    + '</div>'
     + '<div class="cp-sticker-preview" id="cp-sticker-preview">'
     + '<video id="cp-sticker-preview-video" autoplay loop muted playsinline></video>'
     + '<button class="cp-sticker-preview-remove" id="cp-sticker-preview-remove">&#10005;</button>'
@@ -96,14 +104,6 @@
     + '<button class="cp-sticker-btn" id="cp-sticker-btn">&#128520;</button>'
     + '<input class="cp-input" id="cp-input" placeholder="Add a comment..." maxlength="500">'
     + '<button class="cp-send" id="cp-send">POST</button>'
-    + '</div>'
-    + '<div class="cp-stray" id="cp-stray">'
-    + '<div class="cp-stray-nav">'
-    + '<button class="sticker-nav-btn" id="cp-sticker-prev">&#8592; Prev</button>'
-    + '<span class="sticker-page-info" id="cp-sticker-page">1 / 16</span>'
-    + '<button class="sticker-nav-btn" id="cp-sticker-next">Next &#8594;</button>'
-    + '</div>'
-    + '<div class="cp-stray-grid" id="cp-stray-grid"></div>'
     + '</div>';
   document.body.appendChild(panel);
 
@@ -321,7 +321,7 @@
     var preview = document.getElementById('cp-sticker-preview');
     if (preview) preview.classList.remove('visible');
     var vid = document.getElementById('cp-sticker-preview-video');
-    if (vid) vid.src = '';
+    if (vid) { vid.src = ''; vid.load(); }
     cancelReply();
 
     fetch('/api/comments?post_id=' + encodeURIComponent(panelPostId), {
@@ -389,6 +389,11 @@
     var stray = document.getElementById('cp-stray');
     if (stray) stray.classList.remove('open');
     strayOpen = false;
+    pendingSticker = null;
+    var prev2 = document.getElementById('cp-sticker-preview');
+    if (prev2) prev2.classList.remove('visible');
+    var vid2 = document.getElementById('cp-sticker-preview-video');
+    if (vid2) { vid2.src = ''; vid2.load(); }
   }
 
   /* ── updateCount ── */
@@ -4695,6 +4700,7 @@ async function votePoll(postId, idx, poll, container) {
 
 })();
 })();
+
 
 
 
