@@ -4494,6 +4494,14 @@ async function votePoll(postId, idx, poll, container) {
     '.posts-sheet-send{background:var(--fire-orange);color:#fff;border:none;border-radius:20px;padding:0.5rem 1.25rem;font-family:var(--font-d);font-size:0.8rem;letter-spacing:0.06em;cursor:pointer;}',
     '.posts-sheet-send:disabled{opacity:0.5;}',
     '.posts-signin-note{text-align:center;padding:1rem;color:var(--text-dim);font-size:0.82rem;}',
+    '.posts-sheet-toolbar{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;}',
+    '.posts-photo-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:0.3rem 0.75rem;font-size:0.72rem;font-family:var(--font-b);cursor:pointer;display:flex;align-items:center;gap:0.35rem;transition:border-color 0.2s;}',
+    '.posts-photo-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}',
+    '.posts-photo-btn:active{border-color:var(--fire-orange);color:var(--fire-orange);}',
+    '.posts-img-preview{width:100%;max-height:200px;object-fit:cover;border-radius:10px;margin-bottom:0.5rem;display:block;}',
+    '.posts-img-remove{background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:50%;width:24px;height:24px;font-size:0.8rem;cursor:pointer;position:absolute;top:0.4rem;right:0.4rem;display:flex;align-items:center;justify-content:center;}',
+    '.posts-img-wrap{position:relative;margin-bottom:0.5rem;}',
+    '.post-card-img{width:100%;max-height:320px;object-fit:cover;border-radius:10px;margin-bottom:0.55rem;display:block;}',
     /* Post card */
     '.post-card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.75rem;}',
     '.post-card-header{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.6rem;}',
@@ -4618,7 +4626,8 @@ async function votePoll(postId, idx, poll, container) {
           + '<div class="post-card-date">'+timeAgo(p.created_at)+'</div>'
         + '</div>'
       + '</div>'
-      + '<div class="post-card-body">'+escH(p.body)+'</div>'
+      + (p.image_url ? '<img class="post-card-img" src="'+p.image_url+'" loading="lazy" alt="">' : '')
+      + (p.body && p.body.trim() && p.body.trim() !== ' ' ? '<div class="post-card-body">'+escH(p.body)+'</div>' : '')
       + '<div class="post-card-actions">'
         + '<button class="post-like-btn'+(LIKED_POSTS.has(String(p.id))?' liked':'')+'" data-post-id="'+p.id+'">'
           + '<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(p.like_count||'')+'</button>'
@@ -4677,12 +4686,67 @@ async function votePoll(postId, idx, poll, container) {
         sheet.innerHTML = '<div class="posts-sheet-handle"></div>'
           + '<div class="posts-sheet-title">New Post</div>'
           + '<textarea class="posts-sheet-ta" id="posts-sheet-ta" placeholder="What&#39;s on your mind?" maxlength="500"></textarea>'
+          + '<div id="posts-img-wrap-area"></div>'
+          + '<div class="posts-sheet-toolbar">'
+            + '<button class="posts-photo-btn" id="posts-photo-btn">'
+              + '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+              + 'Photo</button>'
+            + '<input type="file" id="posts-file-input" accept="image/*" style="display:none">'
+          + '</div>'
           + '<div class="posts-sheet-footer">'
             + '<div class="posts-sheet-rules">No links &bull; No religion hate &bull; Keep it real &bull; Violations = ban</div>'
             + '<button class="posts-sheet-send" id="posts-sheet-send">Post</button>'
           + '</div>';
         document.body.appendChild(shOverlay);
         document.body.appendChild(sheet);
+
+        /* ── Foto: Canvas compressor ── */
+        var pendingImgBlob = null;
+        var pendingImgUrl  = null;
+
+        function clearPendingImg() {
+          pendingImgBlob = null; pendingImgUrl = null;
+          var wrap = document.getElementById('posts-img-wrap-area');
+          if (wrap) wrap.innerHTML = '';
+        }
+
+        document.getElementById('posts-photo-btn').addEventListener('click', function(){
+          document.getElementById('posts-file-input').click();
+        });
+
+        document.getElementById('posts-file-input').addEventListener('change', function(e){
+          var file = e.target.files[0];
+          if (!file) return;
+          var img = new Image();
+          var url = URL.createObjectURL(file);
+          img.onload = function(){
+            var maxW = 1080;
+            var ratio = Math.min(maxW / img.width, 1);
+            var canvas = document.createElement('canvas');
+            canvas.width  = Math.round(img.width  * ratio);
+            canvas.height = Math.round(img.height * ratio);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(function(blob){
+              URL.revokeObjectURL(url);
+              pendingImgBlob = blob;
+              /* Mostrar preview */
+              var reader = new FileReader();
+              reader.onload = function(ev){
+                pendingImgUrl = ev.target.result;
+                var wrap = document.getElementById('posts-img-wrap-area');
+                if (wrap) wrap.innerHTML = '<div class="posts-img-wrap">'
+                  + '<img class="posts-img-preview" src="'+ev.target.result+'">'
+                  + '<button class="posts-img-remove" id="posts-img-remove">&#10005;</button>'
+                  + '</div>';
+                var rmBtn = document.getElementById('posts-img-remove');
+                if (rmBtn) rmBtn.addEventListener('click', function(){ clearPendingImg(); e.target.value=''; });
+              };
+              reader.readAsDataURL(blob);
+            }, 'image/webp', 0.82);
+          };
+          img.src = url;
+        });
+
         function openPostSheet(){ shOverlay.classList.add('open'); sheet.classList.add('open'); document.body.style.overflow='hidden'; var ta2=document.getElementById('posts-sheet-ta'); if(ta2) ta2.focus(); }
         function closePostSheet(){ shOverlay.classList.remove('open'); sheet.classList.remove('open'); document.body.style.overflow=''; }
         shOverlay.addEventListener('click', closePostSheet);
@@ -4693,14 +4757,29 @@ async function votePoll(postId, idx, poll, container) {
         document.getElementById('posts-sheet-send').addEventListener('click', async function(){
           var ta2=document.getElementById('posts-sheet-ta');
           var text=ta2?ta2.value.trim():'';
-          if(!text) return;
+          if(!text && !pendingImgBlob) return;
           var sendBtn2=document.getElementById('posts-sheet-send');
           sendBtn2.disabled=true;
+          sendBtn2.textContent='Posting...';
           try{
-            var r2=await fetch('/api/posts',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'post',body:text})});
+            var imageUrl = '';
+            /* 1. Subir imagen si hay */
+            if (pendingImgBlob) {
+              var upRes = await fetch('/api/upload', {
+                method:'PUT', credentials:'include',
+                headers:{'Content-Type':'image/webp'},
+                body: pendingImgBlob
+              });
+              var upData = await upRes.json();
+              if (upData.ok) imageUrl = upData.url;
+            }
+            /* 2. Guardar post en D1 */
+            var r2=await fetch('/api/posts',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({action:'post',body:text||' ',image_url:imageUrl})});
             var d2=await r2.json();
             if(d2.ok){
               if(ta2) ta2.value='';
+              clearPendingImg();
               closePostSheet();
               window.loadPostsFeed(container);
             } else {
@@ -4709,6 +4788,7 @@ async function votePoll(postId, idx, poll, container) {
             }
           }catch(e){}
           sendBtn2.disabled=false;
+          sendBtn2.textContent='Post';
         });
         window._openPostSheet = openPostSheet;
       }
