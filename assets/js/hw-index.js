@@ -3904,7 +3904,7 @@ async function votePoll(postId, idx, poll, container) {
     '.bat-fighter-name{font-family:var(--font-d);font-size:0.78rem;letter-spacing:0.07em;color:#fff;text-align:center;display:block;text-shadow:0 1px 4px rgba(0,0,0,0.9);}',
     /* Winner/loser overlays */
     '.bat-fighter.winner{animation:bat-winner-pulse 1.8s ease-in-out infinite;}',
-    '.bat-fighter.winner::after{content:\"\\1F451\";position:absolute;top:0.4rem;left:50%;transform:translateX(-50%);font-size:1.1rem;filter:drop-shadow(0 0 6px gold);}',
+    '.bat-fighter.winner::after{content:\"WIN\";position:absolute;top:0.5rem;left:50%;transform:translateX(-50%);font-family:var(--font-d);font-size:0.62rem;letter-spacing:0.15em;color:#fff;background:linear-gradient(90deg,var(--fire-deep),var(--fire-orange));padding:0.15rem 0.5rem;border-radius:20px;box-shadow:0 0 10px #FF450088;}',
     '.bat-fighter.loser .bat-fighter-img,.bat-fighter.loser video{filter:grayscale(0.75) brightness(0.6);}',
     '.bat-fighter.winner-1{border:2px solid var(--fire-orange);}',
     '.bat-fighter.winner-2{border:2px solid #6c8fff;}',
@@ -4215,6 +4215,7 @@ async function votePoll(postId, idx, poll, container) {
 
 })();
 })();
+
 
 
 
