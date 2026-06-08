@@ -85,6 +85,11 @@ function apiJson(data, status, headers) {
   });
 }
 
+
+function containsLink(text) {
+  return /https?:\/\/|www\.|\.(com|net|org|io|co|xyz|tv|me|gg|ly|link|app|site|web|info|biz|us|uk|ru|de|br|mx)(\/|\s|$)/i.test(text);
+}
+
 async function handleComments(request, env, corsH) {
   const url = new URL(request.url);
   const post_id = url.searchParams.get('post_id');
@@ -103,6 +108,7 @@ async function handleComments(request, env, corsH) {
     const { body } = await request.json();
     if (!body || body.trim().length === 0) return apiJson({ error: 'Empty comment' }, 400, corsH);
     if (body.length > 500) return apiJson({ error: 'Too long' }, 400, corsH);
+    if (containsLink(body)) return apiJson({ error: 'Links are not allowed in comments.' }, 400, corsH);
     const result = await env.DB.prepare(
       'INSERT INTO comments (post_id, user_id, user_name, user_avatar, body) VALUES (?, ?, ?, ?, ?)'
     ).bind(post_id, session.id, session.name || session.email, session.picture || '', body.trim()).run();
@@ -910,6 +916,7 @@ async function handleConfessions(request, env, corsH) {
       const text = (body.body || '').trim();
       if (!text) return apiJson({ error: 'Empty' }, 400, corsH);
       if (text.length > 1000) return apiJson({ error: 'Too long' }, 400, corsH);
+      if (containsLink(text)) return apiJson({ error: 'Links are not allowed.' }, 400, corsH);
       const cat = ['confession','fantasy','experience','rumor'].includes(body.category)
         ? body.category : 'confession';
       const title = (body.title || '').trim().slice(0, 100);
@@ -1038,6 +1045,141 @@ async function handleBattles(request, env, corsH) {
   return apiJson({ error: 'Method not allowed' }, 405, corsH);
 }
 
+
+/* ── USER POSTS ── */
+async function handleUserPosts(request, env, corsH) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    user_name TEXT NOT NULL,
+    user_avatar TEXT DEFAULT '',
+    body TEXT NOT NULL,
+    report_count INTEGER DEFAULT 0,
+    hidden INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS post_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id INTEGER NOT NULL,
+    reporter_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(post_id, reporter_id)
+  )`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS banned_users (
+    user_id TEXT PRIMARY KEY,
+    reason TEXT DEFAULT '',
+    banned_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+
+  const session = getSession(request);
+  const url = new URL(request.url);
+  const isAdmin = (function(){
+    const m = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
+    if (!m) return false;
+    try { const s = JSON.parse(atob(m[1])); return s && s.login === 'Mikeljchm'; } catch(e){ return false; }
+  })();
+
+  if (request.method === 'GET') {
+    const action = url.searchParams.get('action');
+    const userId = url.searchParams.get('user_id');
+
+    /* Feed global — solo posts no ocultos */
+    if (!action && !userId) {
+      const { results } = await env.DB.prepare(
+        'SELECT id,user_id,user_name,user_avatar,body,report_count,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT 50'
+      ).all();
+      return apiJson({ posts: results }, 200, corsH);
+    }
+    /* Posts de un usuario específico */
+    if (userId) {
+      const { results } = await env.DB.prepare(
+        'SELECT id,user_id,user_name,user_avatar,body,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
+      ).bind(userId).all();
+      return apiJson({ posts: results }, 200, corsH);
+    }
+    /* Admin: posts reportados */
+    if (action === 'reported' && isAdmin) {
+      const { results } = await env.DB.prepare(
+        'SELECT id,user_id,user_name,body,report_count,created_at FROM user_posts WHERE report_count > 0 AND hidden=0 ORDER BY report_count DESC LIMIT 50'
+      ).all();
+      return apiJson({ posts: results }, 200, corsH);
+    }
+    return apiJson({ error: 'Invalid request' }, 400, corsH);
+  }
+
+  if (request.method === 'POST') {
+    const body = await request.json();
+    const action = body.action;
+
+    /* Publicar post */
+    if (action === 'post') {
+      if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+      /* Verificar ban */
+      const { results: banned } = await env.DB.prepare(
+        'SELECT user_id FROM banned_users WHERE user_id=?'
+      ).bind(session.id).all();
+      if (banned.length) return apiJson({ error: 'Your account has been suspended.' }, 403, corsH);
+
+      const text = (body.body||'').trim();
+      if (!text) return apiJson({ error: 'Empty post' }, 400, corsH);
+      if (text.length > 500) return apiJson({ error: 'Max 500 characters.' }, 400, corsH);
+      if (containsLink(text)) return apiJson({ error: 'Links are not allowed in posts.' }, 400, corsH);
+
+      const result = await env.DB.prepare(
+        'INSERT INTO user_posts (user_id,user_name,user_avatar,body) VALUES (?,?,?,?)'
+      ).bind(session.id, session.name||session.email, session.picture||'', text).run();
+      await addPoints(env, session.id, 1);
+      return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
+    }
+
+    /* Reportar post */
+    if (action === 'report') {
+      if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+      const postId = parseInt(body.post_id);
+      try {
+        await env.DB.prepare(
+          'INSERT INTO post_reports (post_id,reporter_id) VALUES (?,?)'
+        ).bind(postId, session.id).run();
+        /* Incrementar count */
+        await env.DB.prepare(
+          'UPDATE user_posts SET report_count=report_count+1 WHERE id=?'
+        ).bind(postId).run();
+        /* Auto-ocultar si >= 3 reportes */
+        await env.DB.prepare(
+          'UPDATE user_posts SET hidden=1 WHERE id=? AND report_count >= 3'
+        ).bind(postId).run();
+      } catch(e) { /* Ya reportó */ }
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    /* Admin: ocultar/restaurar post */
+    if (action === 'hide' && isAdmin) {
+      await env.DB.prepare('UPDATE user_posts SET hidden=1 WHERE id=?').bind(parseInt(body.post_id)).run();
+      return apiJson({ ok: true }, 200, corsH);
+    }
+    if (action === 'restore' && isAdmin) {
+      await env.DB.prepare('UPDATE user_posts SET hidden=0,report_count=0 WHERE id=?').bind(parseInt(body.post_id)).run();
+      return apiJson({ ok: true }, 200, corsH);
+    }
+    /* Admin: banear usuario */
+    if (action === 'ban' && isAdmin) {
+      await env.DB.prepare(
+        'INSERT OR REPLACE INTO banned_users (user_id,reason) VALUES (?,?)'
+      ).bind(body.user_id, body.reason||'').run();
+      return apiJson({ ok: true }, 200, corsH);
+    }
+    /* Admin: desbanear */
+    if (action === 'unban' && isAdmin) {
+      await env.DB.prepare('DELETE FROM banned_users WHERE user_id=?').bind(body.user_id).run();
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    return apiJson({ error: 'Unknown action' }, 400, corsH);
+  }
+
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -1075,6 +1217,7 @@ export default {
           dbTest
         }), { headers: { 'Content-Type': 'application/json', ...corsH } });
       }
+      if (path === '/api/posts') return handleUserPosts(request, env, corsH);
       if (path === '/api/battles') return handleBattles(request, env, corsH);
       if (path === '/api/comments') return handleComments(request, env, corsH);
       if (path === '/api/likes') return handleLikes(request, env, corsH);
@@ -1196,6 +1339,7 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
 
 
 
