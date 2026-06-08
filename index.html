@@ -314,55 +314,77 @@ layout: none
       <!-- MORE -->
       <div class="page" id="page-more">
 
-        <!-- ⋮ SETTINGS MENU -->
+        <!-- TOP BAR -->
         <div class="prof-topbar">
-          <div class="prof-topbar-title">Profile</div>
-          <button class="prof-menu-btn" id="prof-menu-btn" aria-label="Settings">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-          </button>
-        </div>
-        <div class="prof-dropdown" id="prof-dropdown">
-          <div class="prof-dd-item">
-            <span>Adult Content</span>
-            <label class="prof-toggle"><input type="checkbox" id="toggle-adult"><span class="prof-toggle-track"></span></label>
+          <div class="prof-topbar-title">PROFILE</div>
+          <div style="position:relative">
+            <button class="prof-menu-btn" id="prof-menu-btn" aria-label="Settings">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+            <div class="prof-dropdown" id="prof-dropdown">
+              <div class="prof-dd-item">
+                <span>Adult Content</span>
+                <label class="prof-toggle"><input type="checkbox" id="toggle-adult"><span class="prof-toggle-track"></span></label>
+              </div>
+              <div class="prof-dd-divider"></div>
+              <div class="prof-dd-item">
+                <span>Notifications</span>
+                <label class="prof-toggle"><input type="checkbox" id="toggle-notif"><span class="prof-toggle-track"></span></label>
+              </div>
+              <div class="prof-dd-divider"></div>
+              <a class="prof-dd-item" href="/terms.html">Terms of Service</a>
+              <div class="prof-dd-divider"></div>
+              <a class="prof-dd-item" href="/privacy.html">Privacy Policy</a>
+              <div class="prof-dd-divider"></div>
+              <a class="prof-dd-item" href="/dmca.html">DMCA Notice</a>
+              <div class="prof-dd-divider"></div>
+              <div class="prof-dd-item" style="gap:1rem;padding:0.65rem 1rem">
+                <a href="https://t.me/hottwrestling" target="_blank" rel="noopener" style="flex:1;color:var(--text);text-decoration:none;font-size:0.82rem">Telegram</a>
+                <a href="https://instagram.com/hott_wrestling" target="_blank" rel="noopener" style="flex:1;color:var(--text);text-decoration:none;font-size:0.82rem">Instagram</a>
+                <a href="https://youtube.com/@hott_wrestling" target="_blank" rel="noopener" style="flex:1;color:var(--text);text-decoration:none;font-size:0.82rem">YouTube</a>
+              </div>
+              <div class="prof-dd-divider"></div>
+              <button class="prof-dd-item prof-dd-signout" id="prof-dd-signout">Sign Out</button>
+              <div style="font-size:0.58rem;color:var(--text-muted);padding:0.4rem 1rem 0.65rem">hottwrestling.com &middot; 18+ only</div>
+            </div>
           </div>
-          <div class="prof-dd-divider"></div>
-          <div class="prof-dd-item">
-            <span>Notifications</span>
-            <label class="prof-toggle"><input type="checkbox" id="toggle-notif"><span class="prof-toggle-track"></span></label>
-          </div>
-          <div class="prof-dd-divider"></div>
-          <a class="prof-dd-item" href="/terms.html">Terms of Service</a>
-          <div class="prof-dd-divider"></div>
-          <a class="prof-dd-item" href="/privacy.html">Privacy Policy</a>
-          <div class="prof-dd-divider"></div>
-          <a class="prof-dd-item" href="/dmca.html">DMCA Notice</a>
-          <div class="prof-dd-divider"></div>
-          <button class="prof-dd-item prof-dd-signout" id="prof-dd-signout">Sign Out</button>
         </div>
 
-        <!-- PROFILE HEADER -->
-        <div class="prof-header" id="prof-header">
+        <!-- HERO COVER -->
+        <div class="prof-hero">
+          <div class="prof-hero-glow"></div>
+          <div class="prof-hero-pattern"></div>
+        </div>
+
+        <!-- AVATAR -->
+        <div class="prof-avatar-row">
           <div class="prof-avatar-wrap" id="user-avatar-wrap">
             <div class="user-avatar-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
           </div>
-          <div class="prof-info">
-            <div class="prof-fullname" id="user-display-name">Sign in to get started</div>
-            <div class="prof-username-wrap" id="prof-username-wrap" style="display:none">
-              <span class="prof-username" id="prof-username-display">@username</span>
-              <button class="prof-username-edit-btn" id="prof-username-edit-btn" aria-label="Edit username">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              </button>
-            </div>
-            <div class="prof-username-input-wrap" id="prof-username-input-wrap" style="display:none">
-              <input class="prof-username-input" id="prof-username-input" type="text" maxlength="30" placeholder="Choose username">
-              <button class="prof-username-save" id="prof-username-save">Save</button>
-            </div>
-            <div class="prof-badge" id="prof-badge" style="display:none"></div>
+        </div>
+
+        <!-- INFO -->
+        <div class="prof-info">
+          <div class="prof-fullname" id="user-display-name">Sign in to get started</div>
+          <div class="prof-username-wrap" id="prof-username-wrap" style="display:none">
+            <span class="prof-username" id="prof-username-display">@username</span>
+            <button class="prof-username-edit-btn" id="prof-username-edit-btn" aria-label="Edit username">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+          <div class="prof-username-input-wrap" id="prof-username-input-wrap" style="display:none">
+            <input class="prof-username-input" id="prof-username-input" type="text" maxlength="30" placeholder="Choose username">
+            <button class="prof-username-save" id="prof-username-save">Save</button>
+          </div>
+          <div class="prof-badge" id="prof-badge" style="display:none"></div>
+          <!-- BIO -->
+          <div class="prof-bio-area" id="prof-bio-area" style="display:none">
+            <div class="prof-bio-text" id="prof-bio-text"></div>
+            <button class="prof-bio-edit-btn" id="prof-bio-edit-btn">+ Add bio</button>
           </div>
         </div>
 
-        <!-- STATS (solo logueado) -->
+        <!-- STATS -->
         <div class="prof-stats" id="prof-stats" style="display:none">
           <div class="prof-stat"><span class="prof-stat-n" id="stat-saved">0</span><span class="prof-stat-l">Saved</span></div>
           <div class="prof-stat-div"></div>
@@ -371,82 +393,49 @@ layout: none
           <div class="prof-stat"><span class="prof-stat-n" id="stat-likes">0</span><span class="prof-stat-l">Liked</span></div>
         </div>
 
-        <!-- SIGN IN CARD (solo no logueado) -->
+        <!-- SIGN IN CARD -->
         <div class="prof-signin-card" id="prof-signin-card">
-          <div class="prof-signin-icon"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--fire-orange)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-          <div class="prof-signin-title">Join HOTT WRESTLING</div>
+          <div class="prof-signin-icon"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--fire-orange)" stroke-width="1.2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div class="prof-signin-title">JOIN HOTT WRESTLING</div>
           <div class="prof-signin-sub">Save posts, create collections &amp; unlock adult content</div>
           <button class="prof-signin-btn" onclick="openAuthModal()">Sign in with Google</button>
         </div>
 
-        <!-- MY STUFF (solo logueado) -->
-        <div class="prof-section" id="prof-my-stuff" style="display:none">
-          <div class="prof-section-title">My Stuff</div>
-          <button class="prof-row" id="prof-row-collections">
-            <div class="prof-row-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>
-            <div class="prof-row-text">My Collections</div>
-            <svg class="prof-row-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-          <div id="my-collections-container" style="padding:0 0 0.5rem;"></div>
-          <div class="prof-row-divider"></div>
-          <button class="prof-row" id="prof-row-liked">
-            <div class="prof-row-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-            <div class="prof-row-text">My Activity</div>
-            <svg class="prof-row-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
+        <!-- TABS: Posts | Collections | Activity -->
+        <div class="prof-tabs" id="prof-tabs" style="display:none">
+          <button class="prof-tab active" data-ptab="posts">Posts</button>
+          <button class="prof-tab" data-ptab="collections">Collections</button>
+          <button class="prof-tab" data-ptab="activity">Activity</button>
         </div>
 
-        <!-- COMMUNITY POSTS -->
-        <div class="prof-section">
-          <div class="prof-section-title">Community Feed</div>
-          <div id="posts-feed-container" style="padding:0 0 0.5rem;"></div>
+        <!-- TAB: Posts -->
+        <div class="prof-tab-pane active" id="ptab-posts" style="display:block">
+          <div id="posts-feed-container" style="padding:0.75rem 0.85rem 0.5rem;"></div>
         </div>
 
-        <!-- DISCOVER (todos) -->
-        <div class="prof-section">
-          <div class="prof-section-title">Discover</div>
-          <button class="prof-row" onclick="document.querySelector('.nav-item[data-page=home]').click()">
-            <div class="prof-row-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="var(--fire-orange)" stroke="none"><path d="M12 2s-5 5.5-5 10a5 5 0 0010 0c0-4.5-5-10-5-10zm0 14a3 3 0 01-3-3c0-2 1.5-4.5 3-7 1.5 2.5 3 5 3 7a3 3 0 01-3 3z"/></svg></div>
-            <div class="prof-row-text">Trending Today</div>
-            <svg class="prof-row-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-          <div class="prof-row-divider"></div>
-          <button class="prof-row" onclick="document.querySelector('.nav-item[data-page=home]').click()">
-            <div class="prof-row-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--fire-yellow)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-            <div class="prof-row-text">Most Saved</div>
-            <svg class="prof-row-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-          <div class="prof-row-divider"></div>
-          <button class="prof-row" onclick="document.querySelector('.nav-item[data-page=home]').click()">
-            <div class="prof-row-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#6c8fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-            <div class="prof-row-text">New This Week</div>
-            <svg class="prof-row-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
+        <!-- TAB: Collections -->
+        <div class="prof-tab-pane" id="ptab-collections" style="display:none">
+          <div id="my-collections-container" style="padding:0.75rem 0.85rem 0.5rem;"></div>
         </div>
 
-        <!-- FOLLOW US (todos) -->
-        <div class="prof-section">
-          <div class="prof-section-title">Follow Us</div>
-          <a class="prof-row" href="https://t.me/hottwrestling" target="_blank" rel="noopener">
-            <div class="prof-row-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5L2 12.5l7 1M21 5l-2.5 15L9 13.5M21 5L9 13.5m0 0v5l3.5-3"/></svg></div>
-            <div class="prof-row-text">Telegram</div>
-            <svg class="prof-row-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </a>
-          <div class="prof-row-divider"></div>
-          <a class="prof-row" href="https://instagram.com/hott_wrestling" target="_blank" rel="noopener">
-            <div class="prof-row-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></div>
-            <div class="prof-row-text">Instagram</div>
-            <svg class="prof-row-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </a>
-          <div class="prof-row-divider"></div>
-          <a class="prof-row" href="https://youtube.com/@hott_wrestling" target="_blank" rel="noopener">
-            <div class="prof-row-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg></div>
-            <div class="prof-row-text">YouTube</div>
-            <svg class="prof-row-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </a>
+        <!-- TAB: Activity -->
+        <div class="prof-tab-pane" id="ptab-activity" style="display:none">
+          <div style="padding:0.75rem 0.85rem">
+            <button class="prof-act-row" id="prof-row-liked">
+              <div class="prof-act-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+              <div class="prof-act-text"><div class="prof-act-label">Liked Posts</div><div class="prof-act-sub" id="act-liked-count"></div></div>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <div class="prof-act-divider"></div>
+            <button class="prof-act-row" id="prof-row-comments">
+              <div class="prof-act-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+              <div class="prof-act-text"><div class="prof-act-label">My Comments</div><div class="prof-act-sub">View comment history</div></div>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
         </div>
 
-        <div style="padding:1.5rem 1rem 3rem;text-align:center;color:var(--text-muted);font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;">
+        <div style="padding:1.5rem 1rem 3rem;text-align:center;color:var(--text-muted);font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;">
           &copy; 2025 HOTT WRESTLING &middot; 18+ ONLY
         </div>
 
@@ -670,6 +659,7 @@ layout: none
 
 </body>
 </html>
+
 
 
 
