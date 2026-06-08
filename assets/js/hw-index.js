@@ -3858,39 +3858,53 @@ async function votePoll(postId, idx, poll, container) {
 (function(){
   'use strict';
 
+  var BATTLE_SVG = '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\" width=\"36\" height=\"36\" fill=\"currentColor\" class=\"bat-vs-svg\"><path d=\"M156.29,453.129l-55.063-82.172c2.25-5.984,2.031-12.875-1.234-18.953c-5.984-11.188-19.906-15.375-31.078-9.375c-11.188,5.984-15.375,19.891-9.391,31.078c4.031,7.5,11.641,11.844,19.578,12.078l55.078,82.188c-2.266,5.984-2.031,12.875,1.234,18.953c5.984,11.172,19.906,15.375,31.078,9.375c11.172-5.984,15.375-19.906,9.375-31.078C171.852,457.707,164.243,453.363,156.29,453.129z\"/><path d=\"M6.852,447.066c-7.359,5.281-9.063,15.531-3.781,22.906l21.594,30.141c5.281,7.375,15.531,9.078,22.906,3.797l58.469-38.641l-37.594-57.438L6.852,447.066z\"/><path d=\"M470.336,172.582C529.07,80.957,463.43,5.02,463.43,5.02s-1.703,5.891-6.281,19.047c-40.172,94.484-118.672,178.797-189.078,240.719c20.328,17.328,39.672,32.625,56.828,45.563C384.383,265.27,443.664,214.191,470.336,172.582z\"/><path d=\"M126.774,371.582l35.844,50.328c0,0,33.813-20.875,79.531-52.141c-17.516-12.219-36.188-25.625-55.063-39.734C151.118,356.613,126.774,371.582,126.774,371.582z\"/><path d=\"M432.898,385.785c7.938-0.234,15.547-4.578,19.578-12.078c5.984-11.188,1.781-25.094-9.391-31.078c-11.172-6-25.094-1.813-31.078,9.375c-3.266,6.078-3.484,12.969-1.234,18.953l-55.078,82.172c-7.938,0.234-15.547,4.578-19.578,12.094c-5.984,11.172-1.781,25.094,9.391,31.078c11.172,6,25.094,1.797,31.078-9.375c3.266-6.078,3.484-12.969,1.234-18.953L432.898,385.785z\"/><path d=\"M505.133,447.066l-61.594-39.234l-37.578,57.438l58.469,38.641c7.375,5.281,17.625,3.578,22.906-3.797l21.594-30.141C514.211,462.598,512.508,452.348,505.133,447.066z\"/><path d=\"M349.383,421.91l14.156-19.875C202.165,292.91,128.024,227.738,91.961,184.082c-12.297-14.906-20.156-27.344-25.438-38.125c-7.047-14.375-9.438-25.828-11.75-35.5c-0.719-2.938,1.094-5.906,4.047-6.609c2.938-0.703,5.906,1.109,6.609,4.063c2.375,9.906,4.484,20,10.953,33.219c6.453,13.219,17.359,29.609,37.469,51.25c39.172,42.219,113.234,104.172,256.046,200.719l15.313-21.516c0,0-247.218-152.016-330.359-347.516C50.258,10.91,48.555,5.02,48.555,5.02s-65.625,75.938-6.891,167.563C104.618,270.801,349.383,421.91,349.383,421.910z\"/></svg>';
+
   /* CSS */
   var bs = document.createElement('style');
   bs.textContent = [
-    /* Tabs */
     '.wrest-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:0;flex-shrink:0;}',
     '.wrest-tab{flex:1;padding:0.65rem;background:none;border:none;color:var(--text-dim);font-family:var(--font-d);font-size:0.8rem;letter-spacing:0.1em;cursor:pointer;border-bottom:2px solid transparent;transition:color 0.2s,border-color 0.2s;}',
     '.wrest-tab.active{color:var(--fire-orange);border-bottom-color:var(--fire-orange);}',
     '.bat-loading{padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;}',
     '.bat-empty{padding:3rem 1rem;text-align:center;color:var(--text-dim);font-size:0.85rem;line-height:1.5;}',
-    /* Battle card */
-    '.bat-card{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1rem;}',
-    '.bat-title{font-family:var(--font-d);font-size:0.8rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);padding:0.6rem 1rem 0;text-align:center;}',
-    '.bat-fighters{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.5rem;padding:0.75rem 0.75rem 0.5rem;}',
-    '.bat-fighter{display:flex;flex-direction:column;align-items:center;gap:0.4rem;}',
-    '.bat-fighter-img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;background:var(--surface-3);}',
-    '.bat-fighter-name{font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.07em;text-align:center;line-height:1.2;}',
-    '.bat-vs{font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.1em;color:var(--fire-orange);text-align:center;}',
-    /* Bars */
-    '.bat-bars{padding:0 0.75rem 0.25rem;}',
-    '.bat-bar-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.5rem;margin-bottom:0.35rem;}',
-    '.bat-bar-wrap{height:8px;border-radius:4px;background:var(--surface-3);overflow:hidden;}',
-    '.bat-bar-fill{height:100%;border-radius:4px;transition:width 0.8s cubic-bezier(0.16,1,0.3,1);}',
-    '.bat-bar-fill-1{background:linear-gradient(90deg,var(--fire-orange),var(--fire-yellow));}',
-    '.bat-bar-fill-2{background:linear-gradient(90deg,#6c8fff,#a78bfa);}',
-    '.bat-bar-pct{font-family:var(--font-d);font-size:0.7rem;color:var(--text-dim);min-width:2.5ch;text-align:center;}',
-    '.bat-total{text-align:center;font-size:0.65rem;color:var(--text-muted);padding-bottom:0.5rem;letter-spacing:0.06em;}',
-    /* Vote buttons */
-    '.bat-btns{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;padding:0.5rem 0.75rem 0.85rem;}',
-    '.bat-vote-btn{background:var(--surface-3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.55rem;font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.06em;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
-    '.bat-vote-btn:active{transform:scale(0.96);}',
-    '.bat-vote-btn.voted{border-color:var(--fire-orange);color:var(--fire-orange);}',
-    '.bat-signin{text-align:center;font-size:0.75rem;color:var(--text-dim);padding:0.5rem 0.75rem 0.85rem;}',
-    /* Admin form */
+    '@keyframes bat-enter{from{opacity:0;transform:translateY(28px) scale(0.97);}to{opacity:1;transform:none;}}',
+    '@keyframes bat-clash{0%,100%{transform:scale(1) rotate(0deg);}30%{transform:scale(1.22) rotate(-10deg);}60%{transform:scale(1.12) rotate(8deg);}}',
+    '@keyframes bat-glow{0%,100%{filter:drop-shadow(0 0 4px var(--fire-orange)) drop-shadow(0 0 12px #ff450055);}50%{filter:drop-shadow(0 0 12px var(--fire-orange)) drop-shadow(0 0 32px #ff4500bb);}}',
+    '@keyframes bat-shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-4px);}40%{transform:translateX(4px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}',
+    '.bat-card{background:var(--surface-2);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:1.25rem;opacity:0;animation:bat-enter 0.55s cubic-bezier(0.16,1,0.3,1) forwards;}',
+    '.bat-title{font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);padding:0.85rem 1rem 0;text-align:center;}',
+    '.bat-fighters{display:grid;grid-template-columns:1fr 52px 1fr;align-items:stretch;gap:0;padding:0.75rem 0.75rem 0.5rem;}',
+    '.bat-fighter{display:flex;flex-direction:column;align-items:center;cursor:pointer;}',
+    '.bat-fighter-img-wrap{width:100%;position:relative;border-radius:14px;overflow:hidden;aspect-ratio:3/4;background:var(--surface-3);}',
+    '.bat-fighter-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);}',
+    '.bat-fighter:active .bat-fighter-img{transform:scale(1.04);}',
+    '.bat-fighter-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.75) 0%,transparent 55%);pointer-events:none;}',
+    '.bat-fighter-name{position:absolute;bottom:0.5rem;left:0;right:0;text-align:center;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.06em;color:#fff;padding:0 0.3rem;line-height:1.2;text-shadow:0 1px 4px rgba(0,0,0,0.8);}',
+    '.bat-vs-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.2rem;padding:0 0.2rem;}',
+    '.bat-vs-svg{color:var(--fire-orange);animation:bat-glow 2.2s ease-in-out infinite,bat-clash 3.8s ease-in-out infinite;}',
+    '.bat-vs-label{font-family:var(--font-d);font-size:0.55rem;letter-spacing:0.18em;color:var(--fire-orange);text-transform:uppercase;}',
+    '.bat-bars{padding:0.5rem 0.85rem 0.25rem;}',
+    '.bat-bar-row{display:grid;grid-template-columns:1fr 3rem 1fr;align-items:center;gap:0.4rem;margin-bottom:0.4rem;}',
+    '.bat-bar-wrap{height:10px;border-radius:5px;background:var(--surface-3);overflow:hidden;}',
+    '.bat-bar-fill{height:100%;border-radius:5px;width:0%;transition:width 1s cubic-bezier(0.16,1,0.3,1);}',
+    '.bat-bar-fill-1{background:linear-gradient(90deg,var(--fire-deep),var(--fire-orange),var(--fire-yellow));}',
+    '.bat-bar-fill-2{background:linear-gradient(90deg,#a78bfa,#6c8fff);}',
+    '.bat-bar-pct{font-family:var(--font-d);font-size:0.72rem;color:var(--text-dim);text-align:center;}',
+    '.bat-total{text-align:center;font-size:0.63rem;color:var(--text-muted);padding-bottom:0.4rem;letter-spacing:0.08em;}',
+    '.bat-btns{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;padding:0.5rem 0.85rem 1rem;}',
+    '.bat-vote-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:12px;padding:0.6rem 0.25rem;font-family:var(--font-d);font-size:0.7rem;letter-spacing:0.07em;cursor:pointer;transition:all 0.25s cubic-bezier(0.16,1,0.3,1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+    '.bat-vote-btn:nth-child(1):not([disabled]):active{background:rgba(255,69,0,0.15);border-color:var(--fire-orange);color:var(--fire-orange);}',
+    '.bat-vote-btn:nth-child(2):not([disabled]):active{background:rgba(108,143,255,0.15);border-color:#6c8fff;color:#6c8fff;}',
+    '.bat-vote-btn.voted-1{border-color:var(--fire-orange);color:var(--fire-orange);background:rgba(255,69,0,0.1);}',
+    '.bat-vote-btn.voted-2{border-color:#6c8fff;color:#6c8fff;background:rgba(108,143,255,0.1);}',
+    '.bat-vote-btn[disabled]:not(.voted-1):not(.voted-2){opacity:0.3;}',
+    '.bat-vote-shake{animation:bat-shake 0.4s ease;}',
+    '.bat-signin{text-align:center;font-size:0.75rem;color:var(--text-dim);padding:0.5rem 0.85rem 1rem;}',
+    '.bat-img-viewer{position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.22s;}',
+    '.bat-img-viewer.open{opacity:1;pointer-events:all;}',
+    '.bat-img-viewer img{max-width:92vw;max-height:85vh;object-fit:contain;border-radius:10px;}',
+    '.bat-img-viewer-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.1);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}',
     '.bat-admin-form{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:1rem;}',
     '.bat-admin-form input{width:100%;background:var(--surface-3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:0.55rem 0.75rem;font-size:0.82rem;font-family:var(--font-b);margin-bottom:0.5rem;box-sizing:border-box;}',
     '.bat-admin-form input:focus{outline:none;border-color:var(--fire-orange);}',
@@ -3920,49 +3934,54 @@ async function votePoll(postId, idx, poll, container) {
           if (gridWrap)    gridWrap.style.display = 'none';
           if (battlesWrap) battlesWrap.style.display = '';
           if (newBtn)      newBtn.style.display = 'none';
-          if (!battlesLoaded) { battlesLoaded = true; loadBattles(); }
-          else loadBattles(); /* refresh on each visit */
+          battlesLoaded = true;
+          loadBattles();
         }
       });
     });
   });
 
-  /* ── Render helpers ── */
-  function pct(v, total) {
-    if (!total) return 0;
-    return Math.round(v / total * 100);
-  }
-  function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
+  /* ── Helpers ── */
+  function pct(v, total) { return total ? Math.round(v/total*100) : 0; }
+  function fmt(n) { return n>=1000?(n/1000).toFixed(1)+'k':String(n); }
+  function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function renderBattleCard(b) {
+  /* ── Render card ── */
+  function renderBattleCard(b, idx) {
     var voted    = b.userVote !== null && b.userVote !== undefined;
     var p1       = pct(b.v1, b.total);
     var p2       = pct(b.v2, b.total);
     var isUser1  = b.userVote === 0;
     var isUser2  = b.userVote === 1;
-    var totalStr = b.total ? fmt(b.total) + ' vote' + (b.total !== 1 ? 's' : '') : 'No votes yet';
+    var totalStr = b.total ? fmt(b.total)+' vote'+(b.total!==1?'s':'') : 'No votes yet';
+    var delay    = (idx||0)*130;
 
-    var html = '<div class="bat-card" data-bat-id="'+b.id+'">'
+    var html = '<div class="bat-card" data-bat-id="'+b.id+'" style="animation-delay:'+delay+'ms">'
       + '<div class="bat-title">'+escH(b.title)+'</div>'
       + '<div class="bat-fighters">'
-        + '<div class="bat-fighter">'
-          + '<img class="bat-fighter-img" src="'+b.wrestler1_image+'" loading="lazy" alt="'+escH(b.wrestler1_name)+'">'
-          + '<div class="bat-fighter-name">'+escH(b.wrestler1_name)+'</div>'
+        + '<div class="bat-fighter" data-bat-img="'+b.wrestler1_image+'">'
+          + '<div class="bat-fighter-img-wrap">'
+            + '<img class="bat-fighter-img" src="'+b.wrestler1_image+'" loading="lazy" alt="'+escH(b.wrestler1_name)+'">'
+            + '<div class="bat-fighter-overlay"></div>'
+            + '<div class="bat-fighter-name">'+escH(b.wrestler1_name)+'</div>'
+          + '</div>'
         + '</div>'
-        + '<div class="bat-vs">&#9876;</div>'
-        + '<div class="bat-fighter">'
-          + '<img class="bat-fighter-img" src="'+b.wrestler2_image+'" loading="lazy" alt="'+escH(b.wrestler2_name)+'">'
-          + '<div class="bat-fighter-name">'+escH(b.wrestler2_name)+'</div>'
+        + '<div class="bat-vs-col">'+BATTLE_SVG+'<span class="bat-vs-label">VS</span></div>'
+        + '<div class="bat-fighter" data-bat-img="'+b.wrestler2_image+'">'
+          + '<div class="bat-fighter-img-wrap">'
+            + '<img class="bat-fighter-img" src="'+b.wrestler2_image+'" loading="lazy" alt="'+escH(b.wrestler2_name)+'">'
+            + '<div class="bat-fighter-overlay"></div>'
+            + '<div class="bat-fighter-name">'+escH(b.wrestler2_name)+'</div>'
+          + '</div>'
         + '</div>'
       + '</div>';
 
-    /* Siempre mostrar barras si ya votó o si hay votos */
     if (voted || b.total > 0) {
       html += '<div class="bat-bars">'
         + '<div class="bat-bar-row">'
-          + '<div class="bat-bar-wrap" style="direction:rtl"><div class="bat-bar-fill bat-bar-fill-1" style="width:0%" data-target="'+p1+'%"></div></div>'
-          + '<div class="bat-bar-pct" id="bat-p1-'+b.id+'">'+p1+'%</div>'
-          + '<div class="bat-bar-wrap"><div class="bat-bar-fill bat-bar-fill-2" style="width:0%" data-target="'+p2+'%"></div></div>'
+          + '<div class="bat-bar-wrap" style="direction:rtl"><div class="bat-bar-fill bat-bar-fill-1" data-target="'+p1+'%"></div></div>'
+          + '<div class="bat-bar-pct">'+p1+'%</div>'
+          + '<div class="bat-bar-wrap"><div class="bat-bar-fill bat-bar-fill-2" data-target="'+p2+'%"></div></div>'
         + '</div>'
         + '<div class="bat-total">'+totalStr+'</div>'
       + '</div>';
@@ -3971,16 +3990,16 @@ async function votePoll(postId, idx, poll, container) {
     if (!voted) {
       if (window.currentUser) {
         html += '<div class="bat-btns">'
-          + '<button class="bat-vote-btn" data-bat-id="'+b.id+'" data-wrestler="1">&#9733; '+escH(b.wrestler1_name)+'</button>'
-          + '<button class="bat-vote-btn" data-bat-id="'+b.id+'" data-wrestler="2">&#9733; '+escH(b.wrestler2_name)+'</button>'
+          + '<button class="bat-vote-btn" data-bat-id="'+b.id+'" data-wrestler="1">Vote '+escH(b.wrestler1_name)+'</button>'
+          + '<button class="bat-vote-btn" data-bat-id="'+b.id+'" data-wrestler="2">Vote '+escH(b.wrestler2_name)+'</button>'
         + '</div>';
       } else {
         html += '<div class="bat-signin">Sign in to vote</div>';
       }
     } else {
       html += '<div class="bat-btns">'
-        + '<button class="bat-vote-btn'+(isUser1?' voted':'')+'" disabled>'+escH(b.wrestler1_name)+(isUser1?' &#10003;':'')+'</button>'
-        + '<button class="bat-vote-btn'+(isUser2?' voted':'')+'" disabled>'+escH(b.wrestler2_name)+(isUser2?' &#10003;':'')+'</button>'
+        + '<button class="bat-vote-btn'+(isUser1?' voted-1':'')+'" disabled>'+escH(b.wrestler1_name)+(isUser1?' &#10003;':'')+'</button>'
+        + '<button class="bat-vote-btn'+(isUser2?' voted-2':'')+'" disabled>'+escH(b.wrestler2_name)+(isUser2?' &#10003;':'')+'</button>'
       + '</div>';
     }
 
@@ -3990,18 +4009,33 @@ async function votePoll(postId, idx, poll, container) {
 
   function animateBars(container) {
     container.querySelectorAll('.bat-bar-fill[data-target]').forEach(function(bar) {
-      var target = bar.getAttribute('data-target');
-      requestAnimationFrame(function(){
-        requestAnimationFrame(function(){ bar.style.width = target; });
-      });
+      var t = bar.getAttribute('data-target');
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ bar.style.width = t; }); });
     });
   }
 
-  function escH(s) {
-    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
+  /* ── Image viewer ── */
+  var imgViewer = document.createElement('div');
+  imgViewer.className = 'bat-img-viewer';
+  imgViewer.innerHTML = '<img id="bat-viewer-img" src="" alt=""><button class="bat-img-viewer-close" id="bat-viewer-close">&#10005;</button>';
+  document.body.appendChild(imgViewer);
 
-  /* ── Load & render battles ── */
+  function closeViewer() { imgViewer.classList.remove('open'); document.body.style.overflow=''; }
+  document.getElementById('bat-viewer-close').addEventListener('click', closeViewer);
+  imgViewer.addEventListener('click', function(e){ if(e.target===imgViewer) closeViewer(); });
+
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.bat-vote-btn')) return;
+    var fighter = e.target.closest('.bat-fighter[data-bat-img]');
+    if (!fighter) return;
+    var src = fighter.getAttribute('data-bat-img');
+    if (!src) return;
+    document.getElementById('bat-viewer-img').src = src;
+    imgViewer.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+
+  /* ── Load battles ── */
   window.loadBattles = async function() {
     var feed = document.getElementById('battles-feed');
     if (!feed) return;
@@ -4011,43 +4045,41 @@ async function votePoll(postId, idx, poll, container) {
       var d = await r.json();
       var battles = d.battles || [];
 
-      /* Admin: mostrar formulario New Battle arriba */
       var adminForm = '';
       if (document.body.classList.contains('is-admin')) {
         adminForm = '<div class="bat-admin-form">'
-          + '<div style="font-family:var(--font-d);font-size:0.8rem;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:0.6rem;">NEW BATTLE</div>'
-          + '<input id="bat-f-title"       placeholder="Battle title (e.g. Championship Match)">'
-          + '<input id="bat-f-w1name"      placeholder="Wrestler 1 name">'
-          + '<input id="bat-f-w1img"       placeholder="Wrestler 1 image URL">'
-          + '<input id="bat-f-w2name"      placeholder="Wrestler 2 name">'
-          + '<input id="bat-f-w2img"       placeholder="Wrestler 2 image URL">'
-          + '<button class="bat-create-btn" id="bat-create-btn">&#9876; Create Battle</button>'
+          + '<div style="font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.15em;color:var(--text-dim);margin-bottom:0.6rem;">NEW BATTLE</div>'
+          + '<input id="bat-f-title"  placeholder="Battle title">'
+          + '<input id="bat-f-w1name" placeholder="Wrestler 1 name">'
+          + '<input id="bat-f-w1img"  placeholder="Wrestler 1 image URL">'
+          + '<input id="bat-f-w2name" placeholder="Wrestler 2 name">'
+          + '<input id="bat-f-w2img"  placeholder="Wrestler 2 image URL">'
+          + '<button class="bat-create-btn" id="bat-create-btn">Create Battle</button>'
           + '</div>';
       }
 
       if (!battles.length) {
         feed.innerHTML = adminForm + '<div class="bat-empty">No battles yet.<br>Check back soon!</div>';
       } else {
-        feed.innerHTML = adminForm + battles.map(renderBattleCard).join('');
+        feed.innerHTML = adminForm + battles.map(function(b,i){ return renderBattleCard(b,i); }).join('');
         animateBars(feed);
       }
 
-      /* Bind create btn */
       var createBtn = document.getElementById('bat-create-btn');
       if (createBtn) {
         createBtn.addEventListener('click', async function() {
-          var title  = (document.getElementById('bat-f-title')  ||{}).value||'';
-          var w1name = (document.getElementById('bat-f-w1name') ||{}).value||'';
-          var w1img  = (document.getElementById('bat-f-w1img')  ||{}).value||'';
-          var w2name = (document.getElementById('bat-f-w2name') ||{}).value||'';
-          var w2img  = (document.getElementById('bat-f-w2img')  ||{}).value||'';
+          var title  = (document.getElementById('bat-f-title') ||{}).value||'';
+          var w1name = (document.getElementById('bat-f-w1name')||{}).value||'';
+          var w1img  = (document.getElementById('bat-f-w1img') ||{}).value||'';
+          var w2name = (document.getElementById('bat-f-w2name')||{}).value||'';
+          var w2img  = (document.getElementById('bat-f-w2img') ||{}).value||'';
           if (!title||!w1name||!w1img||!w2name||!w2img) return;
           createBtn.disabled = true;
           try {
-            var r2 = await fetch('/api/battles', {
-              method:'POST', credentials:'include',
+            var r2 = await fetch('/api/battles',{
+              method:'POST',credentials:'include',
               headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({action:'create',title,wrestler1_name:w1name,wrestler1_image:w1img,wrestler2_name:w2name,wrestler2_image:w2img})
+              body:JSON.stringify({action:'create',title,wrestler1_name:w1name,wrestler1_image:w1img,wrestler2_name:w2name,wrestler2_image:w2img})
             });
             var d2 = await r2.json();
             if (d2.ok) window.loadBattles();
@@ -4055,7 +4087,6 @@ async function votePoll(postId, idx, poll, container) {
           createBtn.disabled = false;
         });
       }
-
     } catch(e) {
       if (feed) feed.innerHTML = '<div class="bat-empty">Could not load battles.</div>';
     }
@@ -4065,36 +4096,38 @@ async function votePoll(postId, idx, poll, container) {
   document.addEventListener('click', async function(e) {
     var btn = e.target.closest('.bat-vote-btn[data-bat-id][data-wrestler]');
     if (!btn || btn.disabled) return;
-    if (!window.currentUser) { if (typeof openAuthModal==='function') openAuthModal(); return; }
+    if (!window.currentUser) { if(typeof openAuthModal==='function') openAuthModal(); return; }
     btn.disabled = true;
     var batId    = btn.getAttribute('data-bat-id');
     var wrestler = btn.getAttribute('data-wrestler');
     try {
-      var r = await fetch('/api/battles', {
-        method:'POST', credentials:'include',
+      var r = await fetch('/api/battles',{
+        method:'POST',credentials:'include',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({action:'vote', id: parseInt(batId), wrestler: parseInt(wrestler)})
+        body:JSON.stringify({action:'vote',id:parseInt(batId),wrestler:parseInt(wrestler)})
       });
       var d = await r.json();
       if (d.ok) {
-        /* Actualizar card sin re-fetch */
         var card = document.querySelector('.bat-card[data-bat-id="'+batId+'"]');
         if (card) {
-          /* Re-renderizar solo esa card */
+          var imgs  = card.querySelectorAll('.bat-fighter-img');
+          var names = card.querySelectorAll('.bat-fighter-name');
           var fakeB = {
             id: batId,
-            title: card.querySelector('.bat-title') ? card.querySelector('.bat-title').textContent : '',
-            wrestler1_name: card.querySelectorAll('.bat-fighter-name')[0] ? card.querySelectorAll('.bat-fighter-name')[0].textContent : '',
-            wrestler1_image: card.querySelectorAll('.bat-fighter-img')[0] ? card.querySelectorAll('.bat-fighter-img')[0].src : '',
-            wrestler2_name: card.querySelectorAll('.bat-fighter-name')[1] ? card.querySelectorAll('.bat-fighter-name')[1].textContent : '',
-            wrestler2_image: card.querySelectorAll('.bat-fighter-img')[1] ? card.querySelectorAll('.bat-fighter-img')[1].src : '',
-            v1: d.v1, v2: d.v2, total: d.total, userVote: d.userVote
+            title: card.querySelector('.bat-title')?card.querySelector('.bat-title').textContent:'',
+            wrestler1_name:  names[0]?names[0].textContent:'',
+            wrestler1_image: imgs[0]?imgs[0].src:'',
+            wrestler2_name:  names[1]?names[1].textContent:'',
+            wrestler2_image: imgs[1]?imgs[1].src:'',
+            v1:d.v1, v2:d.v2, total:d.total, userVote:d.userVote
           };
           var tmp = document.createElement('div');
-          tmp.innerHTML = renderBattleCard(fakeB);
-          card.parentNode.replaceChild(tmp.firstChild, card);
-          var newCard = document.querySelector('.bat-card[data-bat-id="'+batId+'"]');
-          if (newCard) animateBars(newCard);
+          tmp.innerHTML = renderBattleCard(fakeB, 0);
+          var newCard = tmp.firstChild;
+          newCard.style.animation = 'none';
+          newCard.style.opacity   = '1';
+          card.parentNode.replaceChild(newCard, card);
+          animateBars(newCard);
         }
       }
     } catch(e){ btn.disabled = false; }
@@ -4102,6 +4135,7 @@ async function votePoll(postId, idx, poll, container) {
 
 })();
 })();
+
 
 
 
