@@ -3543,15 +3543,15 @@ async function votePoll(postId, idx, poll, container) {
     }
   }
 
-  window.openActivityPanel = function() {
-    currentTab = 'likes';
+  window.openActivityPanel = function(type) {
+    currentTab = type || 'likes';
     panel.querySelectorAll('.act-tab').forEach(function(t){
-      t.classList.toggle('active', t.getAttribute('data-tab') === 'likes');
+      t.classList.toggle('active', t.getAttribute('data-tab') === currentTab);
     });
     panel.classList.add('open');
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
-    loadTab('likes');
+    loadTab(currentTab);
   };
 
   /* Expose ALL_POSTS for cross-reference */
@@ -3624,6 +3624,13 @@ async function votePoll(postId, idx, poll, container) {
     }
 
     loading = false;
+    /* Si no hay resultados trending, mostrar todos los posts ordenados por fecha */
+    if (!TRENDING_IDS.length && window.ALL_POSTS && window.ALL_POSTS.length) {
+      if (typeof window._renderTrendingFeed === 'function') {
+        window._renderTrendingFeed(window.ALL_POSTS.slice());
+      }
+      return;
+    }
 
     /* Renderizar usando la misma maquinaria del feed */
     if (typeof window._renderTrendingFeed === 'function') {
