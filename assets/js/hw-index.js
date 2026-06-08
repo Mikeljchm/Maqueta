@@ -41,6 +41,7 @@
     '.cp-like-btn svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:fill 0.15s,stroke 0.15s;}',
     '.cp-like-btn.liked{color:#ff3b5c;}',
     '.cp-like-btn.liked svg{fill:#ff3b5c;stroke:#ff3b5c;}',
+    '.cp-like-count{font-size:0.68rem;line-height:1;}',
     /* Replies thread */
     '.cp-replies-wrap{margin-left:2.4rem;}',
     '.cp-view-replies-btn{background:none;border:none;color:var(--fire-orange);font-size:0.75rem;font-family:var(--font-b);cursor:pointer;padding:0.3rem 0;display:flex;align-items:center;gap:0.35rem;letter-spacing:0.03em;}',
@@ -232,8 +233,9 @@
           + '<span class="cp-time">' + timeAgo(row.created_at) + '</span>'
           + replyBtnHtml
           + (row.id ? '<button class="cp-like-btn'+(LIKED_COMMENTS.has(String(row.id))?' liked':'')
-            + '" data-comment-like="'+row.id+'">'  
+            + '" data-comment-like="'+row.id+'" data-like-count="'+(row.like_count||0)+'">'  
             + '<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+            + '<span class="cp-like-count">'+(row.like_count||'')+'</span>'
             + '</button>' : '')
         + '</div>'
       + '</div>';
@@ -309,13 +311,24 @@
     var btn = e.target.closest('.cp-like-btn[data-comment-like]');
     if (!btn) return;
     var id = String(btn.getAttribute('data-comment-like'));
-    if (LIKED_COMMENTS.has(id)) {
+    var isLiked = LIKED_COMMENTS.has(id);
+    if (isLiked) {
       LIKED_COMMENTS.delete(id); btn.classList.remove('liked');
     } else {
       LIKED_COMMENTS.add(id); btn.classList.add('liked');
       btn.style.transform='scale(1.4)'; setTimeout(function(){ btn.style.transform=''; },180);
     }
     saveLikedComments();
+    /* Actualizar contador via D1 */
+    if (!window.currentUser) return;
+    fetch('/api/comment-likes', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({comment_id: parseInt(id), action: isLiked ? 'unlike' : 'like'})
+    }).then(function(r){ return r.json(); }).then(function(d){
+      var countEl = btn.querySelector('.cp-like-count');
+      if (countEl) countEl.textContent = d.count > 0 ? d.count : '';
+    }).catch(function(){});
   });
 
   /* ── Delegation: Reply button ── */
