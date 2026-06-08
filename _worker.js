@@ -97,23 +97,51 @@ async function handleComments(request, env, corsH) {
   const post_id = url.searchParams.get('post_id');
   if (!post_id) return apiJson({ error: 'post_id required' }, 400, corsH);
 
+  /* Migración: agregar parent_id si no existe */
+  try { await env.DB.prepare('ALTER TABLE comments ADD COLUMN parent_id INTEGER DEFAULT NULL').run(); } catch(e){}
+
   if (request.method === 'GET') {
+    const parent_id = url.searchParams.get('parent_id');
+
+    if (parent_id) {
+      /* Replies de un comentario específico */
+      const { results } = await env.DB.prepare(
+        'SELECT id, user_name, user_avatar, body, created_at, parent_id FROM comments WHERE post_id=? AND parent_id=? ORDER BY created_at ASC LIMIT 50'
+      ).bind(post_id, parseInt(parent_id)).all();
+      return apiJson({ comments: results }, 200, corsH);
+    }
+
+    /* Top-level comments con reply_count */
     const { results } = await env.DB.prepare(
-      'SELECT id, user_name, user_avatar, body, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC LIMIT 50'
+      'SELECT id, user_name, user_avatar, body, created_at FROM comments WHERE post_id=? AND (parent_id IS NULL OR parent_id=0) ORDER BY created_at ASC LIMIT 50'
     ).bind(post_id).all();
+
+    /* Contar replies para cada top-level */
+    const ids = results.map(function(r){ return r.id; });
+    var replyCounts = {};
+    if (ids.length) {
+      const placeholders = ids.map(function(){ return '?'; }).join(',');
+      const { results: rc } = await env.DB.prepare(
+        'SELECT parent_id, COUNT(*) as cnt FROM comments WHERE parent_id IN ('+placeholders+') GROUP BY parent_id'
+      ).bind(...ids).all();
+      rc.forEach(function(r){ replyCounts[r.parent_id] = r.cnt; });
+    }
+    results.forEach(function(r){ r.reply_count = replyCounts[r.id] || 0; });
+
     return apiJson({ comments: results }, 200, corsH);
   }
 
   if (request.method === 'POST') {
     const session = getSession(request);
     if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
-    const { body } = await request.json();
+    const reqBody = await request.json();
+    const { body, parent_id } = reqBody;
     if (!body || body.trim().length === 0) return apiJson({ error: 'Empty comment' }, 400, corsH);
     if (body.length > 500) return apiJson({ error: 'Too long' }, 400, corsH);
     if (containsLink(body)) return apiJson({ error: 'Links are not allowed in comments.' }, 400, corsH);
     const result = await env.DB.prepare(
-      'INSERT INTO comments (post_id, user_id, user_name, user_avatar, body) VALUES (?, ?, ?, ?, ?)'
-    ).bind(post_id, session.id, session.name || session.email, session.picture || '', body.trim()).run();
+      'INSERT INTO comments (post_id, user_id, user_name, user_avatar, body, parent_id) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(post_id, session.id, session.name || session.email, session.picture || '', body.trim(), parent_id || null).run();
     await addPoints(env, session.id, 2);
     return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
   }
@@ -123,7 +151,7 @@ async function handleComments(request, env, corsH) {
     if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
     const comment_id = url.searchParams.get('id');
     if (!comment_id) return apiJson({ error: 'id required' }, 400, corsH);
-    await env.DB.prepare('DELETE FROM comments WHERE id = ? AND user_id = ?').bind(comment_id, session.id).run();
+    await env.DB.prepare('DELETE FROM comments WHERE id=? AND user_id=?').bind(comment_id, session.id).run();
     return apiJson({ ok: true }, 200, corsH);
   }
 
@@ -1341,6 +1369,7 @@ export default {
     return new Response('Not found', { status: 404 });
   }
 };
+
 
 
 
