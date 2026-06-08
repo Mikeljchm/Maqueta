@@ -3124,6 +3124,12 @@ async function votePoll(postId, idx, poll, container) {
         if (d.username && usernameDisplay) usernameDisplay.textContent = '@' + d.username;
       }).catch(function(){});
 
+      /* Load community posts */
+      var postsContainer = document.getElementById('posts-feed-container');
+      if (postsContainer && typeof window.loadPostsFeed === 'function') {
+        window.loadPostsFeed(postsContainer);
+      }
+
     } else {
       if (signinCard) signinCard.style.display = '';
       if (myStuff)    myStuff.style.display = 'none';
@@ -4214,7 +4220,294 @@ async function votePoll(postId, idx, poll, container) {
   });
 
 })();
+
+/* ── COMMUNITY — Comments everywhere + User Posts feed ── */
+(function(){
+  'use strict';
+
+  /* ─── CSS ─── */
+  var cs = document.createElement('style');
+  cs.textContent = [
+    /* Comment button reutilizable */
+    '.sec-comment-btn{display:inline-flex;align-items:center;gap:0.4rem;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:0.35rem 0.85rem;font-size:0.75rem;font-family:var(--font-b);cursor:pointer;transition:all 0.2s;}',
+    '.sec-comment-btn:active{background:var(--surface-2);color:var(--text);}',
+    '.sec-comment-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}',
+    /* Posts feed */
+    '.posts-wrap{padding:0.75rem;}',
+    '.posts-compose{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:0.85rem;margin-bottom:1rem;}',
+    '.posts-compose-top{display:flex;gap:0.6rem;align-items:flex-start;}',
+    '.posts-compose-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--surface-3);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}',
+    '.posts-compose-avatar img{width:100%;height:100%;object-fit:cover;}',
+    '.posts-compose-textarea{flex:1;background:none;border:none;color:var(--text);font-family:var(--font-b);font-size:0.87rem;resize:none;height:72px;line-height:1.5;outline:none;placeholder-color:var(--text-muted);}',
+    '.posts-compose-footer{display:flex;align-items:center;justify-content:space-between;margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid var(--border);}',
+    '.posts-compose-rules{font-size:0.65rem;color:var(--text-muted);line-height:1.4;flex:1;padding-right:0.75rem;}',
+    '.posts-compose-send{background:var(--fire-orange);color:#fff;border:none;border-radius:20px;padding:0.45rem 1.1rem;font-family:var(--font-d);font-size:0.78rem;letter-spacing:0.06em;cursor:pointer;flex-shrink:0;}',
+    '.posts-compose-send:disabled{opacity:0.5;}',
+    '.posts-signin-note{text-align:center;padding:1rem;color:var(--text-dim);font-size:0.82rem;}',
+    /* Post card */
+    '.post-card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.75rem;}',
+    '.post-card-header{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.6rem;}',
+    '.post-card-avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--surface-3);flex-shrink:0;overflow:hidden;}',
+    '.post-card-avatar img{width:100%;height:100%;object-fit:cover;}',
+    '.post-card-meta{flex:1;min-width:0;}',
+    '.post-card-name{font-family:var(--font-d);font-size:0.8rem;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+    '.post-card-badge{font-size:0.6rem;color:var(--text-dim);}',
+    '.post-card-date{font-size:0.65rem;color:var(--text-muted);}',
+    '.post-card-body{font-size:0.87rem;line-height:1.55;color:var(--text);white-space:pre-wrap;word-break:break-word;margin-bottom:0.65rem;}',
+    '.post-card-actions{display:flex;gap:0.5rem;align-items:center;}',
+    '.post-report-btn{background:none;border:none;color:var(--text-muted);font-size:0.68rem;cursor:pointer;padding:0.2rem 0.5rem;border-radius:8px;font-family:var(--font-b);transition:color 0.2s;}',
+    '.post-report-btn:active{color:#cc4444;}',
+    '.post-report-btn.reported{color:#cc4444;pointer-events:none;}',
+    '.post-comment-btn{display:inline-flex;align-items:center;gap:0.3rem;background:none;border:none;color:var(--text-dim);font-size:0.72rem;cursor:pointer;padding:0.2rem 0.5rem;border-radius:8px;font-family:var(--font-b);}',
+    '.post-comment-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}',
+    '.post-comment-btn:active{color:var(--text);}',
+    /* Admin post actions */
+    '.post-admin-actions{display:flex;gap:0.4rem;margin-top:0.5rem;}',
+    '.post-admin-btn{font-size:0.68rem;border:none;border-radius:8px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);}',
+    '.post-hide-btn{background:#3a1a1a;color:#cc4444;}',
+    '.post-ban-btn{background:#2a0a0a;color:#ff4444;}',
+    '.posts-empty{padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;}'
+  ].join('');
+  document.head.appendChild(cs);
+
+  /* ─── Helpers ─── */
+  function timeAgo(d) {
+    var s = (Date.now() - new Date(d).getTime()) / 1000;
+    if (s < 60)    return 'just now';
+    if (s < 3600)  return Math.floor(s/60)+'m ago';
+    if (s < 86400) return Math.floor(s/3600)+'h ago';
+    return Math.floor(s/86400)+'d ago';
+  }
+  function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* ─── Comment button helper — llama el panel existente ─── */
+  function makeCommentBtn(postId, label) {
+    var btn = document.createElement('button');
+    btn.className = 'sec-comment-btn';
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>'
+      + (label || 'Comment');
+    btn.addEventListener('click', function() {
+      if (typeof window.openCommentsPanel === 'function') window.openCommentsPanel(postId);
+    });
+    return btn;
+  }
+
+  /* ─── Inyectar comment buttons en battles ─── */
+  document.addEventListener('click', function(e) {
+    /* Battle comment */
+    var batCard = e.target.closest('.bat-card[data-bat-id]');
+    if (batCard && !e.target.closest('.bat-vote-btn') && !e.target.closest('.bat-fighter') && !e.target.closest('.bat-comment-btn')) {
+      /* Ya tiene botón? */
+    }
+  });
+
+  /* Hook: después de renderizar battles, agregar comment buttons */
+  var _origLoadBattles = window.loadBattles;
+  window.loadBattles = async function() {
+    await _origLoadBattles.apply(this, arguments);
+    setTimeout(function() {
+      document.querySelectorAll('.bat-card[data-bat-id]').forEach(function(card) {
+        if (card.querySelector('.bat-comment-btn')) return;
+        var id = 'battle_' + card.getAttribute('data-bat-id');
+        var btn = makeCommentBtn(id, 'Comment');
+        btn.classList.add('bat-comment-btn');
+        btn.style.cssText = 'margin:0 0.85rem 0.85rem;font-size:0.7rem;';
+        card.appendChild(btn);
+      });
+    }, 200);
+  };
+
+  /* Hook: después de renderizar confesiones */
+  var _origLoadConf = window.loadPendingConfessions;
+  /* Para el feed público de confesiones inyectar comment btn */
+  document.addEventListener('click', function(e) {
+    var confCard = e.target.closest('.conf-card[data-conf-id]');
+    if (!confCard || e.target.closest('.conf-like-btn') || e.target.closest('.conf-comment-btn')) return;
+    /* Agregar btn si no existe */
+    if (!confCard.querySelector('.conf-comment-btn')) {
+      var id = 'confession_' + confCard.getAttribute('data-conf-id');
+      var btn = makeCommentBtn(id, 'Comment');
+      btn.classList.add('conf-comment-btn');
+      btn.style.cssText = 'margin:0 0 0.75rem 0;font-size:0.7rem;';
+      var actions = confCard.querySelector('.conf-actions');
+      if (actions) confCard.insertBefore(btn, actions);
+    }
+  });
+
+  /* ─── POSTS FEED ─── */
+  var REPORTED_POSTS = new Set();
+  try { REPORTED_POSTS = new Set(JSON.parse(localStorage.getItem('hw_reported_posts')||'[]')); } catch(e){}
+
+  function saveReported() {
+    try { localStorage.setItem('hw_reported_posts', JSON.stringify([...REPORTED_POSTS])); } catch(e){}
+  }
+
+  function renderPost(p) {
+    var isAdmin = document.body.classList.contains('is-admin');
+    var isOwn   = window.currentUser && window.currentUser.id === p.user_id;
+    var reported = REPORTED_POSTS.has(String(p.id));
+    var avatar   = p.user_avatar
+      ? '<img src="'+p.user_avatar+'" loading="lazy" alt="">'
+      : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+
+    var html = '<div class="post-card" data-post-id="'+p.id+'">'
+      + '<div class="post-card-header">'
+        + '<div class="post-card-avatar">'+avatar+'</div>'
+        + '<div class="post-card-meta">'
+          + '<div class="post-card-name">'+escH(p.user_name)+'</div>'
+          + '<div class="post-card-date">'+timeAgo(p.created_at)+'</div>'
+        + '</div>'
+      + '</div>'
+      + '<div class="post-card-body">'+escH(p.body)+'</div>'
+      + '<div class="post-card-actions">'
+        + '<button class="post-comment-btn" data-post-id="'+p.id+'">'
+          + '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Comment'
+        + '</button>';
+
+    if (!isOwn) {
+      html += '<button class="post-report-btn'+(reported?' reported':'')+'" data-post-id="'+p.id+'">'
+        + (reported ? 'Reported' : 'Report')
+      + '</button>';
+    }
+
+    html += '</div>';
+
+    if (isAdmin) {
+      html += '<div class="post-admin-actions">'
+        + '<button class="post-admin-btn post-hide-btn" data-post-id="'+p.id+'">Hide</button>'
+        + '<button class="post-admin-btn post-ban-btn" data-post-id="'+p.id+'" data-user-id="'+p.user_id+'">Ban User</button>'
+      + '</div>';
+    }
+
+    html += '</div>';
+    return html;
+  }
+
+  window.loadPostsFeed = async function(container) {
+    if (!container) return;
+    container.innerHTML = '<div class="posts-empty">Loading...</div>';
+    try {
+      var r = await fetch('/api/posts');
+      var d = await r.json();
+      var posts = d.posts || [];
+      var user  = window.currentUser;
+
+      /* Compose box */
+      var composeHtml = '';
+      if (user) {
+        var avSrc = user.picture
+          ? '<img src="'+user.picture+'" loading="lazy" alt="">'
+          : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+        composeHtml = '<div class="posts-compose">'
+          + '<div class="posts-compose-top">'
+            + '<div class="posts-compose-avatar">'+avSrc+'</div>'
+            + '<textarea class="posts-compose-textarea" id="posts-compose-ta" placeholder="What&#39;s on your mind?" maxlength="500"></textarea>'
+          + '</div>'
+          + '<div class="posts-compose-footer">'
+            + '<div class="posts-compose-rules">No links &bull; No hate against religion &bull; Keep it real &bull; Violations = ban</div>'
+            + '<button class="posts-compose-send" id="posts-compose-send">Post</button>'
+          + '</div>'
+        + '</div>';
+      } else {
+        composeHtml = '<div class="posts-signin-note">Sign in to post your thoughts.</div>';
+      }
+
+      if (!posts.length) {
+        container.innerHTML = composeHtml + '<div class="posts-empty">No posts yet. Be the first!</div>';
+      } else {
+        container.innerHTML = composeHtml + posts.map(renderPost).join('');
+      }
+
+      /* Bind send */
+      var sendBtn = document.getElementById('posts-compose-send');
+      var ta      = document.getElementById('posts-compose-ta');
+      if (sendBtn && ta) {
+        sendBtn.addEventListener('click', async function() {
+          var text = ta.value.trim();
+          if (!text) return;
+          sendBtn.disabled = true;
+          try {
+            var r2 = await fetch('/api/posts', {
+              method: 'POST', credentials: 'include',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({action:'post', body: text})
+            });
+            var d2 = await r2.json();
+            if (d2.ok) {
+              ta.value = '';
+              window.loadPostsFeed(container);
+            } else {
+              /* Mostrar error */
+              var toast = document.getElementById('toast');
+              if (toast) { toast.textContent = d2.error||'Error'; toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 3000); }
+            }
+          } catch(e){}
+          sendBtn.disabled = false;
+        });
+      }
+
+    } catch(e) {
+      container.innerHTML = '<div class="posts-empty">Could not load posts.</div>';
+    }
+  };
+
+  /* Delegation: comment on post, report post, admin actions */
+  document.addEventListener('click', async function(e) {
+    /* Comment on post */
+    var commentBtn = e.target.closest('.post-comment-btn[data-post-id]');
+    if (commentBtn) {
+      var pid = 'userpost_' + commentBtn.getAttribute('data-post-id');
+      if (typeof window.openCommentsPanel === 'function') window.openCommentsPanel(pid);
+      return;
+    }
+
+    /* Report post */
+    var reportBtn = e.target.closest('.post-report-btn[data-post-id]');
+    if (reportBtn && !reportBtn.classList.contains('reported')) {
+      var postId = reportBtn.getAttribute('data-post-id');
+      try {
+        await fetch('/api/posts', {
+          method:'POST', credentials:'include',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({action:'report', post_id: parseInt(postId)})
+        });
+        reportBtn.textContent = 'Reported';
+        reportBtn.classList.add('reported');
+        REPORTED_POSTS.add(postId);
+        saveReported();
+      } catch(e){}
+      return;
+    }
+
+    /* Admin: hide post */
+    var hideBtn = e.target.closest('.post-hide-btn[data-post-id]');
+    if (hideBtn) {
+      await fetch('/api/posts',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'hide',post_id:parseInt(hideBtn.getAttribute('data-post-id'))})});
+      var card = hideBtn.closest('.post-card');
+      if (card) card.remove();
+      return;
+    }
+
+    /* Admin: ban user */
+    var banBtn = e.target.closest('.post-ban-btn[data-user-id]');
+    if (banBtn) {
+      var uid = banBtn.getAttribute('data-user-id');
+      var reason = prompt('Ban reason (optional):') || '';
+      await fetch('/api/posts',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'ban',user_id:uid,reason})});
+      var card2 = banBtn.closest('.post-card');
+      if (card2) { card2.style.opacity='0.3'; card2.style.pointerEvents='none'; }
+      return;
+    }
+  });
+
+  /* Exponer loadPostsFeed para que el Profile page lo llame */
+  window.loadPostsFeed = window.loadPostsFeed;
+
 })();
+})();
+
 
 
 
