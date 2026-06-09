@@ -3351,11 +3351,20 @@ async function votePoll(postId, idx, poll, container) {
     '.prof-toggle-track::before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform 0.2s;}',
     '.prof-toggle input:checked + .prof-toggle-track{background:var(--fire-orange);}',
     '.prof-toggle input:checked + .prof-toggle-track::before{transform:translateX(16px);}',
-    '.prof-hero{height:110px;background:linear-gradient(135deg,#1a0505 0%,#2d0a00 45%,#1a0505 100%);position:relative;}',
+    '.prof-hero{height:110px;background:linear-gradient(135deg,#1a0505 0%,#2d0a00 45%,#1a0505 100%);position:relative;cursor:pointer;overflow:hidden;}',
+    '.prof-hero img{width:100%;height:100%;object-fit:cover;display:block;}',
+    '.prof-hero-edit-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);transition:background 0.2s;pointer-events:none;}',
+    '.prof-hero:active .prof-hero-edit-hint{background:rgba(0,0,0,0.35);}',
+    '.prof-hero-edit-icon{opacity:0;transition:opacity 0.2s;background:rgba(0,0,0,0.55);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;}',
+    '.prof-hero:active .prof-hero-edit-icon{opacity:1;}',
     '.prof-hero-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;}',
     '.prof-hero-pattern{position:absolute;inset:0;opacity:0.05;background-image:repeating-linear-gradient(45deg,var(--fire-orange) 0,var(--fire-orange) 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;}',
     '.prof-avatar-row{padding:0 1rem;margin-top:-34px;margin-bottom:0.65rem;position:relative;z-index:2;}',
-    '.prof-avatar-wrap{width:68px;height:68px;border-radius:50%;border:3px solid var(--bg);background:var(--surface-2);overflow:hidden;display:flex;align-items:center;justify-content:center;}',
+    '.prof-avatar-wrap{width:68px;height:68px;border-radius:50%;border:3px solid var(--bg);background:var(--surface-2);overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}',
+    '.prof-avatar-cam{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;transition:background 0.2s;border-radius:50%;}',
+    '.prof-avatar-cam svg{opacity:0;transition:opacity 0.2s;width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}',
+    '.prof-avatar-wrap:active .prof-avatar-cam{background:rgba(0,0,0,0.45);}',
+    '.prof-avatar-wrap:active .prof-avatar-cam svg{opacity:1;}',
     '.prof-avatar-wrap img{width:100%;height:100%;object-fit:cover;}',
     '.user-avatar-placeholder svg{width:28px;height:28px;stroke:var(--text-muted);fill:none;stroke-width:1.5;}',
     '.prof-info{padding:0 1rem 0.65rem;}',
@@ -3542,10 +3551,69 @@ async function votePoll(postId, idx, poll, container) {
           var bt=document.getElementById('prof-bio-text'); if(bt) bt.textContent=d.bio;
           var eb=document.getElementById('prof-bio-edit-btn'); if(eb) eb.textContent='Edit bio';
         }
+        /* Avatar guardado en D1 */
+        if(d.avatar_url){
+          var aw=document.getElementById('user-avatar-wrap');
+          if(aw) aw.innerHTML='<img src="'+d.avatar_url+'" style="width:100%;height:100%;object-fit:cover;"><div class="prof-avatar-cam"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>';
+        }
+        /* Banner guardado en D1 */
+        if(d.banner_url){
+          var hero=document.getElementById('page-more')&&document.getElementById('page-more').querySelector('.prof-hero');
+          if(hero){ var bImg=document.createElement('img'); bImg.src=d.banner_url; bImg.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;'; hero.insertBefore(bImg,hero.firstChild); }
+        }
       }).catch(function(){});
       if(adultToggle) adultToggle.checked=true;
       var pc=document.getElementById('posts-feed-container');
       if(pc && typeof window.loadPostsFeed==='function') window.loadPostsFeed(pc, user.id);
+
+    /* Upload avatar y banner */
+    function setupImageUpload(triggerEl, type) {
+      if (!triggerEl) return;
+      var inp = document.createElement('input');
+      inp.type='file'; inp.accept='image/*'; inp.style.display='none';
+      document.body.appendChild(inp);
+      triggerEl.addEventListener('click', function(e){ e.stopPropagation(); inp.click(); });
+      inp.addEventListener('change', async function(e){
+        var file=e.target.files[0]; if(!file) return;
+        var img2=new Image(); var url3=URL.createObjectURL(file);
+        img2.onload=async function(){
+          var maxW=type==='banner'?1200:400;
+          var ratio=Math.min(maxW/img2.width,1);
+          var canvas=document.createElement('canvas');
+          canvas.width=Math.round(img2.width*ratio); canvas.height=Math.round(img2.height*ratio);
+          canvas.getContext('2d').drawImage(img2,0,0,canvas.width,canvas.height);
+          URL.revokeObjectURL(url3);
+          canvas.toBlob(async function(blob){
+            try{
+              var upRes=await fetch('/api/upload',{method:'PUT',credentials:'include',headers:{'Content-Type':'image/webp'},body:blob});
+              var upData=await upRes.json();
+              if(!upData.ok) return;
+              var cdnUrl=upData.url;
+              var payload={}; payload[type==='banner'?'banner_url':'avatar_url']=cdnUrl;
+              await fetch('/api/profile',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+              if(type==='banner'){
+                var pg=document.getElementById('page-more');
+                var hero=pg&&pg.querySelector('.prof-hero');
+                if(hero){
+                  var existing=hero.querySelector('img.prof-banner-img');
+                  if(existing){ existing.src=cdnUrl; }
+                  else{ var ni=document.createElement('img'); ni.className='prof-banner-img'; ni.src=cdnUrl; ni.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;'; hero.insertBefore(ni,hero.firstChild); }
+                }
+              } else {
+                var aw2=document.getElementById('user-avatar-wrap');
+                if(aw2) aw2.innerHTML='<img src="'+cdnUrl+'" style="width:100%;height:100%;object-fit:cover;"><div class="prof-avatar-cam"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>';
+                if(window.currentUser) window.currentUser.picture=cdnUrl;
+              }
+              var toast3=document.getElementById('toast');
+              if(toast3){toast3.textContent='Photo updated!';toast3.classList.add('show');setTimeout(function(){toast3.classList.remove('show');},2500);}
+            }catch(err){}
+          },'image/webp',0.85);
+        }; img2.src=url3;
+      });
+    }
+    var pg2=document.getElementById('page-more');
+    setupImageUpload(pg2&&pg2.querySelector('.prof-hero'),'banner');
+    setupImageUpload(document.getElementById('user-avatar-wrap'),'avatar');
     } else {
       if(signinCard) signinCard.style.display='';
       if(tabs)       tabs.style.display='none';
