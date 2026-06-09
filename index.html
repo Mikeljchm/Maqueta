@@ -299,20 +299,39 @@ layout: none
         </div>
       </div>
 
-      <!-- BULGE SPORT -->
+      <!-- COMMUNITIES -->
       <div class="page" id="page-bulge">
+        <!-- Topbar -->
         <div class="page-title-bar">
           <div>
-            <div class="page-title">BULGE <span>SPORT</span></div>
-            <div class="page-subtitle">Athletes &middot; All sports &middot; No filter</div>
+            <div class="page-title">COMMU<span>NITIES</span></div>
+            <div class="page-subtitle">Create &middot; Share &middot; Connect</div>
           </div>
-          <button class="section-new-btn" onclick="openNewProfile('_bulge')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New</button>
+          <button class="comm-create-btn" id="comm-create-btn">+ Create</button>
         </div>
-        <div class="cat-pills" id="bulge-pills" style="border-top:none;position:relative;top:auto;">
-          <button class="cat-pill active" data-bsport="all">All</button>
+        <!-- Search -->
+        <div class="comm-search-bar" id="comm-search-bar">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="comm-search-input" placeholder="Search communities..." maxlength="60">
         </div>
-        <div class="wrestlers-grid" id="bulge-grid"></div>
-        <div id="bulge-empty" class="ring-empty reveal" style="display:none;">
+        <!-- Category pills -->
+        <div class="comm-cat-pills" id="comm-cat-pills">
+          <button class="comm-cat-pill active" data-ccat="all">All</button>
+          <button class="comm-cat-pill" data-ccat="wrestling">Wrestling</button>
+          <button class="comm-cat-pill" data-ccat="fantasies">Fantasies</button>
+          <button class="comm-cat-pill" data-ccat="badboys">Bad Boys</button>
+          <button class="comm-cat-pill" data-ccat="bulge">Bulge</button>
+          <button class="comm-cat-pill" data-ccat="stories">Stories</button>
+          <button class="comm-cat-pill" data-ccat="ai">AI</button>
+        </div>
+        <!-- Communities feed -->
+        <div id="comm-feed">
+          <div class="comm-loading">Loading communities...</div>
+        </div>
+        <!-- Community detail page (slide-in) -->
+        <div id="comm-detail-page" style="display:none;"></div>
+        <!-- Empty placeholder needed for closing tags -->
+        <div style="display:none;" id="bulge-empty">
           <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--fire-orange)" stroke-width="1.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
           <p>Athletes coming soon.</p>
         </div>
@@ -471,8 +490,8 @@ layout: none
         <span>Studs</span>
       </button>
       <button class="nav-item" data-page="bulge">
-        <svg class="filled" viewBox="0 0 512 512" fill="currentColor"><path d="M256 123.021c-50.91 0-102.246 2.886-189.084 8.588 23.825 5.534 46.826 10.086 69.297 13.664 96.682-5.682 142.892-5.682 239.574 0 22.471-3.578 45.472-8.13 69.297-13.664-86.838-5.702-138.174-8.588-189.084-8.588zM25.117 139.664c.019 9.64.08 19.471.264 29.25 199.173 45.623 262.065 45.623 461.238 0 .184-9.779.245-19.61.264-29.25-167.381 44.142-294.385 44.142-461.766 0zm.819 47.834c.542 13.036 1.435 25.696 2.984 37.313 1.938 14.532 4.867 27.376 8.88 36.964 3.967 9.474 8.795 15.347 14.038 18.051 38.386 15.253 65.763 14.797 90.47 28.274a73.11 73.11 0 0 1 9.005 5.802c1.008-27.584 5.494-62.545 25.421-98.158-43.358-5.28-91.246-14.688-150.798-28.246zm460.128 0c-59.552 13.558-107.44 22.967-150.798 28.246 19.927 35.613 24.413 70.574 25.421 98.158a73.11 73.11 0 0 1 9.004-5.802c24.708-13.477 52.085-13.02 90.471-28.274 5.243-2.704 10.071-8.577 14.037-18.05 4.014-9.59 6.943-22.433 8.881-36.965 1.549-11.617 2.442-24.277 2.984-37.313zm-289.709 30.38c-26.301 42.381-27.315 83.996-27.353 114.577a111.803 111.803 0 0 1 6.084 9.621c9.388 16.63 17.537 39.314 25.644 71.742 6.973 27.892 30.698 41.184 55.27 41.184 24.572 0 48.297-13.292 55.27-41.184 8.107-32.428 16.256-55.112 25.644-71.742a111.803 111.803 0 0 1 6.084-9.62c-.038-30.582-1.052-72.197-27.353-114.577-40.839 3.888-78.451 3.888-119.29 0z"/></svg>
-        <span>Bulge</span>
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Community</span>
       </button>
       <button class="nav-item" data-page="audio">
         <svg class="filled" viewBox="0 0 36 36" fill="currentColor"><path d="M18,2.5c-8.82,0-16,6.28-16,14s7.18,14,16,14a18,18,0,0,0,4.88-.68l5.53,3.52a1,1,0,0,0,1.54-.84l0-6.73a13,13,0,0,0,4-9.27C34,8.78,26.82,2.5,18,2.5ZM28.29,24.61a1,1,0,0,0-.32.73l0,5.34-4.38-2.79a1,1,0,0,0-.83-.11A16,16,0,0,1,18,28.5c-7.72,0-14-5.38-14-12s6.28-12,14-12,14,5.38,14,12A11.08,11.08,0,0,1,28.29,24.61Z"/><path d="M25,15.5H11a1,1,0,0,0,0,2H25a1,1,0,0,0,0-2Z"/><path d="M21.75,20.5h-7.5a1,1,0,0,0,0,2h7.5a1,1,0,0,0,0-2Z"/><path d="M11.28,12.5H24.72a1,1,0,0,0,0-2H11.28a1,1,0,0,0,0,2Z"/></svg>
