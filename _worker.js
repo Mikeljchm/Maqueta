@@ -767,6 +767,8 @@ async function handleProfile(request, env, corsH) {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`).run();
   try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN bio TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN avatar_url TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN banner_url TEXT DEFAULT ''").run(); } catch(e){}
 
   const session = getSession(request);
   const url = new URL(request.url);
@@ -776,9 +778,9 @@ async function handleProfile(request, env, corsH) {
     const targetId = url.searchParams.get('user_id') || (session ? session.id : null);
     if (!targetId) return apiJson({ error: 'Not authenticated' }, 401, corsH);
     const { results } = await env.DB.prepare(
-      'SELECT username, bio FROM user_profiles WHERE user_id=?'
+      'SELECT username, bio, avatar_url, banner_url FROM user_profiles WHERE user_id=?'
     ).bind(targetId).all();
-    return apiJson({ username: results[0]?.username || null, bio: results[0]?.bio || '' }, 200, corsH);
+    return apiJson({ username: results[0]?.username||null, bio: results[0]?.bio||'', avatar_url: results[0]?.avatar_url||'', banner_url: results[0]?.banner_url||'' }, 200, corsH);
   }
 
   if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
@@ -799,7 +801,19 @@ async function handleProfile(request, env, corsH) {
           'INSERT INTO user_profiles (user_id, bio) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET bio=excluded.bio'
         ).bind(session.id, bio).run();
       }
-      return apiJson({ ok: true, username: username||null, bio: bio }, 200, corsH);
+      const avatar_url = typeof body.avatar_url === 'string' ? body.avatar_url.trim().slice(0,500) : null;
+      if (avatar_url !== null) {
+        await env.DB.prepare(
+          'INSERT INTO user_profiles (user_id, avatar_url) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET avatar_url=excluded.avatar_url'
+        ).bind(session.id, avatar_url).run();
+      }
+      const banner_url = typeof body.banner_url === 'string' ? body.banner_url.trim().slice(0,500) : null;
+      if (banner_url !== null) {
+        await env.DB.prepare(
+          'INSERT INTO user_profiles (user_id, banner_url) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET banner_url=excluded.banner_url'
+        ).bind(session.id, banner_url).run();
+      }
+      return apiJson({ ok: true, username: username||null, bio: bio, avatar_url, banner_url }, 200, corsH);
     } catch(e) {
       /* Username taken (UNIQUE constraint) */
       return apiJson({ error: 'Username taken' }, 409, corsH);
