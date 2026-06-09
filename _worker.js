@@ -1265,51 +1265,137 @@ async function handleUpload(request, env, corsH) {
 }
 
 
-async function handleCommunities(request, env, corsH) {
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS communities (
+/* ── THREADS (Communities redesigned) ── */
+
+async function initThreadTables(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS threads (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT DEFAULT '',
     category TEXT DEFAULT 'other',
+    tags TEXT DEFAULT '',
     cover_url TEXT DEFAULT '',
     creator_id TEXT NOT NULL,
     creator_name TEXT NOT NULL,
+    pinned_post_id INTEGER DEFAULT NULL,
     member_count INTEGER DEFAULT 1,
     post_count INTEGER DEFAULT 0,
+    trending_score REAL DEFAULT 0,
+    last_activity DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_active INTEGER DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`).run();
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS community_members (
-    community_id INTEGER NOT NULL,
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS thread_members (
+    thread_id INTEGER NOT NULL,
     user_id TEXT NOT NULL,
+    role TEXT DEFAULT 'member',
     joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(community_id, user_id)
+    UNIQUE(thread_id, user_id)
   )`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS thread_follows (
+    thread_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(thread_id, user_id)
+  )`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS thread_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    thread_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    user_name TEXT NOT NULL,
+    user_avatar TEXT DEFAULT '',
+    body TEXT DEFAULT '',
+    image_url TEXT DEFAULT '',
+    like_count INTEGER DEFAULT 0,
+    comment_count INTEGER DEFAULT 0,
+    is_pinned INTEGER DEFAULT 0,
+    hidden INTEGER DEFAULT 0,
+    hidden_by_creator INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS thread_post_likes (
+    post_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    UNIQUE(post_id, user_id)
+  )`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS thread_banned_users (
+    thread_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    banned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(thread_id, user_id)
+  )`).run();
+  try { await env.DB.prepare("ALTER TABLE threads ADD COLUMN trending_score REAL DEFAULT 0").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE threads ADD COLUMN last_activity DATETIME DEFAULT CURRENT_TIMESTAMP").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE threads ADD COLUMN is_active INTEGER DEFAULT 1").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE threads ADD COLUMN pinned_post_id INTEGER DEFAULT NULL").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE threads ADD COLUMN tags TEXT DEFAULT ''").run(); } catch(e){}
+}
 
+function calcTrendingScore(posts, users) {
+  return (posts * 3) + (users * 5);
+}
+
+async function handleCommunities(request, env, corsH) {
+  await initThreadTables(env);
   const url = new URL(request.url);
   const session = getSession(request);
+  const isAdmin = (function(){
+    const m=(request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
+    if(!m) return false;
+    try{ const s=JSON.parse(atob(m[1])); return s&&s.login==='Mikeljchm'; }catch(e){ return false; }
+  })();
 
   if (request.method === 'GET') {
+    const sort     = url.searchParams.get('sort') || 'trending';
     const category = url.searchParams.get('category');
     const search   = url.searchParams.get('q');
-    let query = 'SELECT * FROM communities';
+    const tag      = url.searchParams.get('tag');
+
+    let query = 'SELECT * FROM threads';
     const params = [];
     const filters = [];
     if (category && category !== 'all') { filters.push('category=?'); params.push(category); }
     if (search) { filters.push('(name LIKE ? OR description LIKE ?)'); params.push('%'+search+'%','%'+search+'%'); }
+    if (tag) { filters.push('tags LIKE ?'); params.push('%'+tag+'%'); }
     if (filters.length) query += ' WHERE ' + filters.join(' AND ');
-    query += ' ORDER BY member_count DESC, created_at DESC LIMIT 50';
+    query += sort==='new' ? ' ORDER BY created_at DESC LIMIT 50'
+           : sort==='active' ? ' ORDER BY last_activity DESC LIMIT 50'
+           : ' ORDER BY trending_score DESC, last_activity DESC LIMIT 50';
+
     const { results } = await env.DB.prepare(query).bind(...params).all();
-    /* Marcar si el usuario es miembro */
+
     if (session && results.length) {
       const ids = results.map(function(r){ return r.id; });
       const ph  = ids.map(function(){ return '?'; }).join(',');
-      const { results: memberships } = await env.DB.prepare(
-        'SELECT community_id FROM community_members WHERE user_id=? AND community_id IN ('+ph+')'
+      const { results: mems } = await env.DB.prepare(
+        'SELECT thread_id,role FROM thread_members WHERE user_id=? AND thread_id IN ('+ph+')'
       ).bind(session.id, ...ids).all();
-      const memberSet = new Set(memberships.map(function(m){ return m.community_id; }));
-      results.forEach(function(r){ r.is_member = memberSet.has(r.id); });
+      const { results: fols } = await env.DB.prepare(
+        'SELECT thread_id FROM thread_follows WHERE user_id=? AND thread_id IN ('+ph+')'
+      ).bind(session.id, ...ids).all();
+      const memMap = {}; mems.forEach(function(m){ memMap[m.thread_id]=m.role; });
+      const folSet = new Set(fols.map(function(f){ return f.thread_id; }));
+      results.forEach(function(r){
+        r.is_member=!!memMap[r.id]; r.member_role=memMap[r.id]||null;
+        r.is_following=folSet.has(r.id);
+      });
     }
-    return apiJson({ communities: results }, 200, corsH);
+
+    /* Popular tags */
+    if (url.searchParams.get('popular_tags')==='1') {
+      const { results: tagRows } = await env.DB.prepare(
+        "SELECT tags FROM threads WHERE tags != '' LIMIT 200"
+      ).all();
+      const tc={};
+      tagRows.forEach(function(r){
+        (r.tags||'').split(',').map(function(t){return t.trim().toLowerCase();}).filter(Boolean)
+          .forEach(function(t){ tc[t]=(tc[t]||0)+1; });
+      });
+      const popularTags=Object.entries(tc).sort(function(a,b){return b[1]-a[1];}).slice(0,20).map(function(e){return e[0];});
+      return apiJson({ threads: results, popular_tags: popularTags }, 200, corsH);
+    }
+
+    return apiJson({ threads: results }, 200, corsH);
   }
 
   if (request.method === 'POST') {
@@ -1319,29 +1405,59 @@ async function handleCommunities(request, env, corsH) {
     if (body.action === 'create') {
       const name = (body.name||'').trim().slice(0,60);
       if (!name) return apiJson({ error: 'Name required' }, 400, corsH);
-      const desc = (body.description||'').trim().slice(0,300);
-      const cat  = ['wrestling','fantasies','badboys','bulge','stories','ai','other'].includes(body.category)
-        ? body.category : 'other';
+      const desc  = (body.description||'').trim().slice(0,300);
+      const cat   = ['wrestling','fantasy','stories','visual','discussion','other'].includes(body.category)?body.category:'other';
+      const tags  = (body.tags||'').split(',').map(function(t){return t.trim().toLowerCase().replace(/[^a-z0-9]/g,'');}).filter(Boolean).slice(0,10).join(',');
+      const cover = (body.cover_url||'').trim().slice(0,500);
       const result = await env.DB.prepare(
-        'INSERT INTO communities (name,description,category,creator_id,creator_name) VALUES (?,?,?,?,?)'
-      ).bind(name, desc, cat, session.id, session.name||session.email).run();
+        'INSERT INTO threads (name,description,category,tags,cover_url,creator_id,creator_name) VALUES (?,?,?,?,?,?,?)'
+      ).bind(name,desc,cat,tags,cover,session.id,session.name||session.email).run();
       const newId = result.meta.last_row_id;
-      /* Auto-join creator */
-      await env.DB.prepare('INSERT OR IGNORE INTO community_members (community_id,user_id) VALUES (?,?)').bind(newId, session.id).run();
+      await env.DB.prepare('INSERT OR IGNORE INTO thread_members (thread_id,user_id,role) VALUES (?,?,?)').bind(newId,session.id,'creator').run();
+      await addPoints(env, session.id, 5);
       return apiJson({ ok: true, id: newId }, 200, corsH);
     }
 
     if (body.action === 'join' || body.action === 'leave') {
-      const cid = parseInt(body.community_id);
+      const tid = parseInt(body.thread_id);
       if (body.action === 'join') {
         try {
-          await env.DB.prepare('INSERT INTO community_members (community_id,user_id) VALUES (?,?)').bind(cid, session.id).run();
-          await env.DB.prepare('UPDATE communities SET member_count=member_count+1 WHERE id=?').bind(cid).run();
+          await env.DB.prepare('INSERT INTO thread_members (thread_id,user_id) VALUES (?,?)').bind(tid,session.id).run();
+          await env.DB.prepare('UPDATE threads SET member_count=member_count+1 WHERE id=?').bind(tid).run();
         } catch(e){}
       } else {
-        await env.DB.prepare('DELETE FROM community_members WHERE community_id=? AND user_id=?').bind(cid, session.id).run();
-        await env.DB.prepare('UPDATE communities SET member_count=MAX(0,member_count-1) WHERE id=?').bind(cid).run();
+        await env.DB.prepare("DELETE FROM thread_members WHERE thread_id=? AND user_id=? AND role!='creator'").bind(tid,session.id).run();
+        await env.DB.prepare('UPDATE threads SET member_count=MAX(0,member_count-1) WHERE id=?').bind(tid).run();
       }
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    if (body.action === 'follow' || body.action === 'unfollow') {
+      const tid = parseInt(body.thread_id);
+      if (body.action === 'follow') {
+        try { await env.DB.prepare('INSERT INTO thread_follows (thread_id,user_id) VALUES (?,?)').bind(tid,session.id).run(); } catch(e){}
+      } else {
+        await env.DB.prepare('DELETE FROM thread_follows WHERE thread_id=? AND user_id=?').bind(tid,session.id).run();
+      }
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    if (body.action === 'ban_user') {
+      const tid = parseInt(body.thread_id);
+      const { results: cr } = await env.DB.prepare('SELECT creator_id FROM threads WHERE id=?').bind(tid).all();
+      if (!cr.length||(cr[0].creator_id!==session.id&&!isAdmin)) return apiJson({error:'Forbidden'},403,corsH);
+      try { await env.DB.prepare('INSERT INTO thread_banned_users (thread_id,user_id) VALUES (?,?)').bind(tid,body.user_id).run(); } catch(e){}
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    if (body.action === 'pin_post') {
+      const tid = parseInt(body.thread_id);
+      const pid = parseInt(body.post_id);
+      const { results: cr } = await env.DB.prepare('SELECT creator_id FROM threads WHERE id=?').bind(tid).all();
+      if (!cr.length||(cr[0].creator_id!==session.id&&!isAdmin)) return apiJson({error:'Forbidden'},403,corsH);
+      await env.DB.prepare('UPDATE threads SET pinned_post_id=? WHERE id=?').bind(pid,tid).run();
+      await env.DB.prepare('UPDATE thread_posts SET is_pinned=0 WHERE thread_id=?').bind(tid).run();
+      await env.DB.prepare('UPDATE thread_posts SET is_pinned=1 WHERE id=?').bind(pid).run();
       return apiJson({ ok: true }, 200, corsH);
     }
 
@@ -1352,35 +1468,25 @@ async function handleCommunities(request, env, corsH) {
 }
 
 async function handleCommunityPosts(request, env, corsH) {
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS community_posts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    community_id INTEGER NOT NULL,
-    user_id TEXT NOT NULL,
-    user_name TEXT NOT NULL,
-    user_avatar TEXT DEFAULT '',
-    body TEXT DEFAULT '',
-    image_url TEXT DEFAULT '',
-    like_count INTEGER DEFAULT 0,
-    comment_count INTEGER DEFAULT 0,
-    hidden INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`).run();
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS community_post_likes (
-    post_id INTEGER NOT NULL,
-    user_id TEXT NOT NULL,
-    UNIQUE(post_id, user_id)
-  )`).run();
-
-  const url = new URL(request.url);
+  await initThreadTables(env);
+  const url     = new URL(request.url);
   const session = getSession(request);
+  const isAdmin = (function(){
+    const m=(request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
+    if(!m) return false;
+    try{ const s=JSON.parse(atob(m[1])); return s&&s.login==='Mikeljchm'; }catch(e){ return false; }
+  })();
 
   if (request.method === 'GET') {
-    const communityId = url.searchParams.get('community_id');
-    if (!communityId) return apiJson({ error: 'community_id required' }, 400, corsH);
-    const { results } = await env.DB.prepare(
-      'SELECT id,community_id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,created_at FROM community_posts WHERE community_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
-    ).bind(parseInt(communityId)).all();
-    return apiJson({ posts: results }, 200, corsH);
+    const tid = parseInt(url.searchParams.get('community_id')||url.searchParams.get('thread_id')||'0');
+    if (!tid) return apiJson({ error: 'thread_id required' }, 400, corsH);
+    const { results: pinned } = await env.DB.prepare(
+      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=1 AND hidden=0 AND hidden_by_creator=0'
+    ).bind(tid).all();
+    const { results: posts } = await env.DB.prepare(
+      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT 50'
+    ).bind(tid).all();
+    return apiJson({ posts: [...pinned, ...posts] }, 200, corsH);
   }
 
   if (request.method === 'POST') {
@@ -1388,15 +1494,22 @@ async function handleCommunityPosts(request, env, corsH) {
     const body = await request.json();
 
     if (body.action === 'post') {
-      const text = (body.body||'').trim();
-      const imageUrl = (body.image_url||'').trim().slice(0,500);
-      if (!text && !imageUrl) return apiJson({ error: 'Empty post' }, 400, corsH);
+      const tid    = parseInt(body.community_id||body.thread_id||'0');
+      const text   = (body.body||'').trim();
+      const imgUrl = (body.image_url||'').trim().slice(0,500);
+      if (!text&&!imgUrl) return apiJson({ error: 'Empty post' }, 400, corsH);
       if (containsLink(text)) return apiJson({ error: 'Links are not allowed.' }, 400, corsH);
-      const cid = parseInt(body.community_id);
+      const { results: banned } = await env.DB.prepare('SELECT user_id FROM thread_banned_users WHERE thread_id=? AND user_id=?').bind(tid,session.id).all();
+      if (banned.length) return apiJson({ error: 'You have been removed from this thread.' }, 403, corsH);
       const result = await env.DB.prepare(
-        'INSERT INTO community_posts (community_id,user_id,user_name,user_avatar,body,image_url) VALUES (?,?,?,?,?,?)'
-      ).bind(cid, session.id, session.name||session.email, session.picture||'', text, imageUrl).run();
-      await env.DB.prepare('UPDATE communities SET post_count=post_count+1 WHERE id=?').bind(cid).run();
+        'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url) VALUES (?,?,?,?,?,?)'
+      ).bind(tid,session.id,session.name||session.email,session.picture||'',text,imgUrl).run();
+      await env.DB.prepare('UPDATE threads SET post_count=post_count+1,last_activity=CURRENT_TIMESTAMP,is_active=1 WHERE id=?').bind(tid).run();
+      const since = new Date(Date.now()-86400000).toISOString();
+      const { results: rc } = await env.DB.prepare(
+        'SELECT COUNT(*) as cnt,COUNT(DISTINCT user_id) as users FROM thread_posts WHERE thread_id=? AND created_at>?'
+      ).bind(tid,since).all();
+      await env.DB.prepare('UPDATE threads SET trending_score=? WHERE id=?').bind(calcTrendingScore(rc[0]?.cnt||0,rc[0]?.users||0),tid).run();
       await addPoints(env, session.id, 1);
       return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
     }
@@ -1404,22 +1517,31 @@ async function handleCommunityPosts(request, env, corsH) {
     if (body.action === 'like') {
       const postId = parseInt(body.post_id);
       try {
-        await env.DB.prepare('INSERT INTO community_post_likes (post_id,user_id) VALUES (?,?)').bind(postId, session.id).run();
-        await env.DB.prepare('UPDATE community_posts SET like_count=like_count+1 WHERE id=?').bind(postId).run();
+        await env.DB.prepare('INSERT INTO thread_post_likes (post_id,user_id) VALUES (?,?)').bind(postId,session.id).run();
+        await env.DB.prepare('UPDATE thread_posts SET like_count=like_count+1 WHERE id=?').bind(postId).run();
         await addPoints(env, session.id, 1);
         return apiJson({ ok: true, liked: true }, 200, corsH);
       } catch(e) {
-        await env.DB.prepare('DELETE FROM community_post_likes WHERE post_id=? AND user_id=?').bind(postId, session.id).run();
-        await env.DB.prepare('UPDATE community_posts SET like_count=MAX(0,like_count-1) WHERE id=?').bind(postId).run();
+        await env.DB.prepare('DELETE FROM thread_post_likes WHERE post_id=? AND user_id=?').bind(postId,session.id).run();
+        await env.DB.prepare('UPDATE thread_posts SET like_count=MAX(0,like_count-1) WHERE id=?').bind(postId).run();
         return apiJson({ ok: true, liked: false }, 200, corsH);
       }
     }
 
+    if (body.action === 'creator_hide') {
+      const postId = parseInt(body.post_id);
+      const { results: post } = await env.DB.prepare('SELECT thread_id FROM thread_posts WHERE id=?').bind(postId).all();
+      if (!post.length) return apiJson({ error: 'Not found' }, 404, corsH);
+      const { results: thread } = await env.DB.prepare('SELECT creator_id FROM threads WHERE id=?').bind(post[0].thread_id).all();
+      if (!thread.length||(thread[0].creator_id!==session.id&&!isAdmin)) return apiJson({error:'Forbidden'},403,corsH);
+      await env.DB.prepare('UPDATE thread_posts SET hidden_by_creator=1 WHERE id=?').bind(postId).run();
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
     if (body.action === 'report') {
       const postId = parseInt(body.post_id);
-      const category = body.category || 'other';
-      if (category === 'underage') {
-        await env.DB.prepare('UPDATE community_posts SET hidden=1 WHERE id=?').bind(postId).run();
+      if ((body.category||'')==='underage') {
+        await env.DB.prepare('UPDATE thread_posts SET hidden=1 WHERE id=?').bind(postId).run();
       }
       return apiJson({ ok: true }, 200, corsH);
     }
@@ -1429,6 +1551,7 @@ async function handleCommunityPosts(request, env, corsH) {
 
   return apiJson({ error: 'Method not allowed' }, 405, corsH);
 }
+
 
 export default {
   async fetch(request, env, ctx) {
