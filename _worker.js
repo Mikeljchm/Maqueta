@@ -1234,9 +1234,13 @@ async function handleUpload(request, env, corsH) {
   const contentType = request.headers.get('Content-Type') || 'image/webp';
   const arrayBuffer = await request.arrayBuffer();
   if (!arrayBuffer.byteLength) return apiJson({ error: 'Empty file' }, 400, corsH);
-  if (arrayBuffer.byteLength > 10 * 1024 * 1024) return apiJson({ error: 'Max 10MB' }, 400, corsH);
+  if (arrayBuffer.byteLength > 30 * 1024 * 1024) return apiJson({ error: 'Max 30MB' }, 400, corsH);
 
-  const ext = contentType.includes('jpeg') ? 'jpg' : 'webp';
+  const ext = contentType.includes('jpeg') ? 'jpg'
+    : contentType.includes('mp4') ? 'mp4'
+    : contentType.includes('webm') ? 'webm'
+    : contentType.includes('gif') ? 'gif'
+    : 'webp';
   const filename = session.id.replace(/[^a-zA-Z0-9]/g,'').slice(0,16) + '_' + Date.now() + '.' + ext;
   const storageUrl = 'https://ny.storage.bunnycdn.com/hottwrestling/user-posts/' + filename;
 
