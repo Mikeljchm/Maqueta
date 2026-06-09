@@ -769,14 +769,19 @@ async function handleProfile(request, env, corsH) {
   try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN bio TEXT DEFAULT ''").run(); } catch(e){}
 
   const session = getSession(request);
-  if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+  const url = new URL(request.url);
 
   if (request.method === 'GET') {
+    /* Perfil propio o de otro usuario por ?user_id= */
+    const targetId = url.searchParams.get('user_id') || (session ? session.id : null);
+    if (!targetId) return apiJson({ error: 'Not authenticated' }, 401, corsH);
     const { results } = await env.DB.prepare(
       'SELECT username, bio FROM user_profiles WHERE user_id=?'
-    ).bind(session.id).all();
+    ).bind(targetId).all();
     return apiJson({ username: results[0]?.username || null, bio: results[0]?.bio || '' }, 200, corsH);
   }
+
+  if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
 
   if (request.method === 'POST') {
     const body = await request.json();
