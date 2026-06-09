@@ -3566,7 +3566,228 @@ async function votePoll(postId, idx, poll, container) {
       var pc=document.getElementById('posts-feed-container');
       if(pc && typeof window.loadPostsFeed==='function') window.loadPostsFeed(pc, user.id);
 
-    /* Upload avatar y banner */
+    /* ── Photo Crop & Upload ── */
+
+    /* Create crop modal once */
+    if (!document.getElementById('crop-modal')) {
+      var cropCSS = document.createElement('style');
+      cropCSS.textContent = [
+        '.crop-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:600;display:flex;flex-direction:column;align-items:center;justify-content:center;}',
+        '.crop-modal-title{font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.12em;color:var(--text-dim);margin-bottom:0.75rem;text-align:center;}',
+        '.crop-hint{font-size:0.68rem;color:var(--text-muted);text-align:center;margin-bottom:0.85rem;}',
+        '.crop-container{position:relative;overflow:hidden;background:#111;touch-action:none;}',
+        '.crop-container.avatar-crop{width:280px;height:280px;border-radius:50%;box-shadow:0 0 0 9999px rgba(0,0,0,0.75);}',
+        '.crop-container.banner-crop{width:calc(100vw - 2rem);max-width:440px;height:140px;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,0.75);}',
+        '.crop-img{position:absolute;transform-origin:0 0;will-change:transform;}',
+        '.crop-btns{display:flex;gap:0.75rem;margin-top:1.25rem;}',
+        '.crop-cancel{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:12px;padding:0.6rem 1.5rem;font-family:var(--font-d);font-size:0.82rem;letter-spacing:0.06em;cursor:pointer;}',
+        '.crop-save{background:var(--fire-orange);border:none;color:#fff;border-radius:12px;padding:0.6rem 1.5rem;font-family:var(--font-d);font-size:0.82rem;letter-spacing:0.06em;cursor:pointer;}',
+        '.crop-save:disabled{opacity:0.5;}'
+      ].join('');
+      document.head.appendChild(cropCSS);
+
+      var cropModal = document.createElement('div');
+      cropModal.id = 'crop-modal';
+      cropModal.style.display = 'none';
+      cropModal.innerHTML =
+        '<div class="crop-modal-title" id="crop-modal-title">Adjust Photo</div>'
+        +'<div class="crop-hint">Pinch to zoom &bull; Drag to reposition</div>'
+        +'<div class="crop-container" id="crop-container"><img class="crop-img" id="crop-img"></div>'
+        +'<div class="crop-btns"><button class="crop-cancel" id="crop-cancel">Cancel</button>'
+        +'<button class="crop-save" id="crop-save">Save</button></div>';
+      document.body.appendChild(cropModal);
+
+      document.getElementById('crop-cancel').addEventListener('click', function(){
+        cropModal.style.display = 'none';
+        document.body.style.overflow = '';
+      });
+    }
+
+    /* Open crop modal and resolve with blob */
+    function openCropModal(file, type) {
+      return new Promise(function(resolve) {
+        var modal     = document.getElementById('crop-modal');
+        var container = document.getElementById('crop-container');
+        var imgEl     = document.getElementById('crop-img');
+        var saveBtn   = document.getElementById('crop-save');
+        var titleEl   = document.getElementById('crop-modal-title');
+
+        titleEl.textContent = type === 'avatar' ? 'Adjust Profile Photo' : 'Adjust Banner';
+        container.className = 'crop-container ' + (type==='avatar' ? 'avatar-crop' : 'banner-crop');
+
+        var cW = type==='avatar' ? 280 : Math.min(window.innerWidth - 32, 440);
+        var cH = type==='avatar' ? 280 : 140;
+        container.style.width  = cW + 'px';
+        container.style.height = cH + 'px';
+
+        var objectUrl = URL.createObjectURL(file);
+        var naturalW = 0, naturalH = 0;
+        var scale = 1, minScale = 1;
+        var tx = 0, ty = 0;
+
+        imgEl.onload = function() {
+          naturalW = imgEl.naturalWidth;
+          naturalH = imgEl.naturalHeight;
+          /* Fit image to cover the crop area */
+          var scaleX = cW / naturalW;
+          var scaleY = cH / naturalH;
+          minScale = Math.max(scaleX, scaleY);
+          scale = minScale;
+          tx = (cW - naturalW * scale) / 2;
+          ty = (cH - naturalH * scale) / 2;
+          applyTransform();
+        };
+        imgEl.src = objectUrl;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        function clamp() {
+          var iW = naturalW * scale;
+          var iH = naturalH * scale;
+          if (tx > 0) tx = 0;
+          if (ty > 0) ty = 0;
+          if (tx + iW < cW) tx = cW - iW;
+          if (ty + iH < cH) ty = cH - iH;
+        }
+
+        function applyTransform() {
+          imgEl.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+          imgEl.style.width  = naturalW + 'px';
+          imgEl.style.height = naturalH + 'px';
+        }
+
+        /* Touch handlers */
+        var lastTouches = null;
+        var lastDist    = 0;
+        var lastMid     = null;
+
+        function getTouchDist(t) {
+          var dx = t[0].clientX - t[1].clientX;
+          var dy = t[0].clientY - t[1].clientY;
+          return Math.sqrt(dx*dx + dy*dy);
+        }
+        function getTouchMid(t) {
+          return { x: (t[0].clientX + t[1].clientX)/2, y: (t[0].clientY + t[1].clientY)/2 };
+        }
+
+        container.addEventListener('touchstart', function(e){
+          e.preventDefault();
+          lastTouches = Array.from(e.touches);
+          if (lastTouches.length === 2) {
+            lastDist = getTouchDist(lastTouches);
+            lastMid  = getTouchMid(lastTouches);
+          }
+        }, {passive:false});
+
+        container.addEventListener('touchmove', function(e){
+          e.preventDefault();
+          var touches = Array.from(e.touches);
+          if (touches.length === 1 && lastTouches && lastTouches.length === 1) {
+            var dx = touches[0].clientX - lastTouches[0].clientX;
+            var dy = touches[0].clientY - lastTouches[0].clientY;
+            tx += dx; ty += dy;
+            clamp(); applyTransform();
+          } else if (touches.length === 2 && lastTouches && lastTouches.length === 2) {
+            var dist = getTouchDist(touches);
+            var mid  = getTouchMid(touches);
+            var ds   = dist / lastDist;
+            var newScale = Math.max(minScale, Math.min(scale * ds, minScale * 4));
+            /* Zoom toward pinch center */
+            var rect = container.getBoundingClientRect();
+            var px = mid.x - rect.left;
+            var py = mid.y - rect.top;
+            tx = px - (px - tx) * (newScale / scale);
+            ty = py - (py - ty) * (newScale / scale);
+            scale = newScale;
+            clamp(); applyTransform();
+            lastDist = dist;
+            /* Pan */
+            var dmx = mid.x - lastMid.x;
+            var dmy = mid.y - lastMid.y;
+            tx += dmx; ty += dmy;
+            clamp(); applyTransform();
+            lastMid = mid;
+          }
+          lastTouches = touches;
+        }, {passive:false});
+
+        /* Mouse support for desktop */
+        var dragging = false, dragStart = null;
+        container.addEventListener('mousedown', function(e){
+          dragging=true; dragStart={x:e.clientX-tx, y:e.clientY-ty};
+        });
+        container.addEventListener('mousemove', function(e){
+          if(!dragging) return;
+          tx=e.clientX-dragStart.x; ty=e.clientY-dragStart.y;
+          clamp(); applyTransform();
+        });
+        container.addEventListener('mouseup', function(){ dragging=false; });
+        container.addEventListener('wheel', function(e){
+          e.preventDefault();
+          var ds = e.deltaY < 0 ? 1.1 : 0.9;
+          var ns = Math.max(minScale, Math.min(scale*ds, minScale*4));
+          var rect = container.getBoundingClientRect();
+          var px=e.clientX-rect.left; var py=e.clientY-rect.top;
+          tx=px-(px-tx)*(ns/scale); ty=py-(py-ty)*(ns/scale);
+          scale=ns; clamp(); applyTransform();
+        }, {passive:false});
+
+        /* Save — draw cropped area to canvas */
+        saveBtn.disabled = false;
+        var savedSave = saveBtn.onclick;
+        saveBtn.onclick = function() {
+          saveBtn.disabled = true;
+          var outW = type==='avatar' ? 400  : 1200;
+          var outH = type==='avatar' ? 400  : 400;
+          var cropRatio = outW / cW;
+          var canvas = document.createElement('canvas');
+          canvas.width  = outW;
+          canvas.height = outH;
+          var ctx = canvas.getContext('2d');
+          /* Draw: map container coords back to image coords */
+          ctx.drawImage(imgEl,
+            -tx / scale, -ty / scale,   /* sx, sy in image coords */
+            cW / scale,  cH / scale,    /* sw, sh in image coords */
+            0, 0, outW, outH            /* destination */
+          );
+          canvas.toBlob(function(blob){
+            URL.revokeObjectURL(objectUrl);
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+            resolve(blob);
+          }, 'image/webp', 0.88);
+        };
+      });
+    }
+
+    /* Upload helper — upload blob to Bunny and save URL */
+    async function uploadAndSavePhoto(blob, type) {
+      var upRes = await fetch('/api/upload', {method:'PUT', credentials:'include',
+        headers:{'Content-Type':'image/webp'}, body:blob});
+      var upData = await upRes.json();
+      if (!upData.ok) return;
+      var cdnUrl = upData.url;
+      var payload = {}; payload[type==='banner'?'banner_url':'avatar_url'] = cdnUrl;
+      await fetch('/api/profile', {method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+      /* Update UI */
+      if (type==='banner') {
+        var pg = document.getElementById('page-more');
+        var hero = pg && pg.querySelector('.prof-hero');
+        if (hero) {
+          var existing = hero.querySelector('img.prof-banner-img');
+          if (existing) { existing.src = cdnUrl; }
+          else { var ni=document.createElement('img'); ni.className='prof-banner-img'; ni.src=cdnUrl; ni.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;'; hero.insertBefore(ni,hero.firstChild); }
+        }
+      } else {
+        var aw3 = document.getElementById('user-avatar-wrap');
+        if(aw3) aw3.innerHTML='<img src="'+cdnUrl+'" style="width:100%;height:100%;object-fit:cover;"><div class="prof-avatar-cam"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>';
+        if(window.currentUser) window.currentUser.picture = cdnUrl;
+      }
+      var toast3 = document.getElementById('toast');
+      if(toast3){toast3.textContent='Photo updated!';toast3.classList.add('show');setTimeout(function(){toast3.classList.remove('show');},2500);}
+    }
+
     function setupImageUpload(triggerEl, type) {
       if (!triggerEl) return;
       var inp = document.createElement('input');
@@ -3574,41 +3795,12 @@ async function votePoll(postId, idx, poll, container) {
       document.body.appendChild(inp);
       triggerEl.addEventListener('click', function(e){ e.stopPropagation(); inp.click(); });
       inp.addEventListener('change', async function(e){
-        var file=e.target.files[0]; if(!file) return;
-        var img2=new Image(); var url3=URL.createObjectURL(file);
-        img2.onload=async function(){
-          var maxW=type==='banner'?1200:400;
-          var ratio=Math.min(maxW/img2.width,1);
-          var canvas=document.createElement('canvas');
-          canvas.width=Math.round(img2.width*ratio); canvas.height=Math.round(img2.height*ratio);
-          canvas.getContext('2d').drawImage(img2,0,0,canvas.width,canvas.height);
-          URL.revokeObjectURL(url3);
-          canvas.toBlob(async function(blob){
-            try{
-              var upRes=await fetch('/api/upload',{method:'PUT',credentials:'include',headers:{'Content-Type':'image/webp'},body:blob});
-              var upData=await upRes.json();
-              if(!upData.ok) return;
-              var cdnUrl=upData.url;
-              var payload={}; payload[type==='banner'?'banner_url':'avatar_url']=cdnUrl;
-              await fetch('/api/profile',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-              if(type==='banner'){
-                var pg=document.getElementById('page-more');
-                var hero=pg&&pg.querySelector('.prof-hero');
-                if(hero){
-                  var existing=hero.querySelector('img.prof-banner-img');
-                  if(existing){ existing.src=cdnUrl; }
-                  else{ var ni=document.createElement('img'); ni.className='prof-banner-img'; ni.src=cdnUrl; ni.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;'; hero.insertBefore(ni,hero.firstChild); }
-                }
-              } else {
-                var aw2=document.getElementById('user-avatar-wrap');
-                if(aw2) aw2.innerHTML='<img src="'+cdnUrl+'" style="width:100%;height:100%;object-fit:cover;"><div class="prof-avatar-cam"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>';
-                if(window.currentUser) window.currentUser.picture=cdnUrl;
-              }
-              var toast3=document.getElementById('toast');
-              if(toast3){toast3.textContent='Photo updated!';toast3.classList.add('show');setTimeout(function(){toast3.classList.remove('show');},2500);}
-            }catch(err){}
-          },'image/webp',0.85);
-        }; img2.src=url3;
+        var file = e.target.files[0]; if(!file) return;
+        e.target.value = '';
+        try {
+          var blob = await openCropModal(file, type);
+          await uploadAndSavePhoto(blob, type);
+        } catch(err) {}
       });
     }
     var pg2=document.getElementById('page-more');
