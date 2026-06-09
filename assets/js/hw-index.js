@@ -4678,6 +4678,25 @@ async function votePoll(postId, idx, poll, container) {
     '.post-report-btn{background:none;border:none;color:var(--text-muted);font-size:0.68rem;cursor:pointer;padding:0.2rem 0.5rem;border-radius:8px;font-family:var(--font-b);transition:color 0.2s;}',
     '.post-report-btn:active{color:#cc4444;}',
     '.post-report-btn.reported{color:#cc4444;pointer-events:none;}',
+    /* Report category sheet */
+    '.rep-sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:350;opacity:0;pointer-events:none;transition:opacity 0.22s;}',
+    '.rep-sheet-overlay.open{opacity:1;pointer-events:all;}',
+    '.rep-sheet{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);z-index:351;padding:0.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);}',
+    '.rep-sheet.open{transform:translateY(0);}',
+    '.rep-sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 0.85rem;}',
+    '.rep-sheet-title{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;margin-bottom:0.75rem;color:var(--text);}',
+    '.rep-cat-btn{display:flex;align-items:center;gap:0.75rem;width:100%;background:none;border:none;border-bottom:1px solid var(--border);padding:0.8rem 0;cursor:pointer;text-align:left;}',
+    '.rep-cat-btn:last-child{border-bottom:none;}',
+    '.rep-cat-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}',
+    '.rep-cat-underage .rep-cat-icon{background:rgba(204,0,0,0.15);}',
+    '.rep-cat-copyright .rep-cat-icon{background:rgba(255,69,0,0.12);}',
+    '.rep-cat-spam .rep-cat-icon{background:rgba(255,184,0,0.12);}',
+    '.rep-cat-hate .rep-cat-icon{background:rgba(108,143,255,0.12);}',
+    '.rep-cat-other .rep-cat-icon{background:var(--surface-3);}',
+    '.rep-cat-label{flex:1;}',
+    '.rep-cat-name{font-size:0.85rem;color:var(--text);display:block;margin-bottom:0.1rem;}',
+    '.rep-cat-desc{font-size:0.68rem;color:var(--text-dim);}',
+    '.rep-cat-underage .rep-cat-name{color:#ff4444;}',
     '.post-comment-btn{display:inline-flex;align-items:center;gap:0.3rem;background:none;border:none;color:var(--text-dim);font-size:0.72rem;cursor:pointer;padding:0.2rem 0.5rem;border-radius:8px;font-family:var(--font-b);}',
     '.post-comment-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}',
     '.post-comment-btn:active{color:var(--text);}',
@@ -4765,6 +4784,62 @@ async function votePoll(postId, idx, poll, container) {
   function saveReported() {
     try { localStorage.setItem('hw_reported_posts', JSON.stringify([...REPORTED_POSTS])); } catch(e){}
   }
+
+  /* ── Report sheet ── */
+  var repOverlay = document.createElement('div'); repOverlay.className='rep-sheet-overlay'; repOverlay.id='rep-sheet-overlay';
+  var repSheet   = document.createElement('div'); repSheet.className='rep-sheet'; repSheet.id='rep-sheet';
+  repSheet.innerHTML =
+    '<div class="rep-sheet-handle"></div>'
+    + '<div class="rep-sheet-title">Report Content</div>'
+    + '<button class="rep-cat-btn rep-cat-underage" data-rep-cat="underage">'
+      + '<div class="rep-cat-icon">&#128683;</div>'
+      + '<div class="rep-cat-label">'
+        + '<span class="rep-cat-name">&#9888; Underage Content</span>'
+        + '<span class="rep-cat-desc">Content that may depict minors — removed immediately</span>'
+      + '</div></button>'
+    + '<button class="rep-cat-btn rep-cat-copyright" data-rep-cat="copyright">'
+      + '<div class="rep-cat-icon">&#169;</div>'
+      + '<div class="rep-cat-label">'
+        + '<span class="rep-cat-name">Copyright / DMCA</span>'
+        + '<span class="rep-cat-desc">This content belongs to me or someone else</span>'
+      + '</div></button>'
+    + '<button class="rep-cat-btn rep-cat-spam" data-rep-cat="spam">'
+      + '<div class="rep-cat-icon">&#128231;</div>'
+      + '<div class="rep-cat-label">'
+        + '<span class="rep-cat-name">Spam or Links</span>'
+        + '<span class="rep-cat-desc">Unwanted advertising or external links</span>'
+      + '</div></button>'
+    + '<button class="rep-cat-btn rep-cat-hate" data-rep-cat="hate">'
+      + '<div class="rep-cat-icon">&#128308;</div>'
+      + '<div class="rep-cat-label">'
+        + '<span class="rep-cat-name">Hate Speech</span>'
+        + '<span class="rep-cat-desc">Harassment, discrimination or threats</span>'
+      + '</div></button>'
+    + '<button class="rep-cat-btn rep-cat-other" data-rep-cat="other">'
+      + '<div class="rep-cat-icon">&#8943;</div>'
+      + '<div class="rep-cat-label">'
+        + '<span class="rep-cat-name">Other</span>'
+        + '<span class="rep-cat-desc">Something else that violates the rules</span>'
+      + '</div></button>';
+  document.body.appendChild(repOverlay);
+  document.body.appendChild(repSheet);
+
+  var currentReportPostId = null;
+
+  function openReportSheet(postId) {
+    currentReportPostId = postId;
+    repOverlay.classList.add('open'); repSheet.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeReportSheet() {
+    repOverlay.classList.remove('open'); repSheet.classList.remove('open');
+    document.body.style.overflow = '';
+    currentReportPostId = null;
+  }
+  repOverlay.addEventListener('click', closeReportSheet);
+  var repSY=0;
+  repSheet.addEventListener('touchstart',function(e){repSY=e.touches[0].clientY;},{passive:true});
+  repSheet.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-repSY>50)closeReportSheet();},{passive:true});
 
   var LIKED_POSTS = new Set();
   try { LIKED_POSTS = new Set(JSON.parse(localStorage.getItem('hw_post_likes')||'[]')); } catch(e){}
@@ -5021,20 +5096,40 @@ async function votePoll(postId, idx, poll, container) {
       return;
     }
 
-    /* Report post */
+    /* Report post — abrir sheet de categorías */
     var reportBtn = e.target.closest('.post-report-btn[data-post-id]');
     if (reportBtn && !reportBtn.classList.contains('reported')) {
-      var postId = reportBtn.getAttribute('data-post-id');
+      openReportSheet(reportBtn.getAttribute('data-post-id'));
+      return;
+    }
+
+    /* Seleccionar categoría de reporte */
+    var catBtn = e.target.closest('.rep-cat-btn[data-rep-cat]');
+    if (catBtn && currentReportPostId) {
+      var cat = catBtn.getAttribute('data-rep-cat');
+      var pid = currentReportPostId;
+      closeReportSheet();
       try {
         await fetch('/api/posts', {
           method:'POST', credentials:'include',
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({action:'report', post_id: parseInt(postId)})
+          body: JSON.stringify({action:'report', post_id: parseInt(pid), category: cat})
         });
-        reportBtn.textContent = 'Reported';
-        reportBtn.classList.add('reported');
-        REPORTED_POSTS.add(postId);
-        saveReported();
+        /* Marcar como reportado en el DOM */
+        var btn2 = document.querySelector('.post-report-btn[data-post-id="'+pid+'"]');
+        if (btn2) { btn2.textContent = 'Reported'; btn2.classList.add('reported'); }
+        REPORTED_POSTS.add(pid); saveReported();
+        /* Si es underage — ocultar la card inmediatamente */
+        if (cat === 'underage') {
+          var card = document.querySelector('.post-card[data-post-id="'+pid+'"]');
+          if (card) { card.style.opacity='0.3'; card.style.pointerEvents='none'; }
+        }
+        /* Toast */
+        var toast = document.getElementById('toast');
+        if (toast) {
+          toast.textContent = cat==='underage' ? '⚠ Reported and removed — thank you' : 'Reported — thank you';
+          toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 3000);
+        }
       } catch(e){}
       return;
     }
