@@ -330,131 +330,141 @@
 
   /* Mini profile sheet */
   function closeMiniProfile() {
-    var s = document.getElementById('mini-profile-sheet');
-    var o = document.getElementById('mini-overlay');
-    if (s) { s.style.transform = 'translateY(100%)'; setTimeout(function(){ s.remove(); }, 350); }
-    if (o) o.remove();
-    document.body.style.overflow = '';
+    var page = document.getElementById('page-user-profile');
+    if (page) {
+      page.style.transform = 'translateX(100%)';
+      setTimeout(function(){ page.style.display = 'none'; page.style.transform = ''; }, 320);
+    }
   }
 
   function openMiniProfile(uid, name) {
-    var existing = document.getElementById('mini-profile-sheet');
-    if (existing) existing.remove();
-    var existOv = document.getElementById('mini-overlay');
-    if (existOv) existOv.remove();
+    /* Crear o reutilizar la página de perfil */
+    var page = document.getElementById('page-user-profile');
+    if (!page) {
+      page = document.createElement('div');
+      page.id = 'page-user-profile';
+      page.style.cssText = (
+        'position:fixed;inset:0;background:var(--bg);z-index:250;'
+        + 'display:none;flex-direction:column;max-width:480px;margin:0 auto;'
+        + 'transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);'
+      );
+      document.body.appendChild(page);
+    }
 
-    /* Overlay */
-    var overlay = document.createElement('div');
-    overlay.id = 'mini-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:399;';
-    overlay.addEventListener('click', closeMiniProfile);
-    document.body.appendChild(overlay);
-
-    /* Sheet — full profile viewer */
-    var sheet = document.createElement('div');
-    sheet.id = 'mini-profile-sheet';
-    sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;'
-      + 'background:var(--bg);border-radius:20px 20px 0 0;border-top:1px solid var(--border);'
-      + 'z-index:400;max-height:88vh;display:flex;flex-direction:column;'
-      + 'transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);';
-
-    sheet.innerHTML =
-      /* Handle + close */
-      '<div style="display:flex;align-items:center;padding:0.6rem 1rem 0.4rem;flex-shrink:0;">'
-        + '<div style="flex:1;display:flex;justify-content:center;">'
-          + '<div style="width:36px;height:4px;background:var(--border);border-radius:2px;"></div>'
+    /* Limpiar y construir contenido */
+    page.style.display = 'flex';
+    page.innerHTML =
+      /* Header con back button */
+      '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem 0.5rem;'
+        + 'border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">'
+        + '<button id="user-prof-back" style="background:none;border:none;color:var(--text);'
+          + 'width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">'
+          + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
+          + '<polyline points="15 18 9 12 15 6"/></svg>'
+        + '</button>'
+        + '<div id="user-prof-topname" style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;">'
+          + escH(name||'Profile') + '</div>'
+      + '</div>'
+      /* Scrollable content */
+      + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">'
+        /* Hero */
+        + '<div style="height:100px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;overflow:hidden;">'
+          + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;"></div>'
+          + '<div style="position:absolute;inset:0;opacity:0.05;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'
         + '</div>'
-        + '<button id="mini-close-btn" style="background:none;border:none;color:var(--text-dim);'
-          + 'font-size:1.1rem;cursor:pointer;padding:0.2rem 0.4rem;line-height:1;">&#10005;</button>'
-      + '</div>'
-      /* Hero + avatar */
-      + '<div style="height:80px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);'
-        + 'position:relative;flex-shrink:0;">'
-        + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.35) 0%,transparent 65%);pointer-events:none;"></div>'
-      + '</div>'
-      + '<div style="padding:0 1rem;margin-top:-28px;margin-bottom:0.65rem;flex-shrink:0;">'
-        + '<div id="mini-av" style="width:56px;height:56px;border-radius:50%;border:3px solid var(--bg);'
-          + 'background:var(--surface-2);display:flex;align-items:center;justify-content:center;'
-          + 'font-family:var(--font-d);font-size:1.4rem;overflow:hidden;">'
-          + escH((name||'?').charAt(0).toUpperCase())
+        /* Avatar */
+        + '<div style="padding:0 1rem;margin-top:-28px;margin-bottom:0.65rem;">'
+          + '<div id="user-prof-av" style="width:62px;height:62px;border-radius:50%;border:3px solid var(--bg);'
+            + 'background:var(--surface-2);display:flex;align-items:center;justify-content:center;'
+            + 'font-family:var(--font-d);font-size:1.5rem;overflow:hidden;">'
+            + escH((name||'?').charAt(0).toUpperCase())
+          + '</div>'
         + '</div>'
-      + '</div>'
-      /* Info */
-      + '<div style="padding:0 1rem 0.65rem;flex-shrink:0;">'
-        + '<div style="font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.05em;margin-bottom:0.15rem;">'
-          + escH(name||'User') + '</div>'
-        + '<div id="mini-badge" style="font-size:0.62rem;color:var(--text-dim);margin-bottom:0.4rem;"></div>'
-        + '<div id="mini-bio" style="font-size:0.78rem;color:var(--text-dim);line-height:1.4;"></div>'
-      + '</div>'
-      /* Posts feed */
-      + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.5rem 1rem 2rem;">'
-        + '<div style="font-size:0.65rem;color:var(--text-muted);letter-spacing:0.12em;'
-          + 'text-transform:uppercase;margin-bottom:0.65rem;">Posts</div>'
-        + '<div id="mini-posts-feed"></div>'
+        /* Info */
+        + '<div style="padding:0 1rem 0.75rem;">'
+          + '<div style="font-family:var(--font-d);font-size:1.2rem;letter-spacing:0.05em;margin-bottom:0.12rem;">'
+            + escH(name||'User') + '</div>'
+          + '<div id="user-prof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;'
+            + 'font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.55rem;border-radius:20px;'
+            + 'background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-bottom:0.4rem;"></div>'
+          + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;"></div>'
+        + '</div>'
+        /* Posts label */
+        + '<div style="padding:0 1rem;border-top:1px solid var(--border);padding-top:0.75rem;'
+          + 'font-size:0.65rem;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.65rem;">Posts</div>'
+        /* Posts feed */
+        + '<div id="user-prof-posts" style="padding:0 1rem 3rem;">'
+          + '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>'
+        + '</div>'
       + '</div>';
 
-    document.body.appendChild(sheet);
-    document.body.style.overflow = 'hidden';
-
-    /* Bind close button AFTER appending to DOM */
-    document.getElementById('mini-close-btn').addEventListener('click', closeMiniProfile);
-
-    /* Swipe down to close */
-    var sy = 0;
-    sheet.addEventListener('touchstart', function(e){ sy = e.touches[0].clientY; }, {passive:true});
-    sheet.addEventListener('touchend', function(e){ if (e.changedTouches[0].clientY - sy > 60) closeMiniProfile(); }, {passive:true});
-
+    /* Animate in */
     requestAnimationFrame(function(){ requestAnimationFrame(function(){
-      sheet.style.transform = 'translateY(0)';
+      page.style.transform = 'translateX(0)';
     }); });
 
-    /* Cargar badge + bio */
+    /* Back button */
+    document.getElementById('user-prof-back').addEventListener('click', closeMiniProfile);
+
+    /* Swipe right to go back */
+    var sx = 0;
+    page.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; }, {passive:true});
+    page.addEventListener('touchend', function(e){
+      if (e.changedTouches[0].clientX - sx > 70) closeMiniProfile();
+    }, {passive:true});
+
+    /* Cargar badge */
     fetch('/api/points?user_id=' + encodeURIComponent(uid))
       .then(function(r){ return r.json(); })
       .then(function(d){
-        var b = document.getElementById('mini-badge');
-        if (b) b.textContent = (d.badge||'') + ' ' + (d.level||'Rookie') + ' · ' + (d.points||0) + ' pts';
+        var b = document.getElementById('user-prof-badge');
+        if (b) {
+          b.textContent = (d.badge||'') + ' ' + (d.level||'Rookie');
+          var clsMap = {Rookie:'badge-rookie',Regular:'badge-regular',Soldier:'badge-soldier',VIP:'badge-vip'};
+          b.className = 'prof-badge ' + (clsMap[d.level]||'badge-rookie');
+        }
       }).catch(function(){});
 
+    /* Cargar bio + avatar */
     fetch('/api/profile?user_id=' + encodeURIComponent(uid))
       .then(function(r){ return r.json(); })
       .then(function(d){
-        var bio = document.getElementById('mini-bio');
+        var bio = document.getElementById('user-prof-bio');
         if (bio && d.bio) bio.textContent = d.bio;
       }).catch(function(){});
 
-    /* Cargar posts del usuario */
-    var pf = document.getElementById('mini-posts-feed');
-    if (pf) {
-      pf.innerHTML = '<div style="color:var(--text-dim);font-size:0.8rem;">Loading...</div>';
-      fetch('/api/posts?user_id=' + encodeURIComponent(uid))
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          var posts = d.posts || [];
-          if (!posts.length) {
-            pf.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:1.5rem 0;">No posts yet.</div>';
-            return;
+    /* Cargar posts */
+    fetch('/api/posts?user_id=' + encodeURIComponent(uid))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var pf = document.getElementById('user-prof-posts');
+        if (!pf) return;
+        var posts = d.posts || [];
+        if (!posts.length) {
+          pf.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:2rem 0;">No posts yet.</div>';
+          return;
+        }
+        pf.innerHTML = posts.map(function(p){
+          var mediaHtml = '';
+          if (p.image_url) {
+            var lo = p.image_url.toLowerCase().split('?')[0];
+            mediaHtml = lo.endsWith('.mp4')||lo.endsWith('.webm')
+              ? '<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:280px;object-fit:cover;" src="'+p.image_url+'" autoplay loop muted playsinline></video>'
+              : '<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:280px;object-fit:cover;" src="'+p.image_url+'" loading="lazy">';
           }
-          pf.innerHTML = posts.map(function(p){
-            var mediaHtml = '';
-            if (p.image_url) {
-              var lo = p.image_url.toLowerCase().split('?')[0];
-              mediaHtml = lo.endsWith('.mp4')||lo.endsWith('.webm')
-                ? '<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;" src="'+p.image_url+'" autoplay loop muted playsinline></video>'
-                : '<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;" src="'+p.image_url+'" loading="lazy">';
-            }
-            var body = p.body && p.body.trim() && p.body.trim()!==' ' ? '<div style="font-size:0.84rem;line-height:1.5;color:var(--text);margin-bottom:0.4rem;">'+escH(p.body)+'</div>' : '';
-            var t = (Date.now()-new Date(p.created_at).getTime())/1000;
-            var ago = t<60?'just now':t<3600?Math.floor(t/60)+'m ago':t<86400?Math.floor(t/3600)+'h ago':Math.floor(t/86400)+'d ago';
-            return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:0.75rem;margin-bottom:0.65rem;">'
-              + mediaHtml + body
-              + '<div style="font-size:0.62rem;color:var(--text-muted);">'+ago+'</div>'
-            + '</div>';
-          }).join('');
-        }).catch(function(){
-          pf.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;">Could not load posts.</div>';
-        });
-    }
+          var body = p.body&&p.body.trim()&&p.body.trim()!==' '
+            ? '<div style="font-size:0.85rem;line-height:1.5;color:var(--text);margin-bottom:0.4rem;">'+escH(p.body)+'</div>' : '';
+          var t = (Date.now()-new Date(p.created_at).getTime())/1000;
+          var ago = t<60?'just now':t<3600?Math.floor(t/60)+'m ago':t<86400?Math.floor(t/3600)+'h ago':Math.floor(t/86400)+'d ago';
+          return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.75rem;">'
+            + mediaHtml + body
+            + '<div style="font-size:0.63rem;color:var(--text-muted);">'+ago+'</div>'
+          + '</div>';
+        }).join('');
+      }).catch(function(){
+        var pf2 = document.getElementById('user-prof-posts');
+        if (pf2) pf2.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Could not load posts.</div>';
+      });
   }
 
   /* ── Delegation: Like comment ── */
