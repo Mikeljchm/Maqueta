@@ -1109,9 +1109,11 @@ async function handleUserPosts(request, env, corsH) {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     post_id INTEGER NOT NULL,
     reporter_id TEXT NOT NULL,
+    category TEXT DEFAULT 'other',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(post_id, reporter_id)
   )`).run();
+  try { await env.DB.prepare("ALTER TABLE post_reports ADD COLUMN category TEXT DEFAULT 'other'").run(); } catch(e){}
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS banned_users (
     user_id TEXT PRIMARY KEY,
     reason TEXT DEFAULT '',
@@ -1184,20 +1186,25 @@ async function handleUserPosts(request, env, corsH) {
     if (action === 'report') {
       if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
       const postId = parseInt(body.post_id);
+      const category = ['underage','copyright','spam','hate','other'].includes(body.category)
+        ? body.category : 'other';
       try {
         await env.DB.prepare(
-          'INSERT INTO post_reports (post_id,reporter_id) VALUES (?,?)'
-        ).bind(postId, session.id).run();
-        /* Incrementar count */
+          'INSERT INTO post_reports (post_id,reporter_id,category) VALUES (?,?,?)'
+        ).bind(postId, session.id, category).run();
         await env.DB.prepare(
           'UPDATE user_posts SET report_count=report_count+1 WHERE id=?'
         ).bind(postId).run();
-        /* Auto-ocultar si >= 3 reportes */
-        await env.DB.prepare(
-          'UPDATE user_posts SET hidden=1 WHERE id=? AND report_count >= 3'
-        ).bind(postId).run();
+        /* Underage — ocultar inmediatamente sin esperar 3 reportes */
+        if (category === 'underage') {
+          await env.DB.prepare('UPDATE user_posts SET hidden=1 WHERE id=?').bind(postId).run();
+        } else {
+          await env.DB.prepare(
+            'UPDATE user_posts SET hidden=1 WHERE id=? AND report_count >= 3'
+          ).bind(postId).run();
+        }
       } catch(e) { /* Ya reportó */ }
-      return apiJson({ ok: true }, 200, corsH);
+      return apiJson({ ok: true, category }, 200, corsH);
     }
 
     /* Admin: ocultar/restaurar post */
