@@ -4626,7 +4626,12 @@ async function votePoll(postId, idx, poll, container) {
           + '<div class="post-card-date">'+timeAgo(p.created_at)+'</div>'
         + '</div>'
       + '</div>'
-      + (p.image_url ? '<img class="post-card-img" src="'+p.image_url+'" loading="lazy" alt="">' : '')
+      + (p.image_url ? (function(u){
+          var lo = u.toLowerCase().split('?')[0];
+          return lo.endsWith('.mp4')||lo.endsWith('.webm')
+            ? '<video class="post-card-img" src="'+u+'" autoplay loop muted playsinline controls></video>'
+            : '<img class="post-card-img" src="'+u+'" loading="lazy" alt="">';
+        })(p.image_url) : '')
       + (p.body && p.body.trim() && p.body.trim() !== ' ' ? '<div class="post-card-body">'+escH(p.body)+'</div>' : '')
       + '<div class="post-card-actions">'
         + '<button class="post-like-btn'+(LIKED_POSTS.has(String(p.id))?' liked':'')+'" data-post-id="'+p.id+'">'
@@ -4690,8 +4695,8 @@ async function votePoll(postId, idx, poll, container) {
           + '<div class="posts-sheet-toolbar">'
             + '<button class="posts-photo-btn" id="posts-photo-btn">'
               + '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
-              + 'Photo</button>'
-            + '<input type="file" id="posts-file-input" accept="image/*" style="display:none">'
+              + 'Photo / Video</button>'
+            + '<input type="file" id="posts-file-input" accept="image/*,video/mp4,video/webm,.gif" style="display:none">'
           + '</div>'
           + '<div class="posts-sheet-footer">'
             + '<div class="posts-sheet-rules">No links &bull; No religion hate &bull; Keep it real &bull; Violations = ban</div>'
@@ -4703,6 +4708,7 @@ async function votePoll(postId, idx, poll, container) {
         /* ── Foto: Canvas compressor ── */
         var pendingImgBlob = null;
         var pendingImgUrl  = null;
+        var pendingImgType = 'image/webp';
 
         function clearPendingImg() {
           pendingImgBlob = null; pendingImgUrl = null;
@@ -4717,6 +4723,29 @@ async function votePoll(postId, idx, poll, container) {
         document.getElementById('posts-file-input').addEventListener('change', function(e){
           var file = e.target.files[0];
           if (!file) return;
+          var isVideo = file.type.startsWith('video/');
+          var isGif   = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+
+          if (isVideo || isGif) {
+            /* Skip Canvas — subir directo */
+            if (file.size > 30 * 1024 * 1024) {
+              var t=document.getElementById('toast'); if(t){t.textContent='Max 30MB';t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);} return;
+            }
+            pendingImgBlob = file;
+            pendingImgType = file.type;
+            var url2 = URL.createObjectURL(file);
+            var wrap = document.getElementById('posts-img-wrap-area');
+            var mediaTag = isVideo
+              ? '<video class="posts-img-preview" src="'+url2+'" autoplay loop muted playsinline></video>'
+              : '<img class="posts-img-preview" src="'+url2+'">';
+            if (wrap) wrap.innerHTML = '<div class="posts-img-wrap">'+mediaTag
+              + '<button class="posts-img-remove" id="posts-img-remove">&#10005;</button></div>';
+            var rmBtn = document.getElementById('posts-img-remove');
+            if (rmBtn) rmBtn.addEventListener('click', function(){ clearPendingImg(); e.target.value=''; });
+            return;
+          }
+
+          /* Imagen normal — comprimir con Canvas */
           var img = new Image();
           var url = URL.createObjectURL(file);
           img.onload = function(){
@@ -4729,10 +4758,9 @@ async function votePoll(postId, idx, poll, container) {
             canvas.toBlob(function(blob){
               URL.revokeObjectURL(url);
               pendingImgBlob = blob;
-              /* Mostrar preview */
+              pendingImgType = 'image/webp';
               var reader = new FileReader();
               reader.onload = function(ev){
-                pendingImgUrl = ev.target.result;
                 var wrap = document.getElementById('posts-img-wrap-area');
                 if (wrap) wrap.innerHTML = '<div class="posts-img-wrap">'
                   + '<img class="posts-img-preview" src="'+ev.target.result+'">'
@@ -4767,7 +4795,7 @@ async function votePoll(postId, idx, poll, container) {
             if (pendingImgBlob) {
               var upRes = await fetch('/api/upload', {
                 method:'PUT', credentials:'include',
-                headers:{'Content-Type':'image/webp'},
+                headers:{'Content-Type': pendingImgType || 'image/webp'},
                 body: pendingImgBlob
               });
               var upData = await upRes.json();
