@@ -29,7 +29,9 @@
     '.cp-av{width:32px;height:32px;border-radius:50%;background:var(--surface-3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.85rem;color:var(--text-dim);overflow:hidden;}',
     '.cp-av img{width:100%;height:100%;object-fit:cover;}',
     '.cp-body{flex:1;min-width:0;}',
-    '.cp-username{font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.04em;color:var(--text);margin-bottom:0.2rem;}',
+    '.cp-username{font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.04em;color:var(--text);margin-bottom:0.2rem;cursor:pointer;transition:color 0.15s;}',
+    '.cp-username:hover{color:var(--fire-orange);}',
+    '.cp-av{cursor:pointer;}',
     '.cp-text{font-size:0.85rem;line-height:1.5;color:var(--text);word-break:break-word;}',
     '.cp-text-reply-to{color:var(--fire-orange);font-size:0.8rem;}',
     '.cp-sticker{width:72px;border-radius:10px;display:block;}',
@@ -224,10 +226,13 @@
       ? '<button class="cp-reply-btn" data-comment-id="' + (row.id||'') + '" data-comment-user="' + escH(row.user_name||'') + '">Reply</button>'
       : '';
 
+    var uid = row.user_id || '';
     item.innerHTML =
-      '<div class="cp-av">' + avContent + '</div>'
+      '<div class="cp-av" data-profile-uid="'+uid+'" data-profile-name="'+escH(row.user_name||'')+'">'
+        + avContent + '</div>'
       + '<div class="cp-body">'
-        + '<div class="cp-username">' + escH(row.user_name || 'Anonymous') + '</div>'
+        + '<div class="cp-username" data-profile-uid="'+uid+'" data-profile-name="'+escH(row.user_name||'')+'">'
+          + escH(row.user_name || 'Anonymous') + '</div>'
         + bodyHtml
         + '<div class="cp-meta">'
           + '<span class="cp-time">' + timeAgo(row.created_at) + '</span>'
@@ -304,6 +309,72 @@
         viewBtn.innerHTML = svgHtml + 'Hide repl' + (n === 1 ? 'y' : 'ies');
       })
       .catch(function(){ repliesList.innerHTML = ''; });
+  }
+
+  /* ── Delegation: Open user profile from comment ── */
+  document.addEventListener('click', function(e) {
+    var el = e.target.closest('[data-profile-uid]');
+    if (!el) return;
+    var uid  = el.getAttribute('data-profile-uid');
+    var name = el.getAttribute('data-profile-name');
+    if (!uid) return;
+    /* Si es el propio usuario — abrir su perfil */
+    if (window.currentUser && uid === window.currentUser.id) {
+      var moreNav = document.querySelector('.nav-item[data-page="more"]');
+      if (moreNav) moreNav.click();
+      return;
+    }
+    /* Usuario externo — mostrar mini perfil sheet */
+    openMiniProfile(uid, name);
+  });
+
+  /* Mini profile sheet */
+  function openMiniProfile(uid, name) {
+    var existing = document.getElementById('mini-profile-sheet');
+    if (existing) existing.remove();
+    var sheet = document.createElement('div');
+    sheet.id = 'mini-profile-sheet';
+    sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;'
+      + 'background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);'
+      + 'z-index:400;padding:0.5rem 1.25rem 2.5rem;transform:translateY(100%);'
+      + 'transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);';
+    sheet.innerHTML =
+      '<div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem;"></div>'
+      + '<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">'
+        + '<div id="mini-prof-av" style="width:52px;height:52px;border-radius:50%;background:var(--surface-2);'
+          + 'display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.2rem;overflow:hidden;">'
+          + escH((name||'?').charAt(0).toUpperCase()) + '</div>'
+        + '<div>'
+          + '<div style="font-family:var(--font-d);font-size:1rem;letter-spacing:0.05em;">'
+            + escH(name||'User') + '</div>'
+          + '<div id="mini-prof-badge" style="font-size:0.65rem;color:var(--text-dim);margin-top:0.15rem;"></div>'
+        + '</div>'
+      + '</div>'
+      + '<div id="mini-prof-stats" style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.5rem;"></div>'
+      + '<button onclick="document.getElementById(\"mini-profile-sheet\").remove();document.getElementById(\"mini-overlay\").remove();document.body.style.overflow=\"\";" '
+        + 'style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);'
+          + 'border-radius:12px;padding:0.6rem;font-family:var(--font-b);font-size:0.85rem;cursor:pointer;margin-top:0.5rem;">Close</button>';
+    var overlay = document.createElement('div');
+    overlay.id = 'mini-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:399;';
+    overlay.addEventListener('click', function(){
+      sheet.remove(); overlay.remove(); document.body.style.overflow='';
+    });
+    document.body.appendChild(overlay);
+    document.body.appendChild(sheet);
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      sheet.style.transform = 'translateY(0)';
+    }); });
+    /* Cargar puntos y badge del usuario */
+    fetch('/api/points?user_id=' + encodeURIComponent(uid))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var badge = document.getElementById('mini-prof-badge');
+        var stats = document.getElementById('mini-prof-stats');
+        if (badge) badge.textContent = (d.badge||'') + ' ' + (d.level||'Rookie') + ' · ' + (d.points||0) + ' pts';
+        if (stats && d.points >= 0) stats.textContent = '';
+      }).catch(function(){});
   }
 
   /* ── Delegation: Like comment ── */
