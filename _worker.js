@@ -1109,11 +1109,9 @@ async function handleUserPosts(request, env, corsH) {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     post_id INTEGER NOT NULL,
     reporter_id TEXT NOT NULL,
-    category TEXT DEFAULT 'other',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(post_id, reporter_id)
   )`).run();
-  try { await env.DB.prepare("ALTER TABLE post_reports ADD COLUMN category TEXT DEFAULT 'other'").run(); } catch(e){}
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS banned_users (
     user_id TEXT PRIMARY KEY,
     reason TEXT DEFAULT '',
@@ -1186,25 +1184,20 @@ async function handleUserPosts(request, env, corsH) {
     if (action === 'report') {
       if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
       const postId = parseInt(body.post_id);
-      const category = ['underage','copyright','spam','hate','other'].includes(body.category)
-        ? body.category : 'other';
       try {
         await env.DB.prepare(
-          'INSERT INTO post_reports (post_id,reporter_id,category) VALUES (?,?,?)'
-        ).bind(postId, session.id, category).run();
+          'INSERT INTO post_reports (post_id,reporter_id) VALUES (?,?)'
+        ).bind(postId, session.id).run();
+        /* Incrementar count */
         await env.DB.prepare(
           'UPDATE user_posts SET report_count=report_count+1 WHERE id=?'
         ).bind(postId).run();
-        /* Underage — ocultar inmediatamente sin esperar 3 reportes */
-        if (category === 'underage') {
-          await env.DB.prepare('UPDATE user_posts SET hidden=1 WHERE id=?').bind(postId).run();
-        } else {
-          await env.DB.prepare(
-            'UPDATE user_posts SET hidden=1 WHERE id=? AND report_count >= 3'
-          ).bind(postId).run();
-        }
+        /* Auto-ocultar si >= 3 reportes */
+        await env.DB.prepare(
+          'UPDATE user_posts SET hidden=1 WHERE id=? AND report_count >= 3'
+        ).bind(postId).run();
       } catch(e) { /* Ya reportó */ }
-      return apiJson({ ok: true, category }, 200, corsH);
+      return apiJson({ ok: true }, 200, corsH);
     }
 
     /* Admin: ocultar/restaurar post */
@@ -1271,6 +1264,172 @@ async function handleUpload(request, env, corsH) {
   return apiJson({ ok: true, url: cdnUrl }, 200, corsH);
 }
 
+
+async function handleCommunities(request, env, corsH) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS communities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    category TEXT DEFAULT 'other',
+    cover_url TEXT DEFAULT '',
+    creator_id TEXT NOT NULL,
+    creator_name TEXT NOT NULL,
+    member_count INTEGER DEFAULT 1,
+    post_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS community_members (
+    community_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(community_id, user_id)
+  )`).run();
+
+  const url = new URL(request.url);
+  const session = getSession(request);
+
+  if (request.method === 'GET') {
+    const category = url.searchParams.get('category');
+    const search   = url.searchParams.get('q');
+    let query = 'SELECT * FROM communities';
+    const params = [];
+    const filters = [];
+    if (category && category !== 'all') { filters.push('category=?'); params.push(category); }
+    if (search) { filters.push('(name LIKE ? OR description LIKE ?)'); params.push('%'+search+'%','%'+search+'%'); }
+    if (filters.length) query += ' WHERE ' + filters.join(' AND ');
+    query += ' ORDER BY member_count DESC, created_at DESC LIMIT 50';
+    const { results } = await env.DB.prepare(query).bind(...params).all();
+    /* Marcar si el usuario es miembro */
+    if (session && results.length) {
+      const ids = results.map(function(r){ return r.id; });
+      const ph  = ids.map(function(){ return '?'; }).join(',');
+      const { results: memberships } = await env.DB.prepare(
+        'SELECT community_id FROM community_members WHERE user_id=? AND community_id IN ('+ph+')'
+      ).bind(session.id, ...ids).all();
+      const memberSet = new Set(memberships.map(function(m){ return m.community_id; }));
+      results.forEach(function(r){ r.is_member = memberSet.has(r.id); });
+    }
+    return apiJson({ communities: results }, 200, corsH);
+  }
+
+  if (request.method === 'POST') {
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const body = await request.json();
+
+    if (body.action === 'create') {
+      const name = (body.name||'').trim().slice(0,60);
+      if (!name) return apiJson({ error: 'Name required' }, 400, corsH);
+      const desc = (body.description||'').trim().slice(0,300);
+      const cat  = ['wrestling','fantasies','badboys','bulge','stories','ai','other'].includes(body.category)
+        ? body.category : 'other';
+      const result = await env.DB.prepare(
+        'INSERT INTO communities (name,description,category,creator_id,creator_name) VALUES (?,?,?,?,?)'
+      ).bind(name, desc, cat, session.id, session.name||session.email).run();
+      const newId = result.meta.last_row_id;
+      /* Auto-join creator */
+      await env.DB.prepare('INSERT OR IGNORE INTO community_members (community_id,user_id) VALUES (?,?)').bind(newId, session.id).run();
+      return apiJson({ ok: true, id: newId }, 200, corsH);
+    }
+
+    if (body.action === 'join' || body.action === 'leave') {
+      const cid = parseInt(body.community_id);
+      if (body.action === 'join') {
+        try {
+          await env.DB.prepare('INSERT INTO community_members (community_id,user_id) VALUES (?,?)').bind(cid, session.id).run();
+          await env.DB.prepare('UPDATE communities SET member_count=member_count+1 WHERE id=?').bind(cid).run();
+        } catch(e){}
+      } else {
+        await env.DB.prepare('DELETE FROM community_members WHERE community_id=? AND user_id=?').bind(cid, session.id).run();
+        await env.DB.prepare('UPDATE communities SET member_count=MAX(0,member_count-1) WHERE id=?').bind(cid).run();
+      }
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    return apiJson({ error: 'Unknown action' }, 400, corsH);
+  }
+
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
+async function handleCommunityPosts(request, env, corsH) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS community_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    community_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    user_name TEXT NOT NULL,
+    user_avatar TEXT DEFAULT '',
+    body TEXT DEFAULT '',
+    image_url TEXT DEFAULT '',
+    like_count INTEGER DEFAULT 0,
+    comment_count INTEGER DEFAULT 0,
+    hidden INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS community_post_likes (
+    post_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    UNIQUE(post_id, user_id)
+  )`).run();
+
+  const url = new URL(request.url);
+  const session = getSession(request);
+
+  if (request.method === 'GET') {
+    const communityId = url.searchParams.get('community_id');
+    if (!communityId) return apiJson({ error: 'community_id required' }, 400, corsH);
+    const { results } = await env.DB.prepare(
+      'SELECT id,community_id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,created_at FROM community_posts WHERE community_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
+    ).bind(parseInt(communityId)).all();
+    return apiJson({ posts: results }, 200, corsH);
+  }
+
+  if (request.method === 'POST') {
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const body = await request.json();
+
+    if (body.action === 'post') {
+      const text = (body.body||'').trim();
+      const imageUrl = (body.image_url||'').trim().slice(0,500);
+      if (!text && !imageUrl) return apiJson({ error: 'Empty post' }, 400, corsH);
+      if (containsLink(text)) return apiJson({ error: 'Links are not allowed.' }, 400, corsH);
+      const cid = parseInt(body.community_id);
+      const result = await env.DB.prepare(
+        'INSERT INTO community_posts (community_id,user_id,user_name,user_avatar,body,image_url) VALUES (?,?,?,?,?,?)'
+      ).bind(cid, session.id, session.name||session.email, session.picture||'', text, imageUrl).run();
+      await env.DB.prepare('UPDATE communities SET post_count=post_count+1 WHERE id=?').bind(cid).run();
+      await addPoints(env, session.id, 1);
+      return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
+    }
+
+    if (body.action === 'like') {
+      const postId = parseInt(body.post_id);
+      try {
+        await env.DB.prepare('INSERT INTO community_post_likes (post_id,user_id) VALUES (?,?)').bind(postId, session.id).run();
+        await env.DB.prepare('UPDATE community_posts SET like_count=like_count+1 WHERE id=?').bind(postId).run();
+        await addPoints(env, session.id, 1);
+        return apiJson({ ok: true, liked: true }, 200, corsH);
+      } catch(e) {
+        await env.DB.prepare('DELETE FROM community_post_likes WHERE post_id=? AND user_id=?').bind(postId, session.id).run();
+        await env.DB.prepare('UPDATE community_posts SET like_count=MAX(0,like_count-1) WHERE id=?').bind(postId).run();
+        return apiJson({ ok: true, liked: false }, 200, corsH);
+      }
+    }
+
+    if (body.action === 'report') {
+      const postId = parseInt(body.post_id);
+      const category = body.category || 'other';
+      if (category === 'underage') {
+        await env.DB.prepare('UPDATE community_posts SET hidden=1 WHERE id=?').bind(postId).run();
+      }
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    return apiJson({ error: 'Unknown action' }, 400, corsH);
+  }
+
+  return apiJson({ error: 'Method not allowed' }, 405, corsH);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -1308,6 +1467,8 @@ export default {
           dbTest
         }), { headers: { 'Content-Type': 'application/json', ...corsH } });
       }
+      if (path === '/api/communities') return handleCommunities(request, env, corsH);
+      if (path === '/api/community-posts') return handleCommunityPosts(request, env, corsH);
       if (path === '/api/upload') return handleUpload(request, env, corsH);
       if (path === '/api/posts') return handleUserPosts(request, env, corsH);
       if (path === '/api/battles') return handleBattles(request, env, corsH);
