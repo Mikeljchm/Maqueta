@@ -365,21 +365,21 @@
         + '<div id="user-prof-topname" style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;">'
           + escH(name||'Profile') + '</div>'
       + '</div>'
-      /* Scrollable content */
+      /* Hero — FUERA del scroll para que el avatar no se corte */
+      + '<div style="height:100px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;">'
+        + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;"></div>'
+        + '<div style="position:absolute;inset:0;opacity:0.05;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'
+      + '</div>'
+      /* Avatar — fuera del scroll, con z-index para flotar sobre el hero */
+      + '<div style="padding:0 1rem;margin-top:-31px;margin-bottom:0.65rem;position:relative;z-index:2;flex-shrink:0;">'
+        + '<div id="user-prof-av" style="width:62px;height:62px;border-radius:50%;border:3px solid var(--bg);'
+          + 'background:var(--surface-2);display:flex;align-items:center;justify-content:center;'
+          + 'font-family:var(--font-d);font-size:1.5rem;overflow:hidden;">'
+          + escH((name||'?').charAt(0).toUpperCase())
+        + '</div>'
+      + '</div>'
+      /* Scrollable content — solo info + posts */
       + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">'
-        /* Hero */
-        + '<div style="height:100px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;overflow:hidden;">'
-          + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;"></div>'
-          + '<div style="position:absolute;inset:0;opacity:0.05;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'
-        + '</div>'
-        /* Avatar */
-        + '<div style="padding:0 1rem;margin-top:-28px;margin-bottom:0.65rem;">'
-          + '<div id="user-prof-av" style="width:62px;height:62px;border-radius:50%;border:3px solid var(--bg);'
-            + 'background:var(--surface-2);display:flex;align-items:center;justify-content:center;'
-            + 'font-family:var(--font-d);font-size:1.5rem;overflow:hidden;">'
-            + escH((name||'?').charAt(0).toUpperCase())
-          + '</div>'
-        + '</div>'
         /* Info */
         + '<div style="padding:0 1rem 0.75rem;">'
           + '<div style="font-family:var(--font-d);font-size:1.2rem;letter-spacing:0.05em;margin-bottom:0.12rem;">'
