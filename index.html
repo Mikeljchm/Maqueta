@@ -7,6 +7,13 @@ layout: none
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#000000">
+  <style>
+    @media (min-width:500px) {
+      html { background:#030202; }
+      #app { box-shadow:0 0 80px rgba(0,0,0,0.9); min-height:100vh; }
+      .bottom-nav { max-width:480px; left:50% !important; transform:translateX(-50%) !important; right:auto !important; }
+    }
+  </style>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="The hottest wrestling content. No filters, no censorship.">
@@ -55,7 +62,7 @@ layout: none
   </div>
 
   <!-- APP -->
-  <div id="app" style="display:none">
+  <div id="app" style="display:none;max-width:480px;margin:0 auto;position:relative;">
 
     <div id="top-strip">
       <header class="top-bar" id="top-bar">
