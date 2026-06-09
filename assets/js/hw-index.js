@@ -329,52 +329,132 @@
   });
 
   /* Mini profile sheet */
+  function closeMiniProfile() {
+    var s = document.getElementById('mini-profile-sheet');
+    var o = document.getElementById('mini-overlay');
+    if (s) { s.style.transform = 'translateY(100%)'; setTimeout(function(){ s.remove(); }, 350); }
+    if (o) o.remove();
+    document.body.style.overflow = '';
+  }
+
   function openMiniProfile(uid, name) {
     var existing = document.getElementById('mini-profile-sheet');
     if (existing) existing.remove();
+    var existOv = document.getElementById('mini-overlay');
+    if (existOv) existOv.remove();
+
+    /* Overlay */
+    var overlay = document.createElement('div');
+    overlay.id = 'mini-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:399;';
+    overlay.addEventListener('click', closeMiniProfile);
+    document.body.appendChild(overlay);
+
+    /* Sheet — full profile viewer */
     var sheet = document.createElement('div');
     sheet.id = 'mini-profile-sheet';
     sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;'
-      + 'background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);'
-      + 'z-index:400;padding:0.5rem 1.25rem 2.5rem;transform:translateY(100%);'
-      + 'transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);';
+      + 'background:var(--bg);border-radius:20px 20px 0 0;border-top:1px solid var(--border);'
+      + 'z-index:400;max-height:88vh;display:flex;flex-direction:column;'
+      + 'transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);';
+
     sheet.innerHTML =
-      '<div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem;"></div>'
-      + '<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">'
-        + '<div id="mini-prof-av" style="width:52px;height:52px;border-radius:50%;background:var(--surface-2);'
-          + 'display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.2rem;overflow:hidden;">'
-          + escH((name||'?').charAt(0).toUpperCase()) + '</div>'
-        + '<div>'
-          + '<div style="font-family:var(--font-d);font-size:1rem;letter-spacing:0.05em;">'
-            + escH(name||'User') + '</div>'
-          + '<div id="mini-prof-badge" style="font-size:0.65rem;color:var(--text-dim);margin-top:0.15rem;"></div>'
+      /* Handle + close */
+      '<div style="display:flex;align-items:center;padding:0.6rem 1rem 0.4rem;flex-shrink:0;">'
+        + '<div style="flex:1;display:flex;justify-content:center;">'
+          + '<div style="width:36px;height:4px;background:var(--border);border-radius:2px;"></div>'
+        + '</div>'
+        + '<button id="mini-close-btn" style="background:none;border:none;color:var(--text-dim);'
+          + 'font-size:1.1rem;cursor:pointer;padding:0.2rem 0.4rem;line-height:1;">&#10005;</button>'
+      + '</div>'
+      /* Hero + avatar */
+      + '<div style="height:80px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);'
+        + 'position:relative;flex-shrink:0;">'
+        + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.35) 0%,transparent 65%);pointer-events:none;"></div>'
+      + '</div>'
+      + '<div style="padding:0 1rem;margin-top:-28px;margin-bottom:0.65rem;flex-shrink:0;">'
+        + '<div id="mini-av" style="width:56px;height:56px;border-radius:50%;border:3px solid var(--bg);'
+          + 'background:var(--surface-2);display:flex;align-items:center;justify-content:center;'
+          + 'font-family:var(--font-d);font-size:1.4rem;overflow:hidden;">'
+          + escH((name||'?').charAt(0).toUpperCase())
         + '</div>'
       + '</div>'
-      + '<div id="mini-prof-stats" style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.5rem;"></div>'
-      + '<button onclick="document.getElementById(\"mini-profile-sheet\").remove();document.getElementById(\"mini-overlay\").remove();document.body.style.overflow=\"\";" '
-        + 'style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);'
-          + 'border-radius:12px;padding:0.6rem;font-family:var(--font-b);font-size:0.85rem;cursor:pointer;margin-top:0.5rem;">Close</button>';
-    var overlay = document.createElement('div');
-    overlay.id = 'mini-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:399;';
-    overlay.addEventListener('click', function(){
-      sheet.remove(); overlay.remove(); document.body.style.overflow='';
-    });
-    document.body.appendChild(overlay);
+      /* Info */
+      + '<div style="padding:0 1rem 0.65rem;flex-shrink:0;">'
+        + '<div style="font-family:var(--font-d);font-size:1.1rem;letter-spacing:0.05em;margin-bottom:0.15rem;">'
+          + escH(name||'User') + '</div>'
+        + '<div id="mini-badge" style="font-size:0.62rem;color:var(--text-dim);margin-bottom:0.4rem;"></div>'
+        + '<div id="mini-bio" style="font-size:0.78rem;color:var(--text-dim);line-height:1.4;"></div>'
+      + '</div>'
+      /* Posts feed */
+      + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.5rem 1rem 2rem;">'
+        + '<div style="font-size:0.65rem;color:var(--text-muted);letter-spacing:0.12em;'
+          + 'text-transform:uppercase;margin-bottom:0.65rem;">Posts</div>'
+        + '<div id="mini-posts-feed"></div>'
+      + '</div>';
+
     document.body.appendChild(sheet);
     document.body.style.overflow = 'hidden';
+
+    /* Bind close button AFTER appending to DOM */
+    document.getElementById('mini-close-btn').addEventListener('click', closeMiniProfile);
+
+    /* Swipe down to close */
+    var sy = 0;
+    sheet.addEventListener('touchstart', function(e){ sy = e.touches[0].clientY; }, {passive:true});
+    sheet.addEventListener('touchend', function(e){ if (e.changedTouches[0].clientY - sy > 60) closeMiniProfile(); }, {passive:true});
+
     requestAnimationFrame(function(){ requestAnimationFrame(function(){
       sheet.style.transform = 'translateY(0)';
     }); });
-    /* Cargar puntos y badge del usuario */
+
+    /* Cargar badge + bio */
     fetch('/api/points?user_id=' + encodeURIComponent(uid))
       .then(function(r){ return r.json(); })
       .then(function(d){
-        var badge = document.getElementById('mini-prof-badge');
-        var stats = document.getElementById('mini-prof-stats');
-        if (badge) badge.textContent = (d.badge||'') + ' ' + (d.level||'Rookie') + ' · ' + (d.points||0) + ' pts';
-        if (stats && d.points >= 0) stats.textContent = '';
+        var b = document.getElementById('mini-badge');
+        if (b) b.textContent = (d.badge||'') + ' ' + (d.level||'Rookie') + ' · ' + (d.points||0) + ' pts';
       }).catch(function(){});
+
+    fetch('/api/profile?user_id=' + encodeURIComponent(uid))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var bio = document.getElementById('mini-bio');
+        if (bio && d.bio) bio.textContent = d.bio;
+      }).catch(function(){});
+
+    /* Cargar posts del usuario */
+    var pf = document.getElementById('mini-posts-feed');
+    if (pf) {
+      pf.innerHTML = '<div style="color:var(--text-dim);font-size:0.8rem;">Loading...</div>';
+      fetch('/api/posts?user_id=' + encodeURIComponent(uid))
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var posts = d.posts || [];
+          if (!posts.length) {
+            pf.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:1.5rem 0;">No posts yet.</div>';
+            return;
+          }
+          pf.innerHTML = posts.map(function(p){
+            var mediaHtml = '';
+            if (p.image_url) {
+              var lo = p.image_url.toLowerCase().split('?')[0];
+              mediaHtml = lo.endsWith('.mp4')||lo.endsWith('.webm')
+                ? '<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;" src="'+p.image_url+'" autoplay loop muted playsinline></video>'
+                : '<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;" src="'+p.image_url+'" loading="lazy">';
+            }
+            var body = p.body && p.body.trim() && p.body.trim()!==' ' ? '<div style="font-size:0.84rem;line-height:1.5;color:var(--text);margin-bottom:0.4rem;">'+escH(p.body)+'</div>' : '';
+            var t = (Date.now()-new Date(p.created_at).getTime())/1000;
+            var ago = t<60?'just now':t<3600?Math.floor(t/60)+'m ago':t<86400?Math.floor(t/3600)+'h ago':Math.floor(t/86400)+'d ago';
+            return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:0.75rem;margin-bottom:0.65rem;">'
+              + mediaHtml + body
+              + '<div style="font-size:0.62rem;color:var(--text-muted);">'+ago+'</div>'
+            + '</div>';
+          }).join('');
+        }).catch(function(){
+          pf.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;">Could not load posts.</div>';
+        });
+    }
   }
 
   /* ── Delegation: Like comment ── */
