@@ -314,16 +314,24 @@ layout: none
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input id="comm-search-input" placeholder="Search communities..." maxlength="60">
         </div>
+        <!-- Sort tabs -->
+        <div class="thread-sort-tabs">
+          <button class="thread-sort-tab active" data-sort="trending">&#128293; Trending</button>
+          <button class="thread-sort-tab" data-sort="new">&#10024; New</button>
+          <button class="thread-sort-tab" data-sort="active">&#9889; Active</button>
+        </div>
         <!-- Category pills -->
         <div class="comm-cat-pills" id="comm-cat-pills">
           <button class="comm-cat-pill active" data-ccat="all">All</button>
           <button class="comm-cat-pill" data-ccat="wrestling">Wrestling</button>
-          <button class="comm-cat-pill" data-ccat="fantasies">Fantasies</button>
-          <button class="comm-cat-pill" data-ccat="badboys">Bad Boys</button>
-          <button class="comm-cat-pill" data-ccat="bulge">Bulge</button>
+          <button class="comm-cat-pill" data-ccat="fantasy">Fantasy</button>
           <button class="comm-cat-pill" data-ccat="stories">Stories</button>
-          <button class="comm-cat-pill" data-ccat="ai">AI</button>
+          <button class="comm-cat-pill" data-ccat="visual">Visual</button>
+          <button class="comm-cat-pill" data-ccat="discussion">Discussion</button>
+          <button class="comm-cat-pill" data-ccat="other">Other</button>
         </div>
+        <!-- Popular tags row -->
+        <div class="thread-tags-row" id="thread-tags-row"></div>
         <!-- Communities feed -->
         <div id="comm-feed">
           <div class="comm-loading">Loading communities...</div>
