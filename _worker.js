@@ -106,14 +106,14 @@ async function handleComments(request, env, corsH) {
     if (parent_id) {
       /* Replies de un comentario específico */
       const { results } = await env.DB.prepare(
-        'SELECT id, user_name, user_avatar, body, created_at, parent_id FROM comments WHERE post_id=? AND parent_id=? ORDER BY created_at ASC LIMIT 50'
+        'SELECT id, user_id, user_name, user_avatar, body, created_at, parent_id FROM comments WHERE post_id=? AND parent_id=? ORDER BY created_at ASC LIMIT 50'
       ).bind(post_id, parseInt(parent_id)).all();
       return apiJson({ comments: results }, 200, corsH);
     }
 
     /* Top-level comments con reply_count */
     const { results } = await env.DB.prepare(
-      'SELECT id, user_name, user_avatar, body, created_at FROM comments WHERE post_id=? AND (parent_id IS NULL OR parent_id=0) ORDER BY created_at ASC LIMIT 50'
+      'SELECT id, user_id, user_name, user_avatar, body, created_at FROM comments WHERE post_id=? AND (parent_id IS NULL OR parent_id=0) ORDER BY created_at ASC LIMIT 50'
     ).bind(post_id).all();
 
     /* Contar replies para cada top-level */
