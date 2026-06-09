@@ -3273,7 +3273,8 @@ async function votePoll(postId, idx, poll, container) {
     }
     if (id==='posts'){
       var pc=document.getElementById('posts-feed-container');
-      if (pc && typeof window.loadPostsFeed==='function') window.loadPostsFeed(pc);
+      var uid = window.currentUser ? window.currentUser.id : null;
+      if (pc && typeof window.loadPostsFeed==='function') window.loadPostsFeed(pc, uid);
     }
   });
 
@@ -3383,7 +3384,7 @@ async function votePoll(postId, idx, poll, container) {
       }).catch(function(){});
       if(adultToggle) adultToggle.checked=true;
       var pc=document.getElementById('posts-feed-container');
-      if(pc && typeof window.loadPostsFeed==='function') window.loadPostsFeed(pc);
+      if(pc && typeof window.loadPostsFeed==='function') window.loadPostsFeed(pc, user.id);
     } else {
       if(signinCard) signinCard.style.display='';
       if(tabs)       tabs.style.display='none';
@@ -4659,11 +4660,12 @@ async function votePoll(postId, idx, poll, container) {
     return html;
   }
 
-  window.loadPostsFeed = async function(container) {
+  window.loadPostsFeed = async function(container, userId) {
     if (!container) return;
     container.innerHTML = '<div class="posts-empty">Loading...</div>';
     try {
-      var r = await fetch('/api/posts');
+      var url = userId ? '/api/posts?user_id=' + encodeURIComponent(userId) : '/api/posts';
+      var r = await fetch(url);
       var d = await r.json();
       var posts = d.posts || [];
       var user  = window.currentUser;
