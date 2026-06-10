@@ -6001,8 +6001,17 @@ async function votePoll(postId, idx, poll, container) {
     /* Swipe right to back */
     var inner3=document.getElementById('comm-detail-inner'); var sx2=0;
     if(inner3){
-      inner3.addEventListener('touchstart',function(e){sx2=e.touches[0].clientX;},{passive:true});
-      inner3.addEventListener('touchend',function(e){ if(e.changedTouches[0].clientX-sx2>70) closeDetail(); },{passive:true});
+      var sy2=0;
+      inner3.addEventListener('touchstart',function(e){
+        sx2=e.touches[0].clientX;
+        sy2=e.touches[0].clientY;
+      },{passive:true});
+      inner3.addEventListener('touchend',function(e){
+        var dx=e.changedTouches[0].clientX-sx2;
+        var dy=Math.abs(e.changedTouches[0].clientY-sy2);
+        /* Solo cerrar si: empieza en el borde izquierdo (<35px) + swipe horizontal dominante + distancia suficiente */
+        if(sx2<35 && dx>60 && dx>dy*2) closeDetail();
+      },{passive:true});
     }
 
     loadThreadPosts(thread.id);
