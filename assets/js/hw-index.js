@@ -5573,6 +5573,8 @@ async function votePoll(postId, idx, poll, container) {
     '.comm-follow-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:0.22rem 0.7rem;font-size:0.65rem;font-family:var(--font-b);cursor:pointer;transition:all 0.2s;}',
     '.comm-follow-btn.following{background:rgba(255,184,0,0.1);border-color:var(--fire-yellow);color:var(--fire-yellow);}',
     '.comm-detail-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}',
+    '.comm-detail-collapse{overflow:hidden;transition:max-height 0.35s cubic-bezier(0.16,1,0.3,1),opacity 0.25s ease;max-height:500px;opacity:1;flex-shrink:0;}',
+    '.comm-detail-collapse.hidden{max-height:0 !important;opacity:0;pointer-events:none;}',
     /* Thread post */
     '.comm-post{margin:0.75rem 1rem 0;background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;}',
     '.comm-post.pinned{border-color:rgba(255,184,0,0.3);background:rgba(255,184,0,0.03);}',
@@ -6093,7 +6095,7 @@ async function votePoll(postId, idx, poll, container) {
     /* Scroll: ocultar cover+info al bajar, mostrar al subir */
     var detailScroll = document.getElementById('comm-detail-scroll');
     var collapseEl   = document.getElementById('comm-detail-collapse');
-    var navBar       = document.getElementById('bottom-nav');
+    var navBar       = document.querySelector('.bottom-nav');
     if (detailScroll && collapseEl) {
       var lastY = 0; var collapsed = false;
       detailScroll.addEventListener('scroll', function() {
