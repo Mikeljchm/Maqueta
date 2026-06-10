@@ -349,7 +349,6 @@
   }
 
   function openMiniProfile(uid, name) {
-    /* Crear o reutilizar la página de perfil */
     var page = document.getElementById('page-user-profile');
     if (!page) {
       page = document.createElement('div');
@@ -362,10 +361,8 @@
       document.body.appendChild(page);
     }
 
-    /* Limpiar y construir contenido */
     page.style.display = 'flex';
     page.innerHTML =
-      /* Header con back button */
       '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem 0.5rem;'
         + 'border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">'
         + '<button id="user-prof-back" style="background:none;border:none;color:var(--text);'
@@ -373,56 +370,101 @@
           + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
           + '<polyline points="15 18 9 12 15 6"/></svg>'
         + '</button>'
-        + '<div id="user-prof-topname" style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;">'
+        + '<div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;">'
           + escH(name||'Profile') + '</div>'
       + '</div>'
-      /* Hero — FUERA del scroll para que el avatar no se corte */
-      + '<div id="user-prof-hero" style="height:100px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;overflow:hidden;">'
+      + '<div id="user-prof-hero" style="height:110px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;overflow:hidden;">'
         + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;"></div>'
         + '<div style="position:absolute;inset:0;opacity:0.05;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'
       + '</div>'
-      /* Avatar — fuera del scroll, con z-index para flotar sobre el hero */
-      + '<div style="padding:0 1rem;margin-top:-31px;margin-bottom:0.65rem;position:relative;z-index:2;flex-shrink:0;">'
+      + '<div style="padding:0 1rem;margin-top:-31px;margin-bottom:0.5rem;position:relative;z-index:2;flex-shrink:0;">'
         + '<div id="user-prof-av" style="width:62px;height:62px;border-radius:50%;border:3px solid var(--bg);'
           + 'background:var(--surface-2);display:flex;align-items:center;justify-content:center;'
           + 'font-family:var(--font-d);font-size:1.5rem;overflow:hidden;">'
           + escH((name||'?').charAt(0).toUpperCase())
         + '</div>'
       + '</div>'
-      /* Scrollable content — solo info + posts */
+      + '<div style="padding:0 1rem 0.6rem;flex-shrink:0;">'
+        + '<div style="font-family:var(--font-d);font-size:1.2rem;letter-spacing:0.05em;margin-bottom:0.12rem;">'
+          + escH(name||'User') + '</div>'
+        + '<div id="user-prof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;'
+          + 'font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.55rem;border-radius:20px;'
+          + 'background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-bottom:0.35rem;"></div>'
+        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;"></div>'
+      + '</div>'
+      /* Tabs */
+      + '<div id="user-prof-tabs" style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;">'
+        + '<button class="upt active" data-tab="posts" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'
+        + '<button class="upt" data-tab="liked" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'
+        + '<button class="upt" data-tab="activity" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'
+      + '</div>'
       + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">'
-        /* Info */
-        + '<div style="padding:0 1rem 0.75rem;">'
-          + '<div style="font-family:var(--font-d);font-size:1.2rem;letter-spacing:0.05em;margin-bottom:0.12rem;">'
-            + escH(name||'User') + '</div>'
-          + '<div id="user-prof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;'
-            + 'font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.55rem;border-radius:20px;'
-            + 'background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-bottom:0.4rem;"></div>'
-          + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;"></div>'
-        + '</div>'
-        /* Posts label */
-        + '<div style="padding:0 1rem;border-top:1px solid var(--border);padding-top:0.75rem;'
-          + 'font-size:0.65rem;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.65rem;">Posts</div>'
-        /* Posts feed */
-        + '<div id="user-prof-posts" style="padding:0 1rem 3rem;">'
+        + '<div id="user-prof-posts" style="padding:0.75rem 1rem 3rem;">'
           + '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>'
         + '</div>'
+        + '<div id="user-prof-liked" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+        + '<div id="user-prof-activity" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
       + '</div>';
 
-    /* Animate in */
     requestAnimationFrame(function(){ requestAnimationFrame(function(){
       page.style.transform = 'translateX(0)';
     }); });
 
-    /* Back button */
     document.getElementById('user-prof-back').addEventListener('click', closeMiniProfile);
 
-    /* Swipe right to go back */
     var sx = 0;
     page.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; }, {passive:true});
     page.addEventListener('touchend', function(e){
       if (e.changedTouches[0].clientX - sx > 70) closeMiniProfile();
     }, {passive:true});
+
+    /* Tab switching */
+    page.querySelectorAll('.upt').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        page.querySelectorAll('.upt').forEach(function(b){
+          b.style.borderBottomColor = 'transparent';
+          b.style.color = 'var(--text-dim)';
+          b.classList.remove('active');
+        });
+        btn.style.borderBottomColor = 'var(--fire-orange)';
+        btn.style.color = 'var(--fire-orange)';
+        btn.classList.add('active');
+        var t = btn.getAttribute('data-tab');
+        page.querySelectorAll('#user-prof-posts,#user-prof-liked,#user-prof-activity').forEach(function(p){ p.style.display='none'; });
+        document.getElementById('user-prof-'+t).style.display = 'block';
+        if (t === 'liked' && !btn._loaded) { btn._loaded = true; loadPublicLiked(uid); }
+        if (t === 'activity' && !btn._loaded) { btn._loaded = true; loadPublicActivity(uid); }
+      });
+    });
+
+    /* Helper render post card */
+    function _renderPubPost(p) {
+      var avUrl = (window._resolveAvatar||function(u,a){return a||'';})(p.user_id, p.user_avatar);
+      var avHtml = avUrl
+        ? '<img src="'+avUrl+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">'
+        : '<div style="width:32px;height:32px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.9rem;">'+escH((p.user_name||'?').charAt(0).toUpperCase())+'</div>';
+      var mediaHtml = '';
+      if (p.image_url) {
+        var lo = p.image_url.toLowerCase().split('?')[0];
+        mediaHtml = lo.endsWith('.mp4')||lo.endsWith('.webm')
+          ? '<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;" src="'+p.image_url+'" autoplay loop muted playsinline></video>'
+          : '<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;" src="'+p.image_url+'" loading="lazy">';
+      }
+      var body = p.body&&p.body.trim()&&p.body.trim()!==' '
+        ? '<div style="font-size:0.85rem;line-height:1.5;color:var(--text);margin-bottom:0.4rem;">'+escH(p.body)+'</div>' : '';
+      var t = (Date.now()-new Date(p.created_at).getTime())/1000;
+      var ago = t<60?'just now':t<3600?Math.floor(t/60)+'m ago':t<86400?Math.floor(t/3600)+'h ago':Math.floor(t/86400)+'d ago';
+      return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.75rem;">'
+        + '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">'
+          + avHtml
+          + '<div>'
+            + '<div style="font-family:var(--font-d);font-size:0.78rem;letter-spacing:0.04em;">'+escH(p.user_name||'User')+'</div>'
+            + '<div style="font-size:0.63rem;color:var(--text-muted);">'+ago+'</div>'
+          + '</div>'
+        + '</div>'
+        + mediaHtml + body
+      + '</div>';
+    }
 
     /* Cargar badge */
     fetch('/api/points?user_id=' + encodeURIComponent(uid))
@@ -440,30 +482,26 @@
     fetch('/api/profile?user_id=' + encodeURIComponent(uid))
       .then(function(r){ return r.json(); })
       .then(function(d){
-        /* Bio */
         var bio = document.getElementById('user-prof-bio');
         if (bio && d.bio) bio.textContent = d.bio;
-        /* Avatar */
         if (d.avatar_url) {
           var avEl = document.getElementById('user-prof-av');
-          if (avEl) {
-            avEl.innerHTML = '<img src="'+d.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
-          }
+          if (avEl) avEl.innerHTML = '<img src="'+d.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+          /* Guardar en caché para _resolveAvatar si es el mismo usuario */
+          if (window.currentUser && window.currentUser.id === uid) window.currentUser.picture = d.avatar_url;
         }
-        /* Banner */
         if (d.banner_url) {
           var heroEl = document.getElementById('user-prof-hero');
           if (heroEl) {
-            heroEl.style.backgroundImage = 'none';
             var bImg = document.createElement('img');
             bImg.src = d.banner_url;
-            bImg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+            bImg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;';
             heroEl.appendChild(bImg);
           }
         }
       }).catch(function(){});
 
-    /* Cargar posts */
+    /* Cargar Posts */
     fetch('/api/posts?user_id=' + encodeURIComponent(uid))
       .then(function(r){ return r.json(); })
       .then(function(d){
@@ -474,27 +512,70 @@
           pf.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:2rem 0;">No posts yet.</div>';
           return;
         }
-        pf.innerHTML = posts.map(function(p){
-          var mediaHtml = '';
-          if (p.image_url) {
-            var lo = p.image_url.toLowerCase().split('?')[0];
-            mediaHtml = lo.endsWith('.mp4')||lo.endsWith('.webm')
-              ? '<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:280px;object-fit:cover;" src="'+p.image_url+'" autoplay loop muted playsinline></video>'
-              : '<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:280px;object-fit:cover;" src="'+p.image_url+'" loading="lazy">';
-          }
-          var body = p.body&&p.body.trim()&&p.body.trim()!==' '
-            ? '<div style="font-size:0.85rem;line-height:1.5;color:var(--text);margin-bottom:0.4rem;">'+escH(p.body)+'</div>' : '';
-          var t = (Date.now()-new Date(p.created_at).getTime())/1000;
-          var ago = t<60?'just now':t<3600?Math.floor(t/60)+'m ago':t<86400?Math.floor(t/3600)+'h ago':Math.floor(t/86400)+'d ago';
-          return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.75rem;">'
-            + mediaHtml + body
-            + '<div style="font-size:0.63rem;color:var(--text-muted);">'+ago+'</div>'
-          + '</div>';
-        }).join('');
+        pf.innerHTML = posts.map(_renderPubPost).join('');
       }).catch(function(){
         var pf2 = document.getElementById('user-prof-posts');
         if (pf2) pf2.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Could not load posts.</div>';
       });
+
+    /* Cargar Liked posts */
+    function loadPublicLiked(userId) {
+      var el = document.getElementById('user-prof-liked');
+      if (!el) return;
+      el.innerHTML = '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>';
+      fetch('/api/likes?user_id=' + encodeURIComponent(userId))
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var posts = d.posts || [];
+          if (!posts.length) {
+            el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:2rem 0;">No liked posts yet.</div>';
+            return;
+          }
+          el.innerHTML = posts.map(_renderPubPost).join('');
+        }).catch(function(){
+          el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Could not load.</div>';
+        });
+    }
+
+    /* Cargar Activity (comentarios) */
+    function loadPublicActivity(userId) {
+      var el = document.getElementById('user-prof-activity');
+      if (!el) return;
+      el.innerHTML = '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>';
+      fetch('/api/comments?user_id=' + encodeURIComponent(userId))
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var comments = d.comments || [];
+          if (!comments.length) {
+            el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:2rem 0;">No comments yet.</div>';
+            return;
+          }
+          el.innerHTML = comments.map(function(c){
+            var avUrl = (window._resolveAvatar||function(u,a){return a||'';})(c.user_id, c.user_avatar);
+            var avHtml = avUrl
+              ? '<img src="'+avUrl+'" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;">'
+              : '<div style="width:30px;height:30px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.85rem;flex-shrink:0;">'+escH((c.user_name||'?').charAt(0).toUpperCase())+'</div>';
+            var t2 = (Date.now()-new Date(c.created_at).getTime())/1000;
+            var ago2 = t2<60?'just now':t2<3600?Math.floor(t2/60)+'m ago':t2<86400?Math.floor(t2/3600)+'h ago':Math.floor(t2/86400)+'d ago';
+            var stickerMatch = c.body ? c.body.match(/\[sticker\]([^\[]+)\[\/sticker\]/) : null;
+            var textPart = c.body ? c.body.replace(/\[sticker\][^\[]*\[\/sticker\]/g,'').trim() : '';
+            var bodyHtml = textPart ? '<div style="font-size:0.82rem;color:var(--text);line-height:1.4;">'+escH(textPart)+'</div>' : '';
+            if (stickerMatch) bodyHtml += '<video src="'+stickerMatch[1]+'" autoplay loop muted playsinline style="max-width:60px;border-radius:6px;display:block;margin-top:0.25rem;"></video>';
+            return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:0.75rem;margin-bottom:0.6rem;display:flex;gap:0.6rem;align-items:flex-start;">'
+              + avHtml
+              + '<div style="flex:1;min-width:0;">'
+                + '<div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.2rem;">'
+                  + '<span style="font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.04em;">'+escH(c.user_name||'User')+'</span>'
+                  + '<span style="font-size:0.6rem;color:var(--text-muted);">'+ago2+'</span>'
+                + '</div>'
+                + bodyHtml
+              + '</div>'
+            + '</div>';
+          }).join('');
+        }).catch(function(){
+          el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Could not load.</div>';
+        });
+    }
   }
 
   /* ── Delegation: Like comment ── */
