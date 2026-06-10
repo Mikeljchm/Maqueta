@@ -3582,7 +3582,7 @@ async function votePoll(postId, idx, poll, container) {
         '.crop-container{position:relative;overflow:hidden;background:#111;touch-action:none;flex-shrink:0;}',
         '.crop-container.is-avatar{border-radius:50%;box-shadow:0 0 0 9999px rgba(0,0,0,0.8);}',
         '.crop-container.is-banner{border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,0.8);}',
-        '.crop-img-el{position:absolute;top:0;left:0;display:block;transform-origin:top left;pointer-events:none;user-select:none;}',
+        '.crop-canvas-el{position:absolute;top:0;left:0;display:block;pointer-events:none;user-select:none;}',
         '.crop-btns{display:flex;gap:0.75rem;margin-top:1rem;width:100%;}',
         '.crop-cancel-btn{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:12px;padding:0.65rem;font-family:var(--font-d);font-size:0.82rem;letter-spacing:0.06em;cursor:pointer;}',
         '.crop-save-btn{flex:1;background:var(--fire-orange);border:none;color:#fff;border-radius:12px;padding:0.65rem;font-family:var(--font-d);font-size:0.82rem;letter-spacing:0.06em;cursor:pointer;}',
@@ -3595,7 +3595,7 @@ async function votePoll(postId, idx, poll, container) {
       modal.innerHTML =
         '<div class="crop-modal-title" id="crop-title">Adjust Photo</div>'
         + '<div class="crop-hint">Drag to reposition &bull; Pinch to zoom</div>'
-        + '<div class="crop-container" id="crop-cont"><img class="crop-img-el" id="crop-img-el" src="" alt=""></div>'
+        + '<div class="crop-container" id="crop-cont"><canvas class="crop-canvas-el" id="crop-canvas-el"></canvas></div>'
         + '<div class="crop-btns">'
           + '<button class="crop-cancel-btn" id="crop-cancel-btn">Cancel</button>'
           + '<button class="crop-save-btn" id="crop-save-btn">Save</button>'
@@ -3610,6 +3610,7 @@ async function votePoll(postId, idx, poll, container) {
     var _naturalW = 0, _naturalH = 0;
     var _scale = 1, _minScale = 1;
     var _tx = 0, _ty = 0;
+    var _cropImage   = null;
 
     function _cropClamp() {
       var iW = _naturalW * _scale, iH = _naturalH * _scale;
@@ -3619,17 +3620,21 @@ async function votePoll(postId, idx, poll, container) {
       if (_ty + iH < _cH) _ty = _cH - iH;
     }
     function _cropApply() {
-      var el = document.getElementById('crop-img-el');
-      if (!el) return;
-      el.style.width     = _naturalW + 'px';
-      el.style.height    = _naturalH + 'px';
-      el.style.transform = 'translate(' + _tx + 'px,' + _ty + 'px) scale(' + _scale + ')';
+      var cv = document.getElementById('crop-canvas-el');
+      if (!cv || !_cropImage) return;
+      var ctx = cv.getContext('2d');
+      ctx.clearRect(0, 0, _cW, _cH);
+      ctx.drawImage(_cropImage, 0, 0, _naturalW, _naturalH,
+        _tx, _ty, _naturalW * _scale, _naturalH * _scale);
     }
     function _cropInit() {
-      var el = document.getElementById('crop-img-el');
-      if (!el || !el.naturalWidth) return;
-      _naturalW = el.naturalWidth;
-      _naturalH = el.naturalHeight;
+      if (!_cropImage || !_cropImage.naturalWidth) return;
+      var cv = document.getElementById('crop-canvas-el');
+      if (!cv) return;
+      cv.width  = _cW;
+      cv.height = _cH;
+      _naturalW = _cropImage.naturalWidth;
+      _naturalH = _cropImage.naturalHeight;
       _minScale = Math.max(_cW / _naturalW, _cH / _naturalH);
       _scale    = _minScale;
       _tx = (_cW - _naturalW * _scale) / 2;
@@ -3645,7 +3650,6 @@ async function votePoll(postId, idx, poll, container) {
         var cont  = document.getElementById('crop-cont');
         var title = document.getElementById('crop-title');
         var modal = document.getElementById('crop-modal');
-        var el    = document.getElementById('crop-img-el');
 
         _cW = type === 'avatar' ? Math.min(window.innerWidth - 48, 280) : Math.min(window.innerWidth - 32, 440);
         _cH = type === 'avatar' ? _cW : Math.round(_cW * 140 / 440);
@@ -3656,34 +3660,32 @@ async function votePoll(postId, idx, poll, container) {
         title.textContent = type === 'avatar' ? 'Adjust Profile Photo' : 'Adjust Banner';
 
         /* Reset */
+        _cropImage = null;
         _naturalW = _naturalH = _tx = _ty = 0; _scale = _minScale = 1;
-        el.src = '';
-        el.style.transform = '';
+
+        /* Limpiar canvas si existe */
+        var cv = document.getElementById('crop-canvas-el');
+        if (cv) { cv.width = _cW; cv.height = _cH; }
 
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
 
-        /* Usar Image() separado para decodificar — evita el race condition
-           donde el browser procesa el src antes de registrar onload en el img del DOM */
+        /* Canvas approach: decodificamos con Image() y dibujamos directo.
+           Sin depender de onload del elemento del DOM — 100% confiable en Android Chrome e iOS Safari */
         var fr = new FileReader();
         fr.onload = function(ev) {
-          var tmpImg = new Image();
-          tmpImg.onload = function() {
-            /* Imagen decodificada — ahora asignar al elemento del DOM */
-            el.onload = _cropInit;
-            el.src = ev.target.result;
-            /* Si onload no se dispara (ya completo), llamar manualmente */
-            if (el.complete) {
-              _naturalW = tmpImg.naturalWidth;
-              _naturalH = tmpImg.naturalHeight;
-              _minScale = Math.max(_cW / _naturalW, _cH / _naturalH);
-              _scale    = _minScale;
-              _tx = (_cW - _naturalW * _scale) / 2;
-              _ty = (_cH - _naturalH * _scale) / 2;
-              _cropApply();
-            }
+          var img = new Image();
+          img.onload = function() {
+            _cropImage = img;
+            _cropInit();
           };
-          tmpImg.src = ev.target.result;
+          img.onerror = function() {
+            /* fallback: intentar con createObjectURL */
+            var img2 = new Image();
+            img2.onload = function() { _cropImage = img2; _cropInit(); };
+            img2.src = URL.createObjectURL(file);
+          };
+          img.src = ev.target.result;
         };
         fr.readAsDataURL(file);
       });
@@ -3739,13 +3741,14 @@ async function votePoll(postId, idx, poll, container) {
       if (!btn) return;
       btn.addEventListener('click', function() {
         btn.disabled = true;
-        var el = document.getElementById('crop-img-el');
+        if (!_cropImage) { btn.disabled = false; return; }
         var outW = _cropType==='avatar' ? 400 : 1200;
         var outH = _cropType==='avatar' ? 400 : 400;
         var canvas = document.createElement('canvas');
         canvas.width = outW; canvas.height = outH;
         var ctx = canvas.getContext('2d');
-        ctx.drawImage(el, -_tx/_scale, -_ty/_scale, _cW/_scale, _cH/_scale, 0, 0, outW, outH);
+        /* Fuente: el Image() decodificado (_cropImage), no un elemento del DOM */
+        ctx.drawImage(_cropImage, -_tx/_scale, -_ty/_scale, _cW/_scale, _cH/_scale, 0, 0, outW, outH);
         canvas.toBlob(function(blob) {
           document.getElementById('crop-modal').classList.remove('open');
           document.body.style.overflow = '';
