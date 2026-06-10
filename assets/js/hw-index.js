@@ -3670,24 +3670,41 @@ async function votePoll(postId, idx, poll, container) {
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
 
-        /* Canvas approach: decodificamos con Image() y dibujamos directo.
-           Sin depender de onload del elemento del DOM — 100% confiable en Android Chrome e iOS Safari */
-        var fr = new FileReader();
-        fr.onload = function(ev) {
-          var img = new Image();
-          img.onload = function() {
+        /* createObjectURL es más liviano que base64 en mobile.
+           img.decode() es Promise — garantiza naturalWidth > 0 antes de dibujar.
+           Fallback a onload para browsers sin soporte decode(). */
+        var objURL = URL.createObjectURL(file);
+        var img = new Image();
+        img.src = objURL;
+        var _cleanup = function() { try { URL.revokeObjectURL(objURL); } catch(e){} };
+        if (typeof img.decode === 'function') {
+          img.decode().then(function() {
+            _cleanup();
             _cropImage = img;
             _cropInit();
-          };
+          }).catch(function() {
+            _cleanup();
+            var fr2 = new FileReader();
+            fr2.onload = function(ev) {
+              var img2 = new Image();
+              img2.onload = function() { _cropImage = img2; _cropInit(); };
+              img2.src = ev.target.result;
+            };
+            fr2.readAsDataURL(file);
+          });
+        } else {
+          img.onload = function() { _cleanup(); _cropImage = img; _cropInit(); };
           img.onerror = function() {
-            /* fallback: intentar con createObjectURL */
-            var img2 = new Image();
-            img2.onload = function() { _cropImage = img2; _cropInit(); };
-            img2.src = URL.createObjectURL(file);
+            _cleanup();
+            var fr3 = new FileReader();
+            fr3.onload = function(ev) {
+              var img3 = new Image();
+              img3.onload = function() { _cropImage = img3; _cropInit(); };
+              img3.src = ev.target.result;
+            };
+            fr3.readAsDataURL(file);
           };
-          img.src = ev.target.result;
-        };
-        fr.readAsDataURL(file);
+        }
       });
     }
 
