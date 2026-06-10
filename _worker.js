@@ -1343,6 +1343,7 @@ async function initThreadTables(env) {
   try { await env.DB.prepare("ALTER TABLE threads ADD COLUMN is_active INTEGER DEFAULT 1").run(); } catch(e){}
   try { await env.DB.prepare("ALTER TABLE threads ADD COLUMN pinned_post_id INTEGER DEFAULT NULL").run(); } catch(e){}
   try { await env.DB.prepare("ALTER TABLE threads ADD COLUMN tags TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE thread_posts ADD COLUMN media_urls TEXT DEFAULT ''").run(); } catch(e){}
 }
 
 function calcTrendingScore(posts, users) {
@@ -1495,10 +1496,10 @@ async function handleCommunityPosts(request, env, corsH) {
     const tid = parseInt(url.searchParams.get('community_id')||url.searchParams.get('thread_id')||'0');
     if (!tid) return apiJson({ error: 'thread_id required' }, 400, corsH);
     const { results: pinned } = await env.DB.prepare(
-      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=1 AND hidden=0 AND hidden_by_creator=0'
+      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=1 AND hidden=0 AND hidden_by_creator=0'
     ).bind(tid).all();
     const { results: posts } = await env.DB.prepare(
-      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT 50'
+      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT 50'
     ).bind(tid).all();
     return apiJson({ posts: [...pinned, ...posts] }, 200, corsH);
   }
@@ -1515,9 +1516,10 @@ async function handleCommunityPosts(request, env, corsH) {
       if (containsLink(text)) return apiJson({ error: 'Links are not allowed.' }, 400, corsH);
       const { results: banned } = await env.DB.prepare('SELECT user_id FROM thread_banned_users WHERE thread_id=? AND user_id=?').bind(tid,session.id).all();
       if (banned.length) return apiJson({ error: 'You have been removed from this thread.' }, 403, corsH);
+      const mediaUrls = (body.media_urls||'').trim().slice(0,2000);
       const result = await env.DB.prepare(
-        'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url) VALUES (?,?,?,?,?,?)'
-      ).bind(tid,session.id,session.name||session.email,session.picture||'',text,imgUrl).run();
+        'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url,media_urls) VALUES (?,?,?,?,?,?,?)'
+      ).bind(tid,session.id,session.name||session.email,session.picture||'',text,imgUrl,mediaUrls).run();
       await env.DB.prepare('UPDATE threads SET post_count=post_count+1,last_activity=CURRENT_TIMESTAMP,is_active=1 WHERE id=?').bind(tid).run();
       const since = new Date(Date.now()-86400000).toISOString();
       const { results: rc } = await env.DB.prepare(
