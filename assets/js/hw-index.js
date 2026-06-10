@@ -2510,6 +2510,43 @@ async function votePoll(postId, idx, poll, container) {
     });
   }
 
+  /* Cargar avatar/banner de D1 y actualizar currentUser.picture */
+  async function fetchUserProfile(userId) {
+    if (!userId) return;
+    try {
+      var r = await fetch('/api/profile', { credentials: 'include' });
+      var d = await r.json();
+      if (d.avatar_url && window.currentUser) {
+        window.currentUser.picture = d.avatar_url;
+        /* Actualizar avatar en la UI del header/perfil */
+        var aw = document.getElementById('user-avatar-wrap');
+        if (aw) {
+          aw.innerHTML = '<img src="' + d.avatar_url + '" style="width:100%;height:100%;object-fit:cover;">'
+            + '<div class="prof-avatar-cam"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>';
+        }
+        /* Propagar a todos los avatares del usuario ya renderizados */
+        document.querySelectorAll('[data-profile-uid="' + userId + '"]').forEach(function(el) {
+          var img = el.tagName === 'IMG' ? el : el.querySelector('img');
+          if (img) { img.src = d.avatar_url; }
+        });
+      }
+      if (d.banner_url) {
+        var pg = document.getElementById('page-more');
+        var hero = pg && pg.querySelector('.prof-hero');
+        if (hero && !hero.querySelector('img.prof-banner-img')) {
+          var ni = document.createElement('img');
+          ni.className = 'prof-banner-img';
+          ni.src = d.banner_url;
+          ni.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;';
+          hero.insertBefore(ni, hero.firstChild);
+        } else if (hero) {
+          var ex = hero.querySelector('img.prof-banner-img');
+          if (ex) ex.src = d.banner_url;
+        }
+      }
+    } catch(e) {}
+  }
+
   /* Cargar puntos y badge del usuario desde D1 */
   async function fetchUserPoints(userId) {
     if (!userId) return;
@@ -2563,8 +2600,9 @@ async function votePoll(postId, idx, poll, container) {
     if (session) {
       currentUser = session; window.currentUser = session;
       updateAuthUI(currentUser);
-      /* Cargar puntos y badge del usuario */
       fetchUserPoints(session.id);
+      /* Cargar avatar/banner custom de D1 — pisa el de Google si el usuario subió uno */
+      fetchUserProfile(session.id);
     }
     applyAdultBlur();
 
@@ -2585,6 +2623,7 @@ async function votePoll(postId, idx, poll, container) {
         updateAuthUI(currentUser);
         closeAuthModal();
         fetchUserPoints(s.id);
+        fetchUserProfile(s.id);
         // Restaurar al hacer login también
         setTimeout(restoreSavedStates, 800);
       } else {
