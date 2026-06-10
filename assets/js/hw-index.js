@@ -214,6 +214,7 @@
     }
     return storedAvatar || '';
   }
+  window._resolveAvatar = _resolveAvatar;
 
   function renderComment(row, isReply) {
     var item = document.createElement('div');
@@ -5016,7 +5017,7 @@ async function votePoll(postId, idx, poll, container) {
     var isAdmin = document.body.classList.contains('is-admin');
     var isOwn   = window.currentUser && window.currentUser.id === p.user_id;
     var reported = REPORTED_POSTS.has(String(p.id));
-    var _avUrlP = _resolveAvatar(p.user_id, p.user_avatar);
+    var _avUrlP = (window._resolveAvatar||function(u,a){return a||'';})(p.user_id, p.user_avatar);
     var avatar   = _avUrlP
       ? '<img src="'+_avUrlP+'" loading="lazy" alt="">'
       : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
@@ -5763,7 +5764,7 @@ async function votePoll(postId, idx, poll, container) {
   /* Render thread post */
   function renderThreadPost(p, isCreator){
     var isLiked=COMM_LIKED.has(String(p.id));
-    var _avUrlT=_resolveAvatar(p.user_id,p.user_avatar);
+    var _avUrlT=(window._resolveAvatar||function(u,a){return a||'';})(p.user_id,p.user_avatar);
     var avContent=_avUrlT?'<img src="'+_avUrlT+'" loading="lazy">':escH((p.user_name||'?').charAt(0).toUpperCase());
     var mediaHtml='';
     var mediaList=[];
