@@ -6019,20 +6019,22 @@ async function votePoll(postId, idx, poll, container) {
         +'<div class="comm-detail-name">'+escH(thread.name)+'</div>'
         +(window.currentUser?'<button class="comm-detail-post-btn" id="cdp-btn">+ Post</button>':'')
       +'</div>'
-      +'<div class="comm-detail-cover">'
-        +(thread.cover_url?'<img src="'+thread.cover_url+'" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy">':'')
-        +'<div class="comm-detail-cover-glow"></div>'
-      +'</div>'
-      +'<div class="comm-detail-info">'
-        +'<div class="comm-detail-title">'+escH(thread.name)+'</div>'
-        +(thread.description?'<div class="comm-detail-desc">'+escH(thread.description)+'</div>':'')
-        +(tagHtml?'<div class="comm-detail-info-tags">'+tagHtml+'</div>':'')
-        +'<div class="comm-detail-stats-row">'
-          +'<div class="comm-detail-stats">'
-            +'<span><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'+(thread.member_count||1)+' members</span>'
-            +'<span><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+(thread.post_count||0)+' posts</span>'
+      +'<div class="comm-detail-collapse" id="comm-detail-collapse">'
+        +'<div class="comm-detail-cover">'
+          +(thread.cover_url?'<img src="'+thread.cover_url+'" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy">':'')
+          +'<div class="comm-detail-cover-glow"></div>'
+        +'</div>'
+        +'<div class="comm-detail-info">'
+          +'<div class="comm-detail-title">'+escH(thread.name)+'</div>'
+          +(thread.description?'<div class="comm-detail-desc">'+escH(thread.description)+'</div>':'')
+          +(tagHtml?'<div class="comm-detail-info-tags">'+tagHtml+'</div>':'')
+          +'<div class="comm-detail-stats-row">'
+            +'<div class="comm-detail-stats">'
+              +'<span><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'+(thread.member_count||1)+' members</span>'
+              +'<span><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+(thread.post_count||0)+' posts</span>'
+            +'</div>'
+            +(window.currentUser?'<button class="comm-follow-btn'+(thread.is_following?' following':'')+'" id="cd-follow-btn" data-tid="'+thread.id+'" data-following="'+(thread.is_following?'1':'0')+'">'+(thread.is_following?'&#11088; Following':'&#11088; Follow')+'</button>':'')
           +'</div>'
-          +(window.currentUser?'<button class="comm-follow-btn'+(thread.is_following?' following':'')+'" id="cd-follow-btn" data-tid="'+thread.id+'" data-following="'+(thread.is_following?'1':'0')+'">'+(thread.is_following?'&#11088; Following':'&#11088; Follow')+'</button>':'')
         +'</div>'
       +'</div>'
       +'<div class="comm-detail-scroll" id="comm-detail-scroll"></div>'
@@ -6087,6 +6089,30 @@ async function votePoll(postId, idx, poll, container) {
     }
 
     loadThreadPosts(thread.id);
+
+    /* Scroll: ocultar cover+info al bajar, mostrar al subir */
+    var detailScroll = document.getElementById('comm-detail-scroll');
+    var collapseEl   = document.getElementById('comm-detail-collapse');
+    var navBar       = document.getElementById('bottom-nav');
+    if (detailScroll && collapseEl) {
+      var lastY = 0; var collapsed = false;
+      detailScroll.addEventListener('scroll', function() {
+        var y = detailScroll.scrollTop;
+        var goingDown = y > lastY;
+        var delta = Math.abs(y - lastY);
+        lastY = y;
+        if (delta < 5) return;
+        if (goingDown && y > 60 && !collapsed) {
+          collapsed = true;
+          collapseEl.classList.add('hidden');
+          if (navBar) { navBar.style.transition='transform 0.3s cubic-bezier(0.16,1,0.3,1)'; navBar.style.transform='translateY(100%)'; }
+        } else if (!goingDown && collapsed) {
+          collapsed = false;
+          collapseEl.classList.remove('hidden');
+          if (navBar) navBar.style.transform='translateY(0)';
+        }
+      }, {passive:true});
+    }
   }
 
   /* Event delegation */
