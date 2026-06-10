@@ -377,7 +377,7 @@
           + escH(name||'Profile') + '</div>'
       + '</div>'
       /* Hero — FUERA del scroll para que el avatar no se corte */
-      + '<div style="height:100px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;">'
+      + '<div id="user-prof-hero" style="height:100px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;overflow:hidden;">'
         + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;"></div>'
         + '<div style="position:absolute;inset:0;opacity:0.05;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'
       + '</div>'
@@ -436,12 +436,31 @@
         }
       }).catch(function(){});
 
-    /* Cargar bio + avatar */
+    /* Cargar bio + avatar + banner */
     fetch('/api/profile?user_id=' + encodeURIComponent(uid))
       .then(function(r){ return r.json(); })
       .then(function(d){
+        /* Bio */
         var bio = document.getElementById('user-prof-bio');
         if (bio && d.bio) bio.textContent = d.bio;
+        /* Avatar */
+        if (d.avatar_url) {
+          var avEl = document.getElementById('user-prof-av');
+          if (avEl) {
+            avEl.innerHTML = '<img src="'+d.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+          }
+        }
+        /* Banner */
+        if (d.banner_url) {
+          var heroEl = document.getElementById('user-prof-hero');
+          if (heroEl) {
+            heroEl.style.backgroundImage = 'none';
+            var bImg = document.createElement('img');
+            bImg.src = d.banner_url;
+            bImg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+            heroEl.appendChild(bImg);
+          }
+        }
       }).catch(function(){});
 
     /* Cargar posts */
