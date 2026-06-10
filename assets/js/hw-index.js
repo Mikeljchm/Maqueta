@@ -223,7 +223,7 @@
 
     var _avUrl = _resolveAvatar(row.user_id, row.user_avatar);
     var avContent = _avUrl
-      ? '<img src="' + _avUrl + '" loading="lazy">'
+      ? '<img src="' + _avUrl + '" loading="lazy" data-uid="' + escH(row.user_id||'') + '">'
       : escH((row.user_name || 'A').charAt(0).toUpperCase());
 
     var stickerMatch = row.body ? row.body.match(/\[sticker\]([^\[]+)\[\/sticker\]/) : null;
@@ -2638,11 +2638,20 @@ async function votePoll(postId, idx, poll, container) {
           aw.innerHTML = '<img src="' + d.avatar_url + '" style="width:100%;height:100%;object-fit:cover;">'
             + '<div class="prof-avatar-cam"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>';
         }
-        /* Propagar a todos los avatares del usuario ya renderizados */
+        /* Propagar a TODOS los elementos con data-profile-uid del usuario */
         document.querySelectorAll('[data-profile-uid="' + userId + '"]').forEach(function(el) {
           var img = el.tagName === 'IMG' ? el : el.querySelector('img');
           if (img) { img.src = d.avatar_url; }
         });
+        /* Propagar a avatares de posts y comentarios ya renderizados que tengan data-uid */
+        document.querySelectorAll('img[data-uid="' + userId + '"]').forEach(function(img) {
+          img.src = d.avatar_url;
+        });
+        /* Recargar feed si ya estaba renderizado — para que aparezca la foto */
+        var pc = document.getElementById('posts-feed-container');
+        if (pc && pc.children.length && typeof window.loadPostsFeed === 'function') {
+          window.loadPostsFeed(pc, userId);
+        }
       }
       if (d.banner_url) {
         var pg = document.getElementById('page-more');
@@ -5119,8 +5128,7 @@ async function votePoll(postId, idx, poll, container) {
     var reported = REPORTED_POSTS.has(String(p.id));
     var _avUrlP = (window._resolveAvatar||function(u,a){return a||'';})(p.user_id, p.user_avatar);
     var avatar   = _avUrlP
-      ? '<img src="'+_avUrlP+'" loading="lazy" alt="">'
-      : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+      ? '<img src="'+_avUrlP+'" loading="lazy" alt="" data-uid="'+escH(p.user_id||'')+'">'      : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
 
     var html = '<div class="post-card" data-post-id="'+p.id+'">'
       + '<div class="post-card-header">'
