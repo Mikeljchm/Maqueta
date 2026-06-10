@@ -78,6 +78,17 @@ function getSession(request) {
   } catch { return null; }
 }
 
+/* Obtiene el avatar del usuario: D1 primero, fallback a Google picture */
+async function getUserAvatar(userId, fallback, env) {
+  try {
+    var r = await env.DB.prepare(
+      'SELECT avatar_url FROM user_profiles WHERE user_id=?'
+    ).bind(userId).first();
+    if (r && r.avatar_url) return r.avatar_url;
+  } catch(e) {}
+  return fallback || '';
+}
+
 function apiJson(data, status, headers) {
   return new Response(JSON.stringify(data), {
     status: status || 200,
@@ -141,7 +152,7 @@ async function handleComments(request, env, corsH) {
     if (containsLink(body)) return apiJson({ error: 'Links are not allowed in comments.' }, 400, corsH);
     const result = await env.DB.prepare(
       'INSERT INTO comments (post_id, user_id, user_name, user_avatar, body, parent_id) VALUES (?, ?, ?, ?, ?, ?)'
-    ).bind(post_id, session.id, session.name || session.email, session.picture || '', body.trim(), parent_id || null).run();
+    ).bind(post_id, session.id, session.name || session.email, await getUserAvatar(session.id, session.picture, env), body.trim(), parent_id || null).run();
     await addPoints(env, session.id, 2);
     return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
   }
@@ -1191,7 +1202,7 @@ async function handleUserPosts(request, env, corsH) {
       const image_url = (body.image_url || '').trim().slice(0, 500);
       const result = await env.DB.prepare(
         'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url) VALUES (?,?,?,?,?)'
-      ).bind(session.id, session.name||session.email, session.picture||'', text, image_url).run();
+      ).bind(session.id, session.name||session.email, await getUserAvatar(session.id, session.picture, env), text, image_url).run();
       await addPoints(env, session.id, 1);
       return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
     }
@@ -1521,7 +1532,7 @@ async function handleCommunityPosts(request, env, corsH) {
       const mediaUrls = (body.media_urls||'').trim().slice(0,2000);
       const result = await env.DB.prepare(
         'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url,media_urls) VALUES (?,?,?,?,?,?,?)'
-      ).bind(tid,session.id,session.name||session.email,session.picture||'',text,imgUrl,mediaUrls).run();
+      ).bind(tid,session.id,session.name||session.email,await getUserAvatar(session.id,session.picture,env),text,imgUrl,mediaUrls).run();
       await env.DB.prepare('UPDATE threads SET post_count=post_count+1,last_activity=CURRENT_TIMESTAMP,is_active=1 WHERE id=?').bind(tid).run();
       const since = new Date(Date.now()-86400000).toISOString();
       const { results: rc } = await env.DB.prepare(
