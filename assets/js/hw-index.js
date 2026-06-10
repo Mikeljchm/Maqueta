@@ -4979,6 +4979,12 @@ async function votePoll(postId, idx, poll, container) {
     '.post-like-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:fill 0.15s,stroke 0.15s;}',
     '.post-like-btn.liked{color:#ff3b5c;}',
     '.post-like-btn.liked svg{fill:#ff3b5c;stroke:#ff3b5c;}',
+    /* Post media viewer */
+    '.pmv{position:fixed;inset:0;z-index:600;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;}',
+    '.pmv.open{display:flex;}',
+    '.pmv-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.12);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;}',
+    '.pmv-img{max-width:100%;max-height:100vh;object-fit:contain;display:block;touch-action:pinch-zoom;}',
+    '.pmv-video{max-width:100%;max-height:100vh;display:block;}',
     /* Admin post actions */
     '.post-admin-actions{display:flex;gap:0.4rem;margin-top:0.5rem;}',
     '.post-admin-btn{font-size:0.68rem;border:none;border-radius:8px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);}',
@@ -5141,8 +5147,8 @@ async function votePoll(postId, idx, poll, container) {
       + (p.image_url ? (function(u){
           var lo = u.toLowerCase().split('?')[0];
           return lo.endsWith('.mp4')||lo.endsWith('.webm')
-            ? '<video class="post-card-img" src="'+u+'" autoplay loop muted playsinline controls></video>'
-            : '<img class="post-card-img" src="'+u+'" loading="lazy" alt="">';
+            ? '<video class="post-card-img" src="'+u+'" autoplay loop muted playsinline style="cursor:pointer;" onclick="if(window._openPMV)window._openPMV(this.src,true)"></video>'
+            : '<img class="post-card-img" src="'+u+'" loading="lazy" alt="" style="cursor:pointer;">';
         })(p.image_url) : '')
       + (p.body && p.body.trim() && p.body.trim() !== ' ' ? '<div class="post-card-body">'+escH(p.body)+'</div>' : '')
       + '<div class="post-card-actions">'
@@ -5343,8 +5349,62 @@ async function votePoll(postId, idx, poll, container) {
     }
   };
 
+  /* Post media viewer — fullscreen al tocar imagen/video de post */
+  (function(){
+    var pmv = document.createElement('div');
+    pmv.className = 'pmv'; pmv.id = 'pmv';
+    pmv.innerHTML = '<button class="pmv-close" id="pmv-close">&#10005;</button><div id="pmv-content"></div>';
+    document.body.appendChild(pmv);
+
+    function openPMV(src, isVideo) {
+      var cont = document.getElementById('pmv-content');
+      if (!cont) return;
+      if (isVideo) {
+        cont.innerHTML = '<video class="pmv-video" src="'+src+'" autoplay controls playsinline style="max-width:100vw;max-height:100vh;"></video>';
+      } else {
+        cont.innerHTML = '<img class="pmv-img" src="'+src+'" alt="">';
+      }
+      pmv.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closePMV() {
+      pmv.classList.remove('open');
+      document.body.style.overflow = '';
+      var cont = document.getElementById('pmv-content');
+      if (cont) cont.innerHTML = '';
+    }
+
+    document.getElementById('pmv-close').addEventListener('click', closePMV);
+
+    /* Swipe down to close */
+    var sy = 0;
+    pmv.addEventListener('touchstart', function(e){ sy = e.touches[0].clientY; }, {passive:true});
+    pmv.addEventListener('touchend', function(e){
+      if (e.changedTouches[0].clientY - sy > 80) closePMV();
+    }, {passive:true});
+
+    /* Tap backdrop (fuera de img/video) to close */
+    pmv.addEventListener('click', function(e){
+      if (e.target === pmv) closePMV();
+    });
+
+    /* Exponer */
+    window._openPMV = openPMV;
+  })();
+
   /* Delegation: comment on post, report post, admin actions */
   document.addEventListener('click', async function(e) {
+    /* Abrir imagen/video de post en fullscreen */
+    var postImg = e.target.closest('.post-card-img');
+    if (postImg && window._openPMV) {
+      if (postImg.tagName === 'VIDEO') {
+        /* Para video, solo dejar que los controles nativos manejen */
+        return;
+      }
+      window._openPMV(postImg.src, false);
+      return;
+    }
+
     /* Comment on post */
     var commentBtn = e.target.closest('.post-comment-btn[data-post-id]');
     if (commentBtn) {
