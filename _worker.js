@@ -89,6 +89,26 @@ async function getUserAvatar(userId, fallback, env) {
   return fallback || '';
 }
 
+/* Enriquece un array de rows con el avatar actualizado desde user_profiles.
+   Resuelve el problema de avatares viejos/vacíos en posts y comentarios. */
+async function enrichAvatars(rows, env) {
+  if (!rows || !rows.length) return rows;
+  const uids = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+  if (!uids.length) return rows;
+  try {
+    const ph = uids.map(() => '?').join(',');
+    const { results } = await env.DB.prepare(
+      'SELECT user_id, avatar_url FROM user_profiles WHERE user_id IN ('+ph+') AND avatar_url IS NOT NULL AND avatar_url != \'\''
+    ).bind(...uids).all();
+    const avatarMap = {};
+    results.forEach(r => { avatarMap[r.user_id] = r.avatar_url; });
+    return rows.map(r => ({
+      ...r,
+      user_avatar: avatarMap[r.user_id] || r.user_avatar || ''
+    }));
+  } catch(e) { return rows; }
+}
+
 function apiJson(data, status, headers) {
   return new Response(JSON.stringify(data), {
     status: status || 200,
@@ -117,7 +137,7 @@ async function handleComments(request, env, corsH) {
       const { results } = await env.DB.prepare(
         'SELECT id,user_id,user_name,user_avatar,body,created_at FROM comments WHERE user_id=? ORDER BY created_at DESC LIMIT 50'
       ).bind(publicUserId).all();
-      return apiJson({ comments: results }, 200, corsH);
+      return apiJson({ comments: await enrichAvatars(results, env) }, 200, corsH);
     }
     return apiJson({ error: 'post_id required' }, 400, corsH);
   }
@@ -132,7 +152,8 @@ async function handleComments(request, env, corsH) {
       const { results } = await env.DB.prepare(
         'SELECT id, user_id, user_name, user_avatar, body, created_at, parent_id FROM comments WHERE post_id=? AND parent_id=? ORDER BY created_at ASC LIMIT 50'
       ).bind(post_id, parseInt(parent_id)).all();
-      return apiJson({ comments: results }, 200, corsH);
+      const enrichedReplies = await enrichAvatars(results, env);
+      return apiJson({ comments: enrichedReplies }, 200, corsH);
     }
 
     /* Top-level comments con reply_count */
@@ -151,8 +172,8 @@ async function handleComments(request, env, corsH) {
       rc.forEach(function(r){ replyCounts[r.parent_id] = r.cnt; });
     }
     results.forEach(function(r){ r.reply_count = replyCounts[r.id] || 0; });
-
-    return apiJson({ comments: results }, 200, corsH);
+    const enrichedComments = await enrichAvatars(results, env);
+    return apiJson({ comments: enrichedComments }, 200, corsH);
   }
 
   if (request.method === 'POST') {
@@ -199,7 +220,7 @@ async function handleLikes(request, env, corsH) {
       const { results: posts } = await env.DB.prepare(
         'SELECT id,user_id,user_name,user_avatar,body,image_url,created_at FROM user_posts WHERE CAST(id AS TEXT) IN ('+ph+') AND hidden=0 ORDER BY created_at DESC'
       ).bind(...ids).all();
-      return apiJson({ posts }, 200, corsH);
+      return apiJson({ posts: await enrichAvatars(posts, env) }, 200, corsH);
     }
     if (!post_id) return apiJson({ error: 'post_id required' }, 400, corsH);
     const { results } = await env.DB.prepare(
@@ -1189,14 +1210,14 @@ async function handleUserPosts(request, env, corsH) {
       const { results } = await env.DB.prepare(
         'SELECT id,user_id,user_name,user_avatar,body,image_url,report_count,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT 50'
       ).all();
-      return apiJson({ posts: results }, 200, corsH);
+      return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
     /* Posts de un usuario específico */
     if (userId) {
       const { results } = await env.DB.prepare(
         'SELECT id,user_id,user_name,user_avatar,body,image_url,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
       ).bind(userId).all();
-      return apiJson({ posts: results }, 200, corsH);
+      return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
     /* Admin: posts reportados */
     if (action === 'reported' && isAdmin) {
@@ -1541,7 +1562,8 @@ async function handleCommunityPosts(request, env, corsH) {
     const { results: posts } = await env.DB.prepare(
       'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT 50'
     ).bind(tid).all();
-    return apiJson({ posts: [...pinned, ...posts] }, 200, corsH);
+    const allPosts = await enrichAvatars([...pinned, ...posts], env);
+      return apiJson({ posts: allPosts }, 200, corsH);
   }
 
   if (request.method === 'POST') {
