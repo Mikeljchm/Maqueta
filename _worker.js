@@ -185,9 +185,23 @@ async function handleComments(request, env, corsH) {
 async function handleLikes(request, env, corsH) {
   const url = new URL(request.url);
   const post_id = url.searchParams.get('post_id');
-  if (!post_id) return apiJson({ error: 'post_id required' }, 400, corsH);
 
   if (request.method === 'GET') {
+    /* GET /api/likes?user_id=X — posts liked por un usuario (perfil público) */
+    const publicUid = url.searchParams.get('user_id');
+    if (publicUid && !post_id) {
+      const { results: likedRows } = await env.DB.prepare(
+        'SELECT post_id FROM likes WHERE user_id=? ORDER BY rowid DESC LIMIT 50'
+      ).bind(publicUid).all();
+      if (!likedRows.length) return apiJson({ posts: [] }, 200, corsH);
+      const ids = likedRows.map(r => String(r.post_id));
+      const ph = ids.map(() => '?').join(',');
+      const { results: posts } = await env.DB.prepare(
+        'SELECT id,user_id,user_name,user_avatar,body,image_url,created_at FROM user_posts WHERE CAST(id AS TEXT) IN ('+ph+') AND hidden=0 ORDER BY created_at DESC'
+      ).bind(...ids).all();
+      return apiJson({ posts }, 200, corsH);
+    }
+    if (!post_id) return apiJson({ error: 'post_id required' }, 400, corsH);
     const { results } = await env.DB.prepare(
       'SELECT COUNT(*) as count FROM likes WHERE post_id = ?'
     ).bind(post_id).all();
@@ -1180,7 +1194,7 @@ async function handleUserPosts(request, env, corsH) {
     /* Posts de un usuario específico */
     if (userId) {
       const { results } = await env.DB.prepare(
-        'SELECT id,user_id,user_name,user_avatar,body,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
+        'SELECT id,user_id,user_name,user_avatar,body,image_url,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
       ).bind(userId).all();
       return apiJson({ posts: results }, 200, corsH);
     }
