@@ -5615,23 +5615,33 @@ async function votePoll(postId, idx, poll, container) {
         +'<option value="discussion">Discussion</option>'
         +'<option value="other">Other</option>'
       +'</select>'
-      +'<label class="comm-sheet-label">Tags (comma separated, e.g. singlet, college, muscle)</label>'
+      +'<label class="comm-sheet-label">Tags (comma separated)</label>'
       +'<input class="comm-sheet-input" id="cs-tags" placeholder="singlet, college, muscle..." maxlength="150">'
       +'<label class="comm-sheet-label">Description</label>'
       +'<textarea class="comm-sheet-ta" id="cs-desc" placeholder="Describe your thread..." maxlength="300"></textarea>'
+      +'<label class="comm-sheet-label">Cover photo (optional)</label>'
+      +'<div id="cs-cover-wrap" style="margin-bottom:0.6rem;">'
+        +'<button type="button" class="comm-sheet-media-btn" id="cs-cover-btn" style="width:100%;justify-content:center;">'
+          +'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+          +' Add Cover Photo</button>'
+        +'<input type="file" id="cs-cover-input" accept="image/*" style="display:none">'
+        +'<div id="cs-cover-preview"></div>'
+      +'</div>'
       +'<button class="comm-sheet-cta" id="cs-submit">Create Thread</button>';
   }
 
   function buildPostForm(){
     return '<div class="comm-sheet-handle"></div>'
       +'<div class="comm-sheet-title">New Post</div>'
-      +'<textarea class="comm-sheet-ta" id="cp-body-ta" placeholder="What&#39;s on your mind?" maxlength="500" style="height:110px;"></textarea>'
-      +'<div id="cp-img-wrap-area"></div>'
+      +'<textarea class="comm-sheet-ta" id="cp-body-ta" placeholder="What&#39;s on your mind?" maxlength="500" style="height:80px;"></textarea>'
+      +'<div id="cp-media-grid" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.5rem;"></div>'
       +'<div class="comm-sheet-toolbar">'
-        +'<button class="comm-sheet-media-btn" id="cp-media-btn"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Photo / Video</button>'
-        +'<input type="file" id="cp-file-input" accept="image/*,video/mp4,video/webm,.gif" style="display:none">'
+        +'<button class="comm-sheet-media-btn" id="cp-media-btn">'
+          +'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+          +' Add Photos / Videos <span id="cp-media-count"></span></button>'
+        +'<input type="file" id="cp-file-input" accept="image/*,video/mp4,video/webm,.gif" multiple style="display:none">'
       +'</div>'
-      +'<div style="font-size:0.6rem;color:var(--text-muted);margin-bottom:0.65rem;">No links &#183; Keep it real &#183; Violations = ban</div>'
+      +'<div style="font-size:0.6rem;color:var(--text-muted);margin-bottom:0.65rem;">Up to 10 files &#183; No links &#183; Violations = ban</div>'
       +'<button class="comm-sheet-cta" id="cp-submit">Post</button>';
   }
 
@@ -5639,6 +5649,35 @@ async function votePoll(postId, idx, poll, container) {
     var submitBtn=document.getElementById(sheetMode==='create'?'cs-submit':'cp-submit');
     if(!submitBtn) return;
     if(sheetMode==='create'){
+      /* Cover photo upload */
+      var coverUrl='';
+      var coverBtn=document.getElementById('cs-cover-btn');
+      var coverInput=document.getElementById('cs-cover-input');
+      var coverPreview=document.getElementById('cs-cover-preview');
+      if(coverBtn) coverBtn.addEventListener('click',function(){ coverInput.click(); });
+      if(coverInput) coverInput.addEventListener('change',async function(e){
+        var file=e.target.files[0]; if(!file) return;
+        coverBtn.textContent='Uploading...';
+        try{
+          var img2=new Image(); var url2=URL.createObjectURL(file);
+          img2.onload=function(){
+            var maxW=1200; var ratio=Math.min(maxW/img2.width,1);
+            var canvas=document.createElement('canvas');
+            canvas.width=Math.round(img2.width*ratio); canvas.height=Math.round(img2.height*ratio);
+            canvas.getContext('2d').drawImage(img2,0,0,canvas.width,canvas.height);
+            URL.revokeObjectURL(url2);
+            canvas.toBlob(async function(blob){
+              var upRes=await fetch('/api/upload',{method:'PUT',credentials:'include',headers:{'Content-Type':'image/webp'},body:blob});
+              var upData=await upRes.json();
+              if(upData.ok){
+                coverUrl=upData.url;
+                if(coverPreview) coverPreview.innerHTML='<img src="'+coverUrl+'" style="width:100%;height:70px;object-fit:cover;border-radius:8px;margin-top:0.4rem;">';
+                coverBtn.textContent='&#10003; Cover added';
+              }
+            },'image/webp',0.85);
+          }; img2.src=url2;
+        }catch(e2){ coverBtn.innerHTML='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add Cover Photo'; }
+      });
       submitBtn.addEventListener('click', async function(){
         var name=(document.getElementById('cs-name')||{}).value||'';
         var tags=(document.getElementById('cs-tags')||{}).value||'';
@@ -5648,59 +5687,93 @@ async function votePoll(postId, idx, poll, container) {
         submitBtn.disabled=true;
         try{
           var r=await fetch('/api/communities',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({action:'create',name:name.trim(),description:desc.trim(),category:cat,tags:tags})});
+            body:JSON.stringify({action:'create',name:name.trim(),description:desc.trim(),category:cat,tags:tags,cover_url:coverUrl})});
           var d=await r.json();
           if(d.ok){ closeSheet(); loadCommunities(); }
         }catch(e){}
         submitBtn.disabled=false;
       });
     } else {
+      /* Multi-file state */
+      var pendingFiles = []; /* [{blob, type, previewUrl}] */
+
+      function updateMediaGrid(){
+        var grid=document.getElementById('cp-media-grid');
+        var countEl=document.getElementById('cp-media-count');
+        if(countEl) countEl.textContent=pendingFiles.length?'('+pendingFiles.length+'/10)':'';
+        if(!grid) return;
+        grid.innerHTML=pendingFiles.map(function(f,i){
+          var isVid=f.type.startsWith('video/');
+          var thumb=isVid
+            ?'<video src="'+f.previewUrl+'" style="width:100%;height:100%;object-fit:cover;" muted playsinline></video>'
+            :'<img src="'+f.previewUrl+'" style="width:100%;height:100%;object-fit:cover;">';
+          return '<div style="position:relative;width:calc(33.3% - 0.3rem);aspect-ratio:1;background:var(--surface-3);border-radius:8px;overflow:hidden;">'
+            +thumb
+            +'<button data-rm-idx="'+i+'" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.65);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:0.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">&#10005;</button>'
+          +'</div>';
+        }).join('');
+        /* Remove buttons */
+        grid.querySelectorAll('button[data-rm-idx]').forEach(function(btn){
+          btn.addEventListener('click',function(){
+            var idx=parseInt(btn.getAttribute('data-rm-idx'));
+            pendingFiles.splice(idx,1); updateMediaGrid();
+          });
+        });
+      }
+
       var mediaBtn=document.getElementById('cp-media-btn');
       var fileInput=document.getElementById('cp-file-input');
-      if(mediaBtn) mediaBtn.addEventListener('click',function(){ fileInput.click(); });
-      if(fileInput) fileInput.addEventListener('change',function(e){
-        var file=e.target.files[0]; if(!file) return;
-        var isVideo=file.type.startsWith('video/');
-        var isGif=file.type==='image/gif'||file.name.toLowerCase().endsWith('.gif');
-        var wrap=document.getElementById('cp-img-wrap-area');
-        if(isVideo||isGif){
-          pendingPostBlob=file; pendingPostType=file.type;
-          var u=URL.createObjectURL(file);
-          var tag=isVideo?'<video class="comm-post-img-preview" src="'+u+'" autoplay loop muted playsinline></video>':'<img class="comm-post-img-preview" src="'+u+'">';
-          if(wrap){ wrap.innerHTML='<div class="comm-post-img-wrap">'+tag+'<button class="comm-post-img-remove" id="cp-rm-btn">&#10005;</button></div>';
-            var rm=document.getElementById('cp-rm-btn'); if(rm) rm.addEventListener('click',function(){pendingPostBlob=null;wrap.innerHTML='';e.target.value='';});}
-        } else {
-          var img=new Image(); var url2=URL.createObjectURL(file);
-          img.onload=function(){
-            var maxW=1080; var ratio=Math.min(maxW/img.width,1);
-            var canvas=document.createElement('canvas');
-            canvas.width=Math.round(img.width*ratio); canvas.height=Math.round(img.height*ratio);
-            canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-            canvas.toBlob(function(blob){
-              URL.revokeObjectURL(url2); pendingPostBlob=blob; pendingPostType='image/webp';
-              var reader=new FileReader(); reader.onload=function(ev){
-                if(wrap){ wrap.innerHTML='<div class="comm-post-img-wrap"><img class="comm-post-img-preview" src="'+ev.target.result+'"><button class="comm-post-img-remove" id="cp-rm-btn">&#10005;</button></div>';
-                  var rm=document.getElementById('cp-rm-btn'); if(rm) rm.addEventListener('click',function(){pendingPostBlob=null;wrap.innerHTML='';e.target.value='';});}
-              }; reader.readAsDataURL(blob);
-            },'image/webp',0.82);
-          }; img.src=url2;
+      if(mediaBtn) mediaBtn.addEventListener('click',function(){
+        if(pendingFiles.length>=10) return;
+        fileInput.click();
+      });
+      if(fileInput) fileInput.addEventListener('change',async function(e){
+        var files=Array.from(e.target.files).slice(0, 10-pendingFiles.length);
+        for(var i=0;i<files.length;i++){
+          var file=files[i];
+          var isVideo=file.type.startsWith('video/');
+          var isGif=file.type==='image/gif'||file.name.toLowerCase().endsWith('.gif');
+          if(isVideo||isGif){
+            pendingFiles.push({blob:file,type:file.type,previewUrl:URL.createObjectURL(file)});
+          } else {
+            await new Promise(function(res){
+              var img2=new Image(); var u2=URL.createObjectURL(file);
+              img2.onload=function(){
+                var maxW=1080; var ratio=Math.min(maxW/img2.width,1);
+                var canvas=document.createElement('canvas');
+                canvas.width=Math.round(img2.width*ratio); canvas.height=Math.round(img2.height*ratio);
+                canvas.getContext('2d').drawImage(img2,0,0,canvas.width,canvas.height);
+                URL.revokeObjectURL(u2);
+                canvas.toBlob(function(blob){
+                  var reader=new FileReader(); reader.onload=function(ev){
+                    pendingFiles.push({blob:blob,type:'image/webp',previewUrl:ev.target.result});
+                    res();
+                  }; reader.readAsDataURL(blob);
+                },'image/webp',0.82);
+              }; img2.src=u2;
+            });
+          }
         }
+        updateMediaGrid();
+        e.target.value='';
       });
       submitBtn.addEventListener('click', async function(){
         var ta=document.getElementById('cp-body-ta');
         var text=ta?ta.value.trim():'';
-        if(!text&&!pendingPostBlob) return;
+        if(!text&&!pendingFiles.length) return;
         if(!currentThread) return;
         submitBtn.disabled=true; submitBtn.textContent='Posting...';
         try{
-          var imageUrl='';
-          if(pendingPostBlob){
-            var upRes=await fetch('/api/upload',{method:'PUT',credentials:'include',headers:{'Content-Type':pendingPostType},body:pendingPostBlob});
+          /* Subir todos los archivos en paralelo */
+          var mediaUrls=[];
+          for(var fi=0;fi<pendingFiles.length;fi++){
+            var pf=pendingFiles[fi];
+            var upRes=await fetch('/api/upload',{method:'PUT',credentials:'include',headers:{'Content-Type':pf.type},body:pf.blob});
             var upData=await upRes.json();
-            if(upData.ok) imageUrl=upData.url;
+            if(upData.ok) mediaUrls.push(upData.url);
           }
           var r=await fetch('/api/community-posts',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({action:'post',community_id:currentThread.id,body:text||' ',image_url:imageUrl})});
+            body:JSON.stringify({action:'post',community_id:currentThread.id,body:text||' ',image_url:mediaUrls[0]||'',media_urls:JSON.stringify(mediaUrls)})});
           var d=await r.json();
           if(d.ok){ closeSheet(); loadThreadPosts(currentThread.id); }
           else{ var toast=document.getElementById('toast'); if(toast){toast.textContent=d.error||'Error';toast.classList.add('show');setTimeout(function(){toast.classList.remove('show');},3000);} }
@@ -5766,11 +5839,28 @@ async function votePoll(postId, idx, poll, container) {
     var isLiked=COMM_LIKED.has(String(p.id));
     var avContent=p.user_avatar?'<img src="'+p.user_avatar+'" loading="lazy">':escH((p.user_name||'?').charAt(0).toUpperCase());
     var mediaHtml='';
-    if(p.image_url){
-      var lo=p.image_url.toLowerCase().split('?')[0];
+    var mediaList=[];
+    try{ if(p.media_urls) mediaList=JSON.parse(p.media_urls); }catch(e){}
+    if(!mediaList.length && p.image_url) mediaList=[p.image_url];
+    if(mediaList.length===1){
+      var lo=mediaList[0].toLowerCase().split('?')[0];
       mediaHtml=lo.endsWith('.mp4')||lo.endsWith('.webm')
-        ?'<video class="comm-post-img" src="'+p.image_url+'" autoplay loop muted playsinline controls></video>'
-        :'<img class="comm-post-img" src="'+p.image_url+'" loading="lazy">';
+        ?'<video class="comm-post-img" src="'+mediaList[0]+'" muted playsinline controls controlslist="nodownload" oncontextmenu="return false"></video>'
+        :'<img class="comm-post-img" src="'+mediaList[0]+'" loading="lazy">';
+    } else if(mediaList.length>1){
+      /* Álbum grid */
+      var cols=mediaList.length===2?2:3;
+      mediaHtml='<div style="display:grid;grid-template-columns:repeat('+cols+',1fr);gap:3px;margin-bottom:0.6rem;border-radius:10px;overflow:hidden;">';
+      mediaList.slice(0,9).forEach(function(url,idx){
+        var lo2=url.toLowerCase().split('?')[0];
+        var isV=lo2.endsWith('.mp4')||lo2.endsWith('.webm');
+        var extra=mediaList.length>9&&idx===8?'<div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.2rem;color:#fff;">+'+( mediaList.length-9)+'</div>':'';
+        mediaHtml+='<div style="position:relative;aspect-ratio:1;overflow:hidden;background:#111;">'
+          +(isV?'<video src="'+url+'" style="width:100%;height:100%;object-fit:cover;" muted playsinline controls controlslist="nodownload" oncontextmenu="return false"></video>'
+              :'<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;" loading="lazy">')
+          +extra+'</div>';
+      });
+      mediaHtml+='</div>';
     }
     var body=p.body&&p.body.trim()&&p.body.trim()!==' '?'<div class="comm-post-body">'+escH(p.body)+'</div>':'';
     var pinnedBadge=p.is_pinned?'<div class="comm-post-pin-label">&#128204; Pinned post</div>':'';
