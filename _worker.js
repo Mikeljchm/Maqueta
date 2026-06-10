@@ -106,10 +106,23 @@ function containsLink(text) {
 async function handleComments(request, env, corsH) {
   const url = new URL(request.url);
   const post_id = url.searchParams.get('post_id');
-  if (!post_id) return apiJson({ error: 'post_id required' }, 400, corsH);
 
   /* Migración: agregar parent_id si no existe */
   try { await env.DB.prepare('ALTER TABLE comments ADD COLUMN parent_id INTEGER DEFAULT NULL').run(); } catch(e){}
+
+  /* GET /api/comments?user_id=X — activity pública de un usuario */
+  if (request.method === 'GET' && !post_id) {
+    const publicUserId = url.searchParams.get('user_id');
+    if (publicUserId) {
+      const { results } = await env.DB.prepare(
+        'SELECT id,user_id,user_name,user_avatar,body,created_at FROM comments WHERE user_id=? ORDER BY created_at DESC LIMIT 50'
+      ).bind(publicUserId).all();
+      return apiJson({ comments: results }, 200, corsH);
+    }
+    return apiJson({ error: 'post_id required' }, 400, corsH);
+  }
+
+  if (!post_id) return apiJson({ error: 'post_id required' }, 400, corsH);
 
   if (request.method === 'GET') {
     const parent_id = url.searchParams.get('parent_id');
