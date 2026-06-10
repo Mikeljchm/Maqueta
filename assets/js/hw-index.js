@@ -3663,11 +3663,27 @@ async function votePoll(postId, idx, poll, container) {
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
 
-        /* Cargar imagen via FileReader — garantiza onload en Android */
+        /* Usar Image() separado para decodificar — evita el race condition
+           donde el browser procesa el src antes de registrar onload en el img del DOM */
         var fr = new FileReader();
         fr.onload = function(ev) {
-          el.onload = _cropInit;
-          el.src    = ev.target.result;
+          var tmpImg = new Image();
+          tmpImg.onload = function() {
+            /* Imagen decodificada — ahora asignar al elemento del DOM */
+            el.onload = _cropInit;
+            el.src = ev.target.result;
+            /* Si onload no se dispara (ya completo), llamar manualmente */
+            if (el.complete) {
+              _naturalW = tmpImg.naturalWidth;
+              _naturalH = tmpImg.naturalHeight;
+              _minScale = Math.max(_cW / _naturalW, _cH / _naturalH);
+              _scale    = _minScale;
+              _tx = (_cW - _naturalW * _scale) / 2;
+              _ty = (_cH - _naturalH * _scale) / 2;
+              _cropApply();
+            }
+          };
+          tmpImg.src = ev.target.result;
         };
         fr.readAsDataURL(file);
       });
