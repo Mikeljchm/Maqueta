@@ -206,13 +206,23 @@
   function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   /* ── Render comment (top-level o reply) ── */
+  /* Si el post/comentario es del usuario actual, usar su avatar de D1 (currentUser.picture)
+     en lugar del valor guardado en D1 al momento de postear (puede ser Google o vacío) */
+  function _resolveAvatar(userId, storedAvatar) {
+    if (window.currentUser && window.currentUser.id === userId && window.currentUser.picture) {
+      return window.currentUser.picture;
+    }
+    return storedAvatar || '';
+  }
+
   function renderComment(row, isReply) {
     var item = document.createElement('div');
     item.className = isReply ? 'cp-item cp-reply' : 'cp-item';
     item.setAttribute('data-comment-id', row.id || '');
 
-    var avContent = row.user_avatar
-      ? '<img src="' + row.user_avatar + '" loading="lazy">'
+    var _avUrl = _resolveAvatar(row.user_id, row.user_avatar);
+    var avContent = _avUrl
+      ? '<img src="' + _avUrl + '" loading="lazy">'
       : escH((row.user_name || 'A').charAt(0).toUpperCase());
 
     var stickerMatch = row.body ? row.body.match(/\[sticker\]([^\[]+)\[\/sticker\]/) : null;
@@ -1604,7 +1614,7 @@ async function votePoll(postId, idx, poll, container) {
           const d = await r.json();
           if (d.comments) {
             listEl.innerHTML = '';
-            d.comments.forEach(row => addComment(listEl, row.body, false, row.user_name, row.user_avatar));
+            d.comments.forEach(row => addComment(listEl, row.body, false, row.user_name, row.user_avatar, row.user_id));
             if (countBtn) { const c = countBtn.querySelector('.comment-count'); if(c) c.textContent = d.comments.length||0; }
           }
         } catch(e) {}
@@ -1625,9 +1635,10 @@ async function votePoll(postId, idx, poll, container) {
 
 
 
-      function addComment(list, text, animate, userName, userAvatar) {
+      function addComment(list, text, animate, userName, userAvatar, userId) {
         const div = document.createElement('div'); div.className = 'comment-item';
-        const av = userAvatar ? '<img src="'+userAvatar+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">' : '<div class="comment-av">'+(userName||'HW').charAt(0).toUpperCase()+'</div>';
+        var _avR = (typeof _resolveAvatar==='function') ? _resolveAvatar(userId, userAvatar) : (userAvatar||'');
+        const av = _avR ? '<img src="'+_avR+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">' : '<div class="comment-av">'+(userName||'HW').charAt(0).toUpperCase()+'</div>';
         const name = userName ? '<span class="comment-username">'+userName+'</span>' : '';
         var stickerMatch = text ? text.match(/\[sticker\]([^[]+)\[\/sticker\]/) : null;
         var bodyContent = stickerMatch
@@ -1983,15 +1994,16 @@ async function votePoll(postId, idx, poll, container) {
         const d = await r.json();
         if (d.comments) {
           listEl.innerHTML = '';
-          d.comments.forEach(row => addComment(listEl, row.body, false, row.user_name, row.user_avatar));
+          d.comments.forEach(row => addComment(listEl, row.body, false, row.user_name, row.user_avatar, row.user_id));
           if (countBtn) { const c = countBtn.querySelector('.comment-count'); if(c) c.textContent = d.comments.length||0; }
         }
       } catch(e) {}
     }
 
-    function addComment(list, text, animate, userName, userAvatar) {
+    function addComment(list, text, animate, userName, userAvatar, userId) {
       const div = document.createElement('div'); div.className = 'comment-item';
-      const av = userAvatar ? '<img src="'+userAvatar+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">' : '<div class="comment-av">'+(userName||'HW').charAt(0).toUpperCase()+'</div>';
+      var _avR = (typeof _resolveAvatar==='function') ? _resolveAvatar(userId, userAvatar) : (userAvatar||'');
+      const av = _avR ? '<img src="'+_avR+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">' : '<div class="comment-av">'+(userName||'HW').charAt(0).toUpperCase()+'</div>';
       const name = userName ? '<span class="comment-username">'+userName+'</span>' : '';
       div.innerHTML = av + '<div class="comment-body">'+name+'<div class="comment-text">'+text+'</div></div>';
       if (animate) { div.style.cssText='opacity:0;transform:translateY(5px);transition:all 0.3s'; requestAnimationFrame(()=>{ div.style.opacity='1'; div.style.transform='translateY(0)'; }); }
@@ -2318,15 +2330,16 @@ async function votePoll(postId, idx, poll, container) {
       try {
         const r = await fetch('/api/comments?post_id=lr_' + encodeURIComponent(storySlug), { credentials: 'include' });
         const d = await r.json();
-        if (d.comments) d.comments.forEach(row => addLRComment(row.body, false, row.user_name, row.user_avatar));
+        if (d.comments) d.comments.forEach(row => addLRComment(row.body, false, row.user_name, row.user_avatar, row.user_id));
       } catch(e) {}
     }
 
-    function addLRComment(text, animate, userName, userAvatar) {
+    function addLRComment(text, animate, userName, userAvatar, userId) {
       const listEl = document.getElementById('lr-comments-list');
       const div = document.createElement('div'); div.className = 'lr-comment-item';
-      let avHtml = userAvatar
-        ? '<div class="lr-comment-av"><img src="'+userAvatar+'" alt="'+(userName||'User')+'" onerror="this.parentNode.innerHTML=\'HW\'"></div>'
+      var _avLR = (typeof _resolveAvatar==='function') ? _resolveAvatar(userId, userAvatar) : (userAvatar||'');
+      let avHtml = _avLR
+        ? '<div class="lr-comment-av"><img src="'+_avLR+'" alt="'+(userName||'User')+'" onerror="this.parentNode.innerHTML=\'HW\'"></div>'
         : '<div class="lr-comment-av">HW</div>';
       const nameHtml = userName ? '<div class="lr-comment-username">'+userName+'</div>' : '';
       div.innerHTML = avHtml + '<div class="lr-comment-body">'+nameHtml+'<div class="lr-comment-text">'+text+'</div></div>';
@@ -2344,7 +2357,7 @@ async function votePoll(postId, idx, poll, container) {
         userName = currentUser.name || currentUser.email.split('@')[0];
         userAvatar = currentUser.picture || null;
       }
-      addLRComment(text, true, userName, userAvatar);
+      addLRComment(text, true, userName, userAvatar, currentUser ? currentUser.id : null);
       const postId = 'lr_' + lrCurrentStory.slug;
       try { await fetch('/api/comments?post_id=' + encodeURIComponent(postId), { method: 'POST', credentials: 'include', headers: {'Content-Type':'application/json'}, body: JSON.stringify({body: text}) }); } catch(e) {}
       toast('Posted!');
@@ -5003,8 +5016,9 @@ async function votePoll(postId, idx, poll, container) {
     var isAdmin = document.body.classList.contains('is-admin');
     var isOwn   = window.currentUser && window.currentUser.id === p.user_id;
     var reported = REPORTED_POSTS.has(String(p.id));
-    var avatar   = p.user_avatar
-      ? '<img src="'+p.user_avatar+'" loading="lazy" alt="">'
+    var _avUrlP = _resolveAvatar(p.user_id, p.user_avatar);
+    var avatar   = _avUrlP
+      ? '<img src="'+_avUrlP+'" loading="lazy" alt="">'
       : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
 
     var html = '<div class="post-card" data-post-id="'+p.id+'">'
@@ -5749,7 +5763,8 @@ async function votePoll(postId, idx, poll, container) {
   /* Render thread post */
   function renderThreadPost(p, isCreator){
     var isLiked=COMM_LIKED.has(String(p.id));
-    var avContent=p.user_avatar?'<img src="'+p.user_avatar+'" loading="lazy">':escH((p.user_name||'?').charAt(0).toUpperCase());
+    var _avUrlT=_resolveAvatar(p.user_id,p.user_avatar);
+    var avContent=_avUrlT?'<img src="'+_avUrlT+'" loading="lazy">':escH((p.user_name||'?').charAt(0).toUpperCase());
     var mediaHtml='';
     var mediaList=[];
     try{ if(p.media_urls) mediaList=JSON.parse(p.media_urls); }catch(e){}
