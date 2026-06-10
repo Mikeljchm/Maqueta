@@ -5589,6 +5589,8 @@ async function votePoll(postId, idx, poll, container) {
     '.comm-post-img{width:100%;border-radius:10px;margin-bottom:0.6rem;display:block;max-height:300px;object-fit:cover;}',
     '.comm-post-actions{display:flex;gap:0.35rem;align-items:center;}',
     '.comm-post-act{background:none;border:none;color:var(--text-dim);font-size:0.7rem;cursor:pointer;display:flex;align-items:center;gap:0.28rem;padding:0.2rem 0.4rem;border-radius:8px;font-family:var(--font-b);transition:color 0.15s;}',
+    '.comm-report-btn{margin-left:auto;color:var(--text-muted);border:1px solid rgba(255,255,255,0.06);font-size:0.62rem;padding:0.18rem 0.55rem;border-radius:20px;}',
+    '.comm-report-btn:active{color:#cc4444;border-color:rgba(204,68,68,0.3);}',
     '.comm-post-act svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:fill 0.15s,stroke 0.15s;}',
     '.comm-post-act.liked{color:#ff3b5c;}',
     '.comm-post-act.liked svg{fill:#ff3b5c;stroke:#ff3b5c;}',
@@ -5986,7 +5988,10 @@ async function votePoll(postId, idx, poll, container) {
           +'<button class="comm-post-act creator-act" data-chide-id="'+p.id+'" title="Hide post">&#128683;</button>'
           +'<button class="comm-post-act creator-act" data-cban-uid="'+escH(p.user_id||'')+'" title="Ban user">&#128468;</button>'
           :'')
-        +'<button class="comm-post-act" data-crep-id="'+p.id+'" style="margin-left:auto;font-size:0.62rem;color:var(--text-muted);">Report</button>'
+        +'<button class="comm-post-act comm-report-btn" data-crep-id="'+p.id+'">'
+          +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>'
+          +' Report'
+        +'</button>'
       +'</div>'
     +'</div>';
   }
