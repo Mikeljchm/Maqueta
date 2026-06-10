@@ -3566,42 +3566,6 @@ async function votePoll(postId, idx, poll, container) {
       var pc=document.getElementById('posts-feed-container');
       if(pc && typeof window.loadPostsFeed==='function') window.loadPostsFeed(pc, user.id);
 
-    /* ── Thread Media Viewer ── */
-  (function(){
-    var v=document.createElement('div'); v.className='thread-viewer'; v.id='thread-viewer';
-    v.innerHTML='<div class="thread-viewer-counter" id="tvc"></div>'
-      +'<button class="thread-viewer-close" id="tvcl">&#10005;</button>'
-      +'<button class="thread-viewer-nav thread-viewer-prev" id="tvp">&#8249;</button>'
-      +'<div id="tvcont" style="display:flex;align-items:center;justify-content:center;max-width:100vw;max-height:100vh;"></div>'
-      +'<button class="thread-viewer-nav thread-viewer-next" id="tvn">&#8250;</button>';
-    document.body.appendChild(v);
-    var tvU=[],tvI=0;
-    function tvShow(i){
-      tvI=i; var url=tvU[i];
-      var lo=url.toLowerCase().split('?')[0];
-      var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
-      var ct=document.getElementById('tvcont');
-      if(ct) ct.innerHTML=isV
-        ?'<video class="thread-viewer-video" src="'+url+'" controls autoplay></video>'
-        :'<img class="thread-viewer-img" src="'+url+'">';
-      var ctr=document.getElementById('tvc'); if(ctr) ctr.textContent=(i+1)+' / '+tvU.length;
-      var pp=document.getElementById('tvp'),np=document.getElementById('tvn');
-      if(pp) pp.style.display=tvU.length>1?'':'none';
-      if(np) np.style.display=tvU.length>1?'':'none';
-    }
-    window.openThreadViewer=function(urls,idx){ tvU=urls; v.classList.add('open'); document.body.style.overflow='hidden'; tvShow(idx||0); };
-    document.getElementById('tvcl').addEventListener('click',function(){ v.classList.remove('open'); document.body.style.overflow=''; });
-    document.getElementById('tvp').addEventListener('click',function(){ tvShow((tvI-1+tvU.length)%tvU.length); });
-    document.getElementById('tvn').addEventListener('click',function(){ tvShow((tvI+1)%tvU.length); });
-    var sx=0,sy=0;
-    v.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
-    v.addEventListener('touchend',function(e){
-      var dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
-      if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){ tvShow(dx<0?(tvI+1)%tvU.length:(tvI-1+tvU.length)%tvU.length); }
-      else if(dy>80){ v.classList.remove('open'); document.body.style.overflow=''; }
-    },{passive:true});
-  })();
-
   /* ── Photo Crop & Upload ── */
 
     /* Create crop modal once */
@@ -5587,6 +5551,42 @@ async function votePoll(postId, idx, poll, container) {
     '.thread-viewer-next{right:0.75rem;}'
   ].join('');
   document.head.appendChild(cs);
+
+  /* ── Thread Media Viewer — se crea una sola vez al cargar ── */
+  if (!document.getElementById('thread-viewer')) {
+    var tv=document.createElement('div'); tv.className='thread-viewer'; tv.id='thread-viewer';
+    tv.innerHTML='<div class="thread-viewer-counter" id="tvc"></div>'
+      +'<button class="thread-viewer-close" id="tvcl">&#10005;</button>'
+      +'<button class="thread-viewer-nav thread-viewer-prev" id="tvp">&#8249;</button>'
+      +'<div id="tvcont" style="display:flex;align-items:center;justify-content:center;max-width:100vw;max-height:100vh;"></div>'
+      +'<button class="thread-viewer-nav thread-viewer-next" id="tvn">&#8250;</button>';
+    document.body.appendChild(tv);
+    var tvU=[],tvI=0;
+    function tvShow(i){
+      tvI=i; var url=tvU[i];
+      var lo=url.toLowerCase().split('?')[0];
+      var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
+      var ct=document.getElementById('tvcont');
+      if(ct) ct.innerHTML=isV
+        ?'<video class="thread-viewer-video" src="'+url+'" controls autoplay></video>'
+        :'<img class="thread-viewer-img" src="'+url+'">';
+      var ctr=document.getElementById('tvc'); if(ctr) ctr.textContent=(i+1)+' / '+tvU.length;
+      var pp=document.getElementById('tvp'),np=document.getElementById('tvn');
+      if(pp) pp.style.display=tvU.length>1?'':'none';
+      if(np) np.style.display=tvU.length>1?'':'none';
+    }
+    window.openThreadViewer=function(urls,idx){ tvU=urls; tv.classList.add('open'); document.body.style.overflow='hidden'; tvShow(idx||0); };
+    document.getElementById('tvcl').addEventListener('click',function(){ tv.classList.remove('open'); document.body.style.overflow=''; });
+    document.getElementById('tvp').addEventListener('click',function(){ tvShow((tvI-1+tvU.length)%tvU.length); });
+    document.getElementById('tvn').addEventListener('click',function(){ tvShow((tvI+1)%tvU.length); });
+    var tvSx=0,tvSy=0;
+    tv.addEventListener('touchstart',function(e){tvSx=e.touches[0].clientX;tvSy=e.touches[0].clientY;},{passive:true});
+    tv.addEventListener('touchend',function(e){
+      var dx=e.changedTouches[0].clientX-tvSx, dy=e.changedTouches[0].clientY-tvSy;
+      if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){ tvShow(dx<0?(tvI+1)%tvU.length:(tvI-1+tvU.length)%tvU.length); }
+      else if(dy>80){ tv.classList.remove('open'); document.body.style.overflow=''; }
+    },{passive:true});
+  }
 
   /* State */
   var currentThread    = null;
