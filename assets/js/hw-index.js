@@ -447,8 +447,8 @@
       if (p.image_url) {
         var lo = p.image_url.toLowerCase().split('?')[0];
         mediaHtml = lo.endsWith('.mp4')||lo.endsWith('.webm')
-          ? '<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;" src="'+p.image_url+'" autoplay loop muted playsinline></video>'
-          : '<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;" src="'+p.image_url+'" loading="lazy">';
+          ? '<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;cursor:pointer;" src="'+p.image_url+'" autoplay loop muted playsinline onclick="if(window._openPMV)window._openPMV(this.src,true)"></video>'
+          : '<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;cursor:pointer;" src="'+p.image_url+'" loading="lazy" onclick="if(window._openPMV)window._openPMV(this.src,false)">';
       }
       var body = p.body&&p.body.trim()&&p.body.trim()!==' '
         ? '<div style="font-size:0.85rem;line-height:1.5;color:var(--text);margin-bottom:0.4rem;">'+escH(p.body)+'</div>' : '';
