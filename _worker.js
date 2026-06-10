@@ -789,7 +789,9 @@ async function handleProfile(request, env, corsH) {
     const body = await request.json();
     const username = (body.username || '').replace(/[^a-zA-Z0-9_]/g,'').slice(0,30);
     const bio = typeof body.bio === 'string' ? body.bio.trim().slice(0,120) : null;
-    if (!username && bio === null) return apiJson({ error: 'Nothing to update' }, 400, corsH);
+    const _hasAvatar = typeof body.avatar_url === 'string';
+    const _hasBanner = typeof body.banner_url === 'string';
+    if (!username && bio === null && !_hasAvatar && !_hasBanner) return apiJson({ error: 'Nothing to update' }, 400, corsH);
     try {
       if (username) {
         await env.DB.prepare(
