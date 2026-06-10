@@ -3625,10 +3625,15 @@ async function votePoll(postId, idx, poll, container) {
         var scale = 1, minScale = 1;
         var tx = 0, ty = 0;
 
-        imgEl.onload = function() {
+        /* Mostrar modal primero para evitar que onload no se dispare */
+        imgEl.src = '';
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        function initCrop() {
           naturalW = imgEl.naturalWidth;
           naturalH = imgEl.naturalHeight;
-          /* Fit image to cover the crop area */
+          if (!naturalW || !naturalH) return;
           var scaleX = cW / naturalW;
           var scaleY = cH / naturalH;
           minScale = Math.max(scaleX, scaleY);
@@ -3636,10 +3641,14 @@ async function votePoll(postId, idx, poll, container) {
           tx = (cW - naturalW * scale) / 2;
           ty = (cH - naturalH * scale) / 2;
           applyTransform();
-        };
-        imgEl.src = objectUrl;
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+        }
+        imgEl.onload = initCrop;
+        /* Asignar src después de mostrar el modal */
+        requestAnimationFrame(function(){
+          imgEl.src = objectUrl;
+          /* Si ya está en caché, onload no se dispara — forzar */
+          if (imgEl.complete && imgEl.naturalWidth) initCrop();
+        });
 
         function clamp() {
           var iW = naturalW * scale;
@@ -3783,6 +3792,22 @@ async function votePoll(postId, idx, poll, container) {
         var aw3 = document.getElementById('user-avatar-wrap');
         if(aw3) aw3.innerHTML='<img src="'+cdnUrl+'" style="width:100%;height:100%;object-fit:cover;"><div class="prof-avatar-cam"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>';
         if(window.currentUser) window.currentUser.picture = cdnUrl;
+        /* Propagar avatar a todos los elementos con data-profile-uid del usuario */
+        var myUid = window.currentUser ? window.currentUser.id : null;
+        if (myUid) {
+          document.querySelectorAll('[data-profile-uid="'+myUid+'"]').forEach(function(el){
+            var img2 = el.tagName==='IMG' ? el : el.querySelector('img');
+            if (img2) { img2.src=cdnUrl; }
+            else {
+              /* Elemento sin img aún — reemplazar el texto inicial */
+              if (!el.querySelector('img')) {
+                var newImg=document.createElement('img');
+                newImg.src=cdnUrl; newImg.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%;';
+                el.innerHTML=''; el.appendChild(newImg);
+              }
+            }
+          });
+        }
       }
       var toast3 = document.getElementById('toast');
       if(toast3){toast3.textContent='Photo updated!';toast3.classList.add('show');setTimeout(function(){toast3.classList.remove('show');},2500);}
