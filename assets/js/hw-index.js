@@ -3617,8 +3617,20 @@ async function votePoll(postId, idx, poll, container) {
       if(adultToggle) adultToggle.checked=true;
       var pc=document.getElementById('posts-feed-container');
       if(pc && typeof window.loadPostsFeed==='function') window.loadPostsFeed(pc, user.id);
+    } else {
+      if(signinCard) signinCard.style.display='';
+      if(tabs)       tabs.style.display='none';
+      if(stats)      stats.style.display='none';
+      if(unWrap)     unWrap.style.display='none';
+      if(badge)      badge.style.display='none';
+      if(bioAreaEl)  bioAreaEl.style.display='none';
+      if(adultToggle) adultToggle.checked=false;
+      document.querySelectorAll('.prof-tab-pane').forEach(function(p){ p.style.display='none'; });
+      var pp=document.getElementById('ptab-posts'); if(pp) pp.style.display='block';
+    }
+  }
 
-  /* ── Photo Upload (direct, no crop) ── */
+/* ── Photo Upload (direct, no crop) ── */
 
     /* Compress image in canvas and upload to Bunny CDN */
     async function uploadAndSavePhoto(blob, type) {
@@ -3708,21 +3720,9 @@ async function votePoll(postId, idx, poll, container) {
         }
       });
     }
-    var pg2 = document.getElementById('page-more');
-    setupImageUpload(pg2 && pg2.querySelector('.prof-hero'), 'banner');
-    setupImageUpload(document.getElementById('user-avatar-wrap'), 'avatar');
-    } else {
-      if(signinCard) signinCard.style.display='';
-      if(tabs)       tabs.style.display='none';
-      if(stats)      stats.style.display='none';
-      if(unWrap)     unWrap.style.display='none';
-      if(badge)      badge.style.display='none';
-      if(bioAreaEl)  bioAreaEl.style.display='none';
-      if(adultToggle) adultToggle.checked=false;
-      document.querySelectorAll('.prof-tab-pane').forEach(function(p){ p.style.display='none'; });
-      var pp=document.getElementById('ptab-posts'); if(pp) pp.style.display='block';
-    }
-  }
+  var pg2 = document.getElementById('page-more');
+  setupImageUpload(pg2 && pg2.querySelector('.prof-hero'), 'banner');
+  setupImageUpload(document.getElementById('user-avatar-wrap'), 'avatar');
 
   document.querySelectorAll('.nav-item[data-page="more"]').forEach(function(btn){
     btn.addEventListener('click', loadProfilePage);
