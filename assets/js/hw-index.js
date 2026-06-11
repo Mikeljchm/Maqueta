@@ -6701,7 +6701,7 @@ async function votePoll(postId, idx, poll, container) {
       submitBtn.addEventListener('click', async function(){
         var ta=document.getElementById('cp-body-ta');
         var text=ta?ta.value.trim():'';
-        if(!text&&!pendingFiles.length) return;
+        if(!text&&!pendingFiles.length&&!pendingAudio) return;
         if(!currentThread) return;
         submitBtn.disabled=true; submitBtn.textContent='Posting...';
         try{
