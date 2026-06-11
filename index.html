@@ -400,7 +400,7 @@ layout: none
         </div>
 
         <!-- AVATAR -->
-        <div class="prof-avatar-row">
+        <div class="prof-avatar-row" style="display:flex;align-items:flex-end;">
           <div class="prof-avatar-wrap" id="user-avatar-wrap">
             <div class="user-avatar-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
           </div>
@@ -410,11 +410,11 @@ layout: none
               <span class="prof-ig-stat-n" id="own-posts-count">0</span>
               <span class="prof-ig-stat-l">Posts</span>
             </button>
-            <button class="prof-ig-stat" id="own-stat-followers" onclick="window._openOwnFollowSheet('followers')">
+            <button class="prof-ig-stat" id="own-stat-followers" onclick="if(window.currentUser)window._openFollowSheet(window.currentUser.id,'followers')">
               <span class="prof-ig-stat-n" id="own-followers-count">0</span>
               <span class="prof-ig-stat-l">Followers</span>
             </button>
-            <button class="prof-ig-stat" id="own-stat-following" onclick="window._openOwnFollowSheet('following')">
+            <button class="prof-ig-stat" id="own-stat-following" onclick="if(window.currentUser)window._openFollowSheet(window.currentUser.id,'following')">
               <span class="prof-ig-stat-n" id="own-following-count">0</span>
               <span class="prof-ig-stat-l">Following</span>
             </button>
