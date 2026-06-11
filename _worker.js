@@ -1861,6 +1861,24 @@ export default {
           return apiJson({ok:true},200,corsH);
         }
 
+        /* DELETE /api/admin/user?user_id=X — ban + wipe all content */
+        if (path === '/api/admin/user' && request.method === 'DELETE') {
+          const uid = url.searchParams.get('user_id');
+          if (!uid) return apiJson({ error: 'user_id required' }, 400, corsH);
+          const reason = url.searchParams.get('reason') || 'Terms of service violation';
+          // Ban the user
+          await env.DB.prepare(
+            "INSERT OR REPLACE INTO banned_users (user_id,reason) VALUES (?,?)"
+          ).bind(uid, reason).run();
+          // Wipe all their content
+          await env.DB.prepare('DELETE FROM user_posts WHERE user_id=?').bind(uid).run();
+          await env.DB.prepare('DELETE FROM comments WHERE user_id=?').bind(uid).run();
+          await env.DB.prepare('DELETE FROM thread_posts WHERE user_id=?').bind(uid).run();
+          await env.DB.prepare('DELETE FROM likes WHERE user_id=?').bind(uid).run();
+          await env.DB.prepare('DELETE FROM user_profiles WHERE user_id=?').bind(uid).run();
+          return apiJson({ ok: true, banned: uid }, 200, corsH);
+        }
+
         /* POST /api/admin/notify */
         if (path === '/api/admin/notify' && request.method === 'POST') {
           const body = await request.json();
