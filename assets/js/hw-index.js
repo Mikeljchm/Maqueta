@@ -6530,7 +6530,11 @@ async function votePoll(postId, idx, poll, container) {
           +'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
           +' Add Photos / Videos <span id="cp-media-count"></span></button>'
         +'<input type="file" id="cp-file-input" accept="image/*,video/mp4,video/webm,.gif" multiple style="display:none">'
-      +'</div>'
+      
+        +'<button class="comm-sheet-media-btn" id="cp-mic-btn" style="margin-left:0.4rem;">'
+          +'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>'
+          +' Voice Note</button>'
+        +'<div id="cp-audio-preview" style="display:none;margin-top:0.4rem;width:100%;"></div>'+'</div>'
       +'<div style="font-size:0.6rem;color:var(--text-muted);margin-bottom:0.65rem;">Up to 10 files &#183; No links &#183; Violations = ban</div>'
       +'<button class="comm-sheet-cta" id="cp-submit">Post</button>';
   }
@@ -6642,6 +6646,58 @@ async function votePoll(postId, idx, poll, container) {
         updateMediaGrid();
         e.target.value='';
       });
+
+      /* ── Voice recording ── */
+      var micBtn = document.getElementById('cp-mic-btn');
+      var audioPreview = document.getElementById('cp-audio-preview');
+      var mediaRecorder = null;
+      var audioChunks = [];
+      var pendingAudio = null; /* {blob, type} */
+      var isRecording = false;
+
+      if (micBtn) {
+        micBtn.addEventListener('click', async function() {
+          if (isRecording) {
+            /* Stop recording */
+            mediaRecorder.stop();
+            return;
+          }
+          try {
+            var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            var mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
+            mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+            audioChunks = [];
+            mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorder.onstop = function() {
+              stream.getTracks().forEach(function(t) { t.stop(); });
+              var blob = new Blob(audioChunks, { type: mimeType });
+              pendingAudio = { blob: blob, type: mimeType };
+              /* Show preview player */
+              var url = URL.createObjectURL(blob);
+              audioPreview.style.display = 'block';
+              audioPreview.innerHTML = '<audio controls style="width:100%;border-radius:8px;margin-top:0.25rem;" src="' + url + '"></audio>'
+                + '<button style="background:none;border:none;color:var(--text-muted);font-size:0.7rem;cursor:pointer;margin-top:0.2rem;" id="cp-audio-remove">&#10005; Remove voice note</button>';
+              document.getElementById('cp-audio-remove').onclick = function() {
+                pendingAudio = null;
+                audioPreview.style.display = 'none';
+                audioPreview.innerHTML = '';
+              };
+              isRecording = false;
+              micBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Voice Note';
+              micBtn.style.color = '';
+              micBtn.style.borderColor = '';
+            };
+            mediaRecorder.start();
+            isRecording = true;
+            micBtn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop Recording';
+            micBtn.style.color = '#ff4444';
+            micBtn.style.borderColor = '#ff4444';
+          } catch(err) {
+            alert('Microphone access denied. Please allow microphone in your browser settings.');
+          }
+        });
+      }
+
       submitBtn.addEventListener('click', async function(){
         var ta=document.getElementById('cp-body-ta');
         var text=ta?ta.value.trim():'';
@@ -6657,10 +6713,17 @@ async function votePoll(postId, idx, poll, container) {
             var upData=await upRes.json();
             if(upData.ok) mediaUrls.push(upData.url);
           }
+          /* Upload voice note if present */
+          var audioUrl='';
+          if(pendingAudio){
+            var auRes=await fetch('/api/upload',{method:'PUT',credentials:'include',headers:{'Content-Type':pendingAudio.type},body:pendingAudio.blob});
+            var auData=await auRes.json();
+            if(auData.ok) audioUrl=auData.url;
+          }
           var r=await fetch('/api/community-posts',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({action:'post',community_id:currentThread.id,body:text||' ',image_url:mediaUrls[0]||'',media_urls:JSON.stringify(mediaUrls)})});
+            body:JSON.stringify({action:'post',community_id:currentThread.id,body:text||' ',image_url:mediaUrls[0]||'',media_urls:JSON.stringify(mediaUrls),audio_url:audioUrl})});
           var d=await r.json();
-          if(d.ok){ closeSheet(); loadThreadPosts(currentThread.id); }
+          if(d.ok){ pendingAudio=null; closeSheet(); loadThreadPosts(currentThread.id); }
           else{ var toast=document.getElementById('toast'); if(toast){toast.textContent=d.error||'Error';toast.classList.add('show');setTimeout(function(){toast.classList.remove('show');},3000);} }
         }catch(e){}
         submitBtn.disabled=false; submitBtn.textContent='Post';
@@ -6750,6 +6813,9 @@ async function votePoll(postId, idx, poll, container) {
       });
       mediaHtml+='</div>';
     }
+    var audioHtml = p.audio_url
+      ? '<div style="margin:0.4rem 0;"><audio controls preload="none" style="width:100%;border-radius:10px;height:36px;outline:none;" src="' + p.audio_url + '"></audio></div>'
+      : '';
     var body=p.body&&p.body.trim()&&p.body.trim()!==' '?'<div class="comm-post-body">'+escH(p.body)+'</div>':'';
     var pinnedBadge=p.is_pinned?'<div class="comm-post-pin-label">&#128204; Pinned post</div>':'';
     return '<div class="comm-post'+(p.is_pinned?' pinned':'')+'" data-cpost-id="'+p.id+'" data-cpost-uid="'+escH(p.user_id||'')+'">'
@@ -6761,7 +6827,7 @@ async function votePoll(postId, idx, poll, container) {
           +'<div class="comm-post-time">'+timeAgo(p.created_at)+'</div>'
         +'</div>'
       +'</div>'
-      +mediaHtml+body
+      +mediaHtml+audioHtml+body
       +'<div class="comm-post-actions">'
         +'<button class="comm-post-act'+(isLiked?' liked':'')+'" data-clike-id="'+p.id+'">'
           +'<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(p.like_count||'')
