@@ -351,7 +351,7 @@
     }
   }
 
-  function openMiniProfile(uid, name) {
+  window.openMiniProfile = function openMiniProfile(uid, name) {
     var page = document.getElementById('page-user-profile');
     if (!page) {
       page = document.createElement('div');
