@@ -1660,20 +1660,24 @@ async function handleNotifications(request, env, corsH) {
     )`).run();
   } catch(e) {}
 
-  /* Migrar admin_notifications a notifications si aún no se migró */
+  /* Migrar admin_notifications → notifications una sola vez */
   try {
-    const { results: oldNotifs } = await env.DB.prepare(
-      'SELECT user_id, message, read, created_at FROM admin_notifications'
+    const { results: oldCheck } = await env.DB.prepare(
+      "SELECT COUNT(*) as cnt FROM admin_notifications"
     ).all();
-    for (const n of oldNotifs) {
-      try {
-        await env.DB.prepare(
-          'INSERT INTO notifications (user_id,type,title,message,read,created_at) VALUES (?,?,?,?,?,?)'
-        ).bind(n.user_id, 'admin', 'Admin', n.message, n.read, n.created_at).run();
-      } catch(e2) {}
+    if (oldCheck[0]?.cnt > 0) {
+      const { results: oldNotifs } = await env.DB.prepare(
+        'SELECT user_id, message, read, created_at FROM admin_notifications'
+      ).all();
+      for (const n of oldNotifs) {
+        try {
+          await env.DB.prepare(
+            'INSERT INTO notifications (user_id,type,title,message,read,created_at) VALUES (?,?,?,?,?,?)'
+          ).bind(n.user_id, 'admin', 'Admin', n.message, n.read||0, n.created_at).run();
+        } catch(e2) {}
+      }
+      await env.DB.prepare('DELETE FROM admin_notifications').run();
     }
-    /* Vaciar la vieja para no re-migrar */
-    await env.DB.prepare('DELETE FROM admin_notifications').run();
   } catch(e) {}
 
   const url     = new URL(request.url);
