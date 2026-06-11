@@ -2832,7 +2832,7 @@ async function votePoll(postId, idx, poll, container) {
   }
   initAdmin();
 
-  /* ── NOTIFICATION SYSTEM ── */
+    /* ── NOTIFICATION SYSTEM ── */
   (function() {
     var _panel     = null;
     var _badge     = null;
@@ -2840,6 +2840,7 @@ async function votePoll(postId, idx, poll, container) {
     var _list      = null;
     var _pollTimer = null;
     var _open      = false;
+    var _lastData  = null; /* cache last fetch result */
 
     function _getEls() {
       _btn   = _btn   || document.getElementById('notif-btn');
@@ -2857,7 +2858,7 @@ async function votePoll(postId, idx, poll, container) {
     }
 
     function _renderNotif(n) {
-      var typeIcon = n.type === 'admin' ? '&#128276;' : n.type === 'ban' ? '&#128683;' : '&#128276;';
+      var typeIcon = n.type === 'ban' ? '&#128683;' : '&#128276;';
       return '<div data-nid="' + n.id + '" style="'
         + 'padding:0.8rem 1rem;border-bottom:1px solid var(--border);'
         + 'background:' + (n.read ? 'transparent' : 'rgba(255,69,0,0.06)') + ';'
@@ -2873,45 +2874,65 @@ async function votePoll(postId, idx, poll, container) {
         + '</div>';
     }
 
-    function _fetchNotifs() {
+    function _renderList(items) {
+      _getEls();
+      if (!_list) return;
+      if (!items || !items.length) {
+        _list.innerHTML = '<div style="padding:2rem 1rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">No notifications yet.</div>';
+        return;
+      }
+      _list.innerHTML = items.map(_renderNotif).join('');
+      _list.querySelectorAll('[data-nid]').forEach(function(el) {
+        el.addEventListener('click', function() {
+          var nid = el.getAttribute('data-nid');
+          el.style.background = 'transparent';
+          var dot = el.querySelector('div[style*="fire-orange"]');
+          if (dot) dot.remove();
+          fetch('/api/notifications/read', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: parseInt(nid) })
+          });
+        });
+      });
+    }
+
+    /* _updateBadge — solo actualiza el contador, no renderiza el panel */
+    function _updateBadge(count) {
+      _getEls();
+      if (!_badge) return;
+      if (count > 0) {
+        _badge.textContent = count > 9 ? '9+' : count;
+        _badge.style.display = 'flex';
+      } else {
+        _badge.style.display = 'none';
+      }
+    }
+
+    /* _pollBadge — fetch silencioso solo para el badge, no toca el panel */
+    function _pollBadge() {
       if (!window.currentUser) return;
+      fetch('/api/notifications?limit=1', { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { _updateBadge(d.unread_count || 0); })
+        .catch(function() {});
+    }
+
+    /* _loadPanel — fetch completo que renderiza la lista */
+    function _loadPanel() {
+      _getEls();
+      if (!_list) return;
+      _list.innerHTML = '<div style="padding:2rem 1rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Loading...</div>';
       fetch('/api/notifications?limit=30', { credentials: 'include' })
         .then(function(r) { return r.json(); })
         .then(function(d) {
-          _getEls();
-          var count = d.unread_count || 0;
-          if (_badge) {
-            if (count > 0) {
-              _badge.textContent = count > 9 ? '9+' : count;
-              _badge.style.display = 'flex';
-            } else {
-              _badge.style.display = 'none';
-            }
-          }
-          if (_open && _list) {
-            var items = d.notifications || [];
-            if (!items.length) {
-              _list.innerHTML = '<div style="padding:2rem 1rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">No notifications yet.</div>';
-            } else {
-              _list.innerHTML = items.map(_renderNotif).join('');
-              // Click to mark read
-              _list.querySelectorAll('[data-nid]').forEach(function(el) {
-                el.addEventListener('click', function() {
-                  var nid = el.getAttribute('data-nid');
-                  el.style.background = 'transparent';
-                  var dot = el.querySelector('div[style*="fire-orange"]');
-                  if (dot) dot.remove();
-                  fetch('/api/notifications/read', {
-                    method: 'POST', credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: parseInt(nid) })
-                  });
-                });
-              });
-            }
-          }
+          _lastData = d;
+          _updateBadge(d.unread_count || 0);
+          _renderList(d.notifications || []);
         })
-        .catch(function() {});
+        .catch(function() {
+          if (_list) _list.innerHTML = '<div style="padding:2rem 1rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Could not load.</div>';
+        });
     }
 
     function _openPanel() {
@@ -2923,7 +2944,8 @@ async function votePoll(postId, idx, poll, container) {
       requestAnimationFrame(function() {
         _panel.style.transform = 'translateX(-50%)';
       });
-      _fetchNotifs();
+      /* Always fetch fresh data when opening — no cache */
+      _loadPanel();
     }
 
     function _closePanel() {
@@ -2932,27 +2954,24 @@ async function votePoll(postId, idx, poll, container) {
       _open = false;
       _panel.style.transform = 'translateX(calc(-50% + 100vw))';
       document.body.style.overflow = '';
-      setTimeout(function() {
-        if (!_open) _panel.style.display = 'none';
-      }, 340);
+      setTimeout(function() { if (!_open) _panel.style.display = 'none'; }, 340);
     }
 
     window._initNotifBtn = function() {
       _getEls();
       if (!_btn) return;
-      // Show bell for any logged-in user
       _btn.style.display = 'flex';
-      // Fetch unread count immediately
-      _fetchNotifs();
-      // Poll every 60s
+      /* Initial badge poll */
+      _pollBadge();
+      /* Poll badge every 60s */
       if (_pollTimer) clearInterval(_pollTimer);
-      _pollTimer = setInterval(_fetchNotifs, 60000);
-      // Open/close
+      _pollTimer = setInterval(_pollBadge, 60000);
+      /* Toggle panel */
       _btn.onclick = function() { _open ? _closePanel() : _openPanel(); };
-      // Close button
+      /* Close button */
       var closeBtn = document.getElementById('notif-close');
       if (closeBtn) closeBtn.onclick = _closePanel;
-      // Mark all read
+      /* Mark all read */
       var readAll = document.getElementById('notif-read-all');
       if (readAll) readAll.onclick = function() {
         fetch('/api/notifications/read', {
@@ -2960,7 +2979,7 @@ async function votePoll(postId, idx, poll, container) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ all: true })
         }).then(function() {
-          if (_badge) _badge.style.display = 'none';
+          _updateBadge(0);
           if (_list) _list.querySelectorAll('[data-nid]').forEach(function(el) {
             el.style.background = 'transparent';
             var dot = el.querySelector('div[style*="fire-orange"]');
@@ -2978,7 +2997,7 @@ async function votePoll(postId, idx, poll, container) {
     };
   })();
 
-  /* ── ADMIN ACTION FUNCTIONS ── */
+    /* ── ADMIN ACTION FUNCTIONS ── */
   window._adminIsOn = function() {
     try {
       var m = document.cookie.match(/hw_admin=([^;]+)/);
