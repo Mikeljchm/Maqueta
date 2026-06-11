@@ -2839,7 +2839,7 @@ async function votePoll(postId, idx, poll, container) {
 
       async function _adminLoadPosts(container) {
         try {
-          var r=await fetch('/api/posts',{credentials:'include'});
+          var r=await fetch('/api/admin/posts',{credentials:'include'});
           var d=await r.json(); var posts=d.posts||[];
           if(!posts.length){container.innerHTML='<div style="padding:1rem;text-align:center;color:var(--text-dim);">No posts.</div>';return;}
           container.innerHTML=posts.map(function(p){
@@ -2908,6 +2908,57 @@ async function votePoll(postId, idx, poll, container) {
         var d=await r.json();
         if(d.ok){ var card=btn.closest('div[style]'); if(card) card.remove(); }
         else { btn.disabled=false; btn.textContent='Error'; }
+      };
+      window._adminDelThreadPost=async function(id,uid,btn){
+        var reason=prompt('Razón (se le enviará al usuario):') || 'Tu post fue eliminado por violar nuestras normas.';
+        if(reason===null) return;
+        btn.disabled=true; btn.textContent='...';
+        try {
+          await fetch('/api/admin/thread-post?id='+id,{method:'DELETE',credentials:'include'});
+          if(uid) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
+            headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,message:reason})});
+          var card=btn.closest('.comm-post'); if(card) card.remove();
+        } catch(e){ btn.disabled=false; btn.textContent='Error'; }
+      };
+      window._adminDelAvatar=async function(uid,btn){
+        var reason=prompt('Razón:') || 'Tu foto de perfil fue eliminada por violar nuestras normas.';
+        if(reason===null) return;
+        btn.disabled=true;
+        await fetch('/api/admin/avatar?user_id='+uid,{method:'DELETE',credentials:'include'});
+        if(uid) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
+          headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,message:reason})});
+        var aw=document.getElementById('user-avatar-wrap');
+        if(aw){ var imgs=aw.querySelector('img'); if(imgs) imgs.remove(); }
+        btn.textContent='Deleted';
+      };
+      window._adminDelBanner=async function(uid,btn){
+        var reason=prompt('Razón:') || 'Tu banner fue eliminado por violar nuestras normas.';
+        if(reason===null) return;
+        btn.disabled=true;
+        await fetch('/api/admin/banner?user_id='+uid,{method:'DELETE',credentials:'include'});
+        if(uid) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
+          headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,message:reason})});
+        var hero=document.querySelector('.prof-hero img.prof-banner-img');
+        if(hero) hero.remove();
+        btn.textContent='Deleted';
+      };
+      window._adminDelThreadBanner=async function(tid,btn){
+        var reason=prompt('Razón:') || 'El banner de tu hilo fue eliminado por violar nuestras normas.';
+        if(reason===null) return;
+        btn.disabled=true;
+        await fetch('/api/admin/thread-banner?id='+tid,{method:'DELETE',credentials:'include'});
+        var cover=document.querySelector('#comm-detail-inner .comm-detail-cover img');
+        if(cover) cover.remove();
+        btn.textContent='Deleted';
+      };
+      window._adminDelThreadDesc=async function(tid,btn){
+        var reason=prompt('Razón:') || 'La descripción de tu hilo fue eliminada por violar nuestras normas.';
+        if(reason===null) return;
+        btn.disabled=true;
+        await fetch('/api/admin/thread-desc?id='+tid,{method:'DELETE',credentials:'include'});
+        var desc=document.querySelector('#comm-detail-inner .comm-detail-desc');
+        if(desc) desc.textContent='';
+        btn.textContent='Deleted';
       };
       window._adminMsg=function(userId,userName){
         var msg=prompt('Mensaje para @'+userName+':');
@@ -5294,6 +5345,11 @@ async function votePoll(postId, idx, poll, container) {
     /* Admin post actions */
     '.post-admin-actions{display:flex;gap:0.4rem;margin-top:0.5rem;}',
     '.post-admin-btn{font-size:0.68rem;border:none;border-radius:8px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);}',
+    '.adm-inline-bar{display:none;background:rgba(108,63,199,0.12);border-top:1px solid rgba(108,63,199,0.25);padding:0.3rem 0.6rem;gap:0.35rem;flex-wrap:wrap;}',
+    '.is-admin .adm-inline-bar{display:flex;}',
+    '.adm-btn{background:rgba(108,63,199,0.2);border:1px solid rgba(108,63,199,0.4);color:#b39ddb;border-radius:6px;padding:0.18rem 0.5rem;font-size:0.58rem;font-family:var(--font-d);letter-spacing:0.06em;cursor:pointer;white-space:nowrap;}',
+    '.adm-btn:active{background:rgba(108,63,199,0.4);}',
+    '.adm-btn.danger{background:rgba(204,34,0,0.15);border-color:rgba(204,34,0,0.35);color:#ff6b6b;}',
     '.post-hide-btn{background:#3a1a1a;color:#cc4444;}',
     '.post-ban-btn{background:#2a0a0a;color:#ff4444;}',
     '.posts-empty{padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;}'
@@ -5475,9 +5531,12 @@ async function votePoll(postId, idx, poll, container) {
     html += '</div>';
 
     if (isAdmin) {
-      html += '<div class="post-admin-actions">'
-        + '<button class="post-admin-btn post-hide-btn" data-post-id="'+p.id+'">Hide</button>'
-        + '<button class="post-admin-btn post-ban-btn" data-post-id="'+p.id+'" data-user-id="'+p.user_id+'">Ban User</button>'
+      html += '<div class="adm-inline-bar">'
+        + '<span style="font-size:0.55rem;color:rgba(179,157,219,0.6);letter-spacing:0.1em;margin-right:0.25rem;">ADMIN</span>'
+        + '<button class="adm-btn danger post-admin-del-btn" data-post-id="'+p.id+'" data-user-id="'+escH(p.user_id||'')+'">&#128465; Borrar</button>'
+        + '<button class="adm-btn post-admin-btn post-hide-btn" data-post-id="'+p.id+'">Ocultar</button>'
+        + '<button class="adm-btn post-admin-btn post-ban-btn" data-post-id="'+p.id+'" data-user-id="'+p.user_id+'">Ban</button>'
+        + '<button class="adm-btn adm-msg-btn" data-uid="'+escH(p.user_id||'')+'" data-uname="'+escH(p.user_name||'')+'">&#9993;</button>'
       + '</div>';
     }
 
@@ -5787,6 +5846,32 @@ async function votePoll(postId, idx, poll, container) {
       return;
     }
 
+    /* Admin: delete post permanently */
+    var delPostBtn = e.target.closest('.post-admin-del-btn[data-post-id]');
+    if (delPostBtn) {
+      var pid2 = delPostBtn.getAttribute('data-post-id');
+      var uid2 = delPostBtn.getAttribute('data-user-id');
+      var reason2 = prompt('Razón (se le enviará al usuario):') || 'Tu post fue eliminado por violar nuestras normas.';
+      if (reason2 === null) return;
+      delPostBtn.disabled=true; delPostBtn.textContent='...';
+      try {
+        await fetch('/api/admin/post?id='+pid2,{method:'DELETE',credentials:'include'});
+        if(uid2) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
+          headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid2,message:reason2})});
+        var card2=delPostBtn.closest('.post-card'); if(card2) card2.remove();
+      } catch(err){ delPostBtn.disabled=false; delPostBtn.textContent='Error'; }
+      return;
+    }
+    /* Admin: msg inline */
+    var msgBtn2 = e.target.closest('.adm-msg-btn[data-uid]');
+    if (msgBtn2) {
+      var mUid=msgBtn2.getAttribute('data-uid'); var mUname=msgBtn2.getAttribute('data-uname')||mUid;
+      var mMsg=prompt('Mensaje para @'+mUname+':'); if(!mMsg||!mMsg.trim()) return;
+      await fetch('/api/admin/notify',{method:'POST',credentials:'include',
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:mUid,message:mMsg.trim()})});
+      alert('Mensaje enviado a @'+mUname);
+      return;
+    }
     /* Admin: ban user */
     var banBtn = e.target.closest('.post-ban-btn[data-user-id]');
     if (banBtn) {
@@ -6287,15 +6372,21 @@ async function votePoll(postId, idx, poll, container) {
           +'<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+(p.comment_count||'')
         +'</button>'
         +(isCreator?
-          '<button class="comm-post-act creator-act" data-cpin-id="'+p.id+'" title="Pin post">&#128204;</button>'
-          +'<button class="comm-post-act creator-act" data-chide-id="'+p.id+'" title="Hide post">&#128683;</button>'
-          +'<button class="comm-post-act creator-act" data-cban-uid="'+escH(p.user_id||'')+'" title="Ban user">&#128468;</button>'
+          '<button class="comm-post-act creator-act" data-cpin-id="'+p.id+'" title="Pin">&#128204;</button>'
+          +'<button class="comm-post-act creator-act" data-chide-id="'+p.id+'" title="Hide">&#128683;</button>'
+          +'<button class="comm-post-act creator-act" data-cban-uid="'+escH(p.user_id||'')+'" title="Ban">&#128468;</button>'
+          :'')
+        /* Admin global: borrar post de hilo + msg */
+        +(document.body.classList.contains('is-admin')?
+          '<button class="adm-btn danger" style="margin-left:auto;" onclick="_adminDelThreadPost(\''+p.id+'\',\''+escH(p.user_id||'')+'\',this)">&#128465;</button>'
+          +'<button class="adm-btn" onclick="_adminMsg(\''+escH(p.user_id||'')+'\',\''+escH(p.user_name||'')+'\')" style="margin-left:0.2rem;">&#9993;</button>'
           :'')
         +'<button class="comm-post-act comm-report-btn" data-crep-id="'+p.id+'">'
           +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>'
           +' Report'
         +'</button>'
       +'</div>'
+    +'</div>';
     +'</div>';
   }
 
@@ -6331,13 +6422,14 @@ async function votePoll(postId, idx, poll, container) {
         +(window.currentUser?'<button class="comm-detail-post-btn" id="cdp-btn">+ Post</button>':'')
       +'</div>'
       +'<div class="comm-detail-scroll" id="comm-detail-scroll">'
-        +'<div class="comm-detail-cover">'
+        +'<div class="comm-detail-cover" style="position:relative;">'
           +(thread.cover_url?'<img src="'+thread.cover_url+'" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy">':'')
           +'<div class="comm-detail-cover-glow"></div>'
+          +(document.body.classList.contains('is-admin')&&thread.cover_url?'<button class="adm-btn danger" style="position:absolute;top:6px;right:6px;z-index:2;" onclick="_adminDelThreadBanner(\''+thread.id+'\',this)">&#128465; Banner</button>':'')
         +'</div>'
         +'<div class="comm-detail-info">'
           +'<div class="comm-detail-title">'+escH(thread.name)+'</div>'
-          +(thread.description?'<div class="comm-detail-desc">'+escH(thread.description)+'</div>':'')
+          +(thread.description?'<div class="comm-detail-desc">'+escH(thread.description)+(document.body.classList.contains('is-admin')?'<button class="adm-btn danger" style="font-size:0.5rem;padding:0.1rem 0.35rem;margin-left:0.3rem;" onclick="_adminDelThreadDesc(\''+thread.id+'\',this)">&#128465;</button>':'')+'</div>':'')
           +(tagHtml?'<div class="comm-detail-info-tags">'+tagHtml+'</div>':'')
           +'<div class="comm-detail-stats-row">'
             +'<div class="comm-detail-stats">'
