@@ -408,9 +408,22 @@
         + (window._adminIsOn && window._adminIsOn()
             ? '<div style="margin-top:0.5rem;"><button onclick="window._adminBanUser(\'' + escH(uid) + '\',\'' + escH(name||"User") + '\')" style="background:#3a0808;color:#ff5555;border:1px solid #6a1010;border-radius:10px;padding:0.3rem 0.8rem;font-size:0.7rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban + Delete Account</button></div>'
             : '')
-        + '<div id="user-prof-activity" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
-        + '<div id="user-prof-followers" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
-        + '<div id="user-prof-following" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+        + '<div id="user-prof-tabs" style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;">'
+          + '<button class="upt active" data-tab="posts" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'
+          + '<button class="upt" data-tab="liked" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'
+          + '<button class="upt" data-tab="activity" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'
+          + '<button class="upt" data-tab="followers" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Followers</button>'
+          + '<button class="upt" data-tab="following" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Following</button>'
+        + '</div>'
+        + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">'
+          + '<div id="user-prof-posts" style="padding:0.75rem 1rem 3rem;">'
+            + '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>'
+          + '</div>'
+          + '<div id="user-prof-liked" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+          + '<div id="user-prof-activity" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+          + '<div id="user-prof-followers" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+          + '<div id="user-prof-following" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+        + '</div>'
       + '</div>';
 
     requestAnimationFrame(function(){ requestAnimationFrame(function(){
