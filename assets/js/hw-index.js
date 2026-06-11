@@ -393,27 +393,55 @@
         + '<div id="user-prof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;'
           + 'font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.55rem;border-radius:20px;'
           + 'background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-bottom:0.35rem;"></div>'
-        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;"></div>'        + (window._adminIsOn&&window._adminIsOn() ? '<div style="margin-top:0.5rem;"><button onclick="window._adminBanUser(\'' + escH(uid) + '\',\'' + escH(name||'User') + '\')" style="background:#3a0808;color:#ff5555;border:1px solid #6a1010;border-radius:10px;padding:0.3rem 0.8rem;font-size:0.7rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban + Delete Account</button></div>' : '')
+        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;"></div>'
+        + '<div style="display:flex;align-items:center;gap:1.2rem;margin-top:0.6rem;">'          + '<button class="prof-follow-stat" data-ftype="followers" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;">'            + '<span id="user-prof-followers" style="font-family:var(--font-d);font-size:1rem;">-</span>'            + '<span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Followers</span>'          + '</button>'          + '<button class="prof-follow-stat" data-ftype="following" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;">'            + '<span id="user-prof-following" style="font-family:var(--font-d);font-size:1rem;">-</span>'            + '<span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Following</span>'          + '</button>'          + (window.currentUser && window.currentUser.id !== uid'            ? '<button id="user-prof-follow-btn" onclick="window._toggleFollow(this,\'' + escH(uid) + '\')" style="margin-left:auto;background:var(--fire-orange);color:#fff;border:none;border-radius:20px;padding:0.32rem 1rem;font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.05em;cursor:pointer;">Follow</button>'            : ''          )'        + '</div>'        + (window._adminIsOn&&window._adminIsOn() ? '<div style="margin-top:0.5rem;"><button onclick="window._adminBanUser(\'' + escH(uid) + '\',\'' + escH(name||'User') + '\')" style="background:#3a0808;color:#ff5555;border:1px solid #6a1010;border-radius:10px;padding:0.3rem 0.8rem;font-size:0.7rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban + Delete Account</button></div>' : '')
       + '</div>'
       /* Tabs */
       + '<div id="user-prof-tabs" style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;">'
         + '<button class="upt active" data-tab="posts" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'
         + '<button class="upt" data-tab="liked" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'
         + '<button class="upt" data-tab="activity" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'
+        + '<button class="upt" data-tab="followers" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Followers</button>'
+        + '<button class="upt" data-tab="following" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Following</button>'
       + '</div>'
       + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">'
         + '<div id="user-prof-posts" style="padding:0.75rem 1rem 3rem;">'
           + '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>'
         + '</div>'
         + '<div id="user-prof-liked" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
-        + '<div id="user-prof-activity" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+        + '<div id="user-prof-activity" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="user-prof-followers" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="user-prof-following" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
       + '</div>';
 
     requestAnimationFrame(function(){ requestAnimationFrame(function(){
       page.style.transform = 'translateX(0)';
     }); });
 
+    /* Load follow stats */
+    fetch('/api/user-follows/stats?user_id=' + encodeURIComponent(uid), { credentials: 'include' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        var frEl = document.getElementById('user-prof-followers');
+        var fgEl = document.getElementById('user-prof-following');
+        if (frEl) frEl.textContent = d.followers || 0;
+        if (fgEl) fgEl.textContent = d.following || 0;
+        var followBtn = document.getElementById('user-prof-follow-btn');
+        if (followBtn) {
+          followBtn.textContent = d.is_following ? 'Following' : 'Follow';
+          followBtn.style.background = d.is_following ? 'var(--surface-3)' : 'var(--fire-orange)';
+          followBtn.style.color = d.is_following ? 'var(--text-dim)' : '#fff';
+        }
+      }).catch(function(){});
+
     document.getElementById('user-prof-back').addEventListener('click', closeMiniProfile);
+
+    /* Stat buttons — click opens followers/following tab */
+    page.querySelectorAll('.prof-follow-stat').forEach(function(statBtn) {
+      statBtn.addEventListener('click', function() {
+        var ftype = statBtn.getAttribute('data-ftype');
+        var tabBtn = page.querySelector('.upt[data-tab="'+ftype+'"]');
+        if (tabBtn) tabBtn.click();
+      });
+    });
 
     var sx = 0;
     page.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; }, {passive:true});
@@ -437,6 +465,8 @@
         document.getElementById('user-prof-'+t).style.display = 'block';
         if (t === 'liked' && !btn._loaded) { btn._loaded = true; loadPublicLiked(uid); }
         if (t === 'activity' && !btn._loaded) { btn._loaded = true; loadPublicActivity(uid); }
+        if (t === 'followers' && !btn._loaded) { btn._loaded = true; loadFollowList(uid, 'followers'); }
+        if (t === 'following' && !btn._loaded) { btn._loaded = true; loadFollowList(uid, 'following'); }
       });
     });
 
@@ -579,6 +609,36 @@
             + '</div>';
           }).join('');
         }).catch(function(){
+          el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Could not load.</div>';
+        });
+    }
+
+    /* Load followers or following list */
+    function loadFollowList(userId, type) {
+      var el = document.getElementById('user-prof-' + type);
+      if (!el) return;
+      el.innerHTML = '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>';
+      fetch('/api/user-follows/list?user_id=' + encodeURIComponent(userId) + '&type=' + type, { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var users = d.users || [];
+          if (!users.length) {
+            el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:2rem 0;">No ' + type + ' yet.</div>';
+            return;
+          }
+          el.innerHTML = users.map(function(u) {
+            var av = u.avatar_url
+              ? '<img src="' + u.avatar_url + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;">'
+              : '<div style="width:40px;height:40px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1rem;flex-shrink:0;">' + (u.username||'?').charAt(0).toUpperCase() + '</div>';
+            return '<div onclick="window.openMiniProfile&&window.openMiniProfile(''+escH(u.user_id)+'',''+escH(u.username||'User')+'')" style="display:flex;align-items:center;gap:0.75rem;padding:0.7rem 0;border-bottom:1px solid var(--border);cursor:pointer;">'
+              + av
+              + '<div style="flex:1;min-width:0;">'
+                + '<div style="font-family:var(--font-d);font-size:0.85rem;">' + escH(u.username || 'User') + '</div>'
+              + '</div>'
+              + '</div>';
+          }).join('');
+        })
+        .catch(function() {
           el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Could not load.</div>';
         });
     }
@@ -1332,6 +1392,36 @@ async function votePoll(postId, idx, poll, container) {
     activeFilter = cat || 'all';
     var tb = document.getElementById('trending-bar');
     if (tb) { tb.style.maxHeight = '0'; tb.style.padding = '0 0.75rem'; }
+    /* Following filter — load from D1 via separate endpoint */
+    if (cat === 'following') {
+      var fc = document.getElementById('feed-container');
+      var pc = document.getElementById('posts-feed-container');
+      if (fc) fc.style.display = 'none';
+      if (pc) {
+        pc.style.display = 'block';
+        pc.innerHTML = '<div class="posts-empty">Loading following feed...</div>';
+        fetch('/api/user-follows/feed', { credentials: 'include' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            var posts = d.posts || [];
+            if (!posts.length) {
+              pc.innerHTML = '<div class="posts-empty" style="padding:2rem;text-align:center;color:var(--text-dim);">Follow some users to see their posts here.</div>';
+              return;
+            }
+            if (window.loadPostsFeed) window.loadPostsFeed(pc, null, posts);
+          })
+          .catch(function() { pc.innerHTML = '<div class="posts-empty">Could not load.</div>'; });
+      }
+      return;
+    }
+    /* Restore normal feed */
+    var fc2 = document.getElementById('feed-container');
+    var pc2 = document.getElementById('posts-feed-container');
+    if (fc2) fc2.style.display = '';
+    if (pc2 && cat === 'all') {
+      /* Reload D1 feed normally */
+      if (window.currentUser && window.loadPostsFeed) window.loadPostsFeed(pc2, null);
+    }
     resetFeed();
   };
 
@@ -2592,6 +2682,8 @@ async function votePoll(postId, idx, poll, container) {
 
       if (nameEl) nameEl.textContent = name;
       if (emailEl) emailEl.textContent = email;
+      var fpill = document.getElementById('following-pill');
+      if (fpill) fpill.style.display = '';
       if (avatarWrap) {
         if (avatar) {
           avatarWrap.innerHTML = '<img class="user-avatar" src="' + avatar + '" alt="' + name + '">';
@@ -2605,6 +2697,8 @@ async function votePoll(postId, idx, poll, container) {
         actionBtn.className = 'user-logout-btn';
       }
     } else {
+      var fpill2 = document.getElementById('following-pill');
+      if (fpill2) fpill2.style.display = 'none';
       if (nameEl) nameEl.textContent = 'Sign in to unlock +18 content';
       if (emailEl) emailEl.textContent = 'Free \u00b7 No credit card needed';
       if (avatarWrap) avatarWrap.innerHTML = '<div class="user-avatar-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>';
@@ -3001,7 +3095,31 @@ async function votePoll(postId, idx, poll, container) {
     };
   })();
 
-    /* ── BROADCAST PANEL (admin only) ── */
+    /* ── FOLLOW SYSTEM ── */
+  window._toggleFollow = function(btn, targetUid) {
+    if (!window.currentUser) return;
+    var isFollowing = btn.textContent.trim() === 'Following';
+    var action = isFollowing ? 'unfollow' : 'follow';
+    btn.disabled = true;
+    fetch('/api/user-follows', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: targetUid, action: action })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      btn.disabled = false;
+      btn.textContent = d.is_following ? 'Following' : 'Follow';
+      btn.style.background = d.is_following ? 'var(--surface-3)' : 'var(--fire-orange)';
+      btn.style.color = d.is_following ? 'var(--text-dim)' : '#fff';
+      /* Update counts */
+      var frEl = document.getElementById('user-prof-followers');
+      if (frEl) frEl.textContent = d.followers;
+    })
+    .catch(function() { btn.disabled = false; });
+  };
+
+  /* ── BROADCAST PANEL (admin only) ── */
   (function() {
     var _open = false;
 
