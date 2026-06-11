@@ -1247,8 +1247,28 @@ async function handleUserPosts(request, env, corsH) {
         await env.DB.prepare('DELETE FROM post_likes WHERE post_id=? AND user_id=?').bind(postId, session.id).run();
         await env.DB.prepare('UPDATE user_posts SET like_count = (SELECT COUNT(*) FROM post_likes WHERE post_id=?) WHERE id=?').bind(postId, postId).run();
       }
-      const { results: lk } = await env.DB.prepare('SELECT like_count FROM user_posts WHERE id=?').bind(postId).all();
-      return apiJson({ ok: true, count: lk[0]?.like_count || 0 }, 200, corsH);
+      const { results: lk } = await env.DB.prepare('SELECT like_count, user_id FROM user_posts WHERE id=?').bind(postId).all();
+      const totalLikes = lk[0]?.like_count || 0;
+      const postOwnerId = lk[0]?.user_id;
+
+      /* Milestone notifications — only on like, not unlike, and not self-like */
+      if (action === 'like' && postOwnerId && postOwnerId !== session.id) {
+        const MILESTONES = [10, 50, 100, 500, 1000];
+        if (MILESTONES.includes(totalLikes)) {
+          try {
+            await env.DB.prepare(
+              'INSERT INTO notifications (user_id, type, title, message) VALUES (?,?,?,?)'
+            ).bind(
+              postOwnerId,
+              'like',
+              'Your post is on fire!',
+              'Your post just reached ' + totalLikes + ' likes. Keep it up!'
+            ).run();
+          } catch(e) {}
+        }
+      }
+
+      return apiJson({ ok: true, count: totalLikes }, 200, corsH);
     }
 
     /* Publicar post */
