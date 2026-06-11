@@ -1646,6 +1646,89 @@ async function handleCommunityPosts(request, env, corsH) {
 
 
 export default {
+/* ── NOTIFICATIONS ── */
+async function handleNotifications(request, env, corsH) {
+  /* Crear tabla si no existe — con tipo de notificación y target */
+  try {
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS notifications (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id     TEXT NOT NULL,
+      type        TEXT NOT NULL DEFAULT 'admin',
+      title       TEXT NOT NULL DEFAULT '',
+      message     TEXT NOT NULL,
+      read        INTEGER NOT NULL DEFAULT 0,
+      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+    /* Migrar tabla vieja admin_notifications si existe */
+    await env.DB.prepare(`INSERT OR IGNORE INTO notifications (user_id,type,title,message,read,created_at)
+      SELECT user_id,'admin','Admin','message' || ' ' || message,read,created_at FROM admin_notifications`).run();
+  } catch(e) {}
+
+  const url     = new URL(request.url);
+  const session = getSession(request);
+  const isAdmin = (function(){
+    const m = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
+    if (!m) return false;
+    try { const s = JSON.parse(atob(m[1])); return s && s.login === 'Mikeljchm'; } catch(e) { return false; }
+  })();
+
+  /* GET /api/notifications — traer notificaciones del usuario */
+  if (request.method === 'GET') {
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const limit  = Math.min(parseInt(url.searchParams.get('limit') || '30'), 50);
+    const offset = Math.max(parseInt(url.searchParams.get('offset') || '0'), 0);
+    const { results } = await env.DB.prepare(
+      'SELECT id,type,title,message,read,created_at FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    ).bind(session.id, limit, offset).all();
+    /* Contar no leídas */
+    const { results: unread } = await env.DB.prepare(
+      'SELECT COUNT(*) as cnt FROM notifications WHERE user_id=? AND read=0'
+    ).bind(session.id).all();
+    return apiJson({ notifications: results, unread_count: unread[0]?.cnt || 0 }, 200, corsH);
+  }
+
+  /* POST /api/notifications/read — marcar como leídas */
+  if (request.method === 'POST' && url.pathname === '/api/notifications/read') {
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const body = await request.json();
+    if (body.id) {
+      await env.DB.prepare('UPDATE notifications SET read=1 WHERE id=? AND user_id=?').bind(body.id, session.id).run();
+    } else {
+      /* Marcar todas */
+      await env.DB.prepare('UPDATE notifications SET read=1 WHERE user_id=?').bind(session.id).run();
+    }
+    return apiJson({ ok: true }, 200, corsH);
+  }
+
+  /* POST /api/notifications/broadcast — admin: enviar a todos ── */
+  if (request.method === 'POST' && url.pathname === '/api/notifications/broadcast') {
+    if (!isAdmin) return apiJson({ error: 'Forbidden' }, 403, corsH);
+    const body = await request.json();
+    const { title, message } = body;
+    if (!message || !message.trim()) return apiJson({ error: 'message required' }, 400, corsH);
+    const notifTitle = (title || 'HOTT WRESTLING').trim().slice(0, 80);
+    const notifMsg   = message.trim().slice(0, 500);
+    /* Obtener todos los user_ids únicos */
+    const { results: users } = await env.DB.prepare(
+      'SELECT DISTINCT user_id FROM user_profiles'
+    ).all();
+    if (!users.length) return apiJson({ ok: true, sent: 0 }, 200, corsH);
+    /* Insertar en lotes de 20 */
+    let sent = 0;
+    const batchSize = 20;
+    for (let i = 0; i < users.length; i += batchSize) {
+      const batch = users.slice(i, i + batchSize);
+      const ph = batch.map(() => '(?,?,?,?)').join(',');
+      const vals = batch.flatMap(u => [u.user_id, 'broadcast', notifTitle, notifMsg]);
+      await env.DB.prepare(`INSERT INTO notifications (user_id,type,title,message) VALUES ${ph}`).bind(...vals).run();
+      sent += batch.length;
+    }
+    return apiJson({ ok: true, sent }, 200, corsH);
+  }
+
+  return apiJson({ error: 'Not found' }, 404, corsH);
+}
+
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
@@ -1767,7 +1850,10 @@ export default {
           const {user_id, message} = body;
           if (!user_id || !message) return apiJson({error:'user_id and message required'},400,corsH);
           try { await env.DB.prepare('CREATE TABLE IF NOT EXISTS admin_notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT, read INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)').run(); } catch(e){}
-          await env.DB.prepare('INSERT INTO admin_notifications (user_id,message) VALUES (?,?)').bind(user_id,message).run();
+          try {
+            await env.DB.prepare('CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, type TEXT NOT NULL DEFAULT \'admin\', title TEXT NOT NULL DEFAULT \'\', message TEXT NOT NULL, read INTEGER NOT NULL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)').run();
+          } catch(e) {}
+          await env.DB.prepare('INSERT INTO notifications (user_id,type,title,message) VALUES (?,?,?,?)').bind(user_id,'admin','Admin',message).run();
           return apiJson({ok:true},200,corsH);
         }
 
@@ -1812,6 +1898,7 @@ export default {
       if (path === '/api/create') return handleCreate(request, env, corsH);
       if (path === '/api/delete') return handleDelete(request, env, corsH);
       if (path === '/api/create-profile') return handleCreateProfile(request, env, corsH);
+      if (path === '/api/notifications' || path.startsWith('/api/notifications/')) return handleNotifications(request, env, corsH);
       return new Response('Not found', { status: 404 });
     }
 
