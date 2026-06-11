@@ -2732,6 +2732,7 @@ async function votePoll(postId, idx, poll, container) {
       fetchUserPoints(session.id);
       /* Cargar avatar/banner custom de D1 — pisa el de Google si el usuario subió uno */
       fetchUserProfile(session.id);
+      if (window._initNotifBtn) window._initNotifBtn();
     }
     applyAdultBlur();
 
@@ -2753,11 +2754,13 @@ async function votePoll(postId, idx, poll, container) {
         closeAuthModal();
         fetchUserPoints(s.id);
         fetchUserProfile(s.id);
+        if (window._initNotifBtn) window._initNotifBtn();
         // Restaurar al hacer login también
         setTimeout(restoreSavedStates, 800);
       } else {
         currentUser = null; window.currentUser = null;
         updateAuthUI(null);
+        if (window._hideNotifBtn) window._hideNotifBtn();
         // Limpiar estados al hacer logout
         document.querySelectorAll('.save-btn.col-saved').forEach(function(btn) {
           btn.classList.remove('col-saved');
@@ -2828,6 +2831,152 @@ async function votePoll(postId, idx, poll, container) {
     }
   }
   initAdmin();
+
+  /* ── NOTIFICATION SYSTEM ── */
+  (function() {
+    var _panel     = null;
+    var _badge     = null;
+    var _btn       = null;
+    var _list      = null;
+    var _pollTimer = null;
+    var _open      = false;
+
+    function _getEls() {
+      _btn   = _btn   || document.getElementById('notif-btn');
+      _badge = _badge || document.getElementById('notif-badge');
+      _panel = _panel || document.getElementById('notif-panel');
+      _list  = _list  || document.getElementById('notif-list');
+    }
+
+    function _timeAgo(ts) {
+      var t = (Date.now() - new Date(ts).getTime()) / 1000;
+      if (t < 60)    return 'just now';
+      if (t < 3600)  return Math.floor(t/60) + 'm ago';
+      if (t < 86400) return Math.floor(t/3600) + 'h ago';
+      return Math.floor(t/86400) + 'd ago';
+    }
+
+    function _renderNotif(n) {
+      var typeIcon = n.type === 'admin' ? '&#128276;' : n.type === 'ban' ? '&#128683;' : '&#128276;';
+      return '<div data-nid="' + n.id + '" style="'
+        + 'padding:0.8rem 1rem;border-bottom:1px solid var(--border);'
+        + 'background:' + (n.read ? 'transparent' : 'rgba(255,69,0,0.06)') + ';'
+        + 'display:flex;gap:0.65rem;align-items:flex-start;cursor:pointer;">'
+        + '<div style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--surface-3);'
+          + 'display:flex;align-items:center;justify-content:center;font-size:0.85rem;">' + typeIcon + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+          + (n.title ? '<div style="font-family:var(--font-d);font-size:0.78rem;letter-spacing:0.04em;margin-bottom:0.15rem;">' + escH(n.title) + '</div>' : '')
+          + '<div style="font-size:0.8rem;color:var(--text-dim);line-height:1.45;">' + escH(n.message || '') + '</div>'
+          + '<div style="font-size:0.62rem;color:var(--text-muted);margin-top:0.25rem;">' + _timeAgo(n.created_at) + '</div>'
+        + '</div>'
+        + (!n.read ? '<div style="width:7px;height:7px;border-radius:50%;background:var(--fire-orange);flex-shrink:0;margin-top:0.3rem;"></div>' : '')
+        + '</div>';
+    }
+
+    function _fetchNotifs() {
+      if (!window.currentUser) return;
+      fetch('/api/notifications?limit=30', { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          _getEls();
+          var count = d.unread_count || 0;
+          if (_badge) {
+            if (count > 0) {
+              _badge.textContent = count > 9 ? '9+' : count;
+              _badge.style.display = 'flex';
+            } else {
+              _badge.style.display = 'none';
+            }
+          }
+          if (_open && _list) {
+            var items = d.notifications || [];
+            if (!items.length) {
+              _list.innerHTML = '<div style="padding:2rem 1rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">No notifications yet.</div>';
+            } else {
+              _list.innerHTML = items.map(_renderNotif).join('');
+              // Click to mark read
+              _list.querySelectorAll('[data-nid]').forEach(function(el) {
+                el.addEventListener('click', function() {
+                  var nid = el.getAttribute('data-nid');
+                  el.style.background = 'transparent';
+                  var dot = el.querySelector('div[style*="fire-orange"]');
+                  if (dot) dot.remove();
+                  fetch('/api/notifications/read', {
+                    method: 'POST', credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: parseInt(nid) })
+                  });
+                });
+              });
+            }
+          }
+        })
+        .catch(function() {});
+    }
+
+    function _openPanel() {
+      _getEls();
+      if (!_panel) return;
+      _open = true;
+      _panel.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(function() {
+        _panel.style.transform = 'translateX(-50%)';
+      });
+      _fetchNotifs();
+    }
+
+    function _closePanel() {
+      _getEls();
+      if (!_panel) return;
+      _open = false;
+      _panel.style.transform = 'translateX(calc(-50% + 100vw))';
+      document.body.style.overflow = '';
+      setTimeout(function() {
+        if (!_open) _panel.style.display = 'none';
+      }, 340);
+    }
+
+    window._initNotifBtn = function() {
+      _getEls();
+      if (!_btn) return;
+      // Show bell for any logged-in user
+      _btn.style.display = 'flex';
+      // Fetch unread count immediately
+      _fetchNotifs();
+      // Poll every 60s
+      if (_pollTimer) clearInterval(_pollTimer);
+      _pollTimer = setInterval(_fetchNotifs, 60000);
+      // Open/close
+      _btn.onclick = function() { _open ? _closePanel() : _openPanel(); };
+      // Close button
+      var closeBtn = document.getElementById('notif-close');
+      if (closeBtn) closeBtn.onclick = _closePanel;
+      // Mark all read
+      var readAll = document.getElementById('notif-read-all');
+      if (readAll) readAll.onclick = function() {
+        fetch('/api/notifications/read', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ all: true })
+        }).then(function() {
+          if (_badge) _badge.style.display = 'none';
+          if (_list) _list.querySelectorAll('[data-nid]').forEach(function(el) {
+            el.style.background = 'transparent';
+            var dot = el.querySelector('div[style*="fire-orange"]');
+            if (dot) dot.remove();
+          });
+        });
+      };
+    };
+
+    window._hideNotifBtn = function() {
+      _getEls();
+      if (_btn) _btn.style.display = 'none';
+      if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+      _closePanel();
+    };
+  })();
 
   /* ── ADMIN ACTION FUNCTIONS ── */
   window._adminIsOn = function() {
