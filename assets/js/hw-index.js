@@ -393,20 +393,24 @@
         + '<div id="user-prof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;'
           + 'font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.55rem;border-radius:20px;'
           + 'background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-bottom:0.35rem;"></div>'
-        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;"></div>'      + (function(){          var html = '<div style="display:flex;align-items:center;gap:1.2rem;margin-top:0.6rem;">';          html += '<button class="prof-follow-stat" data-ftype="followers" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;">'            + '<span id="user-prof-followers" style="font-family:var(--font-d);font-size:1rem;">-</span>'            + '<span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Followers</span>'            + '</button>';          html += '<button class="prof-follow-stat" data-ftype="following" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;">'            + '<span id="user-prof-following" style="font-family:var(--font-d);font-size:1rem;">-</span>'            + '<span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Following</span>'            + '</button>';          if (window.currentUser && window.currentUser.id !== uid) {            html += '<button id="user-prof-follow-btn" onclick="window._toggleFollow(this,\'' + escH(uid) + '\')" style="margin-left:auto;background:var(--fire-orange);color:#fff;border:none;border-radius:20px;padding:0.32rem 1rem;font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.05em;cursor:pointer;">Follow</button>';          }          html += '</div>';          if (window._adminIsOn && window._adminIsOn()) {            html += '<div style="margin-top:0.5rem;"><button onclick="window._adminBanUser(\'' + escH(uid) + '\',\'' + escH(name||'User') + '\')" style="background:#3a0808;color:#ff5555;border:1px solid #6a1010;border-radius:10px;padding:0.3rem 0.8rem;font-size:0.7rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban + Delete Account</button></div>';          }          return html;        })()      + '</div>'      /* Tabs */      + '
-      + '<div id="user-prof-tabs" style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;">'
-        + '<button class="upt active" data-tab="posts" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'
-        + '<button class="upt" data-tab="liked" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'
-        + '<button class="upt" data-tab="activity" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'
-        + '<button class="upt" data-tab="followers" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Followers</button>'
-        + '<button class="upt" data-tab="following" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Following</button>'
-      + '</div>'
-      + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">'
-        + '<div id="user-prof-posts" style="padding:0.75rem 1rem 3rem;">'
-          + '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>'
-        + '</div>'
-        + '<div id="user-prof-liked" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
-        + '<div id="user-prof-activity" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="user-prof-followers" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="user-prof-following" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;"></div>'
+        + (window.currentUser && window.currentUser.id !== uid
+            ? '<div style="display:flex;align-items:center;gap:1.2rem;margin-top:0.6rem;">'
+              + '<button class="prof-follow-stat" data-ftype="followers" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;"><span id="user-prof-followers" style="font-family:var(--font-d);font-size:1rem;">-</span><span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Followers</span></button>'
+              + '<button class="prof-follow-stat" data-ftype="following" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;"><span id="user-prof-following" style="font-family:var(--font-d);font-size:1rem;">-</span><span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Following</span></button>'
+              + '<button id="user-prof-follow-btn" onclick="window._toggleFollow(this,\'' + escH(uid) + '\')" style="margin-left:auto;background:var(--fire-orange);color:#fff;border:none;border-radius:20px;padding:0.32rem 1rem;font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.05em;cursor:pointer;">Follow</button>'
+              + '</div>'
+            : '<div style="display:flex;align-items:center;gap:1.2rem;margin-top:0.6rem;">'
+              + '<button class="prof-follow-stat" data-ftype="followers" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;"><span id="user-prof-followers" style="font-family:var(--font-d);font-size:1rem;">-</span><span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Followers</span></button>'
+              + '<button class="prof-follow-stat" data-ftype="following" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;"><span id="user-prof-following" style="font-family:var(--font-d);font-size:1rem;">-</span><span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Following</span></button>'
+              + '</div>'
+          )
+        + (window._adminIsOn && window._adminIsOn()
+            ? '<div style="margin-top:0.5rem;"><button onclick="window._adminBanUser(\'' + escH(uid) + '\',\'' + escH(name||"User") + '\')" style="background:#3a0808;color:#ff5555;border:1px solid #6a1010;border-radius:10px;padding:0.3rem 0.8rem;font-size:0.7rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban + Delete Account</button></div>'
+            : '')
+        + '<div id="user-prof-activity" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+        + '<div id="user-prof-followers" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+        + '<div id="user-prof-following" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
       + '</div>';
 
     requestAnimationFrame(function(){ requestAnimationFrame(function(){
@@ -627,13 +631,20 @@
             var av = u.avatar_url
               ? '<img src="' + u.avatar_url + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;">'
               : '<div style="width:40px;height:40px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1rem;flex-shrink:0;">' + (u.username||'?').charAt(0).toUpperCase() + '</div>';
-            return '<div onclick="window.openMiniProfile&&window.openMiniProfile(''+escH(u.user_id)+'',''+escH(u.username||'User')+'')" style="display:flex;align-items:center;gap:0.75rem;padding:0.7rem 0;border-bottom:1px solid var(--border);cursor:pointer;">'
+            var uid2 = escH(u.user_id);
+            var uname2 = escH(u.username || 'User');
+            return '<div data-open-uid="' + uid2 + '" data-open-name="' + uname2 + '" style="display:flex;align-items:center;gap:0.75rem;padding:0.7rem 0;border-bottom:1px solid var(--border);cursor:pointer;">'
               + av
               + '<div style="flex:1;min-width:0;">'
-                + '<div style="font-family:var(--font-d);font-size:0.85rem;">' + escH(u.username || 'User') + '</div>'
+                + '<div style="font-family:var(--font-d);font-size:0.85rem;">' + uname2 + '</div>'
               + '</div>'
               + '</div>';
           }).join('');
+          el.querySelectorAll('[data-open-uid]').forEach(function(row) {
+            row.addEventListener('click', function() {
+              if (window.openMiniProfile) window.openMiniProfile(row.getAttribute('data-open-uid'), row.getAttribute('data-open-name'));
+            });
+          });
         })
         .catch(function() {
           el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Could not load.</div>';
