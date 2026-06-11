@@ -1986,11 +1986,23 @@ export default {
       const userInfo = await userRes.json();
       const token = await createSessionToken(env.COOKIE_SECRET, userInfo);
 
+      // Extract GitHub login from userInfo (stored in 'login' or derived from name)
+      // We use the Google profile name to match ADMIN_LOGIN
+      const githubLogin = (userInfo.login || userInfo.name || '').replace(/\s+/g,'');
+      const isAdminUser = githubLogin === 'Mikeljchm' || (userInfo.email && userInfo.email === 'chuellomikel@gmail.com');
+
+      const cookieHeaders = [makeCookie(token, COOKIE_MAX_AGE)];
+      if (isAdminUser) {
+        // hw_admin cookie readable by JS (no HttpOnly) — used by frontend to show admin UI
+        const adminPayload = btoa(JSON.stringify({ login: 'Mikeljchm', ts: Date.now() }));
+        cookieHeaders.push('hw_admin=' + adminPayload + '; Max-Age=' + (60 * 60 * 24 * 30) + '; Path=/; Secure; SameSite=Lax');
+      }
+
       return new Response(null, {
         status: 302,
         headers: {
           Location: redirectTo,
-          'Set-Cookie': makeCookie(token, COOKIE_MAX_AGE)
+          'Set-Cookie': cookieHeaders
         }
       });
     }
