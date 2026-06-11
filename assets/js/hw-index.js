@@ -254,6 +254,9 @@
             + '<span class="cp-like-count">'+(row.like_count||'')+'</span>'
             + '</button>' : '')
         + '</div>'
+      + (window._adminIsOn && window._adminIsOn()
+          ? '<button class="adm-del-btn adm-del-comment" data-uid="'+(row.user_id||'')+'" onclick="window._adminDelComment('+(row.id||0)+',\''+(row.user_id||'')+'\',this)" title="Delete comment">&#128465;</button>'
+          : '')
       + '</div>';
 
     /* Si es top-level y tiene replies, agregar el botón "View X replies" */
@@ -2670,181 +2673,6 @@ async function votePoll(postId, idx, poll, container) {
     } catch(e) {}
   }
 
-  /* ── Sistema de Notificaciones ── */
-  (function() {
-    var _notifPanel = null;
-    var _notifOffset = 0;
-    var _notifHasMore = true;
-    var _notifLoading = false;
-
-    /* Estilos del panel */
-    var _ns = document.createElement('style');
-    _ns.textContent = [
-      '#notif-panel{position:fixed;inset:0;z-index:500;background:var(--bg);display:none;flex-direction:column;max-width:480px;margin:0 auto;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);}',
-      '#notif-panel.open{display:flex;transform:translateX(0);}',
-      '.notif-header{display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0;}',
-      '.notif-back{background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}',
-      '.notif-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.07em;flex:1;}',
-      '.notif-read-all{background:none;border:none;color:var(--fire-orange);font-size:0.7rem;font-family:var(--font-b);cursor:pointer;padding:0.3rem 0.5rem;}',
-      '.notif-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}',
-      '.notif-item{display:flex;gap:0.75rem;padding:0.85rem 1rem;border-bottom:1px solid var(--border);align-items:flex-start;transition:background 0.15s;}',
-      '.notif-item.unread{background:rgba(255,69,0,0.04);}',
-      '.notif-item.unread::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--fire-orange);flex-shrink:0;margin-top:0.35rem;}',
-      '.notif-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem;}',
-      '.notif-icon.admin{background:rgba(108,63,199,0.15);}',
-      '.notif-icon.broadcast{background:rgba(255,69,0,0.12);}',
-      '.notif-icon.like{background:rgba(255,59,92,0.12);}',
-      '.notif-body{flex:1;min-width:0;}',
-      '.notif-ntitle{font-family:var(--font-d);font-size:0.78rem;letter-spacing:0.04em;margin-bottom:0.1rem;}',
-      '.notif-msg{font-size:0.75rem;color:var(--text-dim);line-height:1.4;}',
-      '.notif-time{font-size:0.6rem;color:var(--text-muted);margin-top:0.2rem;}',
-      '.notif-empty{padding:3rem 1rem;text-align:center;color:var(--text-dim);font-size:0.82rem;}',
-    ].join('');
-    document.head.appendChild(_ns);
-
-    /* Crear panel */
-    function _buildPanel() {
-      if (document.getElementById('notif-panel')) return;
-      var panel = document.createElement('div');
-      panel.id = 'notif-panel';
-      panel.innerHTML =
-        '<div class="notif-header">'
-        + '<button class="notif-back" id="notif-back"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>'
-        + '<div class="notif-title">NOTIFICATIONS</div>'
-        + '<button class="notif-read-all" id="notif-read-all">Mark all read</button>'
-        + '</div>'
-        + '<div class="notif-list" id="notif-list"></div>';
-      document.body.appendChild(panel);
-
-      document.getElementById('notif-back').addEventListener('click', _closePanel);
-      document.getElementById('notif-read-all').addEventListener('click', async function() {
-        await fetch('/api/notifications/read', {method:'POST', credentials:'include',
-          headers:{'Content-Type':'application/json'}, body:JSON.stringify({})});
-        document.querySelectorAll('.notif-item.unread').forEach(function(el) {
-          el.classList.remove('unread');
-          var dot = el.querySelector('.notif-item::before');
-        });
-        _updateBadge(0);
-      });
-
-      /* Swipe right para cerrar */
-      var sx = 0;
-      panel.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; }, {passive:true});
-      panel.addEventListener('touchend', function(e){
-        if (e.changedTouches[0].clientX - sx > 70) _closePanel();
-      }, {passive:true});
-    }
-
-    function _openPanel() {
-      _buildPanel();
-      var panel = document.getElementById('notif-panel');
-      panel.style.display = 'flex';
-      requestAnimationFrame(function(){ requestAnimationFrame(function(){
-        panel.classList.add('open');
-      }); });
-      document.body.style.overflow = 'hidden';
-      _notifOffset = 0; _notifHasMore = true;
-      var list = document.getElementById('notif-list');
-      list.innerHTML = '<div class="notif-empty">Loading...</div>';
-      _loadNotifs();
-    }
-
-    function _closePanel() {
-      var panel = document.getElementById('notif-panel');
-      if (!panel) return;
-      panel.classList.remove('open');
-      setTimeout(function(){ panel.style.display = 'none'; }, 320);
-      document.body.style.overflow = '';
-    }
-
-    function _timeIcon(type) {
-      if (type === 'broadcast') return '&#128226;';
-      if (type === 'like') return '&#10084;';
-      if (type === 'comment') return '&#128172;';
-      return '&#128276;';
-    }
-
-    function _loadNotifs() {
-      if (_notifLoading || !_notifHasMore) return;
-      _notifLoading = true;
-      fetch('/api/notifications?limit=20&offset='+_notifOffset, {credentials:'include'})
-        .then(function(r){ return r.json(); })
-        .then(function(d) {
-          _notifLoading = false;
-          var list = document.getElementById('notif-list');
-          if (!list) return;
-          var notifs = d.notifications || [];
-          if (_notifOffset === 0) {
-            var loader = list.querySelector('.notif-empty');
-            if (loader) loader.remove();
-            if (!notifs.length) {
-              list.innerHTML = '<div class="notif-empty">No notifications yet.</div>';
-              return;
-            }
-          }
-          _notifHasMore = notifs.length === 20;
-          _notifOffset += notifs.length;
-          notifs.forEach(function(n) {
-            var item = document.createElement('div');
-            item.className = 'notif-item' + (n.read ? '' : ' unread');
-            item.dataset.id = n.id;
-            item.innerHTML =
-              '<div class="notif-icon ' + (n.type||'admin') + '">' + _timeIcon(n.type) + '</div>'
-              + '<div class="notif-body">'
-              + '<div class="notif-ntitle">' + escH(n.title||'Notification') + '</div>'
-              + '<div class="notif-msg">' + escH(n.message) + '</div>'
-              + '<div class="notif-time">' + timeAgo(n.created_at) + '</div>'
-              + '</div>';
-            item.addEventListener('click', function() {
-              if (!n.read) {
-                fetch('/api/notifications/read', {method:'POST', credentials:'include',
-                  headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:n.id})});
-                item.classList.remove('unread');
-                n.read = 1;
-              }
-            });
-            list.appendChild(item);
-          });
-        })
-        .catch(function(){ _notifLoading = false; });
-    }
-
-    function _updateBadge(count) {
-      var badge = document.getElementById('notif-badge');
-      var btn   = document.getElementById('notif-btn');
-      if (!badge || !btn) return;
-      if (count > 0) {
-        badge.textContent = count > 99 ? '99+' : String(count);
-        badge.style.display = 'flex';
-        btn.style.display = 'flex';
-      } else {
-        badge.style.display = 'none';
-        btn.style.display = 'flex'; /* siempre visible si está logueado */
-      }
-    }
-
-    /* Exponer para que initAuth lo llame */
-    window._initNotifications = function() {
-      var btn = document.getElementById('notif-btn');
-      if (btn) {
-        btn.style.display = 'flex';
-        btn.addEventListener('click', _openPanel);
-      }
-      /* Cargar conteo inicial */
-      fetch('/api/notifications?limit=1', {credentials:'include'})
-        .then(function(r){ return r.json(); })
-        .then(function(d){ _updateBadge(d.unread_count || 0); })
-        .catch(function(){});
-      /* Polling cada 60s para actualizar badge */
-      setInterval(function() {
-        fetch('/api/notifications?limit=1', {credentials:'include'})
-          .then(function(r){ return r.json(); })
-          .then(function(d){ _updateBadge(d.unread_count || 0); })
-          .catch(function(){});
-      }, 60000);
-    };
-  })();
-
   /* Cargar puntos y badge del usuario desde D1 */
   async function fetchUserPoints(userId) {
     if (!userId) return;
@@ -2899,8 +2727,8 @@ async function votePoll(postId, idx, poll, container) {
       currentUser = session; window.currentUser = session;
       updateAuthUI(currentUser);
       fetchUserPoints(session.id);
+      /* Cargar avatar/banner custom de D1 — pisa el de Google si el usuario subió uno */
       fetchUserProfile(session.id);
-      if (typeof window._initNotifications === 'function') window._initNotifications();
     }
     applyAdultBlur();
 
@@ -2922,7 +2750,6 @@ async function votePoll(postId, idx, poll, container) {
         closeAuthModal();
         fetchUserPoints(s.id);
         fetchUserProfile(s.id);
-        if (typeof window._initNotifications === 'function') window._initNotifications();
         // Restaurar al hacer login también
         setTimeout(restoreSavedStates, 800);
       } else {
@@ -2953,7 +2780,6 @@ async function votePoll(postId, idx, poll, container) {
     const session = getAdminSession();
     if (session && session.login === ADMIN_LOGIN) {
       document.body.classList.add('is-admin');
-      window._isAdmin = true;
       /* Agregar botón Confessions al panel admin */
       var s = document.createElement('style');
       s.textContent = '.conf-admin-fab{display:none;position:fixed;bottom:calc(var(--nav-h,56px) + var(--safe-bottom,0px) + 7.5rem);right:1rem;background:#6c3fc7;color:#fff;border:none;border-radius:20px;padding:0.5rem 1rem;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.06em;cursor:pointer;z-index:101;box-shadow:0 4px 16px rgba(108,63,199,0.4);}.is-admin .conf-admin-fab{display:flex;align-items:center;gap:0.4rem;}.conf-admin-badge{background:#ff3b5c;color:#fff;border-radius:50%;width:17px;height:17px;font-size:0.6rem;display:flex;align-items:center;justify-content:center;font-family:var(--font-b);font-weight:700;flex-shrink:0;margin-left:0.2rem;}' + '.conf-admin-sheet{position:fixed;inset:0;background:var(--bg);z-index:600;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}.conf-admin-sheet.open{transform:translateX(0);}.conf-admin-header{display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}.conf-admin-back{background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}.conf-admin-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}.conf-admin-htitle{font-family:var(--font-d);font-size:1rem;letter-spacing:0.07em;}.conf-admin-body{flex:1;overflow-y:auto;padding:0.75rem;}';
@@ -2976,226 +2802,22 @@ async function votePoll(postId, idx, poll, container) {
       sheet.className = 'conf-admin-sheet';
       sheet.innerHTML = '<div class="conf-admin-header">'
         + '<button class="conf-admin-back" id="conf-admin-back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>'
-        + '<div class="conf-admin-htitle">ADMIN PANEL</div></div>'
-        + '<div style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface);">'
-          + '<button class="adm-tab active" data-t="confessions" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;">CONF</button>'
-          + '<button class="adm-tab" data-t="posts" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;">POSTS</button>'
-          + '<button class="adm-tab" data-t="threads" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;">HILOS</button>'
-          + '<button class="adm-tab" data-t="users" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;">USERS</button>'          + '<button class="adm-tab" data-t="broadcast" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;">&#128226;</button>'
-        + '</div>'
+        + '<div class="conf-admin-htitle">Pending Confessions</div></div>'
         + '<div class="conf-admin-body" id="conf-admin-body"></div>';
       document.body.appendChild(sheet);
-
-      sheet.querySelectorAll('.adm-tab').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          sheet.querySelectorAll('.adm-tab').forEach(function(b) {
-            b.style.borderBottomColor='transparent'; b.style.color='var(--text-dim)'; b.classList.remove('active');
-          });
-          btn.style.borderBottomColor='var(--fire-orange)'; btn.style.color='var(--fire-orange)'; btn.classList.add('active');
-          var t=btn.getAttribute('data-t');
-          var body=document.getElementById('conf-admin-body');
-          body.innerHTML='<div style="padding:1rem;text-align:center;color:var(--text-dim);font-size:0.8rem;">Loading...</div>';
-          if(t==='confessions'&&typeof window.loadPendingConfessions==='function') window.loadPendingConfessions(body);
-          else if(t==='posts') _adminLoadPosts(body);
-          else if(t==='threads') _adminLoadThreads(body);
-          else if(t==='users') _adminLoadUsers(body);
-          else if(t==='broadcast') _adminLoadBroadcast(body);
-        });
-      });
-
       fab.addEventListener('click', function() {
         sheet.classList.add('open');
         document.body.style.overflow = 'hidden';
-        var badge=document.getElementById('conf-pending-badge');
-        if(badge) badge.style.display='none';
-        if(typeof window.loadPendingConfessions==='function') window.loadPendingConfessions(document.getElementById('conf-admin-body'));
+        var badge = document.getElementById('conf-pending-badge');
+        if (badge) badge.style.display = 'none';
+        if (typeof window.loadPendingConfessions === 'function') {
+          window.loadPendingConfessions(document.getElementById('conf-admin-body'));
+        }
       });
       document.getElementById('conf-admin-back').addEventListener('click', function() {
         sheet.classList.remove('open');
         document.body.style.overflow = '';
       });
-
-      async function _adminLoadPosts(container) {
-        try {
-          var r=await fetch('/api/admin/posts',{credentials:'include'});
-          var d=await r.json(); var posts=d.posts||[];
-          if(!posts.length){container.innerHTML='<div style="padding:1rem;text-align:center;color:var(--text-dim);">No posts.</div>';return;}
-          container.innerHTML=posts.map(function(p){
-            var media=p.image_url?'<div style="font-size:0.65rem;color:var(--fire-orange);margin-bottom:0.2rem;">&#128247; Media</div>':'';
-            return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:0.7rem;margin-bottom:0.5rem;">'
-              +'<div style="font-family:var(--font-d);font-size:0.8rem;margin-bottom:0.2rem;">'+escH(p.user_name||'?')+'</div>'
-              +media+'<div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.45rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">'+escH(p.body||'')+'</div>'
-              +'<div style="display:flex;gap:0.4rem;align-items:center;">'
-                +'<span style="font-size:0.6rem;color:var(--text-muted);flex:1;">'+timeAgo(p.created_at)+'</span>'
-                +'<button onclick="_adminDeletePost(\''+p.id+'\',this)" style="background:#cc2200;border:none;color:#fff;border-radius:8px;padding:0.22rem 0.6rem;font-size:0.65rem;font-family:var(--font-d);cursor:pointer;">&#128465; Borrar</button>'
-                +'<button onclick="_adminMsg(\''+escH(p.user_id)+'\',\''+escH(p.user_name||'')+'\')" style="background:var(--surface-3);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:0.22rem 0.6rem;font-size:0.65rem;cursor:pointer;">&#9993;</button>'
-              +'</div></div>';
-          }).join('');
-        }catch(e){container.innerHTML='<div style="padding:1rem;color:#cc4444;">Error.</div>';}
-      }
-
-      async function _adminLoadThreads(container) {
-        try {
-          var r=await fetch('/api/admin/threads',{credentials:'include'});
-          var d=await r.json(); var threads=d.threads||[];
-          if(!threads.length){container.innerHTML='<div style="padding:1rem;text-align:center;color:var(--text-dim);">No hay hilos.</div>';return;}
-          container.innerHTML=threads.map(function(t){
-            return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:0.7rem;margin-bottom:0.5rem;">'
-              +(t.cover_url?'<img src="'+t.cover_url+'" style="width:100%;height:50px;object-fit:cover;border-radius:6px;margin-bottom:0.4rem;">':'')
-              +'<div style="font-family:var(--font-d);font-size:0.88rem;margin-bottom:0.15rem;">'+escH(t.name)+'</div>'
-              +'<div style="font-size:0.65rem;color:var(--text-dim);margin-bottom:0.45rem;">'+escH(t.description||'')+'</div>'
-              +'<div style="display:flex;gap:0.4rem;align-items:center;">'
-                +'<span style="font-size:0.6rem;color:var(--text-muted);flex:1;">'+(t.member_count||0)+' members &bull; '+(t.post_count||0)+' posts</span>'
-                +'<button onclick="_adminDeleteThread(\''+t.id+'\',this)" style="background:#cc2200;border:none;color:#fff;border-radius:8px;padding:0.22rem 0.6rem;font-size:0.65rem;font-family:var(--font-d);cursor:pointer;">&#128465; Borrar</button>'
-                +'<button onclick="_adminMsg(\''+escH(t.creator_id)+'\',\'Creator\')" style="background:var(--surface-3);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:0.22rem 0.6rem;font-size:0.65rem;cursor:pointer;">&#9993;</button>'
-              +'</div></div>';
-          }).join('');
-        }catch(e){container.innerHTML='<div style="padding:1rem;color:#cc4444;">Error.</div>';}
-      }
-
-      async function _adminLoadUsers(container) {
-        try {
-          var r=await fetch('/api/admin/users',{credentials:'include'});
-          var d=await r.json(); var users=d.users||[];
-          if(!users.length){container.innerHTML='<div style="padding:1rem;text-align:center;color:var(--text-dim);">No hay usuarios.</div>';return;}
-          container.innerHTML=users.map(function(u){
-            var av=u.avatar_url?'<img src="'+u.avatar_url+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">':'<div style="width:36px;height:36px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);">'+escH((u.username||'?').charAt(0).toUpperCase())+'</div>';
-            return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:0.7rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.6rem;">'
-              +av+'<div style="flex:1;min-width:0;">'
-                +'<div style="font-family:var(--font-d);font-size:0.82rem;">'+escH(u.username||u.user_id)+'</div>'
-                +'<div style="font-size:0.6rem;color:var(--text-muted);">'+escH(u.user_id)+'</div>'
-              +'</div>'
-              +'<button onclick="_adminMsg(\''+escH(u.user_id)+'\',\''+escH(u.username||u.user_id)+'\')" style="background:var(--fire-orange);border:none;color:#fff;border-radius:8px;padding:0.22rem 0.6rem;font-size:0.65rem;font-family:var(--font-d);cursor:pointer;">&#9993; Msg</button>'
-            +'</div>';
-          }).join('');
-        }catch(e){container.innerHTML='<div style="padding:1rem;color:#cc4444;">Error.</div>';}
-      }
-
-      async function _adminLoadBroadcast(container) {
-        container.innerHTML =
-          '<div style="padding:1rem;">'          + '<div style="font-family:var(--font-d);font-size:0.8rem;letter-spacing:0.05em;margin-bottom:0.5rem;color:var(--text);">ENVIAR A TODOS LOS USUARIOS</div>'          + '<input id="bc-title" placeholder="Título (opcional)" style="width:100%;background:var(--surface-3);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.75rem;color:var(--text);font-family:var(--font-b);font-size:0.8rem;margin-bottom:0.5rem;box-sizing:border-box;outline:none;">'          + '<textarea id="bc-msg" rows="4" placeholder="Escribe el mensaje para todos los usuarios..." style="width:100%;background:var(--surface-3);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.75rem;color:var(--text);font-family:var(--font-b);font-size:0.8rem;resize:none;outline:none;box-sizing:border-box;"></textarea>'          + '<button id="bc-send" style="margin-top:0.5rem;width:100%;background:var(--fire-orange);border:none;color:#fff;border-radius:10px;padding:0.6rem;font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.08em;cursor:pointer;">&#128226; ENVIAR BROADCAST</button>'          + '<div id="bc-result" style="margin-top:0.5rem;font-size:0.75rem;text-align:center;"></div>'          + '</div>';
-        document.getElementById('bc-send').addEventListener('click', async function() {
-          var title = (document.getElementById('bc-title').value||'').trim();
-          var msg   = (document.getElementById('bc-msg').value||'').trim();
-          if (!msg) { document.getElementById('bc-result').style.color='#cc4444'; document.getElementById('bc-result').textContent='Escribe un mensaje primero.'; return; }
-          var btn3 = this; btn3.disabled=true; btn3.textContent='Enviando...';
-          try {
-            var r = await fetch('/api/notifications/broadcast', {method:'POST', credentials:'include',
-              headers:{'Content-Type':'application/json'},
-              body:JSON.stringify({title: title||'HOTT WRESTLING', message: msg})});
-            var d = await r.json();
-            if (d.ok) {
-              document.getElementById('bc-result').style.color='var(--fire-orange)';
-              document.getElementById('bc-result').textContent='&#10003; Enviado a '+d.sent+' usuarios';
-              document.getElementById('bc-msg').value='';
-              document.getElementById('bc-title').value='';
-            } else {
-              document.getElementById('bc-result').style.color='#cc4444';
-              document.getElementById('bc-result').textContent='Error: '+(d.error||'unknown');
-            }
-          } catch(e) {
-            document.getElementById('bc-result').style.color='#cc4444';
-            document.getElementById('bc-result').textContent='Error de red.';
-          }
-          btn3.disabled=false; btn3.textContent='&#128226; ENVIAR BROADCAST';
-        });
-      }
-
-      window._adminDelComment=async function(id,uid,btn){
-        var reason=prompt('Razón (se le enviará al usuario):\n(Cancelar para abortar)');
-        if(reason===null) return;
-        if(!reason.trim()) reason='Tu comentario fue eliminado por violar nuestras normas.';
-        btn.disabled=true;
-        try {
-          await fetch('/api/admin/comment?id='+id,{method:'DELETE',credentials:'include'});
-          if(uid) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({user_id:uid,message:reason})});
-          var item=btn.closest('.cp-item'); if(item) item.remove();
-        } catch(e){ btn.disabled=false; }
-      };
-      window._adminDeletePost=async function(id,btn){
-        if(!confirm('Eliminar este post permanentemente?')) return;
-        btn.disabled=true; btn.textContent='...';
-        var r=await fetch('/api/admin/post?id='+id,{method:'DELETE',credentials:'include'});
-        var d=await r.json();
-        if(d.ok){ var card=btn.closest('div[style]'); if(card) card.remove(); }
-        else { btn.disabled=false; btn.textContent='Error'; }
-      };
-      window._adminDeleteThread=async function(id,btn){
-        if(!confirm('Eliminar este hilo y TODOS sus posts?')) return;
-        btn.disabled=true; btn.textContent='...';
-        var r=await fetch('/api/admin/thread?id='+id,{method:'DELETE',credentials:'include'});
-        var d=await r.json();
-        if(d.ok){ var card=btn.closest('div[style]'); if(card) card.remove(); }
-        else { btn.disabled=false; btn.textContent='Error'; }
-      };
-      window._adminDelThreadPost=async function(id,uid,btn){
-        var reason=prompt('Razón (se le enviará al usuario):\n(Presiona Cancelar para abortar)');
-        if(reason===null) return;
-        if(!reason.trim()) reason='Tu post fue eliminado por violar nuestras normas.';
-        btn.disabled=true; btn.textContent='...';
-        try {
-          await fetch('/api/admin/thread-post?id='+id,{method:'DELETE',credentials:'include'});
-          if(uid) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
-            headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,message:reason})});
-          var card=btn.closest('.comm-post'); if(card) card.remove();
-        } catch(e){ btn.disabled=false; btn.textContent='Error'; }
-      };
-      window._adminDelAvatar=async function(uid,btn){
-        var reason=prompt('Razón:\n(Cancelar para abortar)');
-        if(reason===null) return;
-        if(!reason.trim()) reason='Tu foto de perfil fue eliminada por violar nuestras normas.';
-        btn.disabled=true;
-        await fetch('/api/admin/avatar?user_id='+uid,{method:'DELETE',credentials:'include'});
-        if(uid) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
-          headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,message:reason})});
-        var aw=document.getElementById('user-avatar-wrap');
-        if(aw){ var imgs=aw.querySelector('img'); if(imgs) imgs.remove(); }
-        btn.textContent='Deleted';
-      };
-      window._adminDelBanner=async function(uid,btn){
-        var reason=prompt('Razón:\n(Cancelar para abortar)');
-        if(reason===null) return;
-        if(!reason.trim()) reason='Tu banner fue eliminado por violar nuestras normas.';
-        btn.disabled=true;
-        await fetch('/api/admin/banner?user_id='+uid,{method:'DELETE',credentials:'include'});
-        if(uid) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
-          headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,message:reason})});
-        var hero=document.querySelector('.prof-hero img.prof-banner-img');
-        if(hero) hero.remove();
-        btn.textContent='Deleted';
-      };
-      window._adminDelThreadBanner=async function(tid,btn){
-        var reason=prompt('Razón:\n(Cancelar para abortar)');
-        if(reason===null) return;
-        if(!reason.trim()) reason='El banner de tu hilo fue eliminado por violar nuestras normas.';
-        btn.disabled=true;
-        await fetch('/api/admin/thread-banner?id='+tid,{method:'DELETE',credentials:'include'});
-        var cover=document.querySelector('#comm-detail-inner .comm-detail-cover img');
-        if(cover) cover.remove();
-        btn.textContent='Deleted';
-      };
-      window._adminDelThreadDesc=async function(tid,btn){
-        var reason=prompt('Razón:\n(Cancelar para abortar)');
-        if(reason===null) return;
-        if(!reason.trim()) reason='La descripción de tu hilo fue eliminada por violar nuestras normas.';
-        btn.disabled=true;
-        await fetch('/api/admin/thread-desc?id='+tid,{method:'DELETE',credentials:'include'});
-        var desc=document.querySelector('#comm-detail-inner .comm-detail-desc');
-        if(desc) desc.textContent='';
-        btn.textContent='Deleted';
-      };
-      window._adminMsg=function(userId,userName){
-        var msg=prompt('Mensaje para @'+userName+':');
-        if(!msg||!msg.trim()) return;
-        fetch('/api/admin/notify',{method:'POST',credentials:'include',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({user_id:userId,message:msg.trim()})
-        }).then(function(r){return r.json();}).then(function(d){
-          if(d.ok) alert('Mensaje enviado a @'+userName);
-        });
-      };
     }
     // Show login button only if ?admin=true in URL
     if (new URLSearchParams(window.location.search).get('admin') === 'true') {
@@ -3203,16 +2825,83 @@ async function votePoll(postId, idx, poll, container) {
     }
   }
   initAdmin();
-  /* Si es admin, recargar feeds para que aparezcan los botones */
-  if (window._isAdmin) {
-    setTimeout(function() {
-      var pc = document.getElementById('posts-feed-container');
-      if (pc && typeof window.loadPostsFeed === 'function') window.loadPostsFeed(pc, window.currentUser ? window.currentUser.id : null);
-      if (typeof loadCommunities === 'function') loadCommunities();
-    }, 300);
-  }
+
+  /* ── ADMIN ACTION FUNCTIONS ── */
+  window._adminIsOn = function() {
+    try {
+      var m = document.cookie.match(/hw_admin=([^;]+)/);
+      if (!m) return false;
+      var s = JSON.parse(atob(m[1]));
+      return s && s.login === 'Mikeljchm';
+    } catch(e) { return false; }
+  };
+
+  window._adminDeletePost = function(id, btn) {
+    if (!window._adminIsOn()) return;
+    var reason = prompt('Reason for deletion (sent to user):');
+    if (reason === null) return;
+    btn.disabled = true;
+    fetch('/api/admin/post?id=' + id, { method: 'DELETE', credentials: 'include' })
+      .then(function(r) { return r.json(); })
+      .then(function() {
+        if (reason.trim()) {
+          fetch('/api/admin/notify', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: btn.dataset.uid, message: 'Your post was removed: ' + reason })
+          });
+        }
+        var card = btn.closest('.post-card, [data-post-id]');
+        if (card) card.style.cssText = 'opacity:0;transition:opacity 0.3s;pointer-events:none;';
+        setTimeout(function() { if (card) card.remove(); }, 300);
+      })
+      .catch(function() { btn.disabled = false; alert('Error deleting post'); });
+  };
+
+  window._adminDelComment = function(id, uid, btn) {
+    if (!window._adminIsOn()) return;
+    var reason = prompt('Reason (sent to user):');
+    if (reason === null) return;
+    btn.disabled = true;
+    fetch('/api/admin/comment?id=' + id, { method: 'DELETE', credentials: 'include' })
+      .then(function(r) { return r.json(); })
+      .then(function() {
+        if (reason.trim() && uid) {
+          fetch('/api/admin/notify', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: uid, message: 'Your comment was removed: ' + reason })
+          });
+        }
+        var item = btn.closest('.cp-item');
+        if (item) { item.style.cssText = 'opacity:0;transition:opacity 0.3s;'; setTimeout(function(){ item.remove(); }, 300); }
+      })
+      .catch(function() { btn.disabled = false; alert('Error deleting comment'); });
+  };
+
+  window._adminDelThreadPost = function(id, uid, btn) {
+    if (!window._adminIsOn()) return;
+    var reason = prompt('Reason (sent to user):');
+    if (reason === null) return;
+    btn.disabled = true;
+    fetch('/api/admin/thread-post?id=' + id, { method: 'DELETE', credentials: 'include' })
+      .then(function(r) { return r.json(); })
+      .then(function() {
+        if (reason.trim() && uid) {
+          fetch('/api/admin/notify', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: uid, message: 'Your post in this thread was removed: ' + reason })
+          });
+        }
+        var card = btn.closest('.comm-post');
+        if (card) { card.style.cssText = 'opacity:0;transition:opacity 0.3s;'; setTimeout(function(){ card.remove(); }, 300); }
+      })
+      .catch(function() { btn.disabled = false; alert('Error deleting thread post'); });
+  };
 
   var editMode = 'edit'; // 'edit' or 'new'
+
 
   function openNewPost() {
     editMode = 'new';
@@ -4341,8 +4030,6 @@ async function votePoll(postId, idx, poll, container) {
       canvas.width = outW; canvas.height = outH;
       var ctx = canvas.getContext('2d');
       ctx.drawImage(freshImg, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
-      /* Calidad según tipo: banner/cover = 0.95, avatar = 0.88 */
-      var _q = (_cropType === 'banner') ? 0.95 : 0.88;
       canvas.toBlob(function(blob) {
         if (!blob || blob.size < 500) {
           var c2 = document.createElement('canvas');
@@ -4351,11 +4038,11 @@ async function votePoll(postId, idx, poll, container) {
           var s2 = Math.max(outW/freshImg.naturalWidth, outH/freshImg.naturalHeight);
           var dw2 = freshImg.naturalWidth*s2, dh2 = freshImg.naturalHeight*s2;
           ctx2.drawImage(freshImg, (outW-dw2)/2, (outH-dh2)/2, dw2, dh2);
-          c2.toBlob(function(b2){ cb(b2); }, 'image/webp', _q);
+          c2.toBlob(function(b2){ cb(b2); }, 'image/webp', 0.88);
           return;
         }
         cb(blob);
-      }, 'image/webp', _q);
+      }, 'image/webp', 0.88);
     };
     freshImg.src = freshURL;
   }
@@ -5581,14 +5268,9 @@ async function votePoll(postId, idx, poll, container) {
     /* Admin post actions */
     '.post-admin-actions{display:flex;gap:0.4rem;margin-top:0.5rem;}',
     '.post-admin-btn{font-size:0.68rem;border:none;border-radius:8px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);}',
-    '.adm-inline-bar{display:none;background:rgba(108,63,199,0.12);border-top:1px solid rgba(108,63,199,0.25);padding:0.3rem 0.6rem;gap:0.35rem;flex-wrap:wrap;}',
-    '.is-admin .adm-inline-bar{display:flex;}',
-    '.adm-btn{background:rgba(108,63,199,0.2);border:1px solid rgba(108,63,199,0.4);color:#b39ddb;border-radius:6px;padding:0.18rem 0.5rem;font-size:0.58rem;font-family:var(--font-d);letter-spacing:0.06em;cursor:pointer;white-space:nowrap;}',
-    '.adm-btn:active{background:rgba(108,63,199,0.4);}',
-    '.adm-btn.danger{background:rgba(204,34,0,0.15);border-color:rgba(204,34,0,0.35);color:#ff6b6b;}',
     '.post-hide-btn{background:#3a1a1a;color:#cc4444;}',
     '.post-ban-btn{background:#2a0a0a;color:#ff4444;}',
-    '.posts-empty{padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;}'
+    '.posts-empty{padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;}'      +'.post-admin-bar{margin-top:0.4rem;}'      +'.adm-del-btn{background:#3a0a0a;color:#ff5555;border:1px solid #6a1a1a;border-radius:8px;padding:0.2rem 0.55rem;font-size:0.68rem;cursor:pointer;font-family:var(--font-b);letter-spacing:0.03em;transition:background 0.15s;}'      +'.adm-del-btn:hover{background:#6a1010;}'      +'.adm-del-comment{position:absolute;top:0.4rem;right:0.4rem;padding:0.15rem 0.4rem;font-size:0.6rem;}'      +'.cp-item{position:relative;}'
   ].join('');
   document.head.appendChild(cs);
 
@@ -5729,7 +5411,7 @@ async function votePoll(postId, idx, poll, container) {
   }
 
   function renderPost(p) {
-    var isAdmin = !!(window._isAdmin || document.body.classList.contains('is-admin'));
+    var isAdmin = document.body.classList.contains('is-admin');
     var isOwn   = window.currentUser && window.currentUser.id === p.user_id;
     var reported = REPORTED_POSTS.has(String(p.id));
     var _avUrlP = (window._resolveAvatar||function(u,a){return a||'';})(p.user_id, p.user_avatar);
@@ -5767,12 +5449,8 @@ async function votePoll(postId, idx, poll, container) {
     html += '</div>';
 
     if (isAdmin) {
-      html += '<div class="adm-inline-bar">'
-        + '<span style="font-size:0.55rem;color:rgba(179,157,219,0.6);letter-spacing:0.1em;margin-right:0.25rem;">ADMIN</span>'
-        + '<button class="adm-btn danger post-admin-del-btn" data-post-id="'+p.id+'" data-user-id="'+escH(p.user_id||'')+'">&#128465; Borrar</button>'
-        + '<button class="adm-btn post-admin-btn post-hide-btn" data-post-id="'+p.id+'">Ocultar</button>'
-        + '<button class="adm-btn post-admin-btn post-ban-btn" data-post-id="'+p.id+'" data-user-id="'+p.user_id+'">Ban</button>'
-        + '<button class="adm-btn adm-msg-btn" data-uid="'+escH(p.user_id||'')+'" data-uname="'+escH(p.user_name||'')+'">&#9993;</button>'
+      html += '<div class="post-admin-bar">'
+        + '<button class="adm-del-btn" data-uid="'+escH(p.user_id||'')+'" onclick="window._adminDeletePost('+p.id+',this)" title="Delete post">&#128465; Delete</button>'
       + '</div>';
     }
 
@@ -5892,7 +5570,7 @@ async function votePoll(postId, idx, poll, container) {
                 if (rmBtn) rmBtn.addEventListener('click', function(){ clearPendingImg(); e.target.value=''; });
               };
               reader.readAsDataURL(blob);
-            }, 'image/webp', 0.85);
+            }, 'image/webp', 0.82);
           };
           img.src = url;
         });
@@ -6082,33 +5760,6 @@ async function votePoll(postId, idx, poll, container) {
       return;
     }
 
-    /* Admin: delete post permanently */
-    var delPostBtn = e.target.closest('.post-admin-del-btn[data-post-id]');
-    if (delPostBtn) {
-      var pid2 = delPostBtn.getAttribute('data-post-id');
-      var uid2 = delPostBtn.getAttribute('data-user-id');
-      var reason2 = prompt('Razón (se le enviará al usuario):');
-      if (reason2 === null) return; /* Canceló */
-      if (!reason2.trim()) reason2 = 'Tu post fue eliminado por violar nuestras normas.';
-      delPostBtn.disabled=true; delPostBtn.textContent='...';
-      try {
-        await fetch('/api/admin/post?id='+pid2,{method:'DELETE',credentials:'include'});
-        if(uid2) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
-          headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid2,message:reason2})});
-        var card2=delPostBtn.closest('.post-card'); if(card2) card2.remove();
-      } catch(err){ delPostBtn.disabled=false; delPostBtn.textContent='Error'; }
-      return;
-    }
-    /* Admin: msg inline */
-    var msgBtn2 = e.target.closest('.adm-msg-btn[data-uid]');
-    if (msgBtn2) {
-      var mUid=msgBtn2.getAttribute('data-uid'); var mUname=msgBtn2.getAttribute('data-uname')||mUid;
-      var mMsg=prompt('Mensaje para @'+mUname+':'); if(!mMsg||!mMsg.trim()) return;
-      await fetch('/api/admin/notify',{method:'POST',credentials:'include',
-        headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:mUid,message:mMsg.trim()})});
-      alert('Mensaje enviado a @'+mUname);
-      return;
-    }
     /* Admin: ban user */
     var banBtn = e.target.closest('.post-ban-btn[data-user-id]');
     if (banBtn) {
@@ -6156,7 +5807,6 @@ async function votePoll(postId, idx, poll, container) {
     '.thread-tag-chip.active{background:rgba(255,69,0,0.1);border-color:rgba(255,69,0,0.5);color:var(--fire-orange);}',
     /* Loading / empty */
     '.comm-loading,.comm-empty{padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;line-height:1.6;}',
-    '@keyframes spin{to{transform:rotate(360deg)}}',
     /* Thread card */
     '.comm-card{margin:0 1rem 0.85rem;background:var(--surface-2);border:1px solid var(--border);border-radius:18px;overflow:hidden;cursor:pointer;transition:border-color 0.2s;}',
     '.comm-card:active{border-color:var(--fire-orange);}',
@@ -6474,7 +6124,7 @@ async function votePoll(postId, idx, poll, container) {
                     pendingFiles.push({blob:blob,type:'image/webp',previewUrl:ev.target.result});
                     res();
                   }; reader.readAsDataURL(blob);
-                },'image/webp',0.85);
+                },'image/webp',0.82);
               }; img2.src=u2;
             });
           }
@@ -6610,21 +6260,16 @@ async function votePoll(postId, idx, poll, container) {
           +'<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+(p.comment_count||'')
         +'</button>'
         +(isCreator?
-          '<button class="comm-post-act creator-act" data-cpin-id="'+p.id+'" title="Pin">&#128204;</button>'
-          +'<button class="comm-post-act creator-act" data-chide-id="'+p.id+'" title="Hide">&#128683;</button>'
-          +'<button class="comm-post-act creator-act" data-cban-uid="'+escH(p.user_id||'')+'" title="Ban">&#128468;</button>'
-          :'')
-        /* Admin global: borrar post de hilo + msg */
-        +(!!(window._isAdmin||document.body.classList.contains('is-admin'))?
-          '<button class="adm-btn danger" style="margin-left:auto;" onclick="_adminDelThreadPost(\''+p.id+'\',\''+escH(p.user_id||'')+'\',this)">&#128465;</button>'
-          +'<button class="adm-btn" onclick="_adminMsg(\''+escH(p.user_id||'')+'\',\''+escH(p.user_name||'')+'\')" style="margin-left:0.2rem;">&#9993;</button>'
+          '<button class="comm-post-act creator-act" data-cpin-id="'+p.id+'" title="Pin post">&#128204;</button>'
+          +'<button class="comm-post-act creator-act" data-chide-id="'+p.id+'" title="Hide post">&#128683;</button>'
+          +'<button class="comm-post-act creator-act" data-cban-uid="'+escH(p.user_id||'')+'" title="Ban user">&#128468;</button>'
           :'')
         +'<button class="comm-post-act comm-report-btn" data-crep-id="'+p.id+'">'
           +'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>'
           +' Report'
         +'</button>'
+      +(window._adminIsOn&&window._adminIsOn()? '<button class="adm-del-btn" onclick="window._adminDelThreadPost('+p.id+',\''+escH(p.user_id||'')+'\',this)" title="Delete">&#128465;</button>' :'')
       +'</div>'
-    +'</div>';
     +'</div>';
   }
 
@@ -6660,14 +6305,13 @@ async function votePoll(postId, idx, poll, container) {
         +(window.currentUser?'<button class="comm-detail-post-btn" id="cdp-btn">+ Post</button>':'')
       +'</div>'
       +'<div class="comm-detail-scroll" id="comm-detail-scroll">'
-        +'<div class="comm-detail-cover" style="position:relative;">'
+        +'<div class="comm-detail-cover">'
           +(thread.cover_url?'<img src="'+thread.cover_url+'" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy">':'')
           +'<div class="comm-detail-cover-glow"></div>'
-          +(document.body.classList.contains('is-admin')&&thread.cover_url?'<button class="adm-btn danger" style="position:absolute;top:6px;right:6px;z-index:2;" onclick="_adminDelThreadBanner(\''+thread.id+'\',this)">&#128465; Banner</button>':'')
         +'</div>'
         +'<div class="comm-detail-info">'
           +'<div class="comm-detail-title">'+escH(thread.name)+'</div>'
-          +(thread.description?'<div class="comm-detail-desc">'+escH(thread.description)+(document.body.classList.contains('is-admin')?'<button class="adm-btn danger" style="font-size:0.5rem;padding:0.1rem 0.35rem;margin-left:0.3rem;" onclick="_adminDelThreadDesc(\''+thread.id+'\',this)">&#128465;</button>':'')+'</div>':'')
+          +(thread.description?'<div class="comm-detail-desc">'+escH(thread.description)+'</div>':'')
           +(tagHtml?'<div class="comm-detail-info-tags">'+tagHtml+'</div>':'')
           +'<div class="comm-detail-stats-row">'
             +'<div class="comm-detail-stats">'
