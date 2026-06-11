@@ -2857,6 +2857,8 @@ async function votePoll(postId, idx, poll, container) {
       return Math.floor(t/86400) + 'd ago';
     }
 
+    function _esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
     function _renderNotif(n) {
       var typeIcon = n.type === 'ban' ? '&#128683;' : '&#128276;';
       return '<div data-nid="' + n.id + '" style="'
@@ -2866,8 +2868,8 @@ async function votePoll(postId, idx, poll, container) {
         + '<div style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--surface-3);'
           + 'display:flex;align-items:center;justify-content:center;font-size:0.85rem;">' + typeIcon + '</div>'
         + '<div style="flex:1;min-width:0;">'
-          + (n.title ? '<div style="font-family:var(--font-d);font-size:0.78rem;letter-spacing:0.04em;margin-bottom:0.15rem;">' + escH(n.title) + '</div>' : '')
-          + '<div style="font-size:0.8rem;color:var(--text-dim);line-height:1.45;">' + escH(n.message || '') + '</div>'
+          + (n.title ? '<div style="font-family:var(--font-d);font-size:0.78rem;letter-spacing:0.04em;margin-bottom:0.15rem;">' + _esc(n.title) + '</div>' : '')
+          + '<div style="font-size:0.8rem;color:var(--text-dim);line-height:1.45;">' + _esc(n.message || '') + '</div>'
           + '<div style="font-size:0.62rem;color:var(--text-muted);margin-top:0.25rem;">' + _timeAgo(n.created_at) + '</div>'
         + '</div>'
         + (!n.read ? '<div style="width:7px;height:7px;border-radius:50%;background:var(--fire-orange);flex-shrink:0;margin-top:0.3rem;"></div>' : '')
