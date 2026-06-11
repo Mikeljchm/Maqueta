@@ -3003,13 +3003,19 @@ async function votePoll(postId, idx, poll, container) {
 
     /* ── BROADCAST PANEL (admin only) ── */
   (function() {
-    var _sheet = null;
-    var _open  = false;
+    var _open = false;
 
-    function _getSheet() { return _sheet || (_sheet = document.getElementById('broadcast-sheet')); }
-
-    function _openSheet() {
-      var s = _getSheet();
+    function _sheet() { return document.getElementById('broadcast-sheet'); }
+    function _close() {
+      var s = _sheet();
+      if (!s) return;
+      _open = false;
+      s.style.transform = 'translateX(calc(-50% + 100vw))';
+      document.body.style.overflow = '';
+      setTimeout(function() { if (!_open) s.style.display = 'none'; }, 340);
+    }
+    function _open_sheet() {
+      var s = _sheet();
       if (!s) return;
       _open = true;
       s.style.display = 'flex';
@@ -3017,72 +3023,70 @@ async function votePoll(postId, idx, poll, container) {
       requestAnimationFrame(function() { s.style.transform = 'translateX(-50%)'; });
     }
 
-    function _closeSheet() {
-      var s = _getSheet();
-      if (!s) return;
-      _open = false;
-      s.style.transform = 'translateX(calc(-50% + 100vw))';
-      document.body.style.overflow = '';
-      setTimeout(function() { if (!_open) s.style.display = 'none'; }, 340);
-    }
+    /* Global — called directly from onclick in HTML */
+    window._sendBroadcast = function(btn) {
+      var titleEl  = document.getElementById('broadcast-title');
+      var msgEl    = document.getElementById('broadcast-msg');
+      var statusEl = document.getElementById('broadcast-status');
+      var msg = msgEl ? msgEl.value.trim() : '';
+      if (!msg) {
+        if (statusEl) statusEl.textContent = 'Write a message first.';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      if (statusEl) statusEl.textContent = '';
+      fetch('/api/admin/broadcast', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: (titleEl && titleEl.value.trim()) || 'Announcement',
+          message: msg
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        btn.disabled = false;
+        btn.innerHTML = '&#9993; SEND TO ALL USERS';
+        if (d.ok) {
+          if (statusEl) statusEl.textContent = 'Sent to ' + d.sent + ' users!';
+          if (msgEl) msgEl.value = '';
+          if (titleEl) titleEl.value = '';
+          var charsEl = document.getElementById('broadcast-chars');
+          if (charsEl) charsEl.textContent = '0 / 500';
+          setTimeout(_close, 2000);
+        } else {
+          if (statusEl) statusEl.textContent = 'Error: ' + (d.error || 'unknown');
+        }
+      })
+      .catch(function(e) {
+        btn.disabled = false;
+        btn.innerHTML = '&#9993; SEND TO ALL USERS';
+        if (statusEl) statusEl.textContent = 'Request failed: ' + e.message;
+      });
+    };
 
     window._initBroadcast = function() {
       var btn = document.getElementById('broadcast-btn');
       if (!btn) return;
       btn.style.display = 'flex';
-
-      btn.onclick = function() { _open ? _closeSheet() : _openSheet(); };
+      btn.onclick = function() { _open ? _close() : _open_sheet(); };
 
       var closeBtn = document.getElementById('broadcast-close');
-      if (closeBtn) closeBtn.onclick = _closeSheet;
+      if (closeBtn) closeBtn.onclick = _close;
 
-      var msgEl    = document.getElementById('broadcast-msg');
-      var charsEl  = document.getElementById('broadcast-chars');
-      var sendBtn  = document.getElementById('broadcast-send');
-      var statusEl = document.getElementById('broadcast-status');
-
+      var msgEl   = document.getElementById('broadcast-msg');
+      var charsEl = document.getElementById('broadcast-chars');
       if (msgEl && charsEl) {
         msgEl.addEventListener('input', function() {
           charsEl.textContent = msgEl.value.length + ' / 500';
         });
       }
-
-      if (sendBtn) {
-        sendBtn.onclick = function() {
-          var title = (document.getElementById('broadcast-title') || {}).value || '';
-          var msg   = msgEl ? msgEl.value.trim() : '';
-          if (!msg) { if (statusEl) statusEl.textContent = 'Write a message first.'; return; }
-          sendBtn.disabled = true;
-          sendBtn.textContent = 'Sending...';
-          if (statusEl) statusEl.textContent = '';
-          fetch('/api/admin/broadcast', {
-            method: 'POST', credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: title || 'Announcement', message: msg })
-          })
-            .then(function(r) { return r.json(); })
-            .then(function(d) {
-              if (d.ok) {
-                if (statusEl) statusEl.textContent = '&#10003; Sent to ' + d.sent + ' users.';
-                if (msgEl) msgEl.value = '';
-                if (charsEl) charsEl.textContent = '0 / 500';
-                if (document.getElementById('broadcast-title')) document.getElementById('broadcast-title').value = '';
-                setTimeout(_closeSheet, 1800);
-              } else {
-                if (statusEl) statusEl.textContent = 'Error: ' + (d.error || 'Unknown');
-              }
-            })
-            .catch(function() { if (statusEl) statusEl.textContent = 'Request failed.'; })
-            .finally(function() {
-              sendBtn.disabled = false;
-              sendBtn.textContent = '\u2709 SEND TO ALL USERS';
-            });
-        };
-      }
     };
   })();
 
-  /* ── ADMIN ACTION FUNCTIONS ── */
+    /* ── ADMIN ACTION FUNCTIONS ── */
   window._adminIsOn = function() {
     try {
       var m = document.cookie.match(/hw_admin=([^;]+)/);
