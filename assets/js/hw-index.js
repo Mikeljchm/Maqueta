@@ -2953,6 +2953,7 @@ async function votePoll(postId, idx, poll, container) {
     const session = getAdminSession();
     if (session && session.login === ADMIN_LOGIN) {
       document.body.classList.add('is-admin');
+      window._isAdmin = true;
       /* Agregar botón Confessions al panel admin */
       var s = document.createElement('style');
       s.textContent = '.conf-admin-fab{display:none;position:fixed;bottom:calc(var(--nav-h,56px) + var(--safe-bottom,0px) + 7.5rem);right:1rem;background:#6c3fc7;color:#fff;border:none;border-radius:20px;padding:0.5rem 1rem;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.06em;cursor:pointer;z-index:101;box-shadow:0 4px 16px rgba(108,63,199,0.4);}.is-admin .conf-admin-fab{display:flex;align-items:center;gap:0.4rem;}.conf-admin-badge{background:#ff3b5c;color:#fff;border-radius:50%;width:17px;height:17px;font-size:0.6rem;display:flex;align-items:center;justify-content:center;font-family:var(--font-b);font-weight:700;flex-shrink:0;margin-left:0.2rem;}' + '.conf-admin-sheet{position:fixed;inset:0;background:var(--bg);z-index:600;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}.conf-admin-sheet.open{transform:translateX(0);}.conf-admin-header{display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}.conf-admin-back{background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}.conf-admin-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}.conf-admin-htitle{font-family:var(--font-d);font-size:1rem;letter-spacing:0.07em;}.conf-admin-body{flex:1;overflow-y:auto;padding:0.75rem;}';
@@ -3202,6 +3203,14 @@ async function votePoll(postId, idx, poll, container) {
     }
   }
   initAdmin();
+  /* Si es admin, recargar feeds para que aparezcan los botones */
+  if (window._isAdmin) {
+    setTimeout(function() {
+      var pc = document.getElementById('posts-feed-container');
+      if (pc && typeof window.loadPostsFeed === 'function') window.loadPostsFeed(pc, window.currentUser ? window.currentUser.id : null);
+      if (typeof loadCommunities === 'function') loadCommunities();
+    }, 300);
+  }
 
   var editMode = 'edit'; // 'edit' or 'new'
 
@@ -5720,7 +5729,7 @@ async function votePoll(postId, idx, poll, container) {
   }
 
   function renderPost(p) {
-    var isAdmin = document.body.classList.contains('is-admin');
+    var isAdmin = !!(window._isAdmin || document.body.classList.contains('is-admin'));
     var isOwn   = window.currentUser && window.currentUser.id === p.user_id;
     var reported = REPORTED_POSTS.has(String(p.id));
     var _avUrlP = (window._resolveAvatar||function(u,a){return a||'';})(p.user_id, p.user_avatar);
@@ -6606,7 +6615,7 @@ async function votePoll(postId, idx, poll, container) {
           +'<button class="comm-post-act creator-act" data-cban-uid="'+escH(p.user_id||'')+'" title="Ban">&#128468;</button>'
           :'')
         /* Admin global: borrar post de hilo + msg */
-        +(document.body.classList.contains('is-admin')?
+        +(!!(window._isAdmin||document.body.classList.contains('is-admin'))?
           '<button class="adm-btn danger" style="margin-left:auto;" onclick="_adminDelThreadPost(\''+p.id+'\',\''+escH(p.user_id||'')+'\',this)">&#128465;</button>'
           +'<button class="adm-btn" onclick="_adminMsg(\''+escH(p.user_id||'')+'\',\''+escH(p.user_name||'')+'\')" style="margin-left:0.2rem;">&#9993;</button>'
           :'')
