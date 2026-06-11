@@ -5969,28 +5969,23 @@ async function votePoll(postId, idx, poll, container) {
       var coverInput=document.getElementById('cs-cover-input');
       var coverPreview=document.getElementById('cs-cover-preview');
       if(coverBtn) coverBtn.addEventListener('click',function(){ coverInput.click(); });
-      if(coverInput) coverInput.addEventListener('change',async function(e){
+      if(coverInput) coverInput.addEventListener('change', function(e){
         var file=e.target.files[0]; if(!file) return;
-        coverBtn.textContent='Uploading...';
-        try{
-          var img2=new Image(); var url2=URL.createObjectURL(file);
-          img2.onload=function(){
-            var maxW=1200; var ratio=Math.min(maxW/img2.width,1);
-            var canvas=document.createElement('canvas');
-            canvas.width=Math.round(img2.width*ratio); canvas.height=Math.round(img2.height*ratio);
-            canvas.getContext('2d').drawImage(img2,0,0,canvas.width,canvas.height);
-            URL.revokeObjectURL(url2);
-            canvas.toBlob(async function(blob){
+        e.target.value='';
+        if(typeof _openCropModal === 'function'){
+          _openCropModal(file, 'banner', async function(blob){
+            coverBtn.textContent='Uploading...';
+            try{
               var upRes=await fetch('/api/upload',{method:'PUT',credentials:'include',headers:{'Content-Type':'image/webp'},body:blob});
               var upData=await upRes.json();
               if(upData.ok){
                 coverUrl=upData.url;
                 if(coverPreview) coverPreview.innerHTML='<img src="'+coverUrl+'" style="width:100%;height:70px;object-fit:cover;border-radius:8px;margin-top:0.4rem;">';
-                coverBtn.textContent='&#10003; Cover added';
-              }
-            },'image/webp',0.85);
-          }; img2.src=url2;
-        }catch(e2){ coverBtn.innerHTML='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add Cover Photo'; }
+                coverBtn.textContent='\u2713 Cover added';
+              } else { coverBtn.textContent='Error - try again'; }
+            }catch(err){ coverBtn.textContent='Error - try again'; }
+          });
+        }
       });
       submitBtn.addEventListener('click', async function(){
         var name=(document.getElementById('cs-name')||{}).value||'';
