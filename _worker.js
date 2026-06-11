@@ -1699,12 +1699,52 @@ export default {
           return apiJson({users:results},200,corsH);
         }
 
+        /* GET /api/admin/posts */
+        if (path === '/api/admin/posts' && request.method === 'GET') {
+          const {results} = await env.DB.prepare(
+            'SELECT id,user_id,user_name,user_avatar,body,image_url,report_count,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT 100'
+          ).all();
+          return apiJson({posts: await enrichAvatars(results,env)},200,corsH);
+        }
+
         /* GET /api/admin/threads */
         if (path === '/api/admin/threads' && request.method === 'GET') {
           const {results} = await env.DB.prepare(
             'SELECT id,name,description,creator_id,member_count,post_count,cover_url,created_at FROM threads ORDER BY created_at DESC LIMIT 100'
           ).all();
           return apiJson({threads:results},200,corsH);
+        }
+
+        /* DELETE /api/admin/avatar?user_id=X — borrar foto de perfil */
+        if (path === '/api/admin/avatar' && request.method === 'DELETE') {
+          const uid = url.searchParams.get('user_id');
+          if (!uid) return apiJson({error:'user_id required'},400,corsH);
+          await env.DB.prepare("UPDATE user_profiles SET avatar_url='' WHERE user_id=?").bind(uid).run();
+          return apiJson({ok:true},200,corsH);
+        }
+
+        /* DELETE /api/admin/banner?user_id=X — borrar banner de perfil */
+        if (path === '/api/admin/banner' && request.method === 'DELETE') {
+          const uid = url.searchParams.get('user_id');
+          if (!uid) return apiJson({error:'user_id required'},400,corsH);
+          await env.DB.prepare("UPDATE user_profiles SET banner_url='' WHERE user_id=?").bind(uid).run();
+          return apiJson({ok:true},200,corsH);
+        }
+
+        /* DELETE /api/admin/thread-banner?id=X — borrar banner de hilo */
+        if (path === '/api/admin/thread-banner' && request.method === 'DELETE') {
+          const tid = url.searchParams.get('id');
+          if (!tid) return apiJson({error:'id required'},400,corsH);
+          await env.DB.prepare("UPDATE threads SET cover_url='' WHERE id=?").bind(tid).run();
+          return apiJson({ok:true},200,corsH);
+        }
+
+        /* PATCH /api/admin/thread-desc?id=X — borrar descripción de hilo */
+        if (path === '/api/admin/thread-desc' && request.method === 'DELETE') {
+          const tid = url.searchParams.get('id');
+          if (!tid) return apiJson({error:'id required'},400,corsH);
+          await env.DB.prepare("UPDATE threads SET description='' WHERE id=?").bind(tid).run();
+          return apiJson({ok:true},200,corsH);
         }
 
         /* POST /api/admin/notify */
