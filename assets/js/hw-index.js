@@ -3740,96 +3740,274 @@ async function votePoll(postId, idx, poll, container) {
     }
   }
 
-/* ── Photo Upload (direct, no crop) ── */
+/* ── Photo Crop & Upload — CSS Transform approach (no canvas preview) ── */
 
-    /* Compress image in canvas and upload to Bunny CDN */
-    async function uploadAndSavePhoto(blob, type) {
-      var upRes = await fetch('/api/upload', {method:'PUT', credentials:'include',
-        headers:{'Content-Type':'image/webp'}, body:blob});
-      var upData = await upRes.json();
-      if (!upData.ok) return;
-      var cdnUrl = upData.url;
-      var payload = {};
-      payload[type==='banner' ? 'banner_url' : 'avatar_url'] = cdnUrl;
-      await fetch('/api/profile', {method:'POST', credentials:'include',
-        headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-      if (type === 'banner') {
-        var pg = document.getElementById('page-more');
-        var hero = pg && pg.querySelector('.prof-hero');
-        if (hero) {
-          var ex = hero.querySelector('img.prof-banner-img');
-          if (ex) { ex.src = cdnUrl; }
-          else {
-            var ni = document.createElement('img');
-            ni.className = 'prof-banner-img';
-            ni.src = cdnUrl;
-            ni.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;';
-            hero.insertBefore(ni, hero.firstChild);
-          }
+  /* ── Crop Modal Styles ── */
+  (function(){
+    var s = document.createElement('style');
+    s.textContent = [
+      '#hw-crop-modal{position:fixed;inset:0;z-index:9999;background:#000;display:none;flex-direction:column;}',
+      '#hw-crop-modal.open{display:flex;}',
+      '#hw-crop-topbar{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;flex-shrink:0;background:#000;}',
+      '#hw-crop-topbar span{font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.1em;color:#fff;}',
+      '#hw-crop-cancel{background:none;border:1px solid #333;color:#aaa;border-radius:20px;padding:0.3rem 0.9rem;font-size:0.75rem;cursor:pointer;}',
+      '#hw-crop-save{background:var(--fire-orange);border:none;color:#fff;border-radius:20px;padding:0.3rem 0.9rem;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.06em;cursor:pointer;}',
+      '#hw-crop-viewport{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000;touch-action:none;}',
+      '#hw-crop-img{position:absolute;transform-origin:center center;will-change:transform;user-select:none;-webkit-user-select:none;pointer-events:none;max-width:none;max-height:none;}',
+      '#hw-crop-overlay{position:absolute;inset:0;pointer-events:none;}',
+      /* Avatar: círculo recortador */
+      '#hw-crop-modal.avatar #hw-crop-mask{position:absolute;inset:0;pointer-events:none;}',
+      '#hw-crop-modal.avatar #hw-crop-mask::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,0.55);-webkit-mask:radial-gradient(circle 42% at 50% 50%,transparent 99%,black 100%);mask:radial-gradient(circle 42% at 50% 50%,transparent 99%,black 100%);}',
+      '#hw-crop-modal.avatar #hw-crop-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:84%;aspect-ratio:1/1;border:2px solid rgba(255,255,255,0.7);border-radius:50%;pointer-events:none;}',
+      /* Banner: rectángulo recortador */
+      '#hw-crop-modal.banner #hw-crop-mask{position:absolute;inset:0;pointer-events:none;}',
+      '#hw-crop-modal.banner #hw-crop-mask::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,0.55);-webkit-mask:polygon(0 0,100% 0,100% 100%,0 100%) exclude,polygon(4% 35%,96% 35%,96% 65%,4% 65%);}',
+      '#hw-crop-modal.banner #hw-crop-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:92%;height:30%;border:2px solid rgba(255,255,255,0.7);border-radius:8px;pointer-events:none;}',
+    ].join('');
+    document.head.appendChild(s);
+  })();
+
+  /* ── Crop Modal Logic ── */
+  var _cropFile = null, _cropType = 'avatar', _cropResolve = null;
+  var _imgNatW = 0, _imgNatH = 0;
+  var _scale = 1, _minScale = 1;
+  var _tx = 0, _ty = 0;
+  var _vpW = 0, _vpH = 0;
+
+  function _buildCropModal() {
+    if (document.getElementById('hw-crop-modal')) return;
+    var m = document.createElement('div');
+    m.id = 'hw-crop-modal';
+    m.innerHTML =
+      '<div id="hw-crop-topbar">'
+      + '<button id="hw-crop-cancel">Cancel</button>'
+      + '<span id="hw-crop-label">CROP PHOTO</span>'
+      + '<button id="hw-crop-save">Save</button>'
+      + '</div>'
+      + '<div id="hw-crop-viewport">'
+      + '<img id="hw-crop-img" src="" alt="">'
+      + '<div id="hw-crop-mask"><div id="hw-crop-ring"></div></div>'
+      + '</div>';
+    document.body.appendChild(m);
+
+    document.getElementById('hw-crop-cancel').addEventListener('click', _closeCropModal);
+
+    document.getElementById('hw-crop-save').addEventListener('click', function() {
+      var btn = this; btn.disabled = true; btn.textContent = '...';
+      _exportCrop(function(blob) {
+        btn.disabled = false; btn.textContent = 'Save';
+        _closeCropModal();
+        if (_cropResolve) { _cropResolve(blob); _cropResolve = null; }
+      });
+    });
+
+    /* Touch handlers en el viewport */
+    var vp = document.getElementById('hw-crop-viewport');
+    var lastDist = 0, isDragging = false;
+    var startTX = 0, startTY = 0, startPX = 0, startPY = 0;
+
+    vp.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        startPX = e.touches[0].clientX;
+        startPY = e.touches[0].clientY;
+        startTX = _tx; startTY = _ty;
+        lastDist = 0;
+      } else if (e.touches.length === 2) {
+        isDragging = false;
+        var dx = e.touches[0].clientX - e.touches[1].clientX;
+        var dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastDist = Math.sqrt(dx*dx + dy*dy);
+      }
+    }, {passive:true});
+
+    vp.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (e.touches.length === 1 && isDragging) {
+        var dx = e.touches[0].clientX - startPX;
+        var dy = e.touches[0].clientY - startPY;
+        _tx = startTX + dx;
+        _ty = startTY + dy;
+        _clamp();
+        _applyTransform();
+      } else if (e.touches.length === 2) {
+        var dx2 = e.touches[0].clientX - e.touches[1].clientX;
+        var dy2 = e.touches[0].clientY - e.touches[1].clientY;
+        var dist = Math.sqrt(dx2*dx2 + dy2*dy2);
+        if (lastDist > 0) {
+          var ratio = dist / lastDist;
+          var newScale = Math.max(_minScale, Math.min(_scale * ratio, _minScale * 6));
+          /* Zoom centrado en el punto medio de los dedos */
+          var mx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - _vpW / 2;
+          var my = (e.touches[0].clientY + e.touches[1].clientY) / 2 - _vpH / 2;
+          _tx = mx - (mx - _tx) * (newScale / _scale);
+          _ty = my - (my - _ty) * (newScale / _scale);
+          _scale = newScale;
+          _clamp();
+          _applyTransform();
         }
-      } else {
-        var aw = document.getElementById('user-avatar-wrap');
-        if (aw) aw.innerHTML = '<img src="'+cdnUrl+'" style="width:100%;height:100%;object-fit:cover;">'
-          + '<div class="prof-avatar-cam"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>';
-        if (window.currentUser) window.currentUser.picture = cdnUrl;
-        var myUid = window.currentUser ? window.currentUser.id : null;
-        if (myUid) {
-          document.querySelectorAll('[data-profile-uid="'+myUid+'"]').forEach(function(el2) {
-            var img2 = el2.tagName==='IMG' ? el2 : el2.querySelector('img');
-            if (img2) { img2.src = cdnUrl; }
-            else { el2.innerHTML=''; var ni2=document.createElement('img'); ni2.src=cdnUrl; ni2.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%;'; el2.appendChild(ni2); }
-          });
+        lastDist = dist;
+      }
+    }, {passive:false});
+
+    vp.addEventListener('touchend', function(e) {
+      if (e.touches.length < 2) lastDist = 0;
+      if (e.touches.length === 0) isDragging = false;
+    }, {passive:true});
+  }
+
+  function _applyTransform() {
+    var img = document.getElementById('hw-crop-img');
+    if (img) img.style.transform = 'translate(' + _tx + 'px,' + _ty + 'px) scale(' + _scale + ')';
+  }
+
+  function _clamp() {
+    /* Límites: la imagen siempre debe cubrir el área de recorte */
+    var scaledW = _imgNatW * _scale;
+    var scaledH = _imgNatH * _scale;
+    var cropW = _cropType === 'avatar' ? _vpW * 0.84 : _vpW * 0.92;
+    var cropH = _cropType === 'avatar' ? _vpW * 0.84 : _vpH * 0.30;
+    var maxTX = (scaledW - cropW) / 2;
+    var maxTY = (scaledH - cropH) / 2;
+    _tx = Math.max(-maxTX, Math.min(maxTX, _tx));
+    _ty = Math.max(-maxTY, Math.min(maxTY, _ty));
+  }
+
+  function _openCropModal(file, type, resolve) {
+    _buildCropModal();
+    _cropFile = file; _cropType = type; _cropResolve = resolve;
+    var modal = document.getElementById('hw-crop-modal');
+    var imgEl  = document.getElementById('hw-crop-img');
+    var vp     = document.getElementById('hw-crop-viewport');
+    modal.className = type; /* avatar | banner */
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    /* Usar createObjectURL — no base64, más liviano */
+    var objURL = URL.createObjectURL(file);
+    imgEl.onload = function() {
+      URL.revokeObjectURL(objURL);
+      _imgNatW = imgEl.naturalWidth;
+      _imgNatH = imgEl.naturalHeight;
+      var vpr = vp.getBoundingClientRect();
+      _vpW = vpr.width; _vpH = vpr.height;
+      /* Escala mínima: imagen cubre el área de recorte */
+      var cropW = type === 'avatar' ? _vpW * 0.84 : _vpW * 0.92;
+      var cropH = type === 'avatar' ? _vpW * 0.84 : _vpH * 0.30;
+      _minScale = Math.max(cropW / _imgNatW, cropH / _imgNatH);
+      _scale = _minScale;
+      /* Centrar */
+      _tx = 0; _ty = 0;
+      /* Tamaño base del img element = naturalSize (scale se aplica via transform) */
+      imgEl.style.width  = _imgNatW + 'px';
+      imgEl.style.height = _imgNatH + 'px';
+      _applyTransform();
+    };
+    imgEl.src = objURL;
+  }
+
+  function _closeCropModal() {
+    var modal = document.getElementById('hw-crop-modal');
+    if (modal) { modal.classList.remove('open'); modal.className = ''; }
+    document.body.style.overflow = '';
+    _cropResolve = null;
+    var imgEl = document.getElementById('hw-crop-img');
+    if (imgEl) { imgEl.src = ''; imgEl.style.width = ''; imgEl.style.height = ''; }
+  }
+
+  function _exportCrop(cb) {
+    /* Solo aquí usamos canvas — invisible, en memoria */
+    var imgEl = document.getElementById('hw-crop-img');
+    var vp    = document.getElementById('hw-crop-viewport');
+    if (!imgEl || !vp) return;
+    var vpr = vp.getBoundingClientRect();
+    _vpW = vpr.width; _vpH = vpr.height;
+
+    var outW = _cropType === 'avatar' ? 400 : 1200;
+    var outH = _cropType === 'avatar' ? 400 : 400;
+
+    /* Área de recorte en coordenadas del viewport */
+    var cropW = _cropType === 'avatar' ? _vpW * 0.84 : _vpW * 0.92;
+    var cropH = _cropType === 'avatar' ? _vpW * 0.84 : _vpH * 0.30;
+
+    /* Centro del viewport → origen de la imagen */
+    /* La imagen está centrada con translate(_tx,_ty) scale(_scale) */
+    /* Coordenada fuente en la imagen: */
+    var srcX = (_vpW/2 - cropW/2 - _tx) / _scale;
+    var srcY = (_vpH/2 - cropH/2 - _ty) / _scale;
+    var srcW = cropW / _scale;
+    var srcH = cropH / _scale;
+
+    var canvas = document.createElement('canvas');
+    canvas.width = outW; canvas.height = outH;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(imgEl, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
+    canvas.toBlob(function(blob) { cb(blob); }, 'image/webp', 0.88);
+  }
+
+  /* ── Upload & Save ── */
+  async function uploadAndSavePhoto(blob, type) {
+    var upRes = await fetch('/api/upload', {method:'PUT', credentials:'include',
+      headers:{'Content-Type':'image/webp'}, body:blob});
+    var upData = await upRes.json();
+    if (!upData.ok) return;
+    var cdnUrl = upData.url;
+    var payload = {};
+    payload[type==='banner' ? 'banner_url' : 'avatar_url'] = cdnUrl;
+    await fetch('/api/profile', {method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    if (type === 'banner') {
+      var pg = document.getElementById('page-more');
+      var hero = pg && pg.querySelector('.prof-hero');
+      if (hero) {
+        var ex = hero.querySelector('img.prof-banner-img');
+        if (ex) { ex.src = cdnUrl; }
+        else {
+          var ni = document.createElement('img');
+          ni.className = 'prof-banner-img';
+          ni.src = cdnUrl;
+          ni.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;';
+          hero.insertBefore(ni, hero.firstChild);
         }
       }
-      var t3 = document.getElementById('toast');
-      if (t3) { t3.textContent='Photo updated!'; t3.classList.add('show'); setTimeout(function(){ t3.classList.remove('show'); }, 2500); }
+    } else {
+      var aw = document.getElementById('user-avatar-wrap');
+      if (aw) aw.innerHTML = '<img src="'+cdnUrl+'" style="width:100%;height:100%;object-fit:cover;">'
+        + '<div class="prof-avatar-cam"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>';
+      if (window.currentUser) window.currentUser.picture = cdnUrl;
+      var myUid = window.currentUser ? window.currentUser.id : null;
+      if (myUid) {
+        document.querySelectorAll('[data-profile-uid="'+myUid+'"]').forEach(function(el2) {
+          var img2 = el2.tagName==='IMG' ? el2 : el2.querySelector('img');
+          if (img2) { img2.src = cdnUrl; }
+        });
+        document.querySelectorAll('img[data-uid="'+myUid+'"]').forEach(function(img3) {
+          img3.src = cdnUrl;
+        });
+      }
     }
+    var t3 = document.getElementById('toast');
+    if (t3) { t3.textContent='Photo updated!'; t3.classList.add('show'); setTimeout(function(){ t3.classList.remove('show'); }, 2500); }
+  }
 
-    function setupImageUpload(triggerEl, type) {
-      if (!triggerEl) return;
-      var inp = document.createElement('input');
-      inp.type='file'; inp.accept='image/*'; inp.style.display='none';
-      document.body.appendChild(inp);
-      triggerEl.addEventListener('click', function(e){ e.stopPropagation(); inp.click(); });
-      inp.addEventListener('change', function(e) {
-        var file = e.target.files[0]; if (!file) return;
-        e.target.value = '';
-        /* Mostrar toast de progreso */
+  function setupImageUpload(triggerEl, type) {
+    if (!triggerEl) return;
+    var inp = document.createElement('input');
+    inp.type='file'; inp.accept='image/*'; inp.style.display='none';
+    document.body.appendChild(inp);
+    triggerEl.addEventListener('click', function(e){ e.stopPropagation(); inp.click(); });
+    inp.addEventListener('change', function(e) {
+      var file = e.target.files[0]; if (!file) return;
+      e.target.value = '';
+      /* Abrir crop modal — al guardar sube a Bunny */
+      _openCropModal(file, type, function(blob) {
         var t3 = document.getElementById('toast');
         if (t3) { t3.textContent='Uploading...'; t3.classList.add('show'); }
-        /* Comprimir con canvas antes de subir */
-        var objURL = URL.createObjectURL(file);
-        var img = new Image();
-        var outW = type === 'avatar' ? 400 : 1200;
-        var outH = type === 'avatar' ? 400 : 400;
-        var doUpload = function() {
-          URL.revokeObjectURL(objURL);
-          var canvas = document.createElement('canvas');
-          canvas.width = outW; canvas.height = outH;
-          var ctx = canvas.getContext('2d');
-          /* object-fit: cover — centrar y recortar */
-          var iW = img.naturalWidth, iH = img.naturalHeight;
-          var scale = Math.max(outW / iW, outH / iH);
-          var dw = iW * scale, dh = iH * scale;
-          var dx = (outW - dw) / 2, dy = (outH - dh) / 2;
-          ctx.drawImage(img, dx, dy, dw, dh);
-          canvas.toBlob(function(blob) {
-            uploadAndSavePhoto(blob, type);
-          }, 'image/webp', 0.88);
-        };
-        if (typeof img.decode === 'function') {
-          img.src = objURL;
-          img.decode().then(doUpload).catch(function() {
-            /* fallback */
-            img.onload = doUpload;
-            if (img.complete) doUpload(); 
-          });
-        } else {
-          img.onload = doUpload;
-          img.src = objURL;
-        }
+        uploadAndSavePhoto(blob, type);
       });
-    }
+    });
+  }
+
   var pg2 = document.getElementById('page-more');
   setupImageUpload(pg2 && pg2.querySelector('.prof-hero'), 'banner');
   setupImageUpload(document.getElementById('user-avatar-wrap'), 'avatar');
