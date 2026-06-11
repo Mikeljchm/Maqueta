@@ -3907,6 +3907,7 @@ async function votePoll(postId, idx, poll, container) {
     };
     imgEl.src = objURL;
   }
+  window._openCropModal = _openCropModal;
 
   function _closeCropModal() {
     var modal = document.getElementById('hw-crop-modal');
