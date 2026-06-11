@@ -724,7 +724,7 @@ layout: none
           style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:0.6rem 0.75rem;color:var(--text);font-size:0.85rem;font-family:var(--font-b);outline:none;resize:none;box-sizing:border-box;"></textarea>
         <div id="broadcast-chars" style="text-align:right;font-size:0.62rem;color:var(--text-muted);margin-top:0.2rem;">0 / 500</div>
       </div>
-      <button id="broadcast-send" style="width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:12px;padding:0.75rem;font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;cursor:pointer;">
+      <button id="broadcast-send" onclick="window._sendBroadcast(this)" style="width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:12px;padding:0.75rem;font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;cursor:pointer;">
         &#9993; SEND TO ALL USERS
       </button>
       <div id="broadcast-status" style="margin-top:0.75rem;text-align:center;font-size:0.8rem;color:var(--text-dim);"></div>
