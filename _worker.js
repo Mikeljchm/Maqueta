@@ -1649,6 +1649,77 @@ export default {
       if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: corsH });
       }
+      /* ── Admin endpoints ── */
+      if (path.startsWith('/api/admin')) {
+        const adminCk = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
+        if (!adminCk) return new Response('Unauthorized',{status:401,headers:corsH});
+
+        /* DELETE /api/admin/thread?id=X */
+        if (path === '/api/admin/thread' && request.method === 'DELETE') {
+          const tid = url.searchParams.get('id');
+          if (!tid) return apiJson({error:'id required'},400,corsH);
+          await env.DB.prepare('DELETE FROM thread_posts WHERE thread_id=?').bind(tid).run();
+          await env.DB.prepare('DELETE FROM thread_members WHERE thread_id=?').bind(tid).run();
+          await env.DB.prepare('DELETE FROM thread_follows WHERE thread_id=?').bind(tid).run();
+          await env.DB.prepare('DELETE FROM threads WHERE id=?').bind(tid).run();
+          return apiJson({ok:true},200,corsH);
+        }
+
+        /* DELETE /api/admin/post?id=X */
+        if (path === '/api/admin/post' && request.method === 'DELETE') {
+          const pid = url.searchParams.get('id');
+          if (!pid) return apiJson({error:'id required'},400,corsH);
+          await env.DB.prepare('DELETE FROM comments WHERE post_id=?').bind(String(pid)).run();
+          await env.DB.prepare('DELETE FROM likes WHERE post_id=?').bind(String(pid)).run();
+          await env.DB.prepare('DELETE FROM user_posts WHERE id=?').bind(pid).run();
+          return apiJson({ok:true},200,corsH);
+        }
+
+        /* DELETE /api/admin/thread-post?id=X */
+        if (path === '/api/admin/thread-post' && request.method === 'DELETE') {
+          const pid = url.searchParams.get('id');
+          if (!pid) return apiJson({error:'id required'},400,corsH);
+          await env.DB.prepare('DELETE FROM thread_posts WHERE id=?').bind(pid).run();
+          return apiJson({ok:true},200,corsH);
+        }
+
+        /* DELETE /api/admin/comment?id=X */
+        if (path === '/api/admin/comment' && request.method === 'DELETE') {
+          const cid = url.searchParams.get('id');
+          if (!cid) return apiJson({error:'id required'},400,corsH);
+          await env.DB.prepare('DELETE FROM comments WHERE id=?').bind(cid).run();
+          return apiJson({ok:true},200,corsH);
+        }
+
+        /* GET /api/admin/users */
+        if (path === '/api/admin/users' && request.method === 'GET') {
+          const {results} = await env.DB.prepare(
+            'SELECT u.user_id,u.username,u.avatar_url FROM user_profiles u ORDER BY u.user_id DESC LIMIT 100'
+          ).all();
+          return apiJson({users:results},200,corsH);
+        }
+
+        /* GET /api/admin/threads */
+        if (path === '/api/admin/threads' && request.method === 'GET') {
+          const {results} = await env.DB.prepare(
+            'SELECT id,name,description,creator_id,member_count,post_count,cover_url,created_at FROM threads ORDER BY created_at DESC LIMIT 100'
+          ).all();
+          return apiJson({threads:results},200,corsH);
+        }
+
+        /* POST /api/admin/notify */
+        if (path === '/api/admin/notify' && request.method === 'POST') {
+          const body = await request.json();
+          const {user_id, message} = body;
+          if (!user_id || !message) return apiJson({error:'user_id and message required'},400,corsH);
+          try { await env.DB.prepare('CREATE TABLE IF NOT EXISTS admin_notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, message TEXT, read INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)').run(); } catch(e){}
+          await env.DB.prepare('INSERT INTO admin_notifications (user_id,message) VALUES (?,?)').bind(user_id,message).run();
+          return apiJson({ok:true},200,corsH);
+        }
+
+        return apiJson({error:'Not found'},404,corsH);
+      }
+
       if (path === '/api/debug') {
         const cookies = request.headers.get('Cookie') || '';
         const hasFanCookie = cookies.includes('hw_fan=');
