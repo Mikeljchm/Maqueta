@@ -3796,12 +3796,10 @@ async function votePoll(postId, idx, poll, container) {
       var btn = this; btn.disabled = true; btn.textContent = '...';
       _exportCrop(function(blob) {
         btn.disabled = false; btn.textContent = 'Save';
-        if (!blob) { console.error('[CROP] toBlob devolvió null'); btn.textContent = 'Error'; return; }
-        console.log('[CROP] blob OK size='+blob.size+' type='+blob.type);
+        if (!blob) return;
         var resolve = _cropResolve;
         _closeCropModal();
-        if (resolve) { resolve(blob); }
-        else { console.error('[CROP] _cropResolve es null'); }
+        if (resolve) resolve(blob);
       });
     });
 
@@ -3922,60 +3920,61 @@ async function votePoll(postId, idx, poll, container) {
   function _exportCrop(cb) {
     var imgEl = document.getElementById('hw-crop-img');
     var vp    = document.getElementById('hw-crop-viewport');
-    if (!imgEl || !vp) return;
+    if (!imgEl || !vp || !imgEl.src || imgEl.src === window.location.href) { cb(null); return; }
 
     var outW = _cropType === 'avatar' ? 400 : 1200;
     var outH = _cropType === 'avatar' ? 400 : 400;
 
-    /* getBoundingClientRect da la posición REAL de la imagen en pantalla
-       incluyendo todos los CSS transforms — es la fuente de verdad */
-    var imgRect = imgEl.getBoundingClientRect();
     var vpRect  = vp.getBoundingClientRect();
+    var imgRect = imgEl.getBoundingClientRect();
 
-    /* Área de recorte: centrada en el viewport */
     var cropW = _cropType === 'avatar' ? vpRect.width * 0.84 : vpRect.width * 0.92;
     var cropH = _cropType === 'avatar' ? vpRect.width * 0.84 : vpRect.height * 0.30;
-    var cropLeft = vpRect.left + (vpRect.width  - cropW) / 2;
-    var cropTop  = vpRect.top  + (vpRect.height - cropH) / 2;
+    var cropOffX = (vpRect.left + (vpRect.width  - cropW) / 2) - imgRect.left;
+    var cropOffY = (vpRect.top  + (vpRect.height - cropH) / 2) - imgRect.top;
+    var rx = _imgNatW / imgRect.width;
+    var ry = _imgNatH / imgRect.height;
+    var srcX = Math.max(0, cropOffX * rx);
+    var srcY = Math.max(0, cropOffY * ry);
+    var srcW = Math.min(cropW * rx, _imgNatW - srcX);
+    var srcH = Math.min(cropH * ry, _imgNatH - srcY);
 
-    /* Convertir coordenadas de pantalla → coordenadas de la imagen natural */
-    /* imgRect da el tamaño renderizado (naturalSize * scale) */
-    var renderedW = imgRect.width;
-    var renderedH = imgRect.height;
-    var pixelRatioX = _imgNatW / renderedW;
-    var pixelRatioY = _imgNatH / renderedH;
-
-    var srcX = (cropLeft - imgRect.left) * pixelRatioX;
-    var srcY = (cropTop  - imgRect.top)  * pixelRatioY;
-    var srcW = cropW * pixelRatioX;
-    var srcH = cropH * pixelRatioY;
-
-    /* Clamp — no salirse de los límites de la imagen */
-    srcX = Math.max(0, Math.min(srcX, _imgNatW - srcW));
-    srcY = Math.max(0, Math.min(srcY, _imgNatH - srcH));
-
-    var canvas = document.createElement('canvas');
-    canvas.width = outW; canvas.height = outH;
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(imgEl, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
-    console.log('[CROP] export srcX='+srcX.toFixed(1)+' srcY='+srcY.toFixed(1)+' srcW='+srcW.toFixed(1)+' srcH='+srcH.toFixed(1));
-    console.log('[CROP] imgNat='+_imgNatW+'x'+_imgNatH+' rendered='+renderedW.toFixed(1)+'x'+renderedH.toFixed(1));
-    canvas.toBlob(function(blob) {
-      console.log('[CROP] toBlob result:', blob ? 'size='+blob.size : 'NULL');
-      cb(blob);
-    }, 'image/webp', 0.88);
+    var freshImg = new Image();
+    var doExport = function() {
+      var canvas = document.createElement('canvas');
+      canvas.width = outW; canvas.height = outH;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(freshImg, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
+      canvas.toBlob(function(blob) {
+        if (!blob || blob.size < 500) {
+          var c2 = document.createElement('canvas');
+          c2.width = outW; c2.height = outH;
+          var ctx2 = c2.getContext('2d');
+          var scale2 = Math.max(outW/freshImg.naturalWidth, outH/freshImg.naturalHeight);
+          var dw = freshImg.naturalWidth*scale2, dh = freshImg.naturalHeight*scale2;
+          ctx2.drawImage(freshImg, (outW-dw)/2, (outH-dh)/2, dw, dh);
+          c2.toBlob(function(b2){ cb(b2); }, 'image/webp', 0.88);
+          return;
+        }
+        cb(blob);
+      }, 'image/webp', 0.88);
+    };
+    if (typeof freshImg.decode === 'function') {
+      freshImg.src = imgEl.src;
+      freshImg.decode().then(doExport).catch(function(){ freshImg.onload=doExport; freshImg.src=imgEl.src; });
+    } else {
+      freshImg.onload = doExport;
+      freshImg.src = imgEl.src;
+    }
   }
 
-  /* ── Upload & Save ── */
+    /* ── Upload & Save ── */
   async function uploadAndSavePhoto(blob, type) {
-    console.log('[UPLOAD] iniciando, blob size='+blob.size);
     var upRes = await fetch('/api/upload', {method:'PUT', credentials:'include',
       headers:{'Content-Type':'image/webp'}, body:blob});
     var upData = await upRes.json();
-    console.log('[UPLOAD] respuesta:', JSON.stringify(upData));
-    if (!upData.ok) { console.error('[UPLOAD] falló:', upData); return; }
+    if (!upData.ok) return;
     var cdnUrl = upData.url;
-    console.log('[UPLOAD] CDN URL:', cdnUrl);
     var payload = {};
     payload[type==='banner' ? 'banner_url' : 'avatar_url'] = cdnUrl;
     await fetch('/api/profile', {method:'POST', credentials:'include',
