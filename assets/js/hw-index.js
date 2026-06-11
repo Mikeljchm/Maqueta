@@ -5924,8 +5924,8 @@ async function votePoll(postId, idx, poll, container) {
         })(p.image_url) : '')
       + (p.body && p.body.trim() && p.body.trim() !== ' ' ? '<div class="post-card-body">'+escH(p.body)+'</div>' : '')
       + '<div class="post-card-actions">'
-        + '<button class="post-like-btn'+(LIKED_POSTS.has(String(p.id))?' liked':'')+'" data-post-id="'+p.id+'">'
-          + '<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(p.like_count||'')+'</button>'
+        + '<button class="post-like-btn'+(LIKED_POSTS.has(String(p.id))?' liked':'')+'" data-post-id="'+p.id+'" data-like-count="'+(p.like_count||0)+'">'
+          + '<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span class="plc">'+(p.like_count||'')+'</button>'
       + '<button class="post-comment-btn" data-post-id="'+p.id+'">'
           + '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Comment'
         + '</button>';
@@ -6188,17 +6188,37 @@ async function votePoll(postId, idx, poll, container) {
     var likeBtn = e.target.closest('.post-like-btn[data-post-id]');
     if (likeBtn) {
       var pid = String(likeBtn.getAttribute('data-post-id'));
-      var svg = likeBtn.querySelector('svg');
-      if (LIKED_POSTS.has(pid)) {
+      var wasLiked = LIKED_POSTS.has(pid);
+      /* Optimistic update */
+      if (wasLiked) {
         LIKED_POSTS.delete(pid);
         likeBtn.classList.remove('liked');
       } else {
         LIKED_POSTS.add(pid);
         likeBtn.classList.add('liked');
-        /* Mini pop animation */
         likeBtn.style.transform='scale(1.35)'; setTimeout(function(){ likeBtn.style.transform=''; },200);
       }
       saveLikedPosts();
+      /* Update count optimistically */
+      var curCount = parseInt(likeBtn.getAttribute('data-like-count')||'0',10);
+      var newCount = Math.max(0, curCount + (wasLiked ? -1 : 1));
+      likeBtn.setAttribute('data-like-count', newCount);
+      var countEl = likeBtn.querySelector('.plc');
+      if (countEl) countEl.textContent = newCount > 0 ? newCount : '';
+      /* Persist to server */
+      if (window.currentUser) {
+        fetch('/api/posts', {
+          method: 'POST', credentials: 'include',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({post_id: parseInt(pid), action: wasLiked ? 'unlike' : 'like'})
+        }).then(function(r){ return r.json(); })
+          .then(function(d){
+            if (d.count !== undefined) {
+              likeBtn.setAttribute('data-like-count', d.count);
+              if (countEl) countEl.textContent = d.count > 0 ? d.count : '';
+            }
+          }).catch(function(){});
+      }
       return;
     }
 
