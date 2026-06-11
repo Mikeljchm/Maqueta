@@ -3796,8 +3796,12 @@ async function votePoll(postId, idx, poll, container) {
       var btn = this; btn.disabled = true; btn.textContent = '...';
       _exportCrop(function(blob) {
         btn.disabled = false; btn.textContent = 'Save';
+        if (!blob) { console.error('[CROP] toBlob devolvió null'); btn.textContent = 'Error'; return; }
+        console.log('[CROP] blob OK size='+blob.size+' type='+blob.type);
+        var resolve = _cropResolve;
         _closeCropModal();
-        if (_cropResolve) { _cropResolve(blob); _cropResolve = null; }
+        if (resolve) { resolve(blob); }
+        else { console.error('[CROP] _cropResolve es null'); }
       });
     });
 
@@ -3954,16 +3958,24 @@ async function votePoll(postId, idx, poll, container) {
     canvas.width = outW; canvas.height = outH;
     var ctx = canvas.getContext('2d');
     ctx.drawImage(imgEl, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
-    canvas.toBlob(function(blob) { cb(blob); }, 'image/webp', 0.88);
+    console.log('[CROP] export srcX='+srcX.toFixed(1)+' srcY='+srcY.toFixed(1)+' srcW='+srcW.toFixed(1)+' srcH='+srcH.toFixed(1));
+    console.log('[CROP] imgNat='+_imgNatW+'x'+_imgNatH+' rendered='+renderedW.toFixed(1)+'x'+renderedH.toFixed(1));
+    canvas.toBlob(function(blob) {
+      console.log('[CROP] toBlob result:', blob ? 'size='+blob.size : 'NULL');
+      cb(blob);
+    }, 'image/webp', 0.88);
   }
 
   /* ── Upload & Save ── */
   async function uploadAndSavePhoto(blob, type) {
+    console.log('[UPLOAD] iniciando, blob size='+blob.size);
     var upRes = await fetch('/api/upload', {method:'PUT', credentials:'include',
       headers:{'Content-Type':'image/webp'}, body:blob});
     var upData = await upRes.json();
-    if (!upData.ok) return;
+    console.log('[UPLOAD] respuesta:', JSON.stringify(upData));
+    if (!upData.ok) { console.error('[UPLOAD] falló:', upData); return; }
     var cdnUrl = upData.url;
+    console.log('[UPLOAD] CDN URL:', cdnUrl);
     var payload = {};
     payload[type==='banner' ? 'banner_url' : 'avatar_url'] = cdnUrl;
     await fetch('/api/profile', {method:'POST', credentials:'include',
