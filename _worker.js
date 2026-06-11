@@ -1647,7 +1647,7 @@ async function handleCommunityPosts(request, env, corsH) {
 
 /* ── NOTIFICATIONS ── */
 async function handleNotifications(request, env, corsH) {
-  /* Crear tabla si no existe — con tipo de notificación y target */
+  /* Crear tabla si no existe */
   try {
     await env.DB.prepare(`CREATE TABLE IF NOT EXISTS notifications (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1658,9 +1658,22 @@ async function handleNotifications(request, env, corsH) {
       read        INTEGER NOT NULL DEFAULT 0,
       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
     )`).run();
-    /* Migrar tabla vieja admin_notifications si existe */
-    await env.DB.prepare(`INSERT OR IGNORE INTO notifications (user_id,type,title,message,read,created_at)
-      SELECT user_id,'admin','Admin','message' || ' ' || message,read,created_at FROM admin_notifications`).run();
+  } catch(e) {}
+
+  /* Migrar admin_notifications a notifications si aún no se migró */
+  try {
+    const { results: oldNotifs } = await env.DB.prepare(
+      'SELECT user_id, message, read, created_at FROM admin_notifications'
+    ).all();
+    for (const n of oldNotifs) {
+      try {
+        await env.DB.prepare(
+          'INSERT INTO notifications (user_id,type,title,message,read,created_at) VALUES (?,?,?,?,?,?)'
+        ).bind(n.user_id, 'admin', 'Admin', n.message, n.read, n.created_at).run();
+      } catch(e2) {}
+    }
+    /* Vaciar la vieja para no re-migrar */
+    await env.DB.prepare('DELETE FROM admin_notifications').run();
   } catch(e) {}
 
   const url     = new URL(request.url);
