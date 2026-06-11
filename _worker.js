@@ -1890,6 +1890,26 @@ export default {
           return apiJson({ ok: true, banned: uid }, 200, corsH);
         }
 
+        /* POST /api/admin/broadcast — enviar anuncio a TODOS los usuarios */
+        if (path === '/api/admin/broadcast' && request.method === 'POST') {
+          const body = await request.json();
+          const { title, message } = body;
+          if (!message) return apiJson({ error: 'message required' }, 400, corsH);
+          /* Obtener todos los user_ids registrados */
+          const { results: users } = await env.DB.prepare(
+            'SELECT user_id FROM user_profiles'
+          ).all();
+          if (!users.length) return apiJson({ ok: true, sent: 0 }, 200, corsH);
+          /* Insertar una notificación por usuario */
+          const stmt = env.DB.prepare(
+            'INSERT INTO notifications (user_id,type,title,message) VALUES (?,?,?,?)'
+          );
+          await env.DB.batch(
+            users.map(u => stmt.bind(u.user_id, 'admin', title || 'Announcement', message))
+          );
+          return apiJson({ ok: true, sent: users.length }, 200, corsH);
+        }
+
         /* POST /api/admin/notify */
         if (path === '/api/admin/notify' && request.method === 'POST') {
           const body = await request.json();
