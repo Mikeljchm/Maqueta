@@ -74,12 +74,13 @@ layout: none
             <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
             App
           </button>
-          <button class="top-btn" id="notif-btn" style="position:relative;display:none;">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;background:#ff3b5c;color:#fff;border-radius:50%;width:16px;height:16px;font-size:0.55rem;font-family:var(--font-b);font-weight:700;display:none;align-items:center;justify-content:center;line-height:1;"></span>
-          </button>
           <button class="top-btn" id="search-shortcut">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </button>
+          <!-- BELL — visible only when logged in -->
+          <button class="top-btn" id="notif-btn" style="display:none;position:relative;" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;background:#FF4500;color:#fff;border-radius:50%;width:14px;height:14px;font-size:0.55rem;font-family:var(--font-b);font-weight:700;display:flex;align-items:center;justify-content:center;pointer-events:none;"></span>
           </button>
         </div>
       </header>
@@ -699,6 +700,18 @@ layout: none
       <div class="edit-status" id="edit-status"></div>
     </div>
   </div>
+  <!-- NOTIFICATIONS PANEL -->
+  <div id="notif-panel" style="display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:100%;z-index:300;background:var(--bg);flex-direction:column;transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);transform:translateX(calc(-50% + 100vw));">
+    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;">
+      <button id="notif-close" style="background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;">Notifications</div>
+      <button id="notif-read-all" style="background:none;border:none;color:var(--text-dim);font-size:0.68rem;font-family:var(--font-b);cursor:pointer;padding:0.2rem 0.4rem;">Mark all read</button>
+    </div>
+    <div id="notif-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.5rem 0;"></div>
+  </div>
+
   <!-- Community detail — fuera de .page para no heredar su scroll -->
   <div id="comm-detail-page" style="display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:100%;z-index:200;background:var(--bg);overflow:hidden;"></div>
 
