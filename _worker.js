@@ -1945,6 +1945,7 @@ export default {
           dbTest
         }), { headers: { 'Content-Type': 'application/json', ...corsH } });
       }
+      if (path === '/api/user-follows' || path.startsWith('/api/user-follows')) return handleUserFollows(request, env, corsH);
       if (path === '/api/communities') return handleCommunities(request, env, corsH);
       if (path === '/api/community-posts') return handleCommunityPosts(request, env, corsH);
       if (path === '/api/upload') return handleUpload(request, env, corsH);
@@ -2084,14 +2085,105 @@ export default {
   }
 };
 
+/* ── USER FOLLOWS ── */
+async function handleUserFollows(request, env, corsH) {
+  const session = getSession(request);
+  const url     = new URL(request.url);
+  const path    = url.pathname;
 
+  /* Create table */
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_follows (
+    follower_id TEXT NOT NULL,
+    following_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (follower_id, following_id)
+  )`).run();
 
+  /* GET /api/user-follows/stats?user_id=X — followers + following counts */
+  if (request.method === 'GET' && path === '/api/user-follows/stats') {
+    const uid = url.searchParams.get('user_id');
+    if (!uid) return apiJson({ error: 'user_id required' }, 400, corsH);
+    const [{ results: frs }, { results: fng }] = await Promise.all([
+      env.DB.prepare('SELECT COUNT(*) as cnt FROM user_follows WHERE following_id=?').bind(uid).all(),
+      env.DB.prepare('SELECT COUNT(*) as cnt FROM user_follows WHERE follower_id=?').bind(uid).all()
+    ]);
+    /* Is current user following this uid? */
+    let is_following = false;
+    if (session) {
+      const { results: chk } = await env.DB.prepare(
+        'SELECT 1 FROM user_follows WHERE follower_id=? AND following_id=?'
+      ).bind(session.id, uid).all();
+      is_following = chk.length > 0;
+    }
+    return apiJson({
+      followers: frs[0]?.cnt || 0,
+      following: fng[0]?.cnt || 0,
+      is_following
+    }, 200, corsH);
+  }
 
+  /* GET /api/user-follows/list?user_id=X&type=followers|following */
+  if (request.method === 'GET' && path === '/api/user-follows/list') {
+    const uid  = url.searchParams.get('user_id');
+    const type = url.searchParams.get('type') || 'followers';
+    if (!uid) return apiJson({ error: 'user_id required' }, 400, corsH);
+    let results;
+    if (type === 'followers') {
+      ({ results } = await env.DB.prepare(
+        'SELECT uf.follower_id as user_id, up.username, up.avatar_url FROM user_follows uf LEFT JOIN user_profiles up ON up.user_id=uf.follower_id WHERE uf.following_id=? ORDER BY uf.created_at DESC LIMIT 100'
+      ).bind(uid).all());
+    } else {
+      ({ results } = await env.DB.prepare(
+        'SELECT uf.following_id as user_id, up.username, up.avatar_url FROM user_follows uf LEFT JOIN user_profiles up ON up.user_id=uf.following_id WHERE uf.follower_id=? ORDER BY uf.created_at DESC LIMIT 100'
+      ).bind(uid).all());
+    }
+    return apiJson({ users: results }, 200, corsH);
+  }
 
+  /* GET /api/user-follows/feed — posts from people I follow */
+  if (request.method === 'GET' && path === '/api/user-follows/feed') {
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const { results: following } = await env.DB.prepare(
+      'SELECT following_id FROM user_follows WHERE follower_id=?'
+    ).bind(session.id).all();
+    if (!following.length) return apiJson({ posts: [] }, 200, corsH);
+    const ids = following.map(r => r.following_id);
+    const ph  = ids.map(() => '?').join(',');
+    const { results } = await env.DB.prepare(
+      'SELECT id,user_id,user_name,user_avatar,body,image_url,report_count,created_at FROM user_posts WHERE hidden=0 AND user_id IN ('+ph+') ORDER BY created_at DESC LIMIT 50'
+    ).bind(...ids).all();
+    return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
+  }
 
+  /* POST /api/user-follows — follow or unfollow */
+  if (request.method === 'POST') {
+    if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+    const body = await request.json();
+    const target = body.user_id;
+    if (!target || target === session.id) return apiJson({ error: 'Invalid target' }, 400, corsH);
+    if (body.action === 'follow') {
+      try {
+        await env.DB.prepare(
+          'INSERT OR IGNORE INTO user_follows (follower_id, following_id) VALUES (?,?)'
+        ).bind(session.id, target).run();
+      } catch(e) {}
+    } else {
+      await env.DB.prepare(
+        'DELETE FROM user_follows WHERE follower_id=? AND following_id=?'
+      ).bind(session.id, target).run();
+    }
+    /* Return updated counts */
+    const [{ results: frs }, { results: fng }] = await Promise.all([
+      env.DB.prepare('SELECT COUNT(*) as cnt FROM user_follows WHERE following_id=?').bind(target).all(),
+      env.DB.prepare('SELECT COUNT(*) as cnt FROM user_follows WHERE follower_id=?').bind(target).all()
+    ]);
+    return apiJson({
+      ok: true,
+      is_following: body.action === 'follow',
+      followers: frs[0]?.cnt || 0,
+      following: fng[0]?.cnt || 0
+    }, 200, corsH);
+  }
 
-
-
-
-
-
+  return apiJson({ error: 'Not found' }, 404, corsH);
+}
