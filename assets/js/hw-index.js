@@ -2799,22 +2799,126 @@ async function votePoll(postId, idx, poll, container) {
       sheet.className = 'conf-admin-sheet';
       sheet.innerHTML = '<div class="conf-admin-header">'
         + '<button class="conf-admin-back" id="conf-admin-back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>'
-        + '<div class="conf-admin-htitle">Pending Confessions</div></div>'
+        + '<div class="conf-admin-htitle">ADMIN PANEL</div></div>'
+        + '<div style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface);">'
+          + '<button class="adm-tab active" data-t="confessions" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;">CONF</button>'
+          + '<button class="adm-tab" data-t="posts" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;">POSTS</button>'
+          + '<button class="adm-tab" data-t="threads" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;">HILOS</button>'
+          + '<button class="adm-tab" data-t="users" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;">USERS</button>'
+        + '</div>'
         + '<div class="conf-admin-body" id="conf-admin-body"></div>';
       document.body.appendChild(sheet);
+
+      sheet.querySelectorAll('.adm-tab').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          sheet.querySelectorAll('.adm-tab').forEach(function(b) {
+            b.style.borderBottomColor='transparent'; b.style.color='var(--text-dim)'; b.classList.remove('active');
+          });
+          btn.style.borderBottomColor='var(--fire-orange)'; btn.style.color='var(--fire-orange)'; btn.classList.add('active');
+          var t=btn.getAttribute('data-t');
+          var body=document.getElementById('conf-admin-body');
+          body.innerHTML='<div style="padding:1rem;text-align:center;color:var(--text-dim);font-size:0.8rem;">Loading...</div>';
+          if(t==='confessions'&&typeof window.loadPendingConfessions==='function') window.loadPendingConfessions(body);
+          else if(t==='posts') _adminLoadPosts(body);
+          else if(t==='threads') _adminLoadThreads(body);
+          else if(t==='users') _adminLoadUsers(body);
+        });
+      });
+
       fab.addEventListener('click', function() {
         sheet.classList.add('open');
         document.body.style.overflow = 'hidden';
-        var badge = document.getElementById('conf-pending-badge');
-        if (badge) badge.style.display = 'none';
-        if (typeof window.loadPendingConfessions === 'function') {
-          window.loadPendingConfessions(document.getElementById('conf-admin-body'));
-        }
+        var badge=document.getElementById('conf-pending-badge');
+        if(badge) badge.style.display='none';
+        if(typeof window.loadPendingConfessions==='function') window.loadPendingConfessions(document.getElementById('conf-admin-body'));
       });
       document.getElementById('conf-admin-back').addEventListener('click', function() {
         sheet.classList.remove('open');
         document.body.style.overflow = '';
       });
+
+      async function _adminLoadPosts(container) {
+        try {
+          var r=await fetch('/api/posts',{credentials:'include'});
+          var d=await r.json(); var posts=d.posts||[];
+          if(!posts.length){container.innerHTML='<div style="padding:1rem;text-align:center;color:var(--text-dim);">No posts.</div>';return;}
+          container.innerHTML=posts.map(function(p){
+            var media=p.image_url?'<div style="font-size:0.65rem;color:var(--fire-orange);margin-bottom:0.2rem;">&#128247; Media</div>':'';
+            return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:0.7rem;margin-bottom:0.5rem;">'
+              +'<div style="font-family:var(--font-d);font-size:0.8rem;margin-bottom:0.2rem;">'+escH(p.user_name||'?')+'</div>'
+              +media+'<div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.45rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">'+escH(p.body||'')+'</div>'
+              +'<div style="display:flex;gap:0.4rem;align-items:center;">'
+                +'<span style="font-size:0.6rem;color:var(--text-muted);flex:1;">'+timeAgo(p.created_at)+'</span>'
+                +'<button onclick="_adminDeletePost(\''+p.id+'\',this)" style="background:#cc2200;border:none;color:#fff;border-radius:8px;padding:0.22rem 0.6rem;font-size:0.65rem;font-family:var(--font-d);cursor:pointer;">&#128465; Borrar</button>'
+                +'<button onclick="_adminMsg(\''+escH(p.user_id)+'\',\''+escH(p.user_name||'')+'\')" style="background:var(--surface-3);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:0.22rem 0.6rem;font-size:0.65rem;cursor:pointer;">&#9993;</button>'
+              +'</div></div>';
+          }).join('');
+        }catch(e){container.innerHTML='<div style="padding:1rem;color:#cc4444;">Error.</div>';}
+      }
+
+      async function _adminLoadThreads(container) {
+        try {
+          var r=await fetch('/api/admin/threads',{credentials:'include'});
+          var d=await r.json(); var threads=d.threads||[];
+          if(!threads.length){container.innerHTML='<div style="padding:1rem;text-align:center;color:var(--text-dim);">No hay hilos.</div>';return;}
+          container.innerHTML=threads.map(function(t){
+            return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:0.7rem;margin-bottom:0.5rem;">'
+              +(t.cover_url?'<img src="'+t.cover_url+'" style="width:100%;height:50px;object-fit:cover;border-radius:6px;margin-bottom:0.4rem;">':'')
+              +'<div style="font-family:var(--font-d);font-size:0.88rem;margin-bottom:0.15rem;">'+escH(t.name)+'</div>'
+              +'<div style="font-size:0.65rem;color:var(--text-dim);margin-bottom:0.45rem;">'+escH(t.description||'')+'</div>'
+              +'<div style="display:flex;gap:0.4rem;align-items:center;">'
+                +'<span style="font-size:0.6rem;color:var(--text-muted);flex:1;">'+(t.member_count||0)+' members &bull; '+(t.post_count||0)+' posts</span>'
+                +'<button onclick="_adminDeleteThread(\''+t.id+'\',this)" style="background:#cc2200;border:none;color:#fff;border-radius:8px;padding:0.22rem 0.6rem;font-size:0.65rem;font-family:var(--font-d);cursor:pointer;">&#128465; Borrar</button>'
+                +'<button onclick="_adminMsg(\''+escH(t.creator_id)+'\',\'Creator\')" style="background:var(--surface-3);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:0.22rem 0.6rem;font-size:0.65rem;cursor:pointer;">&#9993;</button>'
+              +'</div></div>';
+          }).join('');
+        }catch(e){container.innerHTML='<div style="padding:1rem;color:#cc4444;">Error.</div>';}
+      }
+
+      async function _adminLoadUsers(container) {
+        try {
+          var r=await fetch('/api/admin/users',{credentials:'include'});
+          var d=await r.json(); var users=d.users||[];
+          if(!users.length){container.innerHTML='<div style="padding:1rem;text-align:center;color:var(--text-dim);">No hay usuarios.</div>';return;}
+          container.innerHTML=users.map(function(u){
+            var av=u.avatar_url?'<img src="'+u.avatar_url+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">':'<div style="width:36px;height:36px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);">'+escH((u.username||'?').charAt(0).toUpperCase())+'</div>';
+            return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:0.7rem;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.6rem;">'
+              +av+'<div style="flex:1;min-width:0;">'
+                +'<div style="font-family:var(--font-d);font-size:0.82rem;">'+escH(u.username||u.user_id)+'</div>'
+                +'<div style="font-size:0.6rem;color:var(--text-muted);">'+escH(u.user_id)+'</div>'
+              +'</div>'
+              +'<button onclick="_adminMsg(\''+escH(u.user_id)+'\',\''+escH(u.username||u.user_id)+'\')" style="background:var(--fire-orange);border:none;color:#fff;border-radius:8px;padding:0.22rem 0.6rem;font-size:0.65rem;font-family:var(--font-d);cursor:pointer;">&#9993; Msg</button>'
+            +'</div>';
+          }).join('');
+        }catch(e){container.innerHTML='<div style="padding:1rem;color:#cc4444;">Error.</div>';}
+      }
+
+      window._adminDeletePost=async function(id,btn){
+        if(!confirm('Eliminar este post permanentemente?')) return;
+        btn.disabled=true; btn.textContent='...';
+        var r=await fetch('/api/admin/post?id='+id,{method:'DELETE',credentials:'include'});
+        var d=await r.json();
+        if(d.ok){ var card=btn.closest('div[style]'); if(card) card.remove(); }
+        else { btn.disabled=false; btn.textContent='Error'; }
+      };
+      window._adminDeleteThread=async function(id,btn){
+        if(!confirm('Eliminar este hilo y TODOS sus posts?')) return;
+        btn.disabled=true; btn.textContent='...';
+        var r=await fetch('/api/admin/thread?id='+id,{method:'DELETE',credentials:'include'});
+        var d=await r.json();
+        if(d.ok){ var card=btn.closest('div[style]'); if(card) card.remove(); }
+        else { btn.disabled=false; btn.textContent='Error'; }
+      };
+      window._adminMsg=function(userId,userName){
+        var msg=prompt('Mensaje para @'+userName+':');
+        if(!msg||!msg.trim()) return;
+        fetch('/api/admin/notify',{method:'POST',credentials:'include',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({user_id:userId,message:msg.trim()})
+        }).then(function(r){return r.json();}).then(function(d){
+          if(d.ok) alert('Mensaje enviado a @'+userName);
+        });
+      };
     }
     // Show login button only if ?admin=true in URL
     if (new URLSearchParams(window.location.search).get('admin') === 'true') {
