@@ -393,7 +393,7 @@
         + '<div id="user-prof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;'
           + 'font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.55rem;border-radius:20px;'
           + 'background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-bottom:0.35rem;"></div>'
-        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;"></div>'
+        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;"></div>'        + (window._adminIsOn&&window._adminIsOn() ? '<div style="margin-top:0.5rem;"><button onclick="window._adminBanUser(\'' + escH(uid) + '\',\'' + escH(name||'User') + '\')" style="background:#3a0808;color:#ff5555;border:1px solid #6a1010;border-radius:10px;padding:0.3rem 0.8rem;font-size:0.7rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban + Delete Account</button></div>' : '')
       + '</div>'
       /* Tabs */
       + '<div id="user-prof-tabs" style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;">'
@@ -466,6 +466,9 @@
           + '</div>'
         + '</div>'
         + mediaHtml + body
+      + (window._adminIsOn&&window._adminIsOn()
+          ? '<div style="margin-top:0.4rem;"><button class="adm-del-btn" data-upid="'+p.id+'" data-uid="'+escH(p.user_id||'')+'" onclick="window._adminDeleteUserPost('+p.id+',\''+escH(p.user_id||'')+'\',this)" title="Delete post">&#128465; Delete post</button></div>'
+          : '')
       + '</div>';
     }
 
@@ -2900,7 +2903,50 @@ async function votePoll(postId, idx, poll, container) {
       .catch(function() { btn.disabled = false; alert('Error deleting thread post'); });
   };
 
-  var editMode = 'edit'; // 'edit' or 'new'
+  window._adminDeleteUserPost = function(id, uid, btn) {
+    if (!window._adminIsOn()) return;
+    var reason = prompt('Reason for deletion (sent to user):');
+    if (reason === null) return;
+    btn.disabled = true;
+    fetch('/api/admin/post?id=' + id, { method: 'DELETE', credentials: 'include' })
+      .then(function(r) { return r.json(); })
+      .then(function() {
+        if (reason.trim() && uid) {
+          fetch('/api/admin/notify', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: uid, message: 'Your post was removed: ' + reason })
+          });
+        }
+        var card = btn.closest('[data-upid]');
+        if (card) { card.style.cssText = 'opacity:0;transition:opacity 0.3s;'; setTimeout(function(){ card.remove(); }, 300); }
+        else { btn.closest('div[style]') && (btn.closest('div[style]').style.opacity = '0.3'); }
+      })
+      .catch(function() { btn.disabled = false; });
+  };
+
+  window._adminBanUser = function(uid, uname) {
+    if (!window._adminIsOn()) return;
+    var reason = prompt('Ban reason for ' + uname + ' (shown to user):');
+    if (reason === null) return;
+    if (!confirm('BAN + delete ALL content for ' + uname + '?\nThis cannot be undone.')) return;
+    fetch('/api/admin/user?user_id=' + encodeURIComponent(uid) + '&reason=' + encodeURIComponent(reason), {
+      method: 'DELETE', credentials: 'include'
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.ok) {
+          alert('User banned and content wiped.');
+          var page = document.getElementById('page-user-profile');
+          if (page) { page.style.transform = 'translateX(100%)'; setTimeout(function(){ page.style.display = 'none'; }, 350); }
+        } else {
+          alert('Error: ' + (d.error || 'Unknown'));
+        }
+      })
+      .catch(function() { alert('Request failed'); });
+  };
+
+    var editMode = 'edit'; // 'edit' or 'new'
 
 
   function openNewPost() {
