@@ -5112,11 +5112,13 @@ async function votePoll(postId, idx, poll, container) {
     repOverlay.classList.add('open'); repSheet.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
+  window.openReportSheet = openReportSheet;
   function closeReportSheet() {
     repOverlay.classList.remove('open'); repSheet.classList.remove('open');
     document.body.style.overflow = '';
     currentReportPostId = null;
   }
+  window.closeReportSheet = closeReportSheet;
   repOverlay.addEventListener('click', closeReportSheet);
   var repSY=0;
   repSheet.addEventListener('touchstart',function(e){repSY=e.touches[0].clientY;},{passive:true});
