@@ -1180,6 +1180,7 @@ async function handleUserPosts(request, env, corsH) {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`).run();
   try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN image_url TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare('ALTER TABLE user_posts ADD COLUMN like_count INTEGER DEFAULT 0').run(); } catch(e){}
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS post_reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     post_id INTEGER NOT NULL,
@@ -1232,6 +1233,23 @@ async function handleUserPosts(request, env, corsH) {
   if (request.method === 'POST') {
     const body = await request.json();
     const action = body.action;
+
+    /* Like / Unlike post */
+    if (action === 'like' || action === 'unlike') {
+      if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+      const postId = parseInt(body.post_id);
+      if (!postId) return apiJson({ error: 'post_id required' }, 400, corsH);
+      try { await env.DB.prepare('CREATE TABLE IF NOT EXISTS post_likes (post_id INTEGER NOT NULL, user_id TEXT NOT NULL, PRIMARY KEY(post_id,user_id))').run(); } catch(e){}
+      if (action === 'like') {
+        try { await env.DB.prepare('INSERT OR IGNORE INTO post_likes (post_id,user_id) VALUES (?,?)').bind(postId, session.id).run(); } catch(e){}
+        await env.DB.prepare('UPDATE user_posts SET like_count = (SELECT COUNT(*) FROM post_likes WHERE post_id=?) WHERE id=?').bind(postId, postId).run();
+      } else {
+        await env.DB.prepare('DELETE FROM post_likes WHERE post_id=? AND user_id=?').bind(postId, session.id).run();
+        await env.DB.prepare('UPDATE user_posts SET like_count = (SELECT COUNT(*) FROM post_likes WHERE post_id=?) WHERE id=?').bind(postId, postId).run();
+      }
+      const { results: lk } = await env.DB.prepare('SELECT like_count FROM user_posts WHERE id=?').bind(postId).all();
+      return apiJson({ ok: true, count: lk[0]?.like_count || 0 }, 200, corsH);
+    }
 
     /* Publicar post */
     if (action === 'post') {
