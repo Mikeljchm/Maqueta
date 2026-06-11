@@ -1427,6 +1427,9 @@ async function handleCommunities(request, env, corsH) {
     const search   = url.searchParams.get('q');
     const tag      = url.searchParams.get('tag');
 
+    const limit  = Math.min(parseInt(url.searchParams.get('limit')||'20'), 50);
+    const offset = Math.max(parseInt(url.searchParams.get('offset')||'0'), 0);
+
     let query = 'SELECT * FROM threads';
     const params = [];
     const filters = [];
@@ -1434,11 +1437,15 @@ async function handleCommunities(request, env, corsH) {
     if (search) { filters.push('(name LIKE ? OR description LIKE ?)'); params.push('%'+search+'%','%'+search+'%'); }
     if (tag) { filters.push('tags LIKE ?'); params.push('%'+tag+'%'); }
     if (filters.length) query += ' WHERE ' + filters.join(' AND ');
-    query += sort==='new' ? ' ORDER BY created_at DESC LIMIT 50'
-           : sort==='active' ? ' ORDER BY last_activity DESC LIMIT 50'
-           : ' ORDER BY trending_score DESC, last_activity DESC LIMIT 50';
+    const orderBy = sort==='new' ? ' ORDER BY created_at DESC'
+                  : sort==='active' ? ' ORDER BY last_activity DESC'
+                  : ' ORDER BY trending_score DESC, last_activity DESC';
+    query += orderBy + ' LIMIT ? OFFSET ?';
+    params.push(limit + 1, offset); /* +1 para detectar has_more */
 
-    const { results } = await env.DB.prepare(query).bind(...params).all();
+    const { results: rawResults } = await env.DB.prepare(query).bind(...params).all();
+    const has_more = rawResults.length > limit;
+    const results  = has_more ? rawResults.slice(0, limit) : rawResults;
 
     if (session && results.length) {
       const ids = results.map(function(r){ return r.id; });
@@ -1468,10 +1475,10 @@ async function handleCommunities(request, env, corsH) {
           .forEach(function(t){ tc[t]=(tc[t]||0)+1; });
       });
       const popularTags=Object.entries(tc).sort(function(a,b){return b[1]-a[1];}).slice(0,20).map(function(e){return e[0];});
-      return apiJson({ threads: results, popular_tags: popularTags }, 200, corsH);
+      return apiJson({ threads: results, popular_tags: popularTags, has_more }, 200, corsH);
     }
 
-    return apiJson({ threads: results }, 200, corsH);
+    return apiJson({ threads: results, has_more }, 200, corsH);
   }
 
   if (request.method === 'POST') {
@@ -1556,14 +1563,21 @@ async function handleCommunityPosts(request, env, corsH) {
   if (request.method === 'GET') {
     const tid = parseInt(url.searchParams.get('community_id')||url.searchParams.get('thread_id')||'0');
     if (!tid) return apiJson({ error: 'thread_id required' }, 400, corsH);
-    const { results: pinned } = await env.DB.prepare(
-      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=1 AND hidden=0 AND hidden_by_creator=0'
-    ).bind(tid).all();
-    const { results: posts } = await env.DB.prepare(
-      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT 50'
-    ).bind(tid).all();
-    const allPosts = await enrichAvatars([...pinned, ...posts], env);
-      return apiJson({ posts: allPosts }, 200, corsH);
+    const postsLimit  = Math.min(parseInt(url.searchParams.get('limit')||'20'), 50);
+    const postsOffset = Math.max(parseInt(url.searchParams.get('offset')||'0'), 0);
+    /* Pinned solo en primera página */
+    const pinnedArr = postsOffset === 0
+      ? (await env.DB.prepare(
+          'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=1 AND hidden=0 AND hidden_by_creator=0'
+        ).bind(tid).all()).results
+      : [];
+    const { results: rawPosts } = await env.DB.prepare(
+      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    ).bind(tid, postsLimit + 1, postsOffset).all();
+    const posts_has_more = rawPosts.length > postsLimit;
+    const posts = rawPosts.slice(0, postsLimit);
+    const allPosts = await enrichAvatars([...pinnedArr, ...posts], env);
+    return apiJson({ posts: allPosts, has_more: posts_has_more }, 200, corsH);
   }
 
   if (request.method === 'POST') {
