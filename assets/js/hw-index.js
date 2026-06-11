@@ -3945,40 +3945,28 @@ async function votePoll(postId, idx, poll, container) {
     /* Crear URL fresco desde el File original — nunca ha sido revocado */
     var freshURL = URL.createObjectURL(_cropFile);
     var freshImg = new Image();
-
-    var doExport = function() {
+    freshImg.onerror = function() { URL.revokeObjectURL(freshURL); cb(null); };
+    freshImg.onload = function() {
       URL.revokeObjectURL(freshURL);
       var canvas = document.createElement('canvas');
       canvas.width = outW; canvas.height = outH;
       var ctx = canvas.getContext('2d');
       ctx.drawImage(freshImg, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
       canvas.toBlob(function(blob) {
-        /* Fallback si el crop sale vacío */
         if (!blob || blob.size < 500) {
           var c2 = document.createElement('canvas');
           c2.width = outW; c2.height = outH;
           var ctx2 = c2.getContext('2d');
-          var s2 = Math.max(outW / freshImg.naturalWidth, outH / freshImg.naturalHeight);
-          ctx2.drawImage(freshImg, (outW - freshImg.naturalWidth*s2)/2, (outH - freshImg.naturalHeight*s2)/2,
-            freshImg.naturalWidth*s2, freshImg.naturalHeight*s2);
+          var s2 = Math.max(outW/freshImg.naturalWidth, outH/freshImg.naturalHeight);
+          var dw2 = freshImg.naturalWidth*s2, dh2 = freshImg.naturalHeight*s2;
+          ctx2.drawImage(freshImg, (outW-dw2)/2, (outH-dh2)/2, dw2, dh2);
           c2.toBlob(function(b2){ cb(b2); }, 'image/webp', 0.88);
           return;
         }
         cb(blob);
       }, 'image/webp', 0.88);
     };
-
-    freshImg.onerror = function() { URL.revokeObjectURL(freshURL); cb(null); };
-    if (typeof freshImg.decode === 'function') {
-      freshImg.src = freshURL;
-      freshImg.decode().then(doExport).catch(function() {
-        freshImg.onload = doExport;
-        if (freshImg.complete && freshImg.naturalWidth > 0) doExport();
-      });
-    } else {
-      freshImg.onload = doExport;
-      freshImg.src = freshURL;
-    }
+    freshImg.src = freshURL;
   }
 
     /* ── Upload & Save ── */
