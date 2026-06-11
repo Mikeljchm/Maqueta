@@ -1914,6 +1914,15 @@ export default {
           dbTest
         }), { headers: { 'Content-Type': 'application/json', ...corsH } });
       }
+      if (path === '/api/notif-debug') {
+        const adminCk = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
+        if (!adminCk) return new Response('Unauthorized',{status:401,headers:corsH});
+        const { results: notifs } = await env.DB.prepare('SELECT id,user_id,type,title,message,read,created_at FROM notifications ORDER BY created_at DESC LIMIT 30').all();
+        const { results: users } = await env.DB.prepare('SELECT DISTINCT user_id FROM notifications').all();
+        const { results: oldN } = await env.DB.prepare("SELECT COUNT(*) as cnt FROM admin_notifications").all().catch(()=>({results:[{cnt:'table gone'}]}));
+        return new Response(JSON.stringify({notifs, distinct_users:users, old_table_count:oldN},null,2),{status:200,headers:{...corsH,'Content-Type':'application/json'}});
+      }
+
       if (path === '/api/communities') return handleCommunities(request, env, corsH);
       if (path === '/api/community-posts') return handleCommunityPosts(request, env, corsH);
       if (path === '/api/upload') return handleUpload(request, env, corsH);
