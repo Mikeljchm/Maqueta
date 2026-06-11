@@ -2786,6 +2786,7 @@ async function votePoll(postId, idx, poll, container) {
     const session = getAdminSession();
     if (session && session.login === ADMIN_LOGIN) {
       document.body.classList.add('is-admin');
+      if (window._initBroadcast) window._initBroadcast();
       /* Agregar botón Confessions al panel admin */
       var s = document.createElement('style');
       s.textContent = '.conf-admin-fab{display:none;position:fixed;bottom:calc(var(--nav-h,56px) + var(--safe-bottom,0px) + 7.5rem);right:1rem;background:#6c3fc7;color:#fff;border:none;border-radius:20px;padding:0.5rem 1rem;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.06em;cursor:pointer;z-index:101;box-shadow:0 4px 16px rgba(108,63,199,0.4);}.is-admin .conf-admin-fab{display:flex;align-items:center;gap:0.4rem;}.conf-admin-badge{background:#ff3b5c;color:#fff;border-radius:50%;width:17px;height:17px;font-size:0.6rem;display:flex;align-items:center;justify-content:center;font-family:var(--font-b);font-weight:700;flex-shrink:0;margin-left:0.2rem;}' + '.conf-admin-sheet{position:fixed;inset:0;background:var(--bg);z-index:600;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}.conf-admin-sheet.open{transform:translateX(0);}.conf-admin-header{display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}.conf-admin-back{background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}.conf-admin-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}.conf-admin-htitle{font-family:var(--font-d);font-size:1rem;letter-spacing:0.07em;}.conf-admin-body{flex:1;overflow-y:auto;padding:0.75rem;}';
@@ -2999,7 +3000,88 @@ async function votePoll(postId, idx, poll, container) {
     };
   })();
 
-    /* ── ADMIN ACTION FUNCTIONS ── */
+    /* ── BROADCAST PANEL (admin only) ── */
+  (function() {
+    var _sheet = null;
+    var _open  = false;
+
+    function _getSheet() { return _sheet || (_sheet = document.getElementById('broadcast-sheet')); }
+
+    function _openSheet() {
+      var s = _getSheet();
+      if (!s) return;
+      _open = true;
+      s.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(function() { s.style.transform = 'translateX(-50%)'; });
+    }
+
+    function _closeSheet() {
+      var s = _getSheet();
+      if (!s) return;
+      _open = false;
+      s.style.transform = 'translateX(calc(-50% + 100vw))';
+      document.body.style.overflow = '';
+      setTimeout(function() { if (!_open) s.style.display = 'none'; }, 340);
+    }
+
+    window._initBroadcast = function() {
+      var btn = document.getElementById('broadcast-btn');
+      if (!btn) return;
+      btn.style.display = 'flex';
+
+      btn.onclick = function() { _open ? _closeSheet() : _openSheet(); };
+
+      var closeBtn = document.getElementById('broadcast-close');
+      if (closeBtn) closeBtn.onclick = _closeSheet;
+
+      var msgEl    = document.getElementById('broadcast-msg');
+      var charsEl  = document.getElementById('broadcast-chars');
+      var sendBtn  = document.getElementById('broadcast-send');
+      var statusEl = document.getElementById('broadcast-status');
+
+      if (msgEl && charsEl) {
+        msgEl.addEventListener('input', function() {
+          charsEl.textContent = msgEl.value.length + ' / 500';
+        });
+      }
+
+      if (sendBtn) {
+        sendBtn.onclick = function() {
+          var title = (document.getElementById('broadcast-title') || {}).value || '';
+          var msg   = msgEl ? msgEl.value.trim() : '';
+          if (!msg) { if (statusEl) statusEl.textContent = 'Write a message first.'; return; }
+          sendBtn.disabled = true;
+          sendBtn.textContent = 'Sending...';
+          if (statusEl) statusEl.textContent = '';
+          fetch('/api/admin/broadcast', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: title || 'Announcement', message: msg })
+          })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              if (d.ok) {
+                if (statusEl) statusEl.textContent = '&#10003; Sent to ' + d.sent + ' users.';
+                if (msgEl) msgEl.value = '';
+                if (charsEl) charsEl.textContent = '0 / 500';
+                if (document.getElementById('broadcast-title')) document.getElementById('broadcast-title').value = '';
+                setTimeout(_closeSheet, 1800);
+              } else {
+                if (statusEl) statusEl.textContent = 'Error: ' + (d.error || 'Unknown');
+              }
+            })
+            .catch(function() { if (statusEl) statusEl.textContent = 'Request failed.'; })
+            .finally(function() {
+              sendBtn.disabled = false;
+              sendBtn.textContent = '\u2709 SEND TO ALL USERS';
+            });
+        };
+      }
+    };
+  })();
+
+  /* ── ADMIN ACTION FUNCTIONS ── */
   window._adminIsOn = function() {
     try {
       var m = document.cookie.match(/hw_admin=([^;]+)/);
