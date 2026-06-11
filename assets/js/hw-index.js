@@ -6216,6 +6216,7 @@ async function votePoll(postId, idx, poll, container) {
     var dp=document.getElementById('comm-detail-page');
     if(!dp) return;
     dp.style.display='block';
+    document.body.style.overflow='hidden';
     var tags=(thread.tags||'').split(',').filter(Boolean);
     var tagHtml=tags.map(function(t){return '<span class="comm-detail-info-tag">#'+escH(t)+'</span>';}).join('');
     var isCreator=window.currentUser&&thread.creator_id===window.currentUser.id;
@@ -6253,7 +6254,7 @@ async function votePoll(postId, idx, poll, container) {
 
     function closeDetail(){
       var inner2=document.getElementById('comm-detail-inner');
-      if(inner2){ inner2.style.transform='translateX(100%)'; setTimeout(function(){dp.style.display='none';currentThread=null;},330); }
+      if(inner2){ inner2.style.transform='translateX(100%)'; setTimeout(function(){dp.style.display='none';document.body.style.overflow='';currentThread=null;},330); }
     }
 
     document.getElementById('cdb-btn').addEventListener('click', closeDetail);
