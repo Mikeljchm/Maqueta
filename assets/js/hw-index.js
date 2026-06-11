@@ -3117,8 +3117,9 @@ async function votePoll(postId, idx, poll, container) {
         else { btn.disabled=false; btn.textContent='Error'; }
       };
       window._adminDelThreadPost=async function(id,uid,btn){
-        var reason=prompt('Razón (se le enviará al usuario):') || 'Tu post fue eliminado por violar nuestras normas.';
+        var reason=prompt('Razón (se le enviará al usuario):\n(Presiona Cancelar para abortar)');
         if(reason===null) return;
+        if(!reason.trim()) reason='Tu post fue eliminado por violar nuestras normas.';
         btn.disabled=true; btn.textContent='...';
         try {
           await fetch('/api/admin/thread-post?id='+id,{method:'DELETE',credentials:'include'});
@@ -3128,8 +3129,9 @@ async function votePoll(postId, idx, poll, container) {
         } catch(e){ btn.disabled=false; btn.textContent='Error'; }
       };
       window._adminDelAvatar=async function(uid,btn){
-        var reason=prompt('Razón:') || 'Tu foto de perfil fue eliminada por violar nuestras normas.';
+        var reason=prompt('Razón:\n(Cancelar para abortar)');
         if(reason===null) return;
+        if(!reason.trim()) reason='Tu foto de perfil fue eliminada por violar nuestras normas.';
         btn.disabled=true;
         await fetch('/api/admin/avatar?user_id='+uid,{method:'DELETE',credentials:'include'});
         if(uid) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
@@ -3139,8 +3141,9 @@ async function votePoll(postId, idx, poll, container) {
         btn.textContent='Deleted';
       };
       window._adminDelBanner=async function(uid,btn){
-        var reason=prompt('Razón:') || 'Tu banner fue eliminado por violar nuestras normas.';
+        var reason=prompt('Razón:\n(Cancelar para abortar)');
         if(reason===null) return;
+        if(!reason.trim()) reason='Tu banner fue eliminado por violar nuestras normas.';
         btn.disabled=true;
         await fetch('/api/admin/banner?user_id='+uid,{method:'DELETE',credentials:'include'});
         if(uid) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
@@ -3150,8 +3153,9 @@ async function votePoll(postId, idx, poll, container) {
         btn.textContent='Deleted';
       };
       window._adminDelThreadBanner=async function(tid,btn){
-        var reason=prompt('Razón:') || 'El banner de tu hilo fue eliminado por violar nuestras normas.';
+        var reason=prompt('Razón:\n(Cancelar para abortar)');
         if(reason===null) return;
+        if(!reason.trim()) reason='El banner de tu hilo fue eliminado por violar nuestras normas.';
         btn.disabled=true;
         await fetch('/api/admin/thread-banner?id='+tid,{method:'DELETE',credentials:'include'});
         var cover=document.querySelector('#comm-detail-inner .comm-detail-cover img');
@@ -3159,8 +3163,9 @@ async function votePoll(postId, idx, poll, container) {
         btn.textContent='Deleted';
       };
       window._adminDelThreadDesc=async function(tid,btn){
-        var reason=prompt('Razón:') || 'La descripción de tu hilo fue eliminada por violar nuestras normas.';
+        var reason=prompt('Razón:\n(Cancelar para abortar)');
         if(reason===null) return;
+        if(!reason.trim()) reason='La descripción de tu hilo fue eliminada por violar nuestras normas.';
         btn.disabled=true;
         await fetch('/api/admin/thread-desc?id='+tid,{method:'DELETE',credentials:'include'});
         var desc=document.querySelector('#comm-detail-inner .comm-detail-desc');
@@ -6060,8 +6065,9 @@ async function votePoll(postId, idx, poll, container) {
     if (delPostBtn) {
       var pid2 = delPostBtn.getAttribute('data-post-id');
       var uid2 = delPostBtn.getAttribute('data-user-id');
-      var reason2 = prompt('Razón (se le enviará al usuario):') || 'Tu post fue eliminado por violar nuestras normas.';
-      if (reason2 === null) return;
+      var reason2 = prompt('Razón (se le enviará al usuario):');
+      if (reason2 === null) return; /* Canceló */
+      if (!reason2.trim()) reason2 = 'Tu post fue eliminado por violar nuestras normas.';
       delPostBtn.disabled=true; delPostBtn.textContent='...';
       try {
         await fetch('/api/admin/post?id='+pid2,{method:'DELETE',credentials:'include'});
