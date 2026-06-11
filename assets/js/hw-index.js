@@ -3918,9 +3918,11 @@ async function votePoll(postId, idx, poll, container) {
   }
 
   function _exportCrop(cb) {
+    /* Usar _cropFile directamente — el blob URL del imgEl ya fue revocado */
+    if (!_cropFile) { cb(null); return; }
+    var vp = document.getElementById('hw-crop-viewport');
     var imgEl = document.getElementById('hw-crop-img');
-    var vp    = document.getElementById('hw-crop-viewport');
-    if (!imgEl || !vp || !imgEl.src || imgEl.src === window.location.href) { cb(null); return; }
+    if (!vp || !imgEl) { cb(null); return; }
 
     var outW = _cropType === 'avatar' ? 400 : 1200;
     var outH = _cropType === 'avatar' ? 400 : 400;
@@ -3936,35 +3938,45 @@ async function votePoll(postId, idx, poll, container) {
     var ry = _imgNatH / imgRect.height;
     var srcX = Math.max(0, cropOffX * rx);
     var srcY = Math.max(0, cropOffY * ry);
-    var srcW = Math.min(cropW * rx, _imgNatW - srcX);
-    var srcH = Math.min(cropH * ry, _imgNatH - srcY);
+    var srcW = Math.min(Math.max(cropW * rx, 1), _imgNatW - srcX);
+    var srcH = Math.min(Math.max(cropH * ry, 1), _imgNatH - srcY);
 
+    /* Crear URL fresco desde el File original — nunca ha sido revocado */
+    var freshURL = URL.createObjectURL(_cropFile);
     var freshImg = new Image();
+
     var doExport = function() {
+      URL.revokeObjectURL(freshURL);
       var canvas = document.createElement('canvas');
       canvas.width = outW; canvas.height = outH;
       var ctx = canvas.getContext('2d');
       ctx.drawImage(freshImg, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
       canvas.toBlob(function(blob) {
+        /* Fallback si el crop sale vacío */
         if (!blob || blob.size < 500) {
           var c2 = document.createElement('canvas');
           c2.width = outW; c2.height = outH;
           var ctx2 = c2.getContext('2d');
-          var scale2 = Math.max(outW/freshImg.naturalWidth, outH/freshImg.naturalHeight);
-          var dw = freshImg.naturalWidth*scale2, dh = freshImg.naturalHeight*scale2;
-          ctx2.drawImage(freshImg, (outW-dw)/2, (outH-dh)/2, dw, dh);
+          var s2 = Math.max(outW / freshImg.naturalWidth, outH / freshImg.naturalHeight);
+          ctx2.drawImage(freshImg, (outW - freshImg.naturalWidth*s2)/2, (outH - freshImg.naturalHeight*s2)/2,
+            freshImg.naturalWidth*s2, freshImg.naturalHeight*s2);
           c2.toBlob(function(b2){ cb(b2); }, 'image/webp', 0.88);
           return;
         }
         cb(blob);
       }, 'image/webp', 0.88);
     };
+
+    freshImg.onerror = function() { URL.revokeObjectURL(freshURL); cb(null); };
     if (typeof freshImg.decode === 'function') {
-      freshImg.src = imgEl.src;
-      freshImg.decode().then(doExport).catch(function(){ freshImg.onload=doExport; freshImg.src=imgEl.src; });
+      freshImg.src = freshURL;
+      freshImg.decode().then(doExport).catch(function() {
+        freshImg.onload = doExport;
+        if (freshImg.complete && freshImg.naturalWidth > 0) doExport();
+      });
     } else {
       freshImg.onload = doExport;
-      freshImg.src = imgEl.src;
+      freshImg.src = freshURL;
     }
   }
 
