@@ -1645,7 +1645,6 @@ async function handleCommunityPosts(request, env, corsH) {
 }
 
 
-export default {
 /* ── NOTIFICATIONS ── */
 async function handleNotifications(request, env, corsH) {
   /* Crear tabla si no existe — con tipo de notificación y target */
@@ -1729,6 +1728,7 @@ async function handleNotifications(request, env, corsH) {
   return apiJson({ error: 'Not found' }, 404, corsH);
 }
 
+export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
