@@ -1660,6 +1660,17 @@ async function handleNotifications(request, env, corsH) {
     )`).run();
   } catch(e) {}
 
+  /* Limpiar notificaciones con prefijo 'message ' del bug inicial */
+  try {
+    await env.DB.prepare(
+      "UPDATE notifications SET message = SUBSTR(message, 9) WHERE message LIKE 'message %'"
+    ).run();
+    /* Eliminar duplicados exactos (mismo user_id + message + created_at) */
+    await env.DB.prepare(
+      "DELETE FROM notifications WHERE id NOT IN (SELECT MIN(id) FROM notifications GROUP BY user_id, message, created_at)"
+    ).run();
+  } catch(e) {}
+
   /* Migrar admin_notifications → notifications una sola vez */
   try {
     const { results: oldCheck } = await env.DB.prepare(
@@ -1914,15 +1925,6 @@ export default {
           dbTest
         }), { headers: { 'Content-Type': 'application/json', ...corsH } });
       }
-      if (path === '/api/notif-debug') {
-        const adminCk = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
-        if (!adminCk) return new Response('Unauthorized',{status:401,headers:corsH});
-        const { results: notifs } = await env.DB.prepare('SELECT id,user_id,type,title,message,read,created_at FROM notifications ORDER BY created_at DESC LIMIT 30').all();
-        const { results: users } = await env.DB.prepare('SELECT DISTINCT user_id FROM notifications').all();
-        const { results: oldN } = await env.DB.prepare("SELECT COUNT(*) as cnt FROM admin_notifications").all().catch(()=>({results:[{cnt:'table gone'}]}));
-        return new Response(JSON.stringify({notifs, distinct_users:users, old_table_count:oldN},null,2),{status:200,headers:{...corsH,'Content-Type':'application/json'}});
-      }
-
       if (path === '/api/communities') return handleCommunities(request, env, corsH);
       if (path === '/api/community-posts') return handleCommunityPosts(request, env, corsH);
       if (path === '/api/upload') return handleUpload(request, env, corsH);
