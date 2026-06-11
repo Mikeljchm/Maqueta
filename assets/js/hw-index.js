@@ -3100,6 +3100,19 @@ async function votePoll(postId, idx, poll, container) {
         });
       }
 
+      window._adminDelComment=async function(id,uid,btn){
+        var reason=prompt('Razón (se le enviará al usuario):\n(Cancelar para abortar)');
+        if(reason===null) return;
+        if(!reason.trim()) reason='Tu comentario fue eliminado por violar nuestras normas.';
+        btn.disabled=true;
+        try {
+          await fetch('/api/admin/comment?id='+id,{method:'DELETE',credentials:'include'});
+          if(uid) await fetch('/api/admin/notify',{method:'POST',credentials:'include',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({user_id:uid,message:reason})});
+          var item=btn.closest('.cp-item'); if(item) item.remove();
+        } catch(e){ btn.disabled=false; }
+      };
       window._adminDeletePost=async function(id,btn){
         if(!confirm('Eliminar este post permanentemente?')) return;
         btn.disabled=true; btn.textContent='...';
