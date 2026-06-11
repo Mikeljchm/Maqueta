@@ -1,5 +1,5 @@
 
-/* -- COMMENTS PANL (YouTube-style threads) -- */
+/* -- COMMENTS PANEL (YouTube-style threads) -- */
 (function(){
   var panelPostId  = null;
   var panelOpen    = false;
@@ -370,381 +370,7 @@
       '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem 0.5rem;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">'        + '<button id="user-prof-back" style="background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">'          + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'        + '</button>'        + '<div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;" id="user-prof-topname"></div>'      + '</div>'      /* ── BANNER ── */
       + '<div id="user-prof-hero" style="height:110px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;overflow:hidden;">'        + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;"></div>'      + '</div>'      /* ── AVATAR + STATS ROW (Instagram style) ── */
       + '<div style="padding:0 1rem;margin-top:-36px;display:flex;align-items:flex-end;gap:1rem;flex-shrink:0;">'        + '<div id="user-prof-av" style="width:72px;height:72px;border-radius:50%;border:3px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.6rem;overflow:hidden;flex-shrink:0;"></div>'        /* Stats: posts · followers · following */
-        + '<div style="flex:1;display:flex;gap:0;padding-bottom:0.4rem;margin-left:0.5rem;">'          + '<div style="flex:1;text-align:center;">'            + '<div id="user-prof-post-count" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Posts</div>'          + '</div>'          + '<button class="prof-follow-stat" data-ftype="followers" onclick="window._openFollowSheet(\''+escH(uid)+'\',\'followers\')" style="flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0;">'            + '<div id="user-prof-followers" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;color:var(--text);">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Followers</div>'          + '</button>'          + '<button class="prof-follow-stat" data-ftype="following" onclick="window._openFollowSheet(\''+escH(uid)+'\',\'following\')" style="flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0;">'            + '<div id="user-prof-following" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;color:var(--text);">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Following</div>'          + '</button>'        + '</div>'      + '</div>'      /* ── NAME + BADGE + BIO + BUTTONS ── */
-      + '<div style="padding:0.5rem 1rem 0.75rem;flex-shrink:0;">'        + '<div style="font-family:var(--font-d);font-size:1.15rem;letter-spacing:0.04em;margin-bottom:0.15rem;" id="user-prof-name-display"></div>'        + '<div id="user-prof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.55rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-bottom:0.3rem;"></div>'        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;margin-bottom:0.6rem;"></div>'        /* Action buttons row */
-        + '<div style="display:flex;gap:0.5rem;align-items:center;">'          + (window.currentUser && window.currentUser.id !== uid              ? '<button id="user-prof-follow-btn" onclick="window._toggleFollow(this,\'' + escH(uid) + '\')" style="background:var(--fire-orange);color:#fff;border:none;border-radius:8px;padding:0.4rem 1.4rem;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.05em;cursor:pointer;">Follow</button>'              : '')          + (window._adminIsOn && window._adminIsOn()              ? '<button onclick="window._adminBanUser(\'' + escH(uid) + '\',\'' + escH(name||"User") + '\')" style="flex:1;background:#3a0808;color:#ff5555;border:1px solid #6a1010;border-radius:10px;padding:0.5rem 0;font-size:0.72rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban Account</button>'              : '')        + '</div>'      + '</div>'      /* ── TABS ── */
-      + '<div id="user-prof-tabs" style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">'        + '<button class="upt active" data-tab="posts" style="min-width:72px;padding:0.65rem 0.5rem;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Posts</button>'        + '<button class="upt" data-tab="liked" style="min-width:72px;padding:0.65rem 0.5rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Liked</button>'        + '<button class="upt" data-tab="activity" style="min-width:72px;padding:0.65rem 0.5rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Activity</button>'        +         + '</div>'        + '<div id="user-prof-posts" style="padding:0.75rem 1rem 3rem;"><div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div></div>'        + '<div id="user-prof-liked" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="user-prof-activity" style="display:none;padding:0.75rem 1rem 3rem;"></div>'      + '</div>';
-(function(){
-  var panelPostId  = null;
-  var panelOpen    = false;
-  var replyingTo   = null; /* {id, userName} del comentario padre */
-  var LIKED_COMMENTS = new Set();
-  try { LIKED_COMMENTS = new Set(JSON.parse(localStorage.getItem('hw_liked_comments')||'[]')); } catch(e){}
-  function saveLikedComments(){ try{ localStorage.setItem('hw_liked_comments',JSON.stringify([...LIKED_COMMENTS])); }catch(e){} }
-  var pendingSticker = null;
-  var strayOpen    = false;
-
-  /* ── CSS ── */
-  var s = document.createElement('style');
-  s.textContent = [
-    '.cp-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.25s;}',
-    '.cp-overlay.open{opacity:1;pointer-events:all;}',
-    '.cp-panel{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:201;max-height:85vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}',
-    '.cp-panel.open{transform:translateY(0);}',
-    '.cp-header{display:flex;align-items:center;padding:0.75rem 1rem 0.6rem;border-bottom:1px solid var(--border);flex-shrink:0;}',
-    '.cp-title{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;flex:1;}',
-    '.cp-close{background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;padding:0.2rem 0.4rem;}',
-    /* List */
-    '.cp-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.75rem 1rem;display:flex;flex-direction:column;gap:0;}',
-    '.cp-empty{color:var(--text-dim);font-size:0.82rem;text-align:center;padding:2rem 0;}',
-    /* Comment item */
-    '.cp-item{display:flex;gap:0.6rem;padding:0.6rem 0;border-bottom:1px solid var(--border);}',
-    '.cp-item:last-child{border-bottom:none;}',
-    '.cp-av{width:32px;height:32px;border-radius:50%;background:var(--surface-3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.85rem;color:var(--text-dim);overflow:hidden;}',
-    '.cp-av img{width:100%;height:100%;object-fit:cover;}',
-    '.cp-body{flex:1;min-width:0;}',
-    '.cp-username{font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.04em;color:var(--text);margin-bottom:0.2rem;cursor:pointer;transition:color 0.15s;}',
-    '.cp-username:hover{color:var(--fire-orange);}',
-    '.cp-av{cursor:pointer;}',
-    '.cp-text{font-size:0.85rem;line-height:1.5;color:var(--text);word-break:break-word;}',
-    '.cp-text-reply-to{color:var(--fire-orange);font-size:0.8rem;}',
-    '.cp-sticker{width:72px;border-radius:10px;display:block;}',
-    '.cp-meta{display:flex;align-items:center;gap:0.75rem;margin-top:0.35rem;}',
-    '.cp-time{font-size:0.65rem;color:var(--text-muted);}',
-    '.cp-reply-btn{background:none;border:none;font-size:0.7rem;color:var(--text-dim);cursor:pointer;padding:0;font-family:var(--font-b);letter-spacing:0.04em;transition:color 0.15s;}',
-    '.cp-reply-btn:active{color:var(--fire-orange);}',
-    '.cp-like-btn{background:none;border:none;display:inline-flex;align-items:center;gap:0.25rem;font-size:0.7rem;color:var(--text-dim);cursor:pointer;padding:0;font-family:var(--font-b);transition:color 0.15s;}',
-    '.cp-like-btn svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:fill 0.15s,stroke 0.15s;}',
-    '.cp-like-btn.liked{color:#ff3b5c;}',
-    '.cp-like-btn.liked svg{fill:#ff3b5c;stroke:#ff3b5c;}',
-    '.cp-like-count{font-size:0.68rem;line-height:1;}',
-    /* Replies thread */
-    '.cp-replies-wrap{margin-left:2.4rem;}',
-    '.cp-view-replies-btn{background:none;border:none;color:var(--fire-orange);font-size:0.75rem;font-family:var(--font-b);cursor:pointer;padding:0.3rem 0;display:flex;align-items:center;gap:0.35rem;letter-spacing:0.03em;}',
-    '.cp-view-replies-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform 0.2s;}',
-    '.cp-view-replies-btn.expanded svg{transform:rotate(180deg);}',
-    '.cp-replies-list{display:flex;flex-direction:column;gap:0;margin-top:0.2rem;}',
-    /* Reply item — más pequeño */
-    '.cp-item.cp-reply{padding:0.45rem 0;}',
-    '.cp-item.cp-reply .cp-av{width:26px;height:26px;font-size:0.7rem;}',
-    '.cp-item.cp-reply .cp-username{font-size:0.7rem;}',
-    '.cp-item.cp-reply .cp-text{font-size:0.8rem;}',
-    /* Input area */
-    '.cp-sticker-preview{display:none;align-items:center;gap:0.5rem;padding:0.4rem 1rem 0;flex-shrink:0;}',
-    '.cp-sticker-preview.visible{display:flex;}',
-    '.cp-sticker-preview video{width:48px;height:48px;border-radius:8px;object-fit:cover;}',
-    '.cp-sticker-preview-remove{background:none;border:none;color:var(--text-muted);font-size:1rem;cursor:pointer;padding:0.1rem 0.3rem;}',
-    '.cp-reply-indicator{display:none;padding:0.3rem 1rem;font-size:0.72rem;color:var(--fire-orange);background:rgba(255,69,0,0.07);align-items:center;justify-content:space-between;flex-shrink:0;}',
-    '.cp-reply-indicator.visible{display:flex;}',
-    '.cp-reply-cancel{background:none;border:none;color:var(--text-muted);font-size:0.8rem;cursor:pointer;padding:0.1rem;}',
-    '.cp-input-area{padding:0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom,0px));border-top:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;flex-shrink:0;}',
-    '.cp-sticker-btn{background:none;border:none;font-size:1.3rem;cursor:pointer;flex-shrink:0;padding:0.2rem;}',
-    '.cp-input{flex:1;background:var(--surface-3);border:1px solid var(--border);border-radius:20px;padding:0.5rem 0.9rem;color:var(--text);font-family:var(--font-b);font-size:0.85rem;outline:none;}',
-    '.cp-input:focus{border-color:var(--fire-orange);}',
-    '.cp-send{background:var(--fire-orange);border:none;color:#fff;padding:0.5rem 1rem;border-radius:20px;font-family:var(--font-d);font-size:0.85rem;cursor:pointer;letter-spacing:0.05em;}',
-    /* Sticker tray */
-    '.cp-stray{background:var(--surface-2);border-top:1px solid var(--border);padding:0 1rem;max-height:0;overflow:hidden;display:flex;flex-direction:column;gap:0.5rem;transition:max-height 0.3s cubic-bezier(0.16,1,0.3,1),padding 0.3s;flex-shrink:0;}',
-    '.cp-stray.open{max-height:220px;padding:0.75rem 1rem;overflow-y:auto;}',
-    '.cp-stray-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;}',
-    '.cp-stray-item{cursor:pointer;border-radius:8px;overflow:hidden;aspect-ratio:1;}',
-    '.cp-stray-item video{width:100%;height:100%;object-fit:cover;display:block;}',
-    '.cp-stray-nav{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}',
-    '.sticker-nav-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:0.3rem 0.7rem;font-size:0.75rem;cursor:pointer;}',
-    '.sticker-page-info{font-size:0.72rem;color:var(--text-dim);}'
-  ].join('');
-  document.head.appendChild(s);
-
-  /* ── DOM ── */
-  var overlay = document.createElement('div');
-  overlay.className = 'cp-overlay';
-  overlay.addEventListener('click', closePanel);
-  document.body.appendChild(overlay);
-
-  var panel = document.createElement('div');
-  panel.className = 'cp-panel';
-  panel.innerHTML =
-    '<div class="cp-header">'
-    + '<div class="cp-title">Comments<span id="cp-count"></span></div>'
-    + '<button class="cp-close" id="cp-close">&#10005;</button>'
-    + '</div>'
-    + '<div class="cp-list" id="cp-list"></div>'
-    + '<div class="cp-stray" id="cp-stray">'
-    + '<div class="cp-stray-nav">'
-    + '<button class="sticker-nav-btn" id="cp-sticker-prev">&#8592; Prev</button>'
-    + '<span class="sticker-page-info" id="cp-sticker-page">1 / 16</span>'
-    + '<button class="sticker-nav-btn" id="cp-sticker-next">Next &#8594;</button>'
-    + '</div>'
-    + '<div class="cp-stray-grid" id="cp-stray-grid"></div>'
-    + '</div>'
-    + '<div class="cp-sticker-preview" id="cp-sticker-preview">'
-    + '<video id="cp-sticker-preview-video" autoplay loop muted playsinline></video>'
-    + '<button class="cp-sticker-preview-remove" id="cp-sticker-preview-remove">&#10005;</button>'
-    + '</div>'
-    + '<div class="cp-reply-indicator" id="cp-reply-indicator">'
-    + '<span id="cp-reply-indicator-text">Replying to @someone</span>'
-    + '<button class="cp-reply-cancel" id="cp-reply-cancel">&#10005;</button>'
-    + '</div>'
-    + '<div class="cp-input-area">'
-    + '<button class="cp-sticker-btn" id="cp-sticker-btn">&#128520;</button>'
-    + '<input class="cp-input" id="cp-input" placeholder="Add a comment..." maxlength="500">'
-    + '<button class="cp-send" id="cp-send">POST</button>'
-    + '</div>';
-  document.body.appendChild(panel);
-
-  /* ── Sticker tray ── */
-  var TOTAL_PAGES = 16;
-  var currentPage = 1;
-
-  function loadStickerPage(page) {
-    var grid = document.getElementById('cp-stray-grid');
-    var info = document.getElementById('cp-sticker-page');
-    if (!grid) return;
-    grid.innerHTML = '';
-    if (info) info.textContent = page + ' / ' + TOTAL_PAGES;
-    fetch('/assets/data/stickers_' + page + '.json')
-      .then(function(r){ return r.json(); })
-      .then(function(data) {
-        data.forEach(function(url) {
-          var item = document.createElement('div');
-          item.className = 'cp-stray-item';
-          item.innerHTML = '<video src="' + url + '" autoplay loop muted playsinline></video>';
-          item.addEventListener('click', function(){ selectSticker(url); });
-          grid.appendChild(item);
-        });
-      });
-  }
-
-  function selectSticker(url) {
-    pendingSticker = url;
-    var preview = document.getElementById('cp-sticker-preview');
-    var video   = document.getElementById('cp-sticker-preview-video');
-    if (preview && video) { video.src = url; preview.classList.add('visible'); }
-    var stray = document.getElementById('cp-stray');
-    if (stray) stray.classList.remove('open');
-    strayOpen = false;
-    var input = document.getElementById('cp-input');
-    if (input) input.focus();
-  }
-  window.sendSticker = selectSticker; /* compatibilidad con el inline sticker panel */
-
-  document.getElementById('cp-sticker-btn').addEventListener('click', function() {
-    var stray = document.getElementById('cp-stray');
-    strayOpen = !strayOpen;
-    stray.classList.toggle('open', strayOpen);
-    if (strayOpen && !document.getElementById('cp-stray-grid').children.length) loadStickerPage(1);
-  });
-  document.getElementById('cp-sticker-prev').addEventListener('click', function() {
-    if (currentPage > 1) { currentPage--; loadStickerPage(currentPage); }
-  });
-  document.getElementById('cp-sticker-next').addEventListener('click', function() {
-    if (currentPage < TOTAL_PAGES) { currentPage++; loadStickerPage(currentPage); }
-  });
-  document.getElementById('cp-sticker-preview-remove').addEventListener('click', function() {
-    pendingSticker = null;
-    var preview = document.getElementById('cp-sticker-preview');
-    if (preview) preview.classList.remove('visible');
-    var v = document.getElementById('cp-sticker-preview-video');
-    if (v) v.src = '';
-  });
-
-  /* ── Reply indicator ── */
-  document.getElementById('cp-reply-cancel').addEventListener('click', function() {
-    cancelReply();
-  });
-
-  function setReplyingTo(commentId, userName) {
-    replyingTo = {id: commentId, userName: userName};
-    var ind = document.getElementById('cp-reply-indicator');
-    var txt = document.getElementById('cp-reply-indicator-text');
-    if (ind) ind.classList.add('visible');
-    if (txt) txt.textContent = 'Replying to ' + userName;
-    var input = document.getElementById('cp-input');
-    if (input) input.focus();
-  }
-
-  function cancelReply() {
-    replyingTo = null;
-    var ind = document.getElementById('cp-reply-indicator');
-    if (ind) ind.classList.remove('visible');
-  }
-
-  /* ── Helpers ── */
-  function timeAgo(d) {
-    if (!d) return 'just now';
-    var diff = (Date.now() - new Date(d).getTime()) / 1000;
-    if (diff < 60)    return 'just now';
-    if (diff < 3600)  return Math.floor(diff/60)+'m ago';
-    if (diff < 86400) return Math.floor(diff/3600)+'h ago';
-    return Math.floor(diff/86400)+'d ago';
-  }
-  function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-  /* ── Render comment (top-level o reply) ── */
-  /* Si el post/comentario es del usuario actual, usar su avatar de D1 (currentUser.picture)
-     en lugar del valor guardado en D1 al momento de postear (puede ser Google o vacío) */
-  function _resolveAvatar(userId, storedAvatar) {
-    if (window.currentUser && window.currentUser.id === userId && window.currentUser.picture) {
-      return window.currentUser.picture;
-    }
-    return storedAvatar || '';
-  }
-  window._resolveAvatar = _resolveAvatar;
-
-  function renderComment(row, isReply) {
-    var item = document.createElement('div');
-    item.className = isReply ? 'cp-item cp-reply' : 'cp-item';
-    item.setAttribute('data-comment-id', row.id || '');
-
-    var _avUrl = _resolveAvatar(row.user_id, row.user_avatar);
-    var avContent = _avUrl
-      ? '<img src="' + _avUrl + '" loading="lazy" data-uid="' + escH(row.user_id||'') + '">'
-      : escH((row.user_name || 'A').charAt(0).toUpperCase());
-
-    var stickerMatch = row.body ? row.body.match(/\[sticker\]([^\[]+)\[\/sticker\]/) : null;
-    var textPart = row.body ? row.body.replace(/\[sticker\][^\[]*\[\/sticker\]/g, '').trim() : '';
-    var bodyHtml = '';
-    if (textPart) bodyHtml += '<div class="cp-text">' + escH(textPart) + '</div>';
-    if (stickerMatch) bodyHtml += '<video class="cp-sticker" src="' + stickerMatch[1] + '" autoplay loop muted playsinline></video>';
-
-    var replyCount = row.reply_count || 0;
-    var replyBtnHtml = !isReply
-      ? '<button class="cp-reply-btn" data-comment-id="' + (row.id||'') + '" data-comment-user="' + escH(row.user_name||'') + '">Reply</button>'
-      : '';
-
-    var uid = row.user_id || '';
-    item.innerHTML =
-      '<div class="cp-av" data-profile-uid="'+uid+'" data-profile-name="'+escH(row.user_name||'')+'">'
-        + avContent + '</div>'
-      + '<div class="cp-body">'
-        + '<div class="cp-username" data-profile-uid="'+uid+'" data-profile-name="'+escH(row.user_name||'')+'">'
-          + escH(row.user_name || 'Anonymous') + '</div>'
-        + bodyHtml
-        + '<div class="cp-meta">'
-          + '<span class="cp-time">' + timeAgo(row.created_at) + '</span>'
-          + replyBtnHtml
-          + (row.id ? '<button class="cp-like-btn'+(LIKED_COMMENTS.has(String(row.id))?' liked':'')
-            + '" data-comment-like="'+row.id+'" data-like-count="'+(row.like_count||0)+'">'  
-            + '<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
-            + '<span class="cp-like-count">'+(row.like_count||'')+'</span>'
-            + '</button>' : '')
-        + '</div>'
-      + (window._adminIsOn && window._adminIsOn()
-          ? '<button class="adm-del-btn adm-del-comment" data-uid="'+(row.user_id||'')+'" onclick="window._adminDelComment('+(row.id||0)+',\''+(row.user_id||'')+'\',this)" title="Delete comment">&#128465;</button>'
-          : '')
-      + '</div>';
-
-    /* Si es top-level y tiene replies, agregar el botón "View X replies" */
-    if (!isReply && replyCount > 0) {
-      var repliesWrap = document.createElement('div');
-      repliesWrap.className = 'cp-replies-wrap';
-
-      var viewBtn = document.createElement('button');
-      viewBtn.className = 'cp-view-replies-btn';
-      viewBtn.innerHTML =
-        '<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>'
-        + 'View ' + replyCount + ' repl' + (replyCount === 1 ? 'y' : 'ies');
-      viewBtn.setAttribute('data-comment-id', row.id);
-      viewBtn.setAttribute('data-loaded', '0');
-
-      var repliesList = document.createElement('div');
-      repliesList.className = 'cp-replies-list';
-      repliesList.id = 'cp-replies-' + row.id;
-
-      viewBtn.addEventListener('click', function() {
-        var loaded = viewBtn.getAttribute('data-loaded') === '1';
-        var expanded = viewBtn.classList.contains('expanded');
-        if (expanded) {
-          repliesList.style.display = 'none';
-          viewBtn.classList.remove('expanded');
-          viewBtn.querySelector('span') && (viewBtn.querySelector('span').textContent =
-            'View ' + replyCount + ' repl' + (replyCount === 1 ? 'y' : 'ies'));
-        } else if (loaded) {
-          repliesList.style.display = '';
-          viewBtn.classList.add('expanded');
-        } else {
-          loadReplies(row.id, repliesList, viewBtn);
-        }
-      });
-
-      repliesWrap.appendChild(viewBtn);
-      repliesWrap.appendChild(repliesList);
-
-      /* Wrap el item y el thread juntos */
-      var wrapper = document.createElement('div');
-      wrapper.appendChild(item);
-      wrapper.appendChild(repliesWrap);
-      return wrapper;
-    }
-
-    return item;
-  }
-
-  function loadReplies(commentId, repliesList, viewBtn) {
-    repliesList.innerHTML = '<div style="padding:0.5rem 0;font-size:0.75rem;color:var(--text-dim);">Loading...</div>';
-    fetch('/api/comments?post_id=' + encodeURIComponent(panelPostId) + '&parent_id=' + commentId, { credentials: 'include' })
-      .then(function(r){ return r.json(); })
-      .then(function(d) {
-        repliesList.innerHTML = '';
-        (d.comments || []).forEach(function(row) {
-          repliesList.appendChild(renderComment(row, true));
-        });
-        viewBtn.setAttribute('data-loaded', '1');
-        viewBtn.classList.add('expanded');
-        repliesList.style.display = '';
-        /* Actualizar texto del botón */
-        var n = (d.comments||[]).length;
-        var svgHtml = '<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
-        viewBtn.innerHTML = svgHtml + 'Hide repl' + (n === 1 ? 'y' : 'ies');
-      })
-      .catch(function(){ repliesList.innerHTML = ''; });
-  }
-
-  /* ── Delegation: Open user profile from comment ── */
-  document.addEventListener('click', function(e) {
-    var el = e.target.closest('[data-profile-uid]');
-    if (!el) return;
-    var uid  = el.getAttribute('data-profile-uid');
-    var name = el.getAttribute('data-profile-name');
-    if (!uid) return;
-    /* Si es el propio usuario — abrir su perfil */
-    if (window.currentUser && uid === window.currentUser.id) {
-      var moreNav = document.querySelector('.nav-item[data-page="more"]');
-      if (moreNav) moreNav.click();
-      return;
-    }
-    /* Usuario externo — mostrar mini perfil sheet */
-    openMiniProfile(uid, name);
-  });
-
-  /* Mini profile sheet */
-  function closeMiniProfile() {
-    var page = document.getElementById('page-user-profile');
-    if (page) {
-      page.style.transform = 'translateX(100%)';
-      setTimeout(function(){ page.style.display = 'none'; page.style.transform = ''; }, 320);
-    }
-  }
-
-  function openMiniProfile(uid, name) {
-    var page = document.getElementById('page-user-profile');
-    if (!page) {
-      page = document.createElement('div');
-      page.id = 'page-user-profile';
-      page.style.cssText = (
-        'position:fixed;inset:0;background:var(--bg);z-index:250;'
-        + 'display:none;flex-direction:column;max-width:480px;margin:0 auto;'
-        + 'transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);'
-      );
-      document.body.appendChild(page);
-    }
-
-    page.style.display = 'flex';
-    page.innerHTML =
-      /* ── TOP BAR ── */
-      '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem 0.5rem;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">'        + '<button id="user-prof-back" style="background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">'          + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'        + '</button>'        + '<div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;" id="user-prof-topname"></div>'      + '</div>'      /* ── BANNER ── */
-      + '<div id="user-prof-hero" style="height:110px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;overflow:hidden;">'        + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;"></div>'      + '</div>'      /* ── AVATAR + STATS ROW (Instagram style) ── */
-      + '<div style="padding:0 1rem;margin-top:-36px;display:flex;align-items:flex-end;gap:1rem;flex-shrink:0;">'        + '<div id="user-prof-av" style="width:72px;height:72px;border-radius:50%;border:3px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.6rem;overflow:hidden;flex-shrink:0;"></div>'        /* Stats: posts · followers · following */
-        + '<div style="flex:1;display:flex;gap:0;padding-bottom:0.4rem;margin-left:0.5rem;">'          + '<div style="flex:1;text-align:center;">'            + '<div id="user-prof-post-count" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Posts</div>'          + '</div>'          + '<button class="prof-follow-stat" data-ftype="followers" onclick="window._openFollowSheet(\''+escH(uid)+'\',\'followers\')" style="flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0;">'            + '<div id="user-prof-followers" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;color:var(--text);">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Followers</div>'          + '</button>'          + '<button class="prof-follow-stat" data-ftype="following" onclick="window._openFollowSheet(\''+escH(uid)+'\',\'following\')" style="flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0;">'            + '<div id="user-prof-following" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;color:var(--text);">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Following</div>'          + '</button>'        + '</div>'      + '</div>'      /* ── NAME + BADGE + BIO + BUTTONS ── */
+        + '<div style="flex:1;display:flex;gap:0;padding-bottom:0.4rem;margin-left:0.5rem;">'          + '<div style="flex:1;text-align:center;">'            + '<div id="user-prof-post-count" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Posts</div>'          + '</div>'          + '<button class="prof-follow-stat" data-ftype="followers" style="flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0;">'            + '<div id="user-prof-followers" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;color:var(--text);">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Followers</div>'          + '</button>'          + '<button class="prof-follow-stat" data-ftype="following" style="flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0;">'            + '<div id="user-prof-following" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;color:var(--text);">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Following</div>'          + '</button>'        + '</div>'      + '</div>'      /* ── NAME + BADGE + BIO + BUTTONS ── */
       + '<div style="padding:0.5rem 1rem 0.75rem;flex-shrink:0;">'        + '<div style="font-family:var(--font-d);font-size:1.15rem;letter-spacing:0.04em;margin-bottom:0.15rem;" id="user-prof-name-display"></div>'        + '<div id="user-prof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.55rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-bottom:0.3rem;"></div>'        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;margin-bottom:0.6rem;"></div>'        /* Action buttons row */
         + '<div style="display:flex;gap:0.5rem;align-items:center;">'          + (window.currentUser && window.currentUser.id !== uid              ? '<button id="user-prof-follow-btn" onclick="window._toggleFollow(this,\'' + escH(uid) + '\')" style="background:var(--fire-orange);color:#fff;border:none;border-radius:8px;padding:0.4rem 1.4rem;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.05em;cursor:pointer;">Follow</button>'              : '')          + (window._adminIsOn && window._adminIsOn()              ? '<button onclick="window._adminBanUser(\'' + escH(uid) + '\',\'' + escH(name||"User") + '\')" style="flex:1;background:#3a0808;color:#ff5555;border:1px solid #6a1010;border-radius:10px;padding:0.5rem 0;font-size:0.72rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban Account</button>'              : '')        + '</div>'      + '</div>'      /* ── TABS ── */
       + '<div id="user-prof-tabs" style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">'        + '<button class="upt active" data-tab="posts" style="min-width:72px;padding:0.65rem 0.5rem;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Posts</button>'        + '<button class="upt" data-tab="liked" style="min-width:72px;padding:0.65rem 0.5rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Liked</button>'        + '<button class="upt" data-tab="activity" style="min-width:72px;padding:0.65rem 0.5rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Activity</button>'        + '<button class="upt" data-tab="followers" style="min-width:72px;padding:0.65rem 0.5rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Followers</button>'        + '<button class="upt" data-tab="following" style="min-width:72px;padding:0.65rem 0.5rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Following</button>'      + '</div>'      /* ── CONTENT PANELS ── */
@@ -3187,7 +2813,6 @@ async function votePoll(postId, idx, poll, container) {
       /* Cargar avatar/banner custom de D1 — pisa el de Google si el usuario subió uno */
       fetchUserProfile(session.id);
       if (window._initNotifBtn) window._initNotifBtn();
-      if (window._loadOwnProfileStats) window._loadOwnProfileStats();
     }
     applyAdultBlur();
 
@@ -3210,7 +2835,6 @@ async function votePoll(postId, idx, poll, container) {
         fetchUserPoints(s.id);
         fetchUserProfile(s.id);
         if (window._initNotifBtn) window._initNotifBtn();
-        if (window._loadOwnProfileStats) window._loadOwnProfileStats();
         // Restaurar al hacer login también
         setTimeout(restoreSavedStates, 800);
       } else {
@@ -3458,93 +3082,6 @@ async function votePoll(postId, idx, poll, container) {
   })();
 
     /* ── FOLLOW SYSTEM ── */
-
-  /* Sheet to show followers/following list — reusable for both profiles */
-  window._openFollowSheet = function(uid, type) {
-    var sheet = document.getElementById('follow-list-sheet');
-    if (!sheet) {
-      sheet = document.createElement('div');
-      sheet.id = 'follow-list-sheet';
-      sheet.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(calc(-50% + 100vw));width:100%;max-width:480px;height:100%;z-index:400;background:var(--bg);display:flex;flex-direction:column;transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);';
-      sheet.innerHTML = '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0;">'
-        + '<button onclick="window._closeFollowSheet()" style="background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>'
-        + '<div id="follow-sheet-title" style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;"></div>'
-        + '</div>'
-        + '<div id="follow-sheet-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.5rem 0;"></div>';
-      document.body.appendChild(sheet);
-    }
-    document.getElementById('follow-sheet-title').textContent = type === 'followers' ? 'Followers' : 'Following';
-    var listEl = document.getElementById('follow-sheet-list');
-    listEl.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Loading...</div>';
-    sheet.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    requestAnimationFrame(function() { sheet.style.transform = 'translateX(-50%)'; });
-    fetch('/api/user-follows/list?user_id=' + encodeURIComponent(uid) + '&type=' + type, { credentials: 'include' })
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        var users = d.users || [];
-        if (!users.length) {
-          listEl.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted);font-size:0.82rem;">No ' + type + ' yet.</div>';
-          return;
-        }
-        listEl.innerHTML = users.map(function(u) {
-          var av = u.avatar_url
-            ? '<img src="' + u.avatar_url + '" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;">'
-            : '<div style="width:44px;height:44px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.1rem;flex-shrink:0;">' + (u.username||'?').charAt(0).toUpperCase() + '</div>';
-          var uname = u.username || 'User';
-          return '<div data-open-uid="' + u.user_id + '" data-open-name="' + uname + '" style="display:flex;align-items:center;gap:0.85rem;padding:0.75rem 1rem;border-bottom:1px solid var(--border);cursor:pointer;">'
-            + av
-            + '<div style="flex:1;"><div style="font-family:var(--font-d);font-size:0.9rem;">' + uname + '</div></div>'
-            + '</div>';
-        }).join('');
-        listEl.querySelectorAll('[data-open-uid]').forEach(function(row) {
-          row.addEventListener('click', function() {
-            window._closeFollowSheet();
-            setTimeout(function() {
-              if (window.openMiniProfile) window.openMiniProfile(row.getAttribute('data-open-uid'), row.getAttribute('data-open-name'));
-            }, 350);
-          });
-        });
-      })
-      .catch(function() { listEl.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted);">Could not load.</div>'; });
-  };
-
-  window._loadOwnProfileStats = function() {
-    if (!window.currentUser) return;
-    var uid = window.currentUser.id;
-    var statsEl = document.getElementById('prof-ig-stats');
-    if (statsEl) statsEl.style.display = 'flex';
-    /* Followers/Following */
-    fetch('/api/user-follows/stats?user_id=' + encodeURIComponent(uid), { credentials: 'include' })
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        var fc = document.getElementById('own-followers-count');
-        var gc = document.getElementById('own-following-count');
-        if (fc) fc.textContent = d.followers || 0;
-        if (gc) gc.textContent = d.following || 0;
-      }).catch(function(){});
-    /* Post count */
-    fetch('/api/posts?user_id=' + encodeURIComponent(uid))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        var pc = document.getElementById('own-posts-count');
-        if (pc) pc.textContent = (d.posts||[]).length;
-      }).catch(function(){});
-  };
-
-  window._closeFollowSheet = function() {
-    var sheet = document.getElementById('follow-list-sheet');
-    if (!sheet) return;
-    sheet.style.transform = 'translateX(calc(-50% + 100vw))';
-    document.body.style.overflow = '';
-    setTimeout(function() { sheet.style.display = 'none'; }, 350);
-  };
-
-  window._openOwnFollowSheet = function(type) {
-    if (!window.currentUser) return;
-    window._openFollowSheet(window.currentUser.id, type);
-  };
-
   window._toggleFollow = function(btn, targetUid) {
     if (!window.currentUser) return;
     var isFollowing = btn.textContent.trim() === 'Following';
@@ -4469,7 +4006,7 @@ async function votePoll(postId, idx, poll, container) {
     '.prof-hero:active .prof-hero-edit-icon{opacity:1;}',
     '.prof-hero-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;}',
     '.prof-hero-pattern{position:absolute;inset:0;opacity:0.05;background-image:repeating-linear-gradient(45deg,var(--fire-orange) 0,var(--fire-orange) 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;}',
-    '.prof-avatar-row{padding:0 1rem;margin-top:-34px;margin-bottom:0;position:relative;z-index:2;display:flex;align-items:flex-end;gap:1rem;}',
+    '.prof-avatar-row{padding:0 1rem;margin-top:-34px;margin-bottom:0.65rem;position:relative;z-index:2;}',
     '.prof-avatar-wrap{width:68px;height:68px;border-radius:50%;border:3px solid var(--bg);background:var(--surface-2);overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}',
     '.prof-avatar-cam{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;transition:background 0.2s;border-radius:50%;}',
     '.prof-avatar-cam svg{opacity:0;transition:opacity 0.2s;width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}',
@@ -4477,7 +4014,7 @@ async function votePoll(postId, idx, poll, container) {
     '.prof-avatar-wrap:active .prof-avatar-cam svg{opacity:1;}',
     '.prof-avatar-wrap img{width:100%;height:100%;object-fit:cover;}',
     '.user-avatar-placeholder svg{width:28px;height:28px;stroke:var(--text-muted);fill:none;stroke-width:1.5;}',
-    '.prof-info{padding:0.4rem 1rem 0.65rem;}',
+    '.prof-info{padding:0 1rem 0.65rem;}',
     '.prof-fullname{font-family:var(--font-d);font-size:1.2rem;letter-spacing:0.05em;margin-bottom:0.1rem;}',
     '.prof-username-wrap{display:flex;align-items:center;gap:0.4rem;margin-bottom:0.35rem;}',
     '.prof-username{font-size:0.75rem;color:var(--text-dim);}',
@@ -4494,11 +4031,7 @@ async function votePoll(postId, idx, poll, container) {
     '.prof-bio-text{font-size:0.8rem;color:var(--text-dim);line-height:1.5;}',
     '.prof-bio-edit-btn{background:none;border:none;color:var(--text-muted);font-size:0.75rem;cursor:pointer;padding:0;font-family:var(--font-b);font-style:italic;}',
     '.prof-bio-input{width:100%;background:var(--surface-2);border:1px solid var(--fire-orange);color:var(--text);border-radius:8px;padding:0.45rem 0.65rem;font-size:0.8rem;font-family:var(--font-b);resize:none;height:58px;outline:none;margin-top:0.3rem;line-height:1.4;box-sizing:border-box;}',
-    '.prof-stats{display:flex;align-items:center;gap:1.1rem;padding:0.5rem 1rem 0.65rem;flex-wrap:wrap;}'
-    + '.prof-ig-stats{flex:1;display:flex;padding-bottom:0.4rem;}'
-    + '.prof-ig-stat{flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0;}'
-    + '.prof-ig-stat-n{font-family:var(--font-d);font-size:1.1rem;line-height:1;color:var(--text);display:block;}'
-    + '.prof-ig-stat-l{font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;display:block;}',
+    '.prof-stats{display:flex;align-items:center;gap:1.1rem;padding:0.5rem 1rem 0.65rem;flex-wrap:wrap;}',
     '.prof-stat{display:flex;align-items:baseline;gap:0.28rem;}',
     '.prof-stat-n{font-family:var(--font-d);font-size:0.95rem;color:var(--text);line-height:1;}',
     '.prof-stat-l{font-size:0.78rem;color:var(--text-dim);}',
@@ -7438,6 +6971,7 @@ async function votePoll(postId, idx, poll, container) {
     btn.addEventListener('click', loadCommunities);
   });
 
+})();
 })();
 
 
