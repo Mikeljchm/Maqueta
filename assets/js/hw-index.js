@@ -366,71 +366,27 @@
 
     page.style.display = 'flex';
     page.innerHTML =
-      '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem 0.5rem;'
-        + 'border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">'
-        + '<button id="user-prof-back" style="background:none;border:none;color:var(--text);'
-          + 'width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">'
-          + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
-          + '<polyline points="15 18 9 12 15 6"/></svg>'
-        + '</button>'
-        + '<div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;">'
-          + escH(name||'Profile') + '</div>'
-      + '</div>'
-      + '<div id="user-prof-hero" style="height:110px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;overflow:hidden;">'
-        + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;"></div>'
-        + '<div style="position:absolute;inset:0;opacity:0.05;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'
-      + '</div>'
-      + '<div style="padding:0 1rem;margin-top:-31px;margin-bottom:0.5rem;position:relative;z-index:2;flex-shrink:0;">'
-        + '<div id="user-prof-av" style="width:62px;height:62px;border-radius:50%;border:3px solid var(--bg);'
-          + 'background:var(--surface-2);display:flex;align-items:center;justify-content:center;'
-          + 'font-family:var(--font-d);font-size:1.5rem;overflow:hidden;">'
-          + escH((name||'?').charAt(0).toUpperCase())
-        + '</div>'
-      + '</div>'
-      + '<div style="padding:0 1rem 0.6rem;flex-shrink:0;">'
-        + '<div style="font-family:var(--font-d);font-size:1.2rem;letter-spacing:0.05em;margin-bottom:0.12rem;">'
-          + escH(name||'User') + '</div>'
-        + '<div id="user-prof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;'
-          + 'font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.55rem;border-radius:20px;'
-          + 'background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-bottom:0.35rem;"></div>'
-        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;"></div>'
-        + (window.currentUser && window.currentUser.id !== uid
-            ? '<div style="display:flex;align-items:center;gap:1.2rem;margin-top:0.6rem;">'
-              + '<button class="prof-follow-stat" data-ftype="followers" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;"><span id="user-prof-followers" style="font-family:var(--font-d);font-size:1rem;">-</span><span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Followers</span></button>'
-              + '<button class="prof-follow-stat" data-ftype="following" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;"><span id="user-prof-following" style="font-family:var(--font-d);font-size:1rem;">-</span><span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Following</span></button>'
-              + '<button id="user-prof-follow-btn" onclick="window._toggleFollow(this,\'' + escH(uid) + '\')" style="margin-left:auto;background:var(--fire-orange);color:#fff;border:none;border-radius:20px;padding:0.32rem 1rem;font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.05em;cursor:pointer;">Follow</button>'
-              + '</div>'
-            : '<div style="display:flex;align-items:center;gap:1.2rem;margin-top:0.6rem;">'
-              + '<button class="prof-follow-stat" data-ftype="followers" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;"><span id="user-prof-followers" style="font-family:var(--font-d);font-size:1rem;">-</span><span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Followers</span></button>'
-              + '<button class="prof-follow-stat" data-ftype="following" style="background:none;border:none;color:var(--text);cursor:pointer;text-align:left;padding:0;"><span id="user-prof-following" style="font-family:var(--font-d);font-size:1rem;">-</span><span style="font-size:0.65rem;color:var(--text-dim);margin-left:0.25rem;">Following</span></button>'
-              + '</div>'
-          )
-        + (window._adminIsOn && window._adminIsOn()
-            ? '<div style="margin-top:0.5rem;"><button onclick="window._adminBanUser(\'' + escH(uid) + '\',\'' + escH(name||"User") + '\')" style="background:#3a0808;color:#ff5555;border:1px solid #6a1010;border-radius:10px;padding:0.3rem 0.8rem;font-size:0.7rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban + Delete Account</button></div>'
-            : '')
-        + '<div id="user-prof-tabs" style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;">'
-          + '<button class="upt active" data-tab="posts" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'
-          + '<button class="upt" data-tab="liked" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'
-          + '<button class="upt" data-tab="activity" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'
-          + '<button class="upt" data-tab="followers" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Followers</button>'
-          + '<button class="upt" data-tab="following" style="flex:1;padding:0.6rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Following</button>'
-        + '</div>'
-        + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">'
-          + '<div id="user-prof-posts" style="padding:0.75rem 1rem 3rem;">'
-            + '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>'
-          + '</div>'
-          + '<div id="user-prof-liked" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
-          + '<div id="user-prof-activity" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
-          + '<div id="user-prof-followers" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
-          + '<div id="user-prof-following" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
-        + '</div>'
-      + '</div>';
+      /* ── TOP BAR ── */
+      '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem 0.5rem;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">'        + '<button id="user-prof-back" style="background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">'          + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'        + '</button>'        + '<div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;" id="user-prof-topname"></div>'      + '</div>'      /* ── BANNER ── */
+      + '<div id="user-prof-hero" style="height:110px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;overflow:hidden;">'        + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;"></div>'      + '</div>'      /* ── AVATAR + STATS ROW (Instagram style) ── */
+      + '<div style="padding:0 1rem;margin-top:-28px;display:flex;align-items:flex-end;gap:1rem;flex-shrink:0;">'        + '<div id="user-prof-av" style="width:72px;height:72px;border-radius:50%;border:3px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.6rem;overflow:hidden;flex-shrink:0;"></div>'        /* Stats: posts · followers · following */
+        + '<div style="flex:1;display:flex;gap:0;padding-bottom:0.4rem;margin-left:0.5rem;">'          + '<div style="flex:1;text-align:center;">'            + '<div id="user-prof-post-count" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Posts</div>'          + '</div>'          + '<button class="prof-follow-stat" data-ftype="followers" style="flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0;">'            + '<div id="user-prof-followers" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;color:var(--text);">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Followers</div>'          + '</button>'          + '<button class="prof-follow-stat" data-ftype="following" style="flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0;">'            + '<div id="user-prof-following" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;color:var(--text);">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Following</div>'          + '</button>'        + '</div>'      + '</div>'      /* ── NAME + BADGE + BIO + BUTTONS ── */
+      + '<div style="padding:0.5rem 1rem 0.75rem;flex-shrink:0;">'        + '<div style="font-family:var(--font-d);font-size:1.15rem;letter-spacing:0.04em;margin-bottom:0.15rem;" id="user-prof-name-display"></div>'        + '<div id="user-prof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.55rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-bottom:0.3rem;"></div>'        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;margin-bottom:0.6rem;"></div>'        /* Action buttons row */
+        + '<div style="display:flex;gap:0.5rem;">'          + (window.currentUser && window.currentUser.id !== uid              ? '<button id="user-prof-follow-btn" onclick="window._toggleFollow(this,\'' + escH(uid) + '\')" style="flex:1;background:var(--fire-orange);color:#fff;border:none;border-radius:10px;padding:0.5rem 0;font-family:var(--font-d);font-size:0.78rem;letter-spacing:0.05em;cursor:pointer;">Follow</button>'              : '')          + (window._adminIsOn && window._adminIsOn()              ? '<button onclick="window._adminBanUser(\'' + escH(uid) + '\',\'' + escH(name||"User") + '\')" style="flex:1;background:#3a0808;color:#ff5555;border:1px solid #6a1010;border-radius:10px;padding:0.5rem 0;font-size:0.72rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban Account</button>'              : '')        + '</div>'      + '</div>'      /* ── TABS ── */
+      + '<div id="user-prof-tabs" style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;">'        + '<button class="upt active" data-tab="posts" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Posts</button>'        + '<button class="upt" data-tab="liked" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Liked</button>'        + '<button class="upt" data-tab="activity" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Activity</button>'        + '<button class="upt" data-tab="followers" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Followers</button>'        + '<button class="upt" data-tab="following" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Following</button>'      + '</div>'      /* ── CONTENT PANELS ── */
+      + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">'        + '<div id="user-prof-posts" style="padding:0.75rem 1rem 3rem;">'          + '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>'        + '</div>'        + '<div id="user-prof-liked" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="user-prof-activity" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="user-prof-followers" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="user-prof-following" style="display:none;padding:0.75rem 1rem 3rem;"></div>'      + '</div>'
 
     requestAnimationFrame(function(){ requestAnimationFrame(function(){
       page.style.transform = 'translateX(0)';
     }); });
 
-    /* Load follow stats */
+    /* Fill name in topbar and info section */
+    var topName = document.getElementById('user-prof-topname');
+    var nameDisp = document.getElementById('user-prof-name-display');
+    if (topName) topName.textContent = name || 'Profile';
+    if (nameDisp) nameDisp.textContent = name || 'User';
+
+    /* Load follow stats + post count */
     fetch('/api/user-follows/stats?user_id=' + encodeURIComponent(uid), { credentials: 'include' })
       .then(function(r) { return r.json(); })
       .then(function(d) {
@@ -443,7 +399,15 @@
           followBtn.textContent = d.is_following ? 'Following' : 'Follow';
           followBtn.style.background = d.is_following ? 'var(--surface-3)' : 'var(--fire-orange)';
           followBtn.style.color = d.is_following ? 'var(--text-dim)' : '#fff';
+          followBtn.style.border = d.is_following ? '1px solid var(--border)' : 'none';
         }
+      }).catch(function(){});
+    /* Post count */
+    fetch('/api/posts?user_id=' + encodeURIComponent(uid))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var pc = document.getElementById('user-prof-post-count');
+        if (pc) pc.textContent = (d.posts||[]).length;
       }).catch(function(){});
 
     document.getElementById('user-prof-back').addEventListener('click', closeMiniProfile);
