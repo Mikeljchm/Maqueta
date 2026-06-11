@@ -4084,7 +4084,7 @@ async function votePoll(postId, idx, poll, container) {
     '.prof-hero:active .prof-hero-edit-icon{opacity:1;}',
     '.prof-hero-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;}',
     '.prof-hero-pattern{position:absolute;inset:0;opacity:0.05;background-image:repeating-linear-gradient(45deg,var(--fire-orange) 0,var(--fire-orange) 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;}',
-    '.prof-avatar-row{padding:0 1rem;margin-top:-34px;margin-bottom:0.65rem;position:relative;z-index:2;}',
+    '',
     '.prof-avatar-wrap{width:68px;height:68px;border-radius:50%;border:3px solid var(--bg);background:var(--surface-2);overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;}',
     '.prof-avatar-cam{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;transition:background 0.2s;border-radius:50%;}',
     '.prof-avatar-cam svg{opacity:0;transition:opacity 0.2s;width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}',
@@ -4109,7 +4109,12 @@ async function votePoll(postId, idx, poll, container) {
     '.prof-bio-text{font-size:0.8rem;color:var(--text-dim);line-height:1.5;}',
     '.prof-bio-edit-btn{background:none;border:none;color:var(--text-muted);font-size:0.75rem;cursor:pointer;padding:0;font-family:var(--font-b);font-style:italic;}',
     '.prof-bio-input{width:100%;background:var(--surface-2);border:1px solid var(--fire-orange);color:var(--text);border-radius:8px;padding:0.45rem 0.65rem;font-size:0.8rem;font-family:var(--font-b);resize:none;height:58px;outline:none;margin-top:0.3rem;line-height:1.4;box-sizing:border-box;}',
-    '.prof-stats{display:flex;align-items:center;gap:1.1rem;padding:0.5rem 1rem 0.65rem;flex-wrap:wrap;}',
+    '.prof-avatar-row{padding:0 1rem;margin-top:-34px;margin-bottom:0;position:relative;z-index:2;display:flex;align-items:flex-end;gap:0;}'
+    + '.prof-ig-stats{flex:1;display:flex;padding-bottom:0.5rem;padding-left:0.5rem;}'
+    + '.prof-ig-stat{flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0.2rem 0;outline:none;}'
+    + '.prof-ig-stat-n{font-family:var(--font-d);font-size:1.05rem;line-height:1;color:var(--text);display:block;}'
+    + '.prof-ig-stat-l{font-size:0.62rem;color:var(--text-dim);margin-top:0.15rem;display:block;}'
+    + '.prof-stats{display:flex;align-items:center;gap:1.1rem;padding:0.5rem 1rem 0.65rem;flex-wrap:wrap;}',
     '.prof-stat{display:flex;align-items:baseline;gap:0.28rem;}',
     '.prof-stat-n{font-family:var(--font-d);font-size:0.95rem;color:var(--text);line-height:1;}',
     '.prof-stat-l{font-size:0.78rem;color:var(--text-dim);}',
