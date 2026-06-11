@@ -77,6 +77,10 @@ layout: none
           <button class="top-btn" id="search-shortcut">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </button>
+          <!-- BROADCAST — admin only -->
+          <button class="top-btn" id="broadcast-btn" style="display:none;" title="Send announcement">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
           <!-- BELL — visible only when logged in -->
           <button class="top-btn" id="notif-btn" style="display:none;position:relative;" aria-label="Notifications">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -700,6 +704,33 @@ layout: none
       <div class="edit-status" id="edit-status"></div>
     </div>
   </div>
+  <!-- BROADCAST SHEET (admin only) -->
+  <div id="broadcast-sheet" style="display:none;position:fixed;top:0;left:50%;transform:translateX(calc(-50% + 100vw));width:100%;max-width:480px;height:100%;z-index:310;background:var(--bg);flex-direction:column;transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);">
+    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;">
+      <button id="broadcast-close" style="background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;">Send Announcement</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:1.2rem 1rem;">
+      <div style="margin-bottom:0.75rem;">
+        <label style="font-size:0.72rem;color:var(--text-dim);font-family:var(--font-b);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:0.35rem;">Title (optional)</label>
+        <input id="broadcast-title" type="text" placeholder="Announcement" maxlength="80"
+          style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:0.6rem 0.75rem;color:var(--text);font-size:0.85rem;font-family:var(--font-b);outline:none;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:0.72rem;color:var(--text-dim);font-family:var(--font-b);letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:0.35rem;">Message *</label>
+        <textarea id="broadcast-msg" rows="5" placeholder="Write your announcement here..." maxlength="500"
+          style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:0.6rem 0.75rem;color:var(--text);font-size:0.85rem;font-family:var(--font-b);outline:none;resize:none;box-sizing:border-box;"></textarea>
+        <div id="broadcast-chars" style="text-align:right;font-size:0.62rem;color:var(--text-muted);margin-top:0.2rem;">0 / 500</div>
+      </div>
+      <button id="broadcast-send" style="width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:12px;padding:0.75rem;font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;cursor:pointer;">
+        &#9993; SEND TO ALL USERS
+      </button>
+      <div id="broadcast-status" style="margin-top:0.75rem;text-align:center;font-size:0.8rem;color:var(--text-dim);"></div>
+    </div>
+  </div>
+
   <!-- NOTIFICATIONS PANEL -->
   <div id="notif-panel" style="display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:100%;z-index:300;background:var(--bg);flex-direction:column;transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);transform:translateX(calc(-50% + 100vw));">
     <div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;">
