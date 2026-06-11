@@ -5919,6 +5919,7 @@ async function votePoll(postId, idx, poll, container) {
     '.thread-tag-chip.active{background:rgba(255,69,0,0.1);border-color:rgba(255,69,0,0.5);color:var(--fire-orange);}',
     /* Loading / empty */
     '.comm-loading,.comm-empty{padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;line-height:1.6;}',
+    '@keyframes spin{to{transform:rotate(360deg)}}',
     /* Thread card */
     '.comm-card{margin:0 1rem 0.85rem;background:var(--surface-2);border:1px solid var(--border);border-radius:18px;overflow:hidden;cursor:pointer;transition:border-color 0.2s;}',
     '.comm-card:active{border-color:var(--fire-orange);}',
