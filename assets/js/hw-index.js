@@ -3916,27 +3916,39 @@ async function votePoll(postId, idx, poll, container) {
   }
 
   function _exportCrop(cb) {
-    /* Solo aquí usamos canvas — invisible, en memoria */
     var imgEl = document.getElementById('hw-crop-img');
     var vp    = document.getElementById('hw-crop-viewport');
     if (!imgEl || !vp) return;
-    var vpr = vp.getBoundingClientRect();
-    _vpW = vpr.width; _vpH = vpr.height;
 
     var outW = _cropType === 'avatar' ? 400 : 1200;
     var outH = _cropType === 'avatar' ? 400 : 400;
 
-    /* Área de recorte en coordenadas del viewport */
-    var cropW = _cropType === 'avatar' ? _vpW * 0.84 : _vpW * 0.92;
-    var cropH = _cropType === 'avatar' ? _vpW * 0.84 : _vpH * 0.30;
+    /* getBoundingClientRect da la posición REAL de la imagen en pantalla
+       incluyendo todos los CSS transforms — es la fuente de verdad */
+    var imgRect = imgEl.getBoundingClientRect();
+    var vpRect  = vp.getBoundingClientRect();
 
-    /* Centro del viewport → origen de la imagen */
-    /* La imagen está centrada con translate(_tx,_ty) scale(_scale) */
-    /* Coordenada fuente en la imagen: */
-    var srcX = (_vpW/2 - cropW/2 - _tx) / _scale;
-    var srcY = (_vpH/2 - cropH/2 - _ty) / _scale;
-    var srcW = cropW / _scale;
-    var srcH = cropH / _scale;
+    /* Área de recorte: centrada en el viewport */
+    var cropW = _cropType === 'avatar' ? vpRect.width * 0.84 : vpRect.width * 0.92;
+    var cropH = _cropType === 'avatar' ? vpRect.width * 0.84 : vpRect.height * 0.30;
+    var cropLeft = vpRect.left + (vpRect.width  - cropW) / 2;
+    var cropTop  = vpRect.top  + (vpRect.height - cropH) / 2;
+
+    /* Convertir coordenadas de pantalla → coordenadas de la imagen natural */
+    /* imgRect da el tamaño renderizado (naturalSize * scale) */
+    var renderedW = imgRect.width;
+    var renderedH = imgRect.height;
+    var pixelRatioX = _imgNatW / renderedW;
+    var pixelRatioY = _imgNatH / renderedH;
+
+    var srcX = (cropLeft - imgRect.left) * pixelRatioX;
+    var srcY = (cropTop  - imgRect.top)  * pixelRatioY;
+    var srcW = cropW * pixelRatioX;
+    var srcH = cropH * pixelRatioY;
+
+    /* Clamp — no salirse de los límites de la imagen */
+    srcX = Math.max(0, Math.min(srcX, _imgNatW - srcW));
+    srcY = Math.max(0, Math.min(srcY, _imgNatH - srcH));
 
     var canvas = document.createElement('canvas');
     canvas.width = outW; canvas.height = outH;
