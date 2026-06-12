@@ -1853,8 +1853,8 @@ export default {
         if (!isWriteOp && await checkRateLimit(env, 'r:'+clientIP, 120, 60)) {
           return new Response(JSON.stringify({error:'Too many requests'}), {status:429, headers:{...corsH,'Content-Type':'application/json'}});
         }
-        /* Writes: 40/min per IP */
-        if (isWriteOp && !isUpload && await checkRateLimit(env, 'w:'+clientIP, 40, 60)) {
+        /* Writes: 20/min per IP */
+        if (isWriteOp && !isUpload && await checkRateLimit(env, 'w:'+clientIP, 20, 60)) {
           return new Response(JSON.stringify({error:'Too many requests'}), {status:429, headers:{...corsH,'Content-Type':'application/json'}});
         }
         /* Uploads: 15/min per IP */
