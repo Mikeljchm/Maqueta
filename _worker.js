@@ -1018,12 +1018,12 @@ async function handleConfessions(request, env, corsH) {
     if (status === 'pending') {
       if (!isAdmin) return apiJson({ error: 'Forbidden' }, 403, corsH);
       const { results } = await env.DB.prepare(
-        "SELECT id, title, body, category, created_at FROM confessions WHERE status='pending' ORDER BY created_at ASC"
+        "SELECT id, title, body, category, audio_url, created_at FROM confessions WHERE status='pending' ORDER BY created_at ASC"
       ).all();
       return apiJson({ confessions: results }, 200, corsH);
     }
     const { results } = await env.DB.prepare(
-      "SELECT id, title, body, category, created_at FROM confessions WHERE status='approved' ORDER BY created_at DESC LIMIT 50"
+      "SELECT id, title, body, category, audio_url, created_at FROM confessions WHERE status='approved' ORDER BY created_at DESC LIMIT 50"
     ).all();
     return apiJson({ confessions: results }, 200, corsH);
   }
@@ -1040,9 +1040,11 @@ async function handleConfessions(request, env, corsH) {
       const cat = ['confession','fantasy','experience','rumor'].includes(body.category)
         ? body.category : 'confession';
       const title = (body.title || '').trim().slice(0, 100);
+      const audioUrl = (body.audio_url || '').slice(0, 500);
+      try { await env.DB.prepare('ALTER TABLE confessions ADD COLUMN audio_url TEXT DEFAULT \'\'').run(); } catch(e){}
       await env.DB.prepare(
-        "INSERT INTO confessions (title, body, category) VALUES (?, ?, ?)"
-      ).bind(title, text, cat).run();
+        "INSERT INTO confessions (title, body, category, audio_url) VALUES (?, ?, ?, ?)"
+      ).bind(title, text, cat, audioUrl).run();
       return apiJson({ ok: true }, 200, corsH);
     }
 
