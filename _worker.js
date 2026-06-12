@@ -1628,7 +1628,8 @@ async function handleCommunityPosts(request, env, corsH) {
       const tid    = parseInt(body.community_id||body.thread_id||'0');
       const text   = (body.body||'').trim();
       const imgUrl = (body.image_url||'').trim().slice(0,500);
-      if (!text&&!imgUrl) return apiJson({ error: 'Empty post' }, 400, corsH);
+      const audioUrl = (body.audio_url||'').trim().slice(0,500);
+      if (!text&&!imgUrl&&!audioUrl) return apiJson({ error: 'Empty post' }, 400, corsH);
       if (containsLink(text)) return apiJson({ error: 'Links are not allowed.' }, 400, corsH);
       const { results: banned } = await env.DB.prepare('SELECT user_id FROM thread_banned_users WHERE thread_id=? AND user_id=?').bind(tid,session.id).all();
       if (banned.length) return apiJson({ error: 'You have been removed from this thread.' }, 403, corsH);
