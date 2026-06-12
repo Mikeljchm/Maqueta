@@ -5175,7 +5175,9 @@ async function votePoll(postId, idx, poll, container) {
     '.conf-textarea{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.75rem;font-size:0.85rem;font-family:var(--font-b);resize:none;height:120px;line-height:1.5;margin-bottom:0.75rem;box-sizing:border-box;}',
     '.conf-textarea:focus{outline:none;border-color:var(--fire-orange);}',
     '.conf-submit-btn{width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:12px;padding:0.75rem;font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.07em;cursor:pointer;margin-bottom:0.6rem;transition:opacity 0.2s;}',
-    '.conf-submit-btn:disabled{opacity:0.5;}',
+    '.conf-mic-btn{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);border-radius:12px;padding:0.65rem;font-family:var(--font-b);font-size:0.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.4rem;margin-bottom:0.6rem;transition:border-color 0.15s,color 0.15s;}'
+    + '.conf-mic-btn.recording{border-color:#ff4444;color:#ff4444;}'
+    + '.conf-submit-btn:disabled{opacity:0.5;}',
     '.conf-anon-note{text-align:center;font-size:0.7rem;color:var(--text-muted);letter-spacing:0.06em;}',
     /* Admin moderation */
     '.conf-admin-card{background:var(--surface-3);border:1px solid var(--border);border-radius:12px;padding:0.85rem;margin-bottom:0.6rem;}',
@@ -5245,6 +5247,7 @@ async function votePoll(postId, idx, poll, container) {
         + (cf.title ? '<div class="conf-card-title">'+escH(cf.title)+'</div>' : '')
         + '<div class="conf-body-preview">'+escH(cf.body)+'</div>'
         + (hasMore ? '<button class="conf-read-btn">Read full story &rsaquo;</button>' : '')
+        + (cf.audio_url ? '<div class="hw-audio-player" data-src="'+cf.audio_url+'" style="margin:0.4rem 0;">' + '<button class="hw-audio-play" onclick="event.stopPropagation();window._hwAudioPlay(this)"><svg class="hw-play-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg><svg class="hw-pause-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>' + '<div class="hw-audio-bar"><div class="hw-audio-progress"><div class="hw-audio-fill"></div></div><span class="hw-audio-time">0:00</span></div>' + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);flex-shrink:0;"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>' + '</div>' : '')
         + '<div class="conf-actions">'
         + '<button class="conf-like-btn'+(isLiked?' liked':'')+' " data-conf-id="'+cf.id+'">'
         + '<svg viewBox="0 0 24 24" width="14" height="14" fill="'+(isLiked?'#ff3b5c':'none')+'" stroke="'+(isLiked?'#ff3b5c':'currentColor')+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
@@ -5311,7 +5314,9 @@ async function votePoll(postId, idx, poll, container) {
     + '</select>'
     + '<input class="conf-title-input" id="conf-title" type="text" maxlength="100" placeholder="Title (optional)">'
     + '<textarea class="conf-textarea" id="conf-textarea" maxlength="1000" placeholder="Share your confession, fantasy or experience... 100% anonymous"></textarea>'
-    + '<button class="conf-submit-btn" id="conf-submit-btn">Submit Story</button>'
+    + '<button class="conf-mic-btn" id="conf-mic-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Add Voice Note</button>'
+    + '<div id="conf-audio-preview" style="display:none;margin-bottom:0.75rem;"></div>'
+    + 'class="conf-submit-btn" id="conf-submit-btn">Submit Story</button>'
     + '<div class="conf-anon-note">&#128274; Your identity is never stored</div>';
   document.body.appendChild(panel);
 
@@ -5319,6 +5324,59 @@ async function votePoll(postId, idx, poll, container) {
   var submitBtn = document.getElementById('conf-submit-btn');
   var textarea  = document.getElementById('conf-textarea');
   var catSel    = document.getElementById('conf-cat');
+
+  /* ── Voice recording for stories ── */
+  var confMicBtn = document.getElementById('conf-mic-btn');
+  var confAudioPreview = document.getElementById('conf-audio-preview');
+  var confMediaRecorder = null;
+  var confAudioChunks = [];
+  var confPendingAudio = null;
+  var confRecording = false;
+
+  if (confMicBtn) {
+    confMicBtn.addEventListener('click', async function() {
+      if (confRecording) {
+        confMediaRecorder.stop();
+        return;
+      }
+      try {
+        var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        var mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm'
+          : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/ogg';
+        confMediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+        confAudioChunks = [];
+        confMediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) confAudioChunks.push(e.data); };
+        confMediaRecorder.onstop = function() {
+          stream.getTracks().forEach(function(t) { t.stop(); });
+          var blob = new Blob(confAudioChunks, { type: mimeType });
+          confPendingAudio = { blob: blob, type: mimeType };
+          var url = URL.createObjectURL(blob);
+          confAudioPreview.style.display = 'block';
+          confAudioPreview.innerHTML = '<div class="hw-audio-player" style="margin:0;">'
+            + '<button class="hw-audio-play" onclick="window._hwAudioPlay(this)"><svg class="hw-play-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg><svg class="hw-pause-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>'
+            + '<div class="hw-audio-bar"><div class="hw-audio-progress"><div class="hw-audio-fill"></div></div><span class="hw-audio-time">0:00</span></div>'
+            + '</div>'
+            + '<button style="background:none;border:none;color:var(--text-muted);font-size:0.7rem;cursor:pointer;margin-top:0.25rem;" id="conf-audio-remove">&#10005; Remove voice note</button>';
+          /* Attach audio src */
+          confAudioPreview.querySelector('.hw-audio-player').setAttribute('data-src', url);
+          document.getElementById('conf-audio-remove').onclick = function() {
+            confPendingAudio = null;
+            confAudioPreview.style.display = 'none';
+            confAudioPreview.innerHTML = '';
+          };
+          confRecording = false;
+          confMicBtn.classList.remove('recording');
+          confMicBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Add Voice Note';
+        };
+        confMediaRecorder.start();
+        confRecording = true;
+        confMicBtn.classList.add('recording');
+        confMicBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop Recording';
+      } catch(err) {
+        alert('Microphone access denied.');
+      }
+    });
+  }
 
   function openPanel() {
     if (!panel) return;
@@ -5413,16 +5471,27 @@ async function votePoll(postId, idx, poll, container) {
 
   if (submitBtn) submitBtn.addEventListener('click', async function() {
     var text = textarea ? textarea.value.trim() : '';
-    if (!text) return;
+    if (!text && !confPendingAudio) return;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Sending...';
     try {
+      var audioUrl = '';
+      if (confPendingAudio) {
+        try {
+          var auRes = await fetch('/api/upload', { method: 'PUT', credentials: 'include',
+            headers: { 'Content-Type': confPendingAudio.type }, body: confPendingAudio.blob });
+          var auData = await auRes.json();
+          if (auData.ok) audioUrl = auData.url;
+        } catch(e) {}
+      }
       var r = await fetch('/api/confessions', {
         method: 'POST',
+        credentials: 'include',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ action:'submit', body: text,
+        body: JSON.stringify({ action:'submit', body: text || ' ',
           title: document.getElementById('conf-title') ? document.getElementById('conf-title').value.trim() : '',
-          category: catSel ? catSel.value : 'confession' })
+          category: catSel ? catSel.value : 'confession',
+          audio_url: audioUrl })
       });
       var d = await r.json();
       if (d.ok) {
