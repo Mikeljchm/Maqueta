@@ -3105,6 +3105,7 @@ async function votePoll(postId, idx, poll, container) {
       setTimeout(function() { if (!_open) s.style.display = 'none'; }, 340);
     }
 
+    window._closeSuggestionsPanel = _close;
     window._loadSuggestions = function() {
       var list = document.getElementById('suggestions-list');
       if (!list) return;
