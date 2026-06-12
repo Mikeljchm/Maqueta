@@ -1809,6 +1809,20 @@ async function handleNotifications(request, env, corsH) {
   return apiJson({ error: 'Not found' }, 404, corsH);
 }
 
+
+/* ── RATE LIMITER ── */
+async function checkRateLimit(env, key, limit, windowSecs) {
+  if (!env.KV) return false; /* KV not configured — skip */
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const windowKey = key + ':' + Math.floor(now / windowSecs);
+    const current = parseInt(await env.KV.get(windowKey) || '0');
+    if (current >= limit) return true; /* blocked */
+    await env.KV.put(windowKey, String(current + 1), { expirationTtl: windowSecs * 2 });
+    return false; /* allowed */
+  } catch(e) { return false; } /* fail open */
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -1826,6 +1840,27 @@ export default {
       };
       if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: corsH });
+      }
+
+      /* ── Rate limiting by IP ── */
+      const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const isWriteOp = request.method === 'POST' || request.method === 'DELETE' || request.method === 'PUT';
+      const isUpload  = path === '/api/upload';
+      const isAuth    = path.startsWith('/auth/');
+
+      if (!isAuth) {
+        /* Reads: 120/min per IP */
+        if (!isWriteOp && await checkRateLimit(env, 'r:'+clientIP, 120, 60)) {
+          return new Response(JSON.stringify({error:'Too many requests'}), {status:429, headers:{...corsH,'Content-Type':'application/json'}});
+        }
+        /* Writes: 40/min per IP */
+        if (isWriteOp && !isUpload && await checkRateLimit(env, 'w:'+clientIP, 40, 60)) {
+          return new Response(JSON.stringify({error:'Too many requests'}), {status:429, headers:{...corsH,'Content-Type':'application/json'}});
+        }
+        /* Uploads: 15/min per IP */
+        if (isUpload && await checkRateLimit(env, 'u:'+clientIP, 15, 60)) {
+          return new Response(JSON.stringify({error:'Too many uploads'}), {status:429, headers:{...corsH,'Content-Type':'application/json'}});
+        }
       }
       /* ── Admin endpoints ── */
       if (path.startsWith('/api/admin')) {
