@@ -1358,6 +1358,7 @@ async function handleUpload(request, env, corsH) {
     : contentType.includes('mp4') ? 'mp4'
     : contentType.includes('webm') ? 'webm'
     : contentType.includes('ogg') ? 'ogg'
+    : contentType.includes('mp4') && contentType.includes('audio') ? 'm4a'
     : contentType.includes('gif') ? 'gif'
     : 'webp';
   const filename = session.id.replace(/[^a-zA-Z0-9]/g,'').slice(0,16) + '_' + Date.now() + '.' + ext;
@@ -1984,6 +1985,28 @@ export default {
           session: session ? { id: session.id, name: session.name } : null,
           dbTest
         }), { headers: { 'Content-Type': 'application/json', ...corsH } });
+      }
+      if (path === '/api/suggestions') {
+        if (request.method !== 'POST') return apiJson({ error: 'Method not allowed' }, 405, corsH);
+        const session = getSession(request);
+        const body = await request.json();
+        const msg = (body.message||'').trim().slice(0, 1000);
+        const cat = (body.category||'other').slice(0, 50);
+        if (!msg) return apiJson({ error: 'Message required' }, 400, corsH);
+        /* Store in D1 */
+        try {
+          await env.DB.prepare('CREATE TABLE IF NOT EXISTS suggestions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, category TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)').run();
+          await env.DB.prepare('INSERT INTO suggestions (user_id, category, message) VALUES (?,?,?)').bind(session ? session.id : 'anonymous', cat, msg).run();
+        } catch(e) {}
+        /* Notify admin via notifications table */
+        try {
+          const adminId = '102938216489956327429';
+          await env.DB.prepare('INSERT INTO notifications (user_id, type, title, message) VALUES (?,?,?,?)').bind(
+            adminId, 'admin', 'New suggestion: ' + cat,
+            (session ? (session.name || 'Anonymous') : 'Anonymous') + ': ' + msg.slice(0, 200)
+          ).run();
+        } catch(e) {}
+        return apiJson({ ok: true }, 200, corsH);
       }
       if (path === '/api/user-follows' || path.startsWith('/api/user-follows')) return handleUserFollows(request, env, corsH);
       if (path === '/api/communities') return handleCommunities(request, env, corsH);
