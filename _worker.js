@@ -1986,6 +1986,25 @@ export default {
           dbTest
         }), { headers: { 'Content-Type': 'application/json', ...corsH } });
       }
+      /* GET/DELETE /api/admin/suggestions */
+      if (path === '/api/admin/suggestions') {
+        const adminCk = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
+        if (!adminCk) return apiJson({ error: 'Unauthorized' }, 401, corsH);
+        try { await env.DB.prepare('CREATE TABLE IF NOT EXISTS suggestions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, category TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)').run(); } catch(e){}
+        if (request.method === 'GET') {
+          const { results } = await env.DB.prepare(
+            'SELECT s.id, s.user_id, s.category, s.message, s.created_at, up.username FROM suggestions s LEFT JOIN user_profiles up ON up.user_id=s.user_id ORDER BY s.created_at DESC LIMIT 100'
+          ).all();
+          return apiJson({ suggestions: results }, 200, corsH);
+        }
+        if (request.method === 'DELETE') {
+          const sid = url.searchParams.get('id');
+          if (sid) await env.DB.prepare('DELETE FROM suggestions WHERE id=?').bind(parseInt(sid)).run();
+          return apiJson({ ok: true }, 200, corsH);
+        }
+        return apiJson({ error: 'Method not allowed' }, 405, corsH);
+      }
+
       if (path === '/api/suggestions') {
         if (request.method !== 'POST') return apiJson({ error: 'Method not allowed' }, 405, corsH);
         const session = getSession(request);
@@ -1998,26 +2017,6 @@ export default {
           await env.DB.prepare('CREATE TABLE IF NOT EXISTS suggestions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, category TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)').run();
           await env.DB.prepare('INSERT INTO suggestions (user_id, category, message) VALUES (?,?,?)').bind(session ? session.id : 'anonymous', cat, msg).run();
         } catch(e) {}
-        return apiJson({ ok: true }, 200, corsH);
-      }
-
-      /* GET /api/admin/suggestions — admin only */
-      if (path === '/api/admin/suggestions' && request.method === 'GET') {
-        const adminCk = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
-        if (!adminCk) return apiJson({ error: 'Unauthorized' }, 401, corsH);
-        try { await env.DB.prepare('CREATE TABLE IF NOT EXISTS suggestions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, category TEXT, message TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)').run(); } catch(e){}
-        const { results } = await env.DB.prepare(
-          'SELECT s.id, s.user_id, s.category, s.message, s.created_at, up.username FROM suggestions s LEFT JOIN user_profiles up ON up.user_id=s.user_id ORDER BY s.created_at DESC LIMIT 100'
-        ).all();
-        return apiJson({ suggestions: results }, 200, corsH);
-      }
-
-      /* DELETE /api/admin/suggestions?id=X */
-      if (path === '/api/admin/suggestions' && request.method === 'DELETE') {
-        const adminCk = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
-        if (!adminCk) return apiJson({ error: 'Unauthorized' }, 401, corsH);
-        const sid = url.searchParams.get('id');
-        if (sid) await env.DB.prepare('DELETE FROM suggestions WHERE id=?').bind(parseInt(sid)).run();
         return apiJson({ ok: true }, 200, corsH);
       }
       if (path === '/api/user-follows' || path.startsWith('/api/user-follows')) return handleUserFollows(request, env, corsH);
