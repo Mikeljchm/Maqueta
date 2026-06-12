@@ -2197,9 +2197,20 @@ async function votePoll(postId, idx, poll, container) {
     });
 
     // Event delegation para save-btn (collections) — touchend capture para mobile
+    var _saveTouchStartX = 0, _saveTouchStartY = 0;
+    document.addEventListener('touchstart', function(e) {
+      var btn = e.target.closest('.save-btn[data-id]');
+      if (!btn) return;
+      _saveTouchStartX = e.touches[0].clientX;
+      _saveTouchStartY = e.touches[0].clientY;
+    }, { passive: true });
     document.addEventListener('touchend', function(e) {
       var btn = e.target.closest('.save-btn[data-id]');
       if (!btn) return;
+      /* Ignore if user scrolled more than 8px — it was a scroll not a tap */
+      var dx = Math.abs(e.changedTouches[0].clientX - _saveTouchStartX);
+      var dy = Math.abs(e.changedTouches[0].clientY - _saveTouchStartY);
+      if (dx > 8 || dy > 8) return;
       e.preventDefault();
       e.stopPropagation();
       var id = btn.getAttribute('data-id');
