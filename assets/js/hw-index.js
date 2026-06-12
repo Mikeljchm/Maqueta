@@ -3084,6 +3084,62 @@ async function votePoll(postId, idx, poll, container) {
   })();
 
     /* ── FOLLOW SYSTEM ── */
+  /* ── CUSTOM AUDIO PLAYER ── */
+  window._hwAudioPlay = function(btn) {
+    var wrapper = btn.closest('.hw-audio-player');
+    if (!wrapper) return;
+    var src = wrapper.getAttribute('data-src');
+    var fill = wrapper.querySelector('.hw-audio-fill');
+    var timeEl = wrapper.querySelector('.hw-audio-time');
+    var playIcon = btn.querySelector('.hw-play-icon');
+    var pauseIcon = btn.querySelector('.hw-pause-icon');
+    var bar = wrapper.querySelector('.hw-audio-progress');
+
+    /* Reuse or create audio element */
+    if (!wrapper._audio) {
+      wrapper._audio = new Audio(src);
+      wrapper._audio.preload = 'metadata';
+      wrapper._audio.addEventListener('timeupdate', function() {
+        var pct = wrapper._audio.duration ? (wrapper._audio.currentTime / wrapper._audio.duration) * 100 : 0;
+        if (fill) fill.style.width = pct + '%';
+        if (timeEl) {
+          var t = Math.floor(wrapper._audio.currentTime);
+          timeEl.textContent = Math.floor(t/60) + ':' + ('0'+t%60).slice(-2);
+        }
+      });
+      wrapper._audio.addEventListener('ended', function() {
+        if (fill) fill.style.width = '0%';
+        if (timeEl) timeEl.textContent = '0:00';
+        if (playIcon) { playIcon.style.display=''; pauseIcon.style.display='none'; }
+        wrapper._playing = false;
+      });
+      /* Click on bar to seek */
+      if (bar) bar.addEventListener('click', function(e) {
+        if (!wrapper._audio.duration) return;
+        var rect = bar.getBoundingClientRect();
+        wrapper._audio.currentTime = ((e.clientX - rect.left) / rect.width) * wrapper._audio.duration;
+      });
+    }
+
+    if (wrapper._playing) {
+      wrapper._audio.pause();
+      wrapper._playing = false;
+      if (playIcon) { playIcon.style.display=''; pauseIcon.style.display='none'; }
+    } else {
+      /* Pause all other players */
+      document.querySelectorAll('.hw-audio-player').forEach(function(p) {
+        if (p !== wrapper && p._audio && p._playing) {
+          p._audio.pause(); p._playing = false;
+          var pi = p.querySelector('.hw-play-icon'), pi2 = p.querySelector('.hw-pause-icon');
+          if (pi) { pi.style.display=''; pi2.style.display='none'; }
+        }
+      });
+      wrapper._audio.play();
+      wrapper._playing = true;
+      if (playIcon) { playIcon.style.display='none'; pauseIcon.style.display=''; }
+    }
+  };
+
   window._openFollowSheet = function(uid, type) {
     var sheet = document.getElementById('follow-list-sheet');
     if (!sheet) {
@@ -6367,7 +6423,14 @@ async function votePoll(postId, idx, poll, container) {
     '.comm-detail-collapse{overflow:hidden;transition:max-height 0.35s cubic-bezier(0.16,1,0.3,1),opacity 0.25s ease;max-height:500px;opacity:1;flex-shrink:0;}',
     '.comm-detail-collapse.hidden{max-height:0 !important;opacity:0;pointer-events:none;}',
     /* Thread post */
-    '.comm-post{margin:0.75rem 1rem 0;background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;}',
+    '.hw-audio-player{display:flex;align-items:center;gap:0.55rem;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:0.5rem 0.75rem;margin:0.4rem 0;}'
+    + '.hw-audio-play{width:32px;height:32px;border-radius:50%;background:var(--fire-orange);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform 0.15s;}'
+    + '.hw-audio-play:active{transform:scale(0.9);}'
+    + '.hw-audio-bar{flex:1;display:flex;align-items:center;gap:0.5rem;}'
+    + '.hw-audio-progress{flex:1;height:3px;background:var(--border);border-radius:3px;cursor:pointer;position:relative;}'
+    + '.hw-audio-fill{height:100%;background:var(--fire-orange);border-radius:3px;width:0%;transition:width 0.1s linear;}'
+    + '.hw-audio-time{font-size:0.62rem;color:var(--text-muted);font-family:var(--font-b);white-space:nowrap;min-width:2.5rem;text-align:right;}'
+    + '.comm-post{margin:0.75rem 1rem 0;background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;}',
     '.comm-post.pinned{border-color:rgba(255,184,0,0.3);background:rgba(255,184,0,0.03);}',
     '.comm-post-pin-label{font-size:0.58rem;color:var(--fire-yellow);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.35rem;display:flex;align-items:center;gap:0.25rem;}',
     '.comm-post-header{display:flex;align-items:center;gap:0.55rem;margin-bottom:0.6rem;}',
@@ -6814,8 +6877,7 @@ async function votePoll(postId, idx, poll, container) {
       mediaHtml+='</div>';
     }
     var audioHtml = p.audio_url
-      ? '<div style="margin:0.4rem 0;"><audio controls preload="none" style="width:100%;border-radius:10px;height:36px;outline:none;" src="' + p.audio_url + '"></audio></div>'
-      : '';
+      ? '<div class="hw-audio-player" data-src="' + p.audio_url + '">'        + '<button class="hw-audio-play" onclick="window._hwAudioPlay(this)" aria-label="Play">'          + '<svg class="hw-play-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>'          + '<svg class="hw-pause-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'        + '</button>'        + '<div class="hw-audio-bar">'          + '<div class="hw-audio-progress"><div class="hw-audio-fill"></div></div>'          + '<span class="hw-audio-time">0:00</span>'        + '</div>'        + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);flex-shrink:0;"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>'      + '</div>'      : '';
     var body=p.body&&p.body.trim()&&p.body.trim()!==' '?'<div class="comm-post-body">'+escH(p.body)+'</div>':'';
     var pinnedBadge=p.is_pinned?'<div class="comm-post-pin-label">&#128204; Pinned post</div>':'';
     return '<div class="comm-post'+(p.is_pinned?' pinned':'')+'" data-cpost-id="'+p.id+'" data-cpost-uid="'+escH(p.user_id||'')+'">'
