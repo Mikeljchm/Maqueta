@@ -1035,13 +1035,14 @@ async function handleConfessions(request, env, corsH) {
 
     if (action === 'submit') {
       const text = (body.body || '').trim();
-      if (!text) return apiJson({ error: 'Empty' }, 400, corsH);
+      const audioUrl2 = (body.audio_url || '').trim();
+      if (!text && !audioUrl2) return apiJson({ error: 'Empty' }, 400, corsH);
       if (text.length > 1000) return apiJson({ error: 'Too long' }, 400, corsH);
       if (containsLink(text)) return apiJson({ error: 'Links are not allowed.' }, 400, corsH);
       const cat = ['confession','fantasy','experience','rumor'].includes(body.category)
         ? body.category : 'confession';
       const title = (body.title || '').trim().slice(0, 100);
-      const audioUrl = (body.audio_url || '').slice(0, 500);
+      const audioUrl = audioUrl2.slice(0, 500);
       try { await env.DB.prepare('ALTER TABLE confessions ADD COLUMN audio_url TEXT DEFAULT \'\'').run(); } catch(e){}
       await env.DB.prepare(
         "INSERT INTO confessions (title, body, category, audio_url) VALUES (?, ?, ?, ?)"
@@ -1051,9 +1052,17 @@ async function handleConfessions(request, env, corsH) {
 
     if (action === 'approve') {
       if (!isAdmin) return apiJson({ error: 'Forbidden' }, 403, corsH);
-      await env.DB.prepare(
-        "UPDATE confessions SET status='approved' WHERE id=?"
-      ).bind(parseInt(body.id)).run();
+      if (body.id === 'all') {
+        await env.DB.prepare("UPDATE confessions SET status='approved' WHERE status='pending'").run();
+      } else {
+        await env.DB.prepare("UPDATE confessions SET status='approved' WHERE id=?").bind(parseInt(body.id)).run();
+      }
+      return apiJson({ ok: true }, 200, corsH);
+    }
+
+    if (action === 'reject') {
+      if (!isAdmin) return apiJson({ error: 'Forbidden' }, 403, corsH);
+      await env.DB.prepare("UPDATE confessions SET status='rejected' WHERE id=?").bind(parseInt(body.id)).run();
       return apiJson({ ok: true }, 200, corsH);
     }
 
