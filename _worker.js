@@ -1004,6 +1004,7 @@ async function handleConfessions(request, env, corsH) {
   )`).run();
   /* Agregar columna title si ya existe la tabla sin ella */
   try { await env.DB.prepare("ALTER TABLE confessions ADD COLUMN title TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE confessions ADD COLUMN audio_url TEXT DEFAULT ''").run(); } catch(e){}
 
   const url    = new URL(request.url);
   const isAdmin = (function(){
