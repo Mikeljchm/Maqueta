@@ -2869,7 +2869,7 @@ async function votePoll(postId, idx, poll, container) {
     if (session && session.login === ADMIN_LOGIN) {
       document.body.classList.add('is-admin');
       /* _initBroadcast se define en un IIFE posterior — defer para que ya exista */
-      setTimeout(function() { if (window._initBroadcast) window._initBroadcast(); }, 0);
+      setTimeout(function() { if (window._initBroadcast) window._initBroadcast(); if (window._initSuggestionsBtn) window._initSuggestionsBtn(); }, 0);
       /* Agregar botón Confessions al panel admin */
       var s = document.createElement('style');
       s.textContent = '.conf-admin-fab{display:none;position:fixed;bottom:calc(var(--nav-h,56px) + var(--safe-bottom,0px) + 7.5rem);right:1rem;background:#6c3fc7;color:#fff;border:none;border-radius:20px;padding:0.5rem 1rem;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.06em;cursor:pointer;z-index:101;box-shadow:0 4px 16px rgba(108,63,199,0.4);}.is-admin .conf-admin-fab{display:flex;align-items:center;gap:0.4rem;}.conf-admin-badge{background:#ff3b5c;color:#fff;border-radius:50%;width:17px;height:17px;font-size:0.6rem;display:flex;align-items:center;justify-content:center;font-family:var(--font-b);font-weight:700;flex-shrink:0;margin-left:0.2rem;}' + '.conf-admin-sheet{position:fixed;inset:0;background:var(--bg);z-index:600;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}.conf-admin-sheet.open{transform:translateX(0);}.conf-admin-header{display:flex;align-items:center;gap:0.75rem;padding:0.9rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}.conf-admin-back{background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}.conf-admin-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}.conf-admin-htitle{font-family:var(--font-d);font-size:1rem;letter-spacing:0.07em;}.conf-admin-body{flex:1;overflow-y:auto;padding:0.75rem;}';
@@ -3084,6 +3084,95 @@ async function votePoll(postId, idx, poll, container) {
   })();
 
     /* ── FOLLOW SYSTEM ── */
+  /* ── SUGGESTIONS PANEL (admin only) ── */
+  (function() {
+    var _open = false;
+    var CAT_ICONS = { feature: '&#128161;', bug: '&#128027;', design: '&#127912;', content: '&#127919;', other: '&#128172;' };
+
+    function _timeAgo(ts) {
+      var t = (Date.now() - new Date(ts).getTime()) / 1000;
+      if (t < 60) return 'just now';
+      if (t < 3600) return Math.floor(t/60) + 'm ago';
+      if (t < 86400) return Math.floor(t/3600) + 'h ago';
+      return Math.floor(t/86400) + 'd ago';
+    }
+
+    function _close() {
+      var s = document.getElementById('suggestions-panel'); if (!s) return;
+      _open = false;
+      s.style.transform = 'translateX(calc(-50% + 100vw))';
+      document.body.style.overflow = '';
+      setTimeout(function() { if (!_open) s.style.display = 'none'; }, 340);
+    }
+
+    window._loadSuggestions = function() {
+      var list = document.getElementById('suggestions-list');
+      if (!list) return;
+      list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Loading...</div>';
+      fetch('/api/admin/suggestions', { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var items = d.suggestions || [];
+          if (!items.length) {
+            list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted);font-size:0.82rem;">No suggestions yet.</div>';
+            return;
+          }
+          /* Update badge */
+          var badge = document.getElementById('suggestions-badge');
+          if (badge) { badge.textContent = items.length > 9 ? '9+' : items.length; badge.style.display = 'flex'; }
+          list.innerHTML = items.map(function(s) {
+            var icon = CAT_ICONS[s.category] || '&#128172;';
+            var uname = s.username || 'Anonymous';
+            return '<div style="padding:0.85rem 1rem;border-bottom:1px solid var(--border);">'
+              + '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">'
+                + '<span style="font-size:0.9rem;">' + icon + '</span>'
+                + '<span style="font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.05em;color:var(--fire-orange);">' + s.category.toUpperCase() + '</span>'
+                + '<span style="font-size:0.65rem;color:var(--text-muted);margin-left:auto;">' + _timeAgo(s.created_at) + '</span>'
+              + '</div>'
+              + '<div style="font-size:0.82rem;color:var(--text);line-height:1.5;margin-bottom:0.35rem;">' + s.message.replace(/</g,'&lt;') + '</div>'
+              + '<div style="display:flex;align-items:center;justify-content:space-between;">'
+                + '<span style="font-size:0.65rem;color:var(--text-muted);">from <b>' + uname + '</b></span>'
+                + '<button onclick="window._deleteSuggestion(' + s.id + ',this)" style="background:none;border:none;color:var(--text-muted);font-size:0.65rem;cursor:pointer;padding:0.2rem 0.4rem;">&#128465; Done</button>'
+              + '</div>'
+              + '</div>';
+          }).join('');
+        })
+        .catch(function() { list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted);">Could not load.</div>'; });
+    };
+
+    window._deleteSuggestion = function(id, btn) {
+      var row = btn.closest('div[style*="border-bottom"]');
+      fetch('/api/admin/suggestions?id=' + id, { method: 'DELETE', credentials: 'include' })
+        .then(function() { if (row) { row.style.opacity = '0.3'; row.style.pointerEvents = 'none'; } });
+    };
+
+    window._initSuggestionsBtn = function() {
+      var btn = document.getElementById('suggestions-btn');
+      if (!btn) return;
+      btn.style.display = 'flex';
+      var closeBtn = document.getElementById('suggestions-close');
+      if (closeBtn) closeBtn.onclick = _close;
+      btn.onclick = function() {
+        var panel = document.getElementById('suggestions-panel');
+        if (!panel) return;
+        if (_open) { _close(); return; }
+        _open = true;
+        panel.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(function() { panel.style.transform = 'translateX(-50%)'; });
+        window._loadSuggestions();
+      };
+      /* Load badge count on init */
+      fetch('/api/admin/suggestions', { credentials: 'include' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var cnt = (d.suggestions||[]).length;
+          var badge = document.getElementById('suggestions-badge');
+          if (badge && cnt > 0) { badge.textContent = cnt > 9 ? '9+' : cnt; badge.style.display = 'flex'; }
+        }).catch(function(){});
+    };
+  })();
+
   /* ── SUGGESTION SYSTEM ── */
   (function() {
     var _open = false;
