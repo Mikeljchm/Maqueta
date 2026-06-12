@@ -3084,6 +3084,62 @@ async function votePoll(postId, idx, poll, container) {
   })();
 
     /* ── FOLLOW SYSTEM ── */
+  /* ── SUGGESTION SYSTEM ── */
+  (function() {
+    var _open = false;
+    function _sheet() { return document.getElementById('suggestion-sheet'); }
+    function _close() {
+      var s = _sheet(); if (!s) return;
+      _open = false;
+      s.style.transform = 'translateX(calc(-50% + 100vw))';
+      document.body.style.overflow = '';
+      setTimeout(function() { if (!_open) s.style.display = 'none'; }, 340);
+    }
+    window._openSuggestionSheet = function() {
+      var s = _sheet(); if (!s) return;
+      _open = true;
+      s.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(function() { s.style.transform = 'translateX(-50%)'; });
+      var closeBtn = document.getElementById('suggestion-close');
+      if (closeBtn) closeBtn.onclick = _close;
+      var msg = document.getElementById('suggestion-msg');
+      var chars = document.getElementById('suggestion-chars');
+      if (msg && chars) msg.oninput = function() { chars.textContent = msg.value.length + ' / 1000'; };
+    };
+    window._sendSuggestion = function(btn) {
+      var msg = (document.getElementById('suggestion-msg')||{}).value||'';
+      var cat = (document.getElementById('suggestion-cat')||{}).value||'other';
+      var status = document.getElementById('suggestion-status');
+      if (!msg.trim()) { if (status) status.textContent = 'Write your suggestion first.'; return; }
+      btn.disabled = true; btn.textContent = 'Sending...';
+      if (status) status.textContent = '';
+      fetch('/api/suggestions', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: cat, message: msg.trim() })
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          btn.disabled = false; btn.innerHTML = '&#128161; SEND SUGGESTION';
+          if (d.ok) {
+            if (status) status.textContent = '&#10003; Thanks! We got your suggestion.';
+            var msgEl = document.getElementById('suggestion-msg');
+            if (msgEl) msgEl.value = '';
+            var charsEl = document.getElementById('suggestion-chars');
+            if (charsEl) charsEl.textContent = '0 / 1000';
+            setTimeout(function() { _close(); }, 2000);
+          } else {
+            if (status) status.textContent = 'Error: ' + (d.error || 'Try again');
+          }
+        })
+        .catch(function() {
+          btn.disabled = false; btn.innerHTML = '&#128161; SEND SUGGESTION';
+          if (status) status.textContent = 'Request failed.';
+        });
+    };
+  })();
+
   /* ── CUSTOM AUDIO PLAYER ── */
   window._hwAudioPlay = function(btn) {
     var wrapper = btn.closest('.hw-audio-player');
@@ -6727,7 +6783,7 @@ async function votePoll(postId, idx, poll, container) {
           }
           try {
             var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            var mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
+            var mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/ogg';
             mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
             audioChunks = [];
             mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) audioChunks.push(e.data); };
