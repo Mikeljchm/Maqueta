@@ -3184,6 +3184,7 @@ async function votePoll(postId, idx, poll, container) {
       document.body.style.overflow = '';
       setTimeout(function() { if (!_open) s.style.display = 'none'; }, 340);
     }
+    window._closeSuggestionSheet = _close;
     window._openSuggestionSheet = function() {
       var s = _sheet(); if (!s) return;
       _open = true;
