@@ -5316,7 +5316,7 @@ async function votePoll(postId, idx, poll, container) {
     + '<textarea class="conf-textarea" id="conf-textarea" maxlength="1000" placeholder="Share your confession, fantasy or experience... 100% anonymous"></textarea>'
     + '<button class="conf-mic-btn" id="conf-mic-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Add Voice Note</button>'
     + '<div id="conf-audio-preview" style="display:none;margin-bottom:0.75rem;"></div>'
-    + 'class="conf-submit-btn" id="conf-submit-btn">Submit Story</button>'
+    + '<button class="conf-submit-btn" id="conf-submit-btn">Submit Story</button>'
     + '<div class="conf-anon-note">&#128274; Your identity is never stored</div>';
   document.body.appendChild(panel);
 
