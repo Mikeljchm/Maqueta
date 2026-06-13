@@ -819,16 +819,21 @@ async function handleReactions(request, env, corsH) {
 
 
 async function handleProfile(request, env, corsH) {
+  /* Ensure table exists with ALL columns */
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_profiles (
     user_id TEXT PRIMARY KEY,
     username TEXT UNIQUE,
+    display_name TEXT DEFAULT '',
     bio TEXT DEFAULT '',
+    avatar_url TEXT DEFAULT '',
+    banner_url TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`).run();
-  try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN bio TEXT DEFAULT ''").run(); } catch(e){}
-  try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN display_name TEXT DEFAULT ''").run(); } catch(e){}
-  try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN avatar_url TEXT DEFAULT ''").run(); } catch(e){}
-  try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN banner_url TEXT DEFAULT ''").run(); } catch(e){}
+  /* Migrate older tables missing columns */
+  const migrations = ['display_name TEXT DEFAULT \'\'','bio TEXT DEFAULT \'\'','avatar_url TEXT DEFAULT \'\'','banner_url TEXT DEFAULT \'\''];
+  for (const col of migrations) {
+    try { await env.DB.prepare(`ALTER TABLE user_profiles ADD COLUMN ${col}`).run(); } catch(e) {}
+  }
 
   const session = getSession(request);
   const url = new URL(request.url);
@@ -847,52 +852,51 @@ async function handleProfile(request, env, corsH) {
 
   if (request.method === 'POST') {
     const body = await request.json();
-    const username = (body.username || '').replace(/[^a-zA-Z0-9_]/g,'').slice(0,30);
-    const bio = typeof body.bio === 'string' ? body.bio.trim().slice(0,120) : null;
-    const _hasAvatar = typeof body.avatar_url === 'string';
-    const _hasBanner = typeof body.banner_url === 'string';
-    const _hasDisplayName = typeof body.display_name === 'string';
-    if (!username && bio === null && !_hasAvatar && !_hasBanner && !_hasDisplayName) return apiJson({ error: 'Nothing to update' }, 400, corsH);
+    const displayName   = typeof body.display_name === 'string' ? body.display_name.trim().slice(0,50) : null;
+    const bio           = typeof body.bio === 'string' ? body.bio.trim().slice(0,120) : null;
+    const avatar_url    = typeof body.avatar_url === 'string' ? body.avatar_url.trim().slice(0,500) : null;
+    const banner_url    = typeof body.banner_url === 'string' ? body.banner_url.trim().slice(0,500) : null;
+    const rawUsername   = (body.username || '').replace(/[^a-zA-Z0-9_]/g,'').toLowerCase().slice(0,30);
+
+    if (!displayName && bio === null && avatar_url === null && banner_url === null && !rawUsername) {
+      return apiJson({ error: 'Nothing to update' }, 400, corsH);
+    }
+
     try {
-      const displayName = typeof body.display_name === 'string' ? body.display_name.trim().slice(0, 50) : null;
-      if (displayName !== null) {
-        await env.DB.prepare(
-          'INSERT INTO user_profiles (user_id, display_name) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET display_name=excluded.display_name'
-        ).bind(session.id, displayName).run();
-      }
-      if (username) {
-        const uname = username.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 30);
-        if (uname.length < 3) return apiJson({ error: 'Username too short' }, 400, corsH);
-        /* Check uniqueness — exclude own user_id */
+      /* Username uniqueness check */
+      if (rawUsername) {
+        if (rawUsername.length < 3) return apiJson({ error: 'Username too short' }, 400, corsH);
         const { results: taken } = await env.DB.prepare(
           'SELECT user_id FROM user_profiles WHERE username=? AND user_id!=?'
-        ).bind(uname, session.id).all();
+        ).bind(rawUsername, session.id).all();
         if (taken.length > 0) return apiJson({ error: 'Username taken' }, 409, corsH);
-        await env.DB.prepare(
-          'INSERT INTO user_profiles (user_id, username) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET username=excluded.username'
-        ).bind(session.id, uname).run();
+      }
+
+      /* Ensure row exists */
+      await env.DB.prepare(
+        'INSERT OR IGNORE INTO user_profiles (user_id) VALUES (?)'
+      ).bind(session.id).run();
+
+      /* Update only the fields that were sent */
+      if (displayName !== null) {
+        await env.DB.prepare('UPDATE user_profiles SET display_name=? WHERE user_id=?').bind(displayName, session.id).run();
       }
       if (bio !== null) {
-        await env.DB.prepare(
-          'INSERT INTO user_profiles (user_id, bio) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET bio=excluded.bio'
-        ).bind(session.id, bio).run();
+        await env.DB.prepare('UPDATE user_profiles SET bio=? WHERE user_id=?').bind(bio, session.id).run();
       }
-      const avatar_url = typeof body.avatar_url === 'string' ? body.avatar_url.trim().slice(0,500) : null;
       if (avatar_url !== null) {
-        await env.DB.prepare(
-          'INSERT INTO user_profiles (user_id, avatar_url) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET avatar_url=excluded.avatar_url'
-        ).bind(session.id, avatar_url).run();
+        await env.DB.prepare('UPDATE user_profiles SET avatar_url=? WHERE user_id=?').bind(avatar_url, session.id).run();
       }
-      const banner_url = typeof body.banner_url === 'string' ? body.banner_url.trim().slice(0,500) : null;
       if (banner_url !== null) {
-        await env.DB.prepare(
-          'INSERT INTO user_profiles (user_id, banner_url) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET banner_url=excluded.banner_url'
-        ).bind(session.id, banner_url).run();
+        await env.DB.prepare('UPDATE user_profiles SET banner_url=? WHERE user_id=?').bind(banner_url, session.id).run();
       }
-      return apiJson({ ok: true, username: username||null, bio: bio, avatar_url, banner_url }, 200, corsH);
+      if (rawUsername) {
+        await env.DB.prepare('UPDATE user_profiles SET username=? WHERE user_id=?').bind(rawUsername, session.id).run();
+      }
+
+      return apiJson({ ok: true, display_name: displayName, username: rawUsername||null, bio, avatar_url, banner_url }, 200, corsH);
     } catch(e) {
-      /* Username taken (UNIQUE constraint) */
-      return apiJson({ error: 'Username taken' }, 409, corsH);
+      return apiJson({ error: 'Save failed: ' + e.message }, 500, corsH);
     }
   }
   return apiJson({ error: 'Method not allowed' }, 405, corsH);
