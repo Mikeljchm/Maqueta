@@ -430,6 +430,17 @@
             ubio.parentNode.insertBefore(ageSpan, ubio.nextSibling);
           }
         }
+        /* Ubicación */
+        var uLocStr=[d.city,d.country].filter(Boolean).join(', ');
+        if(uLocStr){
+          var ubio2=document.getElementById('uprof-bio');
+          if(ubio2){
+            var locSpan=document.createElement('div');
+            locSpan.style.cssText='font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;';
+            locSpan.textContent='\uD83D\uDCCD '+uLocStr;
+            ubio2.parentNode.insertBefore(locSpan, ubio2.nextSibling);
+          }
+        }
       }).catch(function(){});
 
     fetch('/api/points?user_id='+encodeURIComponent(uid))
@@ -4318,6 +4329,10 @@ async function votePoll(postId, idx, poll, container) {
           +'<label class="prof-toggle"><input type="checkbox" id="ep-age-public"><span class="prof-toggle-track"></span></label>'
         +'</div>'
       +'</div>'
+      +'<label class="ep-label">City</label>'
+      +'<input class="ep-input" id="ep-city" type="text" maxlength="60" placeholder="e.g. Medell&#237;n">'
+      +'<label class="ep-label">Country</label>'
+      +'<input class="ep-input" id="ep-country" type="text" maxlength="60" placeholder="e.g. Colombia">'
       +'<button class="ep-save-btn" id="ep-save">Save Profile</button>';
     document.body.appendChild(ov); document.body.appendChild(sh);
 
@@ -4337,6 +4352,8 @@ async function votePoll(postId, idx, poll, container) {
       fetch('/api/profile',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
         if(epAge&&d.age) epAge.value=d.age;
         var apCb=document.getElementById('ep-age-public'); if(apCb) apCb.checked=!!d.age_public;
+        var ecity=document.getElementById('ep-city'); if(ecity&&d.city) ecity.value=d.city;
+        var ecountry=document.getElementById('ep-country'); if(ecountry&&d.country) ecountry.value=d.country;
       }).catch(function(){});
       ov.classList.add('open'); sh.classList.add('open'); document.body.style.overflow='hidden';
     }
@@ -4365,6 +4382,10 @@ async function votePoll(postId, idx, poll, container) {
         if(bio!==undefined) payload.bio=bio;
         if(ageVal&&ageVal>=13&&ageVal<120) payload.age=ageVal;
         payload.age_public=agePub;
+        var cityVal=(document.getElementById('ep-city')||{}).value||'';
+        var countryVal=(document.getElementById('ep-country')||{}).value||'';
+        if(cityVal.trim()) payload.city=cityVal.trim();
+        if(countryVal.trim()) payload.country=countryVal.trim();
 
         var r=await fetch('/api/profile',{method:'POST',credentials:'include',
           headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -4403,6 +4424,19 @@ async function votePoll(postId, idx, poll, container) {
           ageEl2.textContent=ageVal+' years old';
         } else if(ageEl2 && !agePub){
           ageEl2.textContent='';
+        }
+        /* Location */
+        var locEl=document.getElementById('prof-location-display');
+        var locStr=[cityVal,countryVal].filter(Boolean).join(', ');
+        if(locStr){
+          if(!locEl){
+            locEl=document.createElement('div');
+            locEl.id='prof-location-display';
+            locEl.style.cssText='font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;text-align:center;';
+            var baRef2=document.getElementById('prof-bio-area');
+            if(baRef2) baRef2.parentNode.insertBefore(locEl, baRef2.nextSibling);
+          }
+          locEl.textContent='&#128205; '+locStr;
         }
         closeEP();
         var toast=document.getElementById('toast');
@@ -4488,11 +4522,24 @@ async function votePoll(postId, idx, poll, container) {
           if(!ageEl){
             ageEl=document.createElement('div');
             ageEl.id='prof-age-display';
-            ageEl.style.cssText='font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;';
+            ageEl.style.cssText='font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;text-align:center;';
             var bioArea3=document.getElementById('prof-bio-area');
             if(bioArea3) bioArea3.parentNode.insertBefore(ageEl, bioArea3.nextSibling);
           }
           ageEl.textContent=d.age+' years old';
+        }
+        /* Ubicación */
+        var locStr2=[d.city,d.country].filter(Boolean).join(', ');
+        if(locStr2){
+          var locEl2=document.getElementById('prof-location-display');
+          if(!locEl2){
+            locEl2=document.createElement('div');
+            locEl2.id='prof-location-display';
+            locEl2.style.cssText='font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;text-align:center;';
+            var bioArea4=document.getElementById('prof-bio-area');
+            if(bioArea4) bioArea4.parentNode.insertBefore(locEl2, bioArea4.nextSibling);
+          }
+          locEl2.textContent='\uD83D\uDCCD '+locStr2;
         }
       }).catch(function(){});
       if(adultToggle) adultToggle.checked=true;
