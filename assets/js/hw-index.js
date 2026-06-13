@@ -425,7 +425,7 @@
           var ubio=document.getElementById('uprof-bio');
           if(ubio){
             var ageSpan=document.createElement('div');
-            ageSpan.style.cssText='font-size:0.68rem;color:var(--text-muted);margin-top:0.2rem;';
+            ageSpan.style.cssText='font-size:0.68rem;color:var(--text-muted);margin-top:0.2rem;text-align:center;width:100%;';
             ageSpan.textContent=d.age+' years old';
             ubio.parentNode.insertBefore(ageSpan, ubio.nextSibling);
           }
@@ -436,8 +436,8 @@
           var ubio2=document.getElementById('uprof-bio');
           if(ubio2){
             var locSpan=document.createElement('div');
-            locSpan.style.cssText='font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;';
-            locSpan.textContent='\uD83D\uDCCD '+uLocStr;
+            locSpan.style.cssText='font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;text-align:center;width:100%;';
+            locSpan.innerHTML='&#128205; '+uLocStr.replace(/&/g,'&amp;').replace(/</g,'&lt;');
             ubio2.parentNode.insertBefore(locSpan, ubio2.nextSibling);
           }
         }
@@ -4436,7 +4436,7 @@ async function votePoll(postId, idx, poll, container) {
             var baRef2=document.getElementById('prof-bio-area');
             if(baRef2) baRef2.parentNode.insertBefore(locEl, baRef2.nextSibling);
           }
-          locEl.textContent='&#128205; '+locStr;
+          locEl.innerHTML='&#128205; '+locStr.replace(/&/g,'&amp;').replace(/</g,'&lt;');
         }
         closeEP();
         var toast=document.getElementById('toast');
@@ -4539,7 +4539,7 @@ async function votePoll(postId, idx, poll, container) {
             var bioArea4=document.getElementById('prof-bio-area');
             if(bioArea4) bioArea4.parentNode.insertBefore(locEl2, bioArea4.nextSibling);
           }
-          locEl2.textContent='\uD83D\uDCCD '+locStr2;
+          locEl2.innerHTML='&#128205; '+locStr2.replace(/&/g,'&amp;').replace(/</g,'&lt;');
         }
       }).catch(function(){});
       if(adultToggle) adultToggle.checked=true;
