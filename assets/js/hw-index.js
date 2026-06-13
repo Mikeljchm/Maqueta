@@ -2734,21 +2734,6 @@ async function votePoll(postId, idx, poll, container) {
     try {
       var r = await fetch('/api/profile', { credentials: 'include' });
       var d = await r.json();
-      if (d.display_name) {
-        var dnEl = document.getElementById('user-display-name');
-        if (dnEl) dnEl.textContent = d.display_name;
-        if (window.currentUser) window.currentUser.display_name = d.display_name;
-        /* Update sessionStorage cache so reload shows correct name */
-        try {
-          var cacheKey = HottAuth._CACHE_KEY;
-          var raw = sessionStorage.getItem(cacheKey);
-          if (raw) {
-            var cached = JSON.parse(raw);
-            if (cached.d) { cached.d.display_name = d.display_name; }
-            sessionStorage.setItem(cacheKey, JSON.stringify(cached));
-          }
-        } catch(e) {}
-      }
       if (d.avatar_url && window.currentUser) {
         window.currentUser.picture = d.avatar_url;
         /* Actualizar avatar en la UI del header/perfil */
@@ -2841,7 +2826,7 @@ async function votePoll(postId, idx, poll, container) {
     const session = await HottAuth.init();
     if (session) {
       currentUser = session; window.currentUser = session;
-      updateAuthUI(currentUser);
+      await updateAuthUI(currentUser);
       fetchUserPoints(session.id);
       /* Cargar avatar/banner custom de D1 — pisa el de Google si el usuario subió uno */
       fetchUserProfile(session.id);
@@ -2861,10 +2846,10 @@ async function votePoll(postId, idx, poll, container) {
       }, 700);
     }
 
-    HottAuth.onChange(s => {
+    HottAuth.onChange(async s => {
       if (s) {
         currentUser = s; window.currentUser = s;
-        updateAuthUI(currentUser);
+        await updateAuthUI(currentUser);
         closeAuthModal();
         fetchUserPoints(s.id);
         fetchUserProfile(s.id);
