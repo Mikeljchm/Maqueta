@@ -6746,6 +6746,7 @@ async function votePoll(postId, idx, poll, container) {
     '.comm-post-time{font-size:0.62rem;color:var(--text-muted);}',
     '.comm-post-body{font-size:0.9rem;line-height:1.65;color:#e8e2d8;margin-bottom:0.6rem;white-space:pre-wrap;word-break:break-word;font-family:var(--font-b);}',
     '.comm-post-img{width:100%;border-radius:10px;margin-bottom:0.6rem;display:block;max-height:300px;object-fit:cover;}',
+    '.comm-post-vid{width:100%;border-radius:10px;margin-bottom:0.6rem;display:block;}',
     '.comm-post-actions{display:flex;gap:0.35rem;align-items:center;}',
     '.comm-post-act{background:none;border:none;color:var(--text-dim);font-size:0.7rem;cursor:pointer;display:flex;align-items:center;gap:0.28rem;padding:0.2rem 0.4rem;border-radius:8px;font-family:var(--font-b);transition:color 0.15s;}',
     '.comm-report-btn{margin-left:auto;color:var(--text-muted);border:1px solid rgba(255,255,255,0.06);font-size:0.62rem;padding:0.18rem 0.55rem;border-radius:20px;}',
@@ -7163,7 +7164,7 @@ async function votePoll(postId, idx, poll, container) {
       var lo=mediaList[0].toLowerCase().split('?')[0];
       var tvSingleEnc=encodeURIComponent(JSON.stringify(mediaList));
       mediaHtml=lo.endsWith('.mp4')||lo.endsWith('.webm')
-        ?'<video class="comm-post-img" src="'+mediaList[0]+'" muted playsinline controls controlslist="nodownload" oncontextmenu="return false"></video>'
+        ?'<video class="comm-post-vid" src="'+mediaList[0]+'" muted playsinline controls controlslist="nodownload" oncontextmenu="return false"></video>'
         :'<img class="comm-post-img" src="'+mediaList[0]+'" loading="lazy" style="cursor:pointer;" data-tv-idx="0" data-tv-urls="'+tvSingleEnc+'">';
     } else if(mediaList.length>1){
       /* Álbum grid */
@@ -7174,8 +7175,9 @@ async function votePoll(postId, idx, poll, container) {
         var lo2=url.toLowerCase().split('?')[0];
         var isV=lo2.endsWith('.mp4')||lo2.endsWith('.webm');
         var extra=mediaList.length>9&&idx===8?'<div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.2rem;color:#fff;">+'+( mediaList.length-9)+'</div>':'';
-        mediaHtml+='<div style="position:relative;aspect-ratio:1;overflow:hidden;background:#111;cursor:pointer;" data-tv-idx="'+idx+'">'
-          +(isV?'<video src="'+url+'" style="width:100%;height:100%;object-fit:cover;" muted playsinline controlslist="nodownload" oncontextmenu="return false"></video>'
+        var cellStyle=isV?'position:relative;overflow:hidden;background:#111;cursor:pointer;':'position:relative;aspect-ratio:1;overflow:hidden;background:#111;cursor:pointer;';
+        mediaHtml+='<div style="'+cellStyle+'" data-tv-idx="'+idx+'">'
+          +(isV?'<video src="'+url+'" style="width:100%;display:block;" muted playsinline controlslist="nodownload" oncontextmenu="return false"></video>'
               :'<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;" loading="lazy">')
           +extra+'</div>';
       });
