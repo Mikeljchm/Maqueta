@@ -4261,110 +4261,139 @@ async function votePoll(postId, idx, poll, container) {
     }
   });
 
-  /* Username */
-  var usernameDisplay   = document.getElementById('prof-username-display');
-  var usernameWrap      = document.getElementById('prof-username-wrap');
-  var usernameInputWrap = document.getElementById('prof-username-input-wrap');
-  var usernameInput     = document.getElementById('prof-username-input');
-  var usernameSave      = document.getElementById('prof-username-save');
-  var editBtn           = document.getElementById('prof-username-edit-btn');
-  function showUsernameInput(){
-    if(usernameWrap) usernameWrap.style.display='none';
-    if(usernameInputWrap) usernameInputWrap.style.display='flex';
-    if(usernameInput){ usernameInput.value=(usernameDisplay&&usernameDisplay.textContent.replace('@',''))||''; usernameInput.focus(); }
-  }
-  function hideUsernameInput(){
-    if(usernameWrap) usernameWrap.style.display='flex';
-    if(usernameInputWrap) usernameInputWrap.style.display='none';
-  }
-  if(editBtn) editBtn.addEventListener('click', showUsernameInput);
-  if(usernameSave) usernameSave.addEventListener('click', async function(){
-    var val=usernameInput?usernameInput.value.trim().replace(/[^a-zA-Z0-9_]/g,'').toLowerCase():'';
-    if(!val){ hideUsernameInput(); return; }
-    if(val.length < 3){ alert('Username must be at least 3 characters.'); return; }
-    if(val.length > 30){ alert('Username max 30 characters.'); return; }
-    usernameSave.disabled=true; usernameSave.textContent='...';
-    try{
-      var r=await fetch('/api/profile',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:val})});
-      var d=await r.json();
-      if(d.ok){
-        if(usernameDisplay) usernameDisplay.textContent='@'+val;
-        hideUsernameInput();
-      } else if(d.error === 'Username taken'){
-        usernameInput.style.borderColor='#ff4444';
-        usernameInput.placeholder='@'+val+' is already taken';
-        usernameInput.value='';
-      } else {
-        alert(d.error||'Error saving username');
-      }
-    }catch(e){ hideUsernameInput(); }
-    usernameSave.disabled=false; usernameSave.textContent='Save';
-  });
+  /* ── Edit Profile Sheet — un solo botón, todos los campos ── */
+  (function(){
+    /* CSS del sheet */
+    var st=document.createElement('style');
+    st.textContent=[
+      '.ep-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:350;display:none;}',
+      '.ep-overlay.open{display:block;}',
+      '.ep-sheet{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);z-index:351;padding:0.5rem 1.1rem calc(1.5rem + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);}',
+      '.ep-sheet.open{transform:translateY(0);}',
+      '.ep-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem;}',
+      '.ep-title{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;margin-bottom:1rem;}',
+      '.ep-label{font-size:0.65rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.3rem;display:block;}',
+      '.ep-input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.6rem 0.85rem;font-size:0.85rem;font-family:var(--font-b);margin-bottom:0.85rem;box-sizing:border-box;outline:none;}',
+      '.ep-input:focus{border-color:var(--fire-orange);}',
+      '.ep-ta{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.6rem 0.85rem;font-size:0.85rem;font-family:var(--font-b);resize:none;height:80px;margin-bottom:0.85rem;box-sizing:border-box;outline:none;line-height:1.5;}',
+      '.ep-ta:focus{border-color:var(--fire-orange);}',
+      '.ep-age-row{display:flex;gap:0.75rem;align-items:center;margin-bottom:0.85rem;}',
+      '.ep-age-input{width:80px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.6rem 0.75rem;font-size:0.85rem;font-family:var(--font-b);outline:none;text-align:center;}',
+      '.ep-age-input:focus{border-color:var(--fire-orange);}',
+      '.ep-toggle-row{display:flex;align-items:center;gap:0.75rem;flex:1;background:var(--surface-2);border-radius:10px;padding:0.5rem 0.85rem;border:1px solid var(--border);}',
+      '.ep-toggle-label{font-size:0.78rem;color:var(--text-dim);flex:1;}',
+      '.ep-save-btn{width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:12px;padding:0.75rem;font-family:var(--font-d);font-size:0.88rem;letter-spacing:0.06em;cursor:pointer;margin-top:0.25rem;}',
+      '.ep-save-btn:disabled{opacity:0.5;}',
+      '.ep-edit-profile-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:0.35rem 1.1rem;font-family:var(--font-b);font-size:0.72rem;cursor:pointer;margin-top:0.5rem;display:inline-block;}'
+    ].join('');
+    document.head.appendChild(st);
 
-  /* Display Name */
-  var nameEditBtn    = document.getElementById('prof-name-edit-btn');
-  var nameInputWrap  = document.getElementById('prof-name-input-wrap');
-  var nameInput      = document.getElementById('prof-name-input');
-  var nameSave       = document.getElementById('prof-name-save');
-  var nameCancel     = document.getElementById('prof-name-cancel');
-  var nameEl         = document.getElementById('user-display-name');
+    /* Crear overlay y sheet */
+    var ov=document.createElement('div'); ov.className='ep-overlay'; ov.id='ep-overlay';
+    var sh=document.createElement('div'); sh.className='ep-sheet'; sh.id='ep-sheet';
+    sh.innerHTML=
+      '<div class="ep-handle"></div>'
+      +'<div class="ep-title">Edit Profile</div>'
+      +'<label class="ep-label">Display Name</label>'
+      +'<input class="ep-input" id="ep-name" type="text" maxlength="50" placeholder="Your name">'
+      +'<label class="ep-label">Username</label>'
+      +'<input class="ep-input" id="ep-username" type="text" maxlength="30" placeholder="@username">'
+      +'<label class="ep-label">Bio</label>'
+      +'<textarea class="ep-ta" id="ep-bio" maxlength="150" placeholder="Tell something about yourself..."></textarea>'
+      +'<label class="ep-label">Age</label>'
+      +'<div class="ep-age-row">'
+        +'<input class="ep-age-input" id="ep-age" type="number" min="18" max="99" placeholder="Age">'
+        +'<div class="ep-toggle-row">'
+          +'<span class="ep-toggle-label">Show age publicly</span>'
+          +'<label class="prof-toggle"><input type="checkbox" id="ep-age-public"><span class="prof-toggle-track"></span></label>'
+        +'</div>'
+      +'</div>'
+      +'<button class="ep-save-btn" id="ep-save">Save Profile</button>';
+    document.body.appendChild(ov); document.body.appendChild(sh);
 
+    function openEP(){
+      /* Pre-llenar con datos actuales */
+      var nameEl=document.getElementById('user-display-name');
+      var unEl=document.getElementById('prof-username-display');
+      var bioEl=document.getElementById('prof-bio-text');
+      var epName=document.getElementById('ep-name');
+      var epUn=document.getElementById('ep-username');
+      var epBio=document.getElementById('ep-bio');
+      var epAge=document.getElementById('ep-age');
+      if(epName&&nameEl) epName.value=nameEl.textContent==='Sign in to get started'?'':nameEl.textContent;
+      if(epUn&&unEl) epUn.value=unEl.textContent.replace('@','');
+      if(epBio&&bioEl) epBio.value=bioEl.textContent;
+      /* Cargar age desde API */
+      fetch('/api/profile',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
+        if(epAge&&d.age) epAge.value=d.age;
+        var apCb=document.getElementById('ep-age-public'); if(apCb) apCb.checked=!!d.age_public;
+      }).catch(function(){});
+      ov.classList.add('open'); sh.classList.add('open'); document.body.style.overflow='hidden';
+    }
+    function closeEP(){ ov.classList.remove('open'); sh.classList.remove('open'); document.body.style.overflow=''; }
+    ov.addEventListener('click',closeEP);
+    var shY2=0;
+    sh.addEventListener('touchstart',function(e){shY2=e.touches[0].clientY;},{passive:true});
+    sh.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-shY2>60)closeEP();},{passive:true});
 
-  function showNameInput() {
-    if (nameInputWrap) { nameInputWrap.style.display = 'flex'; }
-    if (nameInput && nameEl) nameInput.value = nameEl.textContent !== 'Sign in to get started' ? nameEl.textContent : '';
-    if (nameInput) nameInput.focus();
-  }
-  function hideNameInput() {
-    if (nameInputWrap) nameInputWrap.style.display = 'none';
-  }
-  /* nameEditBtn now uses onclick inline → _editDisplayName modal */
-  if (nameCancel)  nameCancel.addEventListener('click', hideNameInput);
-  if (nameSave) nameSave.addEventListener('click', async function() {
-    var val = nameInput ? nameInput.value.trim() : '';
-    if (!val) { hideNameInput(); return; }
-    nameSave.disabled = true; nameSave.textContent = '...';
-    try {
-      var r = await fetch('/api/profile', { method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ display_name: val }) });
-      var d = await r.json();
-      if (d.ok) {
-        if (nameEl) nameEl.textContent = val;
-        if (window.currentUser) window.currentUser.display_name = val;
-        hideNameInput();
-      }
-    } catch(e) { hideNameInput(); }
-    nameSave.disabled = false; nameSave.textContent = 'Save';
-  });
+    /* Botón Edit Profile en el perfil — lo crearemos dinámicamente */
+    window._openEditProfile = openEP;
 
-  /* Bio */
-  var bioEditing = false;
-  function showBioInput(){
-    if(bioEditing) return;
-    bioEditing = true;
-    var bioArea=document.getElementById('prof-bio-area');
-    var bioText=document.getElementById('prof-bio-text');
-    var current=bioText?bioText.textContent:'';
-    var ta=document.createElement('textarea');
-    ta.className='prof-bio-input'; ta.value=current; ta.maxLength=120;
-    ta.placeholder='Write something about yourself...';
-    if(bioArea){ bioArea.innerHTML=''; bioArea.appendChild(ta); }
-    ta.focus();
-    ta.addEventListener('blur', async function(){
-      var val=ta.value.trim();
-      bioEditing=false;
-      var bioArea2=document.getElementById('prof-bio-area');
-      if(bioArea2){
-        bioArea2.innerHTML='<div class="prof-bio-text" id="prof-bio-text">'+val+'</div>'
-          +'<button class="prof-bio-edit-btn" id="prof-bio-edit-btn">'+(val?'Edit bio':'+ Add bio')+'</button>';
-        document.getElementById('prof-bio-edit-btn').addEventListener('click', showBioInput);
-      }
-      try{ await fetch('/api/profile',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({bio:val})}); }catch(e){}
+    /* Save */
+    document.getElementById('ep-save').addEventListener('click', async function(){
+      var btn=this; btn.disabled=true; btn.textContent='Saving...';
+      var name=document.getElementById('ep-name').value.trim();
+      var username=document.getElementById('ep-username').value.trim().replace(/[^a-zA-Z0-9_]/g,'').toLowerCase();
+      var bio=document.getElementById('ep-bio').value.trim();
+      var ageVal=parseInt(document.getElementById('ep-age').value)||null;
+      var agePub=document.getElementById('ep-age-public').checked;
+
+      try{
+        var payload={};
+        if(name) payload.display_name=name;
+        if(username.length>=3) payload.username=username;
+        if(bio!==undefined) payload.bio=bio;
+        if(ageVal&&ageVal>=13&&ageVal<120) payload.age=ageVal;
+        payload.age_public=agePub;
+
+        var r=await fetch('/api/profile',{method:'POST',credentials:'include',
+          headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        var d=await r.json();
+
+        if(d.error==='Username taken'){
+          document.getElementById('ep-username').style.borderColor='#ff4444';
+          document.getElementById('ep-username').placeholder='Already taken';
+          document.getElementById('ep-username').value='';
+          btn.disabled=false; btn.textContent='Save Profile'; return;
+        }
+
+        /* Actualizar UI */
+        if(name){
+          var ne=document.getElementById('user-display-name'); if(ne) ne.textContent=name;
+          if(window.currentUser) window.currentUser.display_name=name;
+        }
+        if(username.length>=3){
+          var ue=document.getElementById('prof-username-display'); if(ue) ue.textContent='@'+username;
+        }
+        if(bio!==undefined){
+          var bt=document.getElementById('prof-bio-text'); if(bt) bt.textContent=bio;
+          /* Mostrar la bio area si tiene contenido */
+          var ba=document.getElementById('prof-bio-area'); if(ba) ba.style.display='';
+        }
+        closeEP();
+        var toast=document.getElementById('toast');
+        if(toast){toast.textContent='Profile updated!';toast.classList.add('show');setTimeout(function(){toast.classList.remove('show');},2500);}
+      }catch(e){}
+      btn.disabled=false; btn.textContent='Save Profile';
     });
-  }
-  var bioEditBtnEl=document.getElementById('prof-bio-edit-btn');
-  if(bioEditBtnEl) bioEditBtnEl.addEventListener('click', showBioInput);
+  })();
+
+  /* Conectar botón prof-name-edit-btn al nuevo sheet */
+  var nameEditBtn = document.getElementById('prof-name-edit-btn');
+  if(nameEditBtn) nameEditBtn.addEventListener('click', function(){ if(window._openEditProfile) window._openEditProfile(); });
+  /* Compat — mantener refs vacías para que el código existente no explote */
+  var usernameDisplay = document.getElementById('prof-username-display');
+  var bioEditBtnEl    = document.getElementById('prof-bio-edit-btn');
 
   /* Activity */
   var rowLiked=document.getElementById('prof-row-liked');
@@ -4388,6 +4417,7 @@ async function votePoll(postId, idx, poll, container) {
       if(stats)      stats.style.display='';
       if(unWrap)     unWrap.style.display='flex';
       if(bioAreaEl)  bioAreaEl.style.display='';
+      var editProfBtn=document.getElementById('prof-name-edit-btn'); if(editProfBtn) editProfBtn.style.display='';
       if(badge){
         var lvl=(user.level)||'Rookie';
         var bdg=(user.badge)||'&#128304;';
