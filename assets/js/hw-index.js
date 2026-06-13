@@ -4444,7 +4444,7 @@ async function votePoll(postId, idx, poll, container) {
   function hideNameInput() {
     if (nameInputWrap) nameInputWrap.style.display = 'none';
   }
-  if (nameEditBtn) nameEditBtn.addEventListener('click', showNameInput);
+  /* nameEditBtn now uses onclick inline → _editDisplayName modal */
   if (nameCancel)  nameCancel.addEventListener('click', hideNameInput);
   if (nameSave) nameSave.addEventListener('click', async function() {
     var val = nameInput ? nameInput.value.trim() : '';
