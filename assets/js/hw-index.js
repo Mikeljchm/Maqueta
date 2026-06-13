@@ -2727,6 +2727,11 @@ async function votePoll(postId, idx, poll, container) {
     try {
       var r = await fetch('/api/profile', { credentials: 'include' });
       var d = await r.json();
+      if (d.display_name) {
+        var dnEl = document.getElementById('user-display-name');
+        if (dnEl) dnEl.textContent = d.display_name;
+        if (window.currentUser) window.currentUser.display_name = d.display_name;
+      }
       if (d.avatar_url && window.currentUser) {
         window.currentUser.picture = d.avatar_url;
         /* Actualizar avatar en la UI del header/perfil */
