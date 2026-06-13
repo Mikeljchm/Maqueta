@@ -2731,6 +2731,16 @@ async function votePoll(postId, idx, poll, container) {
         var dnEl = document.getElementById('user-display-name');
         if (dnEl) dnEl.textContent = d.display_name;
         if (window.currentUser) window.currentUser.display_name = d.display_name;
+        /* Update sessionStorage cache so reload shows correct name */
+        try {
+          var cacheKey = HottAuth._CACHE_KEY;
+          var raw = sessionStorage.getItem(cacheKey);
+          if (raw) {
+            var cached = JSON.parse(raw);
+            if (cached.d) { cached.d.display_name = d.display_name; }
+            sessionStorage.setItem(cacheKey, JSON.stringify(cached));
+          }
+        } catch(e) {}
       }
       if (d.avatar_url && window.currentUser) {
         window.currentUser.picture = d.avatar_url;
