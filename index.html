@@ -819,6 +819,63 @@ layout: none
   <!-- Community detail — fuera de .page para no heredar su scroll -->
   <div id="comm-detail-page" style="display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:100%;z-index:200;background:var(--bg);overflow:hidden;"></div>
 
+<script>
+function hwEditName() {
+  var ex = document.getElementById('hw-name-modal');
+  if (ex) ex.remove();
+  var dnEl = document.getElementById('user-display-name');
+  var cur = (dnEl && dnEl.textContent !== 'Sign in to get started') ? dnEl.textContent : '';
+  var ov = document.createElement('div');
+  ov.id = 'hw-name-modal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.75);';
+  ov.innerHTML = '<div style="width:100%;max-width:480px;background:#100808;border-radius:20px 20px 0 0;border-top:1px solid #2a1010;padding:1.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom));box-sizing:border-box;">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem;">'
+    +   '<span style="font-family:\'Bebas Neue\',Impact,sans-serif;font-size:1rem;letter-spacing:0.12em;color:#F0EAE0;">&#9998; EDIT NAME</span>'
+    +   '<button onclick="document.getElementById(\'hw-name-modal\').remove()" style="background:none;border:none;color:#8a7060;font-size:1.3rem;padding:0.2rem 0.5rem;cursor:pointer;line-height:1;">&#10005;</button>'
+    + '</div>'
+    + '<input id="hwnm-inp" type="text" maxlength="50" placeholder="Your display name" autocomplete="off"'
+    +   ' style="width:100%;background:#180a0a;border:1.5px solid #FF4500;color:#F0EAE0;border-radius:10px;padding:0.75rem 0.9rem;font-size:1rem;box-sizing:border-box;outline:none;-webkit-appearance:none;font-family:inherit;">'
+    + '<div id="hwnm-err" style="display:none;color:#ff5555;font-size:0.78rem;margin-top:0.4rem;"></div>'
+    + '<button id="hwnm-save" style="margin-top:0.9rem;width:100%;background:#FF4500;color:#fff;border:none;border-radius:12px;padding:0.85rem;font-family:\'Bebas Neue\',Impact,sans-serif;font-size:1rem;letter-spacing:0.1em;cursor:pointer;">SAVE NAME</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e){ if (e.target === ov) ov.remove(); });
+  var inp = document.getElementById('hwnm-inp');
+  var saveBtn = document.getElementById('hwnm-save');
+  var errEl = document.getElementById('hwnm-err');
+  inp.value = cur;
+  setTimeout(function(){ inp.focus(); }, 60);
+  saveBtn.addEventListener('click', async function() {
+    var val = inp.value.trim();
+    if (val.length < 2) { errEl.textContent = 'At least 2 characters.'; errEl.style.display = 'block'; return; }
+    saveBtn.disabled = true; saveBtn.textContent = '...';
+    try {
+      var r = await fetch('/api/profile', { method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'}, body: JSON.stringify({display_name: val}) });
+      var d = await r.json();
+      if (d.ok) {
+        if (dnEl) dnEl.textContent = val;
+        if (window.currentUser) window.currentUser.display_name = val;
+        ov.remove();
+        var t = document.getElementById('toast');
+        if (t) { t.textContent = 'Name updated!'; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 2200); }
+      } else {
+        errEl.textContent = d.error || 'Error. Try again.';
+        errEl.style.display = 'block';
+        saveBtn.disabled = false; saveBtn.textContent = 'SAVE NAME';
+      }
+    } catch(e) {
+      errEl.textContent = 'Connection error.';
+      errEl.style.display = 'block';
+      saveBtn.disabled = false; saveBtn.textContent = 'SAVE NAME';
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  var btn = document.getElementById('prof-name-edit-btn');
+  if (btn) btn.addEventListener('click', function(e){ e.stopPropagation(); hwEditName(); });
+});
+</script>
 </body>
 </html>
 
