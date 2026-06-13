@@ -380,7 +380,7 @@
         + '<div id="uprof-av" style="width:90px;height:90px;border-radius:50%;border:4px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:2rem;overflow:hidden;">'+escH((name||'?').charAt(0).toUpperCase())+'</div>'
       + '</div>'
       + '<div style="text-align:center;padding:0.5rem 1rem 0;flex-shrink:0;">'
-        + '<div style="font-family:var(--font-d);font-size:1.3rem;letter-spacing:0.04em;">'+escH(name||'User')+'</div>'
+        + '<div id="uprof-name" style="font-family:var(--font-d);font-size:1.3rem;letter-spacing:0.04em;">'+escH(name||'User')+'</div>'
         + '<div id="uprof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.6rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-top:0.3rem;"></div>'
       + '</div>'
       + '<div style="display:flex;justify-content:center;padding:0.65rem 1rem 0.4rem;flex-shrink:0;">'
@@ -417,6 +417,19 @@
     /* Cargar datos */
     fetch('/api/profile?user_id='+encodeURIComponent(uid),{credentials:'include'})
       .then(function(r){return r.json();}).then(function(d){
+        /* Actualizar nombre real desde D1 */
+        var realName = d.display_name || name || '';
+        if(realName){
+          /* Topbar */
+          var topbar=page.querySelector('div[style*="font-family:var(--font-d)"][style*="flex:1"]');
+          if(topbar) topbar.textContent=realName;
+          /* Nombre grande */
+          var nameEl=page.querySelector('[id="uprof-name"]');
+          if(nameEl) nameEl.textContent=realName;
+          /* Avatar inicial */
+          var avEl=document.getElementById('uprof-av');
+          if(avEl&&!d.avatar_url) avEl.textContent=realName.charAt(0).toUpperCase();
+        }
         if(d.banner_url){var bn=document.getElementById('uprof-banner');if(bn){var bi=document.createElement('img');bi.src=d.banner_url;bi.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;';bn.insertBefore(bi,bn.firstChild);}}
         var av=document.getElementById('uprof-av');if(av&&d.avatar_url) av.innerHTML='<img src="'+d.avatar_url+'" style="width:100%;height:100%;object-fit:cover;">';
         var bio=document.getElementById('uprof-bio');if(bio&&d.bio) bio.textContent=d.bio;
