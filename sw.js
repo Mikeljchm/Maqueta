@@ -1,5 +1,5 @@
-/* HOTT WRESTLING — Service Worker v5 */
-const VERSION      = 'v5';
+/* HOTT WRESTLING — Service Worker v6 */
+const VERSION      = 'v6';
 const CACHE_STATIC = 'hw-static-' + VERSION;
 const CACHE_PAGES  = 'hw-pages-'  + VERSION;
 const CACHE_IMAGES = 'hw-images-' + VERSION;
