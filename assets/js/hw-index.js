@@ -2659,31 +2659,38 @@ async function votePoll(postId, idx, poll, container) {
 
   function signOut() { HottAuth.logout(); }
 
-  function updateAuthUI(user) {
+  async function updateAuthUI(user) {
     const nameEl = document.getElementById('user-display-name');
     const emailEl = document.getElementById('user-display-email');
     const avatarWrap = document.getElementById('user-avatar-wrap');
     const actionBtn = document.getElementById('user-action-btn');
 
     if (user) {
-      const name = user.display_name || user.name || user.email.split('@')[0];
-      const avatar = user.picture || '';
       const email = user.email || '';
-
-      if (nameEl) nameEl.textContent = name;
       if (emailEl) emailEl.textContent = email;
-      /* Override with D1 display_name if set */
-      fetch('/api/profile', {credentials:'include'}).then(function(r){ return r.json(); }).then(function(d){
-        if (d.display_name) {
-          if (nameEl) nameEl.textContent = d.display_name;
-          if (window.currentUser) window.currentUser.display_name = d.display_name;
+
+      /* Always fetch D1 first — never trust Google name */
+      var displayName = user.display_name || user.name || user.email.split('@')[0];
+      try {
+        var pr = await fetch('/api/profile', {credentials:'include'});
+        var pd = await pr.json();
+        if (pd.display_name) {
+          displayName = pd.display_name;
+          if (window.currentUser) window.currentUser.display_name = pd.display_name;
+          try {
+            var raw = sessionStorage.getItem(HottAuth._CACHE_KEY);
+            if (raw) { var sc = JSON.parse(raw); sc.d.display_name = pd.display_name; sessionStorage.setItem(HottAuth._CACHE_KEY, JSON.stringify(sc)); }
+          } catch(e) {}
         }
-      }).catch(function(){});
+      } catch(e) {}
+
+      if (nameEl) nameEl.textContent = displayName;
       var fpill = document.getElementById('following-pill');
       if (fpill) fpill.style.display = '';
+      const avatar = user.picture || '';
       if (avatarWrap) {
         if (avatar) {
-          avatarWrap.innerHTML = '<img class="user-avatar" src="' + avatar + '" alt="' + name + '">';
+          avatarWrap.innerHTML = '<img class="user-avatar" src="' + avatar + '" alt="' + displayName + '">';
         } else {
           avatarWrap.innerHTML = '<div class="user-avatar-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>';
         }
