@@ -420,6 +420,16 @@
         if(d.banner_url){var bn=document.getElementById('uprof-banner');if(bn){var bi=document.createElement('img');bi.src=d.banner_url;bi.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;';bn.insertBefore(bi,bn.firstChild);}}
         var av=document.getElementById('uprof-av');if(av&&d.avatar_url) av.innerHTML='<img src="'+d.avatar_url+'" style="width:100%;height:100%;object-fit:cover;">';
         var bio=document.getElementById('uprof-bio');if(bio&&d.bio) bio.textContent=d.bio;
+        /* Edad pública */
+        if(d.age&&d.age_public){
+          var ubio=document.getElementById('uprof-bio');
+          if(ubio){
+            var ageSpan=document.createElement('div');
+            ageSpan.style.cssText='font-size:0.68rem;color:var(--text-muted);margin-top:0.2rem;';
+            ageSpan.textContent=d.age+' years old';
+            ubio.parentNode.insertBefore(ageSpan, ubio.nextSibling);
+          }
+        }
       }).catch(function(){});
 
     fetch('/api/points?user_id='+encodeURIComponent(uid))
@@ -4380,6 +4390,20 @@ async function votePoll(postId, idx, poll, container) {
           /* Mostrar la bio area si tiene contenido */
           var ba=document.getElementById('prof-bio-area'); if(ba) ba.style.display='';
         }
+        /* Mostrar/ocultar edad en perfil propio */
+        var ageEl2=document.getElementById('prof-age-display');
+        if(ageVal&&agePub){
+          if(!ageEl2){
+            ageEl2=document.createElement('div');
+            ageEl2.id='prof-age-display';
+            ageEl2.style.cssText='font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;text-align:center;';
+            var baRef=document.getElementById('prof-bio-area');
+            if(baRef) baRef.parentNode.insertBefore(ageEl2, baRef.nextSibling);
+          }
+          ageEl2.textContent=ageVal+' years old';
+        } else if(ageEl2 && !agePub){
+          ageEl2.textContent='';
+        }
         closeEP();
         var toast=document.getElementById('toast');
         if(toast){toast.textContent='Profile updated!';toast.classList.add('show');setTimeout(function(){toast.classList.remove('show');},2500);}
@@ -4446,7 +4470,7 @@ async function votePoll(postId, idx, poll, container) {
         }
         if(d.bio){
           var bt=document.getElementById('prof-bio-text'); if(bt) bt.textContent=d.bio;
-          var eb=document.getElementById('prof-bio-edit-btn'); if(eb) eb.textContent='Edit bio';
+          var ba2=document.getElementById('prof-bio-area'); if(ba2) ba2.style.display='';
         }
         /* Avatar guardado en D1 */
         if(d.avatar_url){
@@ -4457,6 +4481,18 @@ async function votePoll(postId, idx, poll, container) {
         if(d.banner_url){
           var hero=document.getElementById('page-more')&&document.getElementById('page-more').querySelector('.prof-hero');
           if(hero){ var bImg=document.createElement('img'); bImg.src=d.banner_url; bImg.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;'; hero.insertBefore(bImg,hero.firstChild); }
+        }
+        /* Edad */
+        if(d.age && d.age_public){
+          var ageEl=document.getElementById('prof-age-display');
+          if(!ageEl){
+            ageEl=document.createElement('div');
+            ageEl.id='prof-age-display';
+            ageEl.style.cssText='font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;';
+            var bioArea3=document.getElementById('prof-bio-area');
+            if(bioArea3) bioArea3.parentNode.insertBefore(ageEl, bioArea3.nextSibling);
+          }
+          ageEl.textContent=d.age+' years old';
         }
       }).catch(function(){});
       if(adultToggle) adultToggle.checked=true;
