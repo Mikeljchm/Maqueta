@@ -4952,6 +4952,22 @@ async function votePoll(postId, idx, poll, container) {
     inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') saveBtn.click(); });
   };
 
+  /* Bind pencil button — runs after _editDisplayName is defined */
+  (function bindNameBtn() {
+    var btn = document.getElementById('prof-name-edit-btn');
+    if (btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        window._editDisplayName();
+      });
+    } else {
+      document.addEventListener('DOMContentLoaded', function() {
+        var b = document.getElementById('prof-name-edit-btn');
+        if (b) b.addEventListener('click', function(e){ e.stopPropagation(); window._editDisplayName(); });
+      });
+    }
+  }());
+
 })();
 
 /* ── ACTIVITY PANEL ── */
