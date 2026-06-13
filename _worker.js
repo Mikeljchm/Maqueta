@@ -2077,6 +2077,10 @@ export default {
       if (path === '/api/trending') return handleTrending(request, env, corsH);
       if (path === '/api/activity') return handleActivity(request, env, corsH);
       if (path === '/api/profile') return handleProfile(request, env, corsH);
+      if (path === '/api/debug-profiles') {
+        const { results } = await env.DB.prepare('SELECT user_id, display_name, username, bio FROM user_profiles LIMIT 20').all();
+        return apiJson({ rows: results }, 200, corsH);
+      }
       if (path === '/api/reactions') return handleReactions(request, env, corsH);
       if (path === '/api/collections') return handleCollections(request, env, corsH);
       if (path === '/api/save') return handleSave(request, env, corsH);
