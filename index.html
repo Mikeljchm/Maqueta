@@ -370,7 +370,6 @@ layout: none
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
             </button>
             <div class="prof-dropdown" id="prof-dropdown">
-
               <div class="prof-dd-item">
                 <span>Adult Content</span>
                 <label class="prof-toggle"><input type="checkbox" id="toggle-adult"><span class="prof-toggle-track"></span></label>
@@ -403,49 +402,36 @@ layout: none
           </div>
         </div>
 
-        <!-- HERO COVER -->
-        <div class="prof-hero">
+        <!-- BANNER — toca para cambiar -->
+        <div class="prof-hero" style="height:180px;cursor:pointer;">
           <div class="prof-hero-glow"></div>
           <div class="prof-hero-pattern"></div>
+          <div class="prof-hero-edit-hint"><div class="prof-hero-edit-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div></div>
         </div>
 
-        <!-- AVATAR -->
-        <div class="prof-avatar-row">
-          <div class="prof-avatar-wrap" id="user-avatar-wrap">
+        <!-- AVATAR — centrado, flotando sobre el banner -->
+        <div style="display:flex;flex-direction:column;align-items:center;margin-top:-46px;position:relative;z-index:3;">
+          <div class="prof-avatar-wrap" id="user-avatar-wrap" style="width:90px;height:90px;border:4px solid var(--bg);">
             <div class="user-avatar-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
-          </div>
-          <!-- Instagram-style stats next to avatar -->
-          <div class="prof-ig-stats" id="prof-ig-stats" style="display:none;">
-            <button class="prof-ig-stat" id="own-stat-posts">
-              <span class="prof-ig-stat-n" id="own-posts-count">0</span>
-              <span class="prof-ig-stat-l">Posts</span>
-            </button>
-            <button class="prof-ig-stat" id="own-stat-followers" onclick="if(window.currentUser)window._openFollowSheet(window.currentUser.id,'followers')">
-              <span class="prof-ig-stat-n" id="own-followers-count">0</span>
-              <span class="prof-ig-stat-l">Followers</span>
-            </button>
-            <button class="prof-ig-stat" id="own-stat-following" onclick="if(window.currentUser)window._openFollowSheet(window.currentUser.id,'following')">
-              <span class="prof-ig-stat-n" id="own-following-count">0</span>
-              <span class="prof-ig-stat-l">Following</span>
-            </button>
+            <div class="prof-avatar-cam"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
           </div>
         </div>
 
-        <!-- INFO -->
-        <div class="prof-info">
-          <div style="display:flex;align-items:center;gap:0.4rem;">
-            <div class="prof-fullname" id="user-display-name">Sign in to get started</div>
-            <button id="prof-name-edit-btn" style="background:none;border:none;color:var(--fire-orange);padding:0.35rem;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;border-radius:8px;opacity:0.85;line-height:0;" aria-label="Edit name">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <!-- NOMBRE + BADGE — centrado -->
+        <div style="text-align:center;padding:0.5rem 1rem 0;">
+          <div style="display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+            <div class="prof-fullname" id="user-display-name" style="font-size:1.3rem;">Sign in to get started</div>
+            <button id="prof-name-edit-btn" style="background:none;border:none;color:var(--fire-orange);padding:0.35rem;cursor:pointer;border-radius:8px;opacity:0.85;line-height:0;" aria-label="Edit name">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
           </div>
-          <div id="prof-name-input-wrap" style="display:none;flex-direction:row;gap:0.4rem;margin-bottom:0.35rem;">
+          <div id="prof-name-input-wrap" style="display:none;flex-direction:row;gap:0.4rem;margin-bottom:0.35rem;justify-content:center;">
             <input id="prof-name-input" type="text" maxlength="50" placeholder="Your display name"
-              style="flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:0.3rem 0.6rem;font-size:0.85rem;font-family:var(--font-b);outline:none;">
+              style="flex:1;max-width:200px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:0.3rem 0.6rem;font-size:0.85rem;font-family:var(--font-b);outline:none;">
             <button id="prof-name-save" style="background:var(--fire-orange);color:#fff;border:none;border-radius:8px;padding:0.3rem 0.7rem;font-size:0.75rem;cursor:pointer;font-family:var(--font-d);letter-spacing:0.05em;">Save</button>
             <button id="prof-name-cancel" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:0.3rem 0.5rem;font-size:0.75rem;cursor:pointer;">&#10005;</button>
           </div>
-          <div class="prof-username-wrap" id="prof-username-wrap" style="display:none">
+          <div class="prof-username-wrap" id="prof-username-wrap" style="display:none;justify-content:center;">
             <span class="prof-username" id="prof-username-display">@username</span>
             <button class="prof-username-edit-btn" id="prof-username-edit-btn" aria-label="Edit username">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -455,15 +441,31 @@ layout: none
             <input class="prof-username-input" id="prof-username-input" type="text" maxlength="30" placeholder="Choose username">
             <button class="prof-username-save" id="prof-username-save">Save</button>
           </div>
-          <div class="prof-badge" id="prof-badge" style="display:none"></div>
-          <!-- BIO -->
-          <div class="prof-bio-area" id="prof-bio-area" style="display:none">
+          <div class="prof-badge" id="prof-badge" style="display:none;justify-content:center;margin-top:0.3rem;"></div>
+          <!-- BIO centrada -->
+          <div class="prof-bio-area" id="prof-bio-area" style="display:none;text-align:center;">
             <div class="prof-bio-text" id="prof-bio-text"></div>
             <button class="prof-bio-edit-btn" id="prof-bio-edit-btn">+ Add bio</button>
           </div>
         </div>
 
-                <!-- SIGN IN CARD -->
+        <!-- STATS — Posts · Followers · Following centrados -->
+        <div class="prof-ig-stats" id="prof-ig-stats" style="display:none;justify-content:center;padding:0.65rem 1rem 0.5rem;">
+          <button class="prof-ig-stat" id="own-stat-posts">
+            <span class="prof-ig-stat-n" id="own-posts-count">0</span>
+            <span class="prof-ig-stat-l">Posts</span>
+          </button>
+          <button class="prof-ig-stat" id="own-stat-followers" onclick="if(window.currentUser)window._openFollowSheet(window.currentUser.id,'followers')">
+            <span class="prof-ig-stat-n" id="own-followers-count">0</span>
+            <span class="prof-ig-stat-l">Followers</span>
+          </button>
+          <button class="prof-ig-stat" id="own-stat-following" onclick="if(window.currentUser)window._openFollowSheet(window.currentUser.id,'following')">
+            <span class="prof-ig-stat-n" id="own-following-count">0</span>
+            <span class="prof-ig-stat-l">Following</span>
+          </button>
+        </div>
+
+        <!-- SIGN IN CARD -->
         <div class="prof-signin-card" id="prof-signin-card">
           <div class="prof-signin-icon"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--fire-orange)" stroke-width="1.2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
           <div class="prof-signin-title">JOIN HOTT WRESTLING</div>
