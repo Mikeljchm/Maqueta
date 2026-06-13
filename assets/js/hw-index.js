@@ -2618,16 +2618,29 @@ async function votePoll(postId, idx, poll, container) {
   const HottAuth = {
     _session: null, _cb: [], _CACHE_KEY: 'hw_s', _TTL: 300000,
     async init() {
+      /* Step 1: get Google session (cache or fresh) */
       try {
         const raw = sessionStorage.getItem(this._CACHE_KEY);
-        if(raw){ const c=JSON.parse(raw); if(Date.now()-c.t<this._TTL){ this._session=c.d; this._cb.forEach(fn=>fn(this._session)); return this._session; } }
+        if(raw){ const c=JSON.parse(raw); if(Date.now()-c.t<this._TTL){ this._session=c.d; } }
       } catch(e){}
-      try {
-        const r = await fetch('/auth/google/session',{credentials:'include'});
-        const d = await r.json();
-        this._session = d.authenticated ? d.user : null;
+      if (!this._session) {
+        try {
+          const r = await fetch('/auth/google/session',{credentials:'include'});
+          const d = await r.json();
+          this._session = d.authenticated ? d.user : null;
+        } catch { this._session = null; }
+      }
+      /* Step 2: always merge display_name from D1 — never trust Google name */
+      if (this._session) {
+        try {
+          const pr = await fetch('/api/profile',{credentials:'include'});
+          const pd = await pr.json();
+          if (pd.display_name) this._session.display_name = pd.display_name;
+          if (pd.avatar_url)   this._session.picture      = pd.avatar_url;
+        } catch(e) {}
+        /* Save enriched session to cache */
         try { sessionStorage.setItem(this._CACHE_KEY, JSON.stringify({d:this._session,t:Date.now()})); } catch(e){}
-      } catch { this._session = null; }
+      }
       this._cb.forEach(fn => fn(this._session)); return this._session;
     },
     login() { sessionStorage.removeItem(this._CACHE_KEY); window.location.href = '/auth/google/login?redirect=' + encodeURIComponent(window.location.href); },
