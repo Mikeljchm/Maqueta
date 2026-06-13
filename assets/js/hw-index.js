@@ -2672,8 +2672,6 @@ async function votePoll(postId, idx, poll, container) {
 
       if (nameEl) nameEl.textContent = name;
       if (emailEl) emailEl.textContent = email;
-      var _neb = document.getElementById('prof-name-edit-btn');
-      if (_neb) _neb.style.display = 'inline-flex';
       var fpill = document.getElementById('following-pill');
       if (fpill) fpill.style.display = '';
       if (avatarWrap) {
@@ -4514,8 +4512,6 @@ async function votePoll(postId, idx, poll, container) {
       if(stats)      stats.style.display='';
       if(unWrap)     unWrap.style.display='flex';
       if(bioAreaEl)  bioAreaEl.style.display='';
-      var _neb2 = document.getElementById('prof-name-edit-btn');
-      if(_neb2)      _neb2.style.display='inline-flex';
       if(badge){
         var lvl=(user.level)||'Rookie';
         var bdg=(user.badge)||'&#128304;';
