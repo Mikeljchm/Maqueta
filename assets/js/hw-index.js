@@ -4514,6 +4514,8 @@ async function votePoll(postId, idx, poll, container) {
       if(stats)      stats.style.display='';
       if(unWrap)     unWrap.style.display='flex';
       if(bioAreaEl)  bioAreaEl.style.display='';
+      var _neb2 = document.getElementById('prof-name-edit-btn');
+      if(_neb2)      _neb2.style.display='inline-flex';
       if(badge){
         var lvl=(user.level)||'Rookie';
         var bdg=(user.badge)||'&#128304;';
