@@ -2671,8 +2671,6 @@ async function votePoll(postId, idx, poll, container) {
       const email = user.email || '';
 
       if (nameEl) nameEl.textContent = name;
-      var nameEditBtnEl = document.getElementById('prof-name-edit-btn');
-      if (nameEditBtnEl) nameEditBtnEl.style.display = '';
       if (emailEl) emailEl.textContent = email;
       var fpill = document.getElementById('following-pill');
       if (fpill) fpill.style.display = '';
@@ -4434,6 +4432,8 @@ async function votePoll(postId, idx, poll, container) {
   var nameSave       = document.getElementById('prof-name-save');
   var nameCancel     = document.getElementById('prof-name-cancel');
   var nameEl         = document.getElementById('user-display-name');
+  /* Show edit button if already logged in */
+  if (window.currentUser && nameEditBtn) nameEditBtn.style.display = '';
 
   function showNameInput() {
     if (nameInputWrap) { nameInputWrap.style.display = 'flex'; }
