@@ -2672,6 +2672,13 @@ async function votePoll(postId, idx, poll, container) {
 
       if (nameEl) nameEl.textContent = name;
       if (emailEl) emailEl.textContent = email;
+      /* Override with D1 display_name if set */
+      fetch('/api/profile', {credentials:'include'}).then(function(r){ return r.json(); }).then(function(d){
+        if (d.display_name) {
+          if (nameEl) nameEl.textContent = d.display_name;
+          if (window.currentUser) window.currentUser.display_name = d.display_name;
+        }
+      }).catch(function(){});
       var fpill = document.getElementById('following-pill');
       if (fpill) fpill.style.display = '';
       if (avatarWrap) {
