@@ -352,276 +352,121 @@
   }
 
   window.openMiniProfile = function openMiniProfile(uid, name) {
+    if (window.currentUser && uid === window.currentUser.id) {
+      var moreBtn = document.querySelector('.nav-item[data-page="more"]');
+      if (moreBtn) moreBtn.click();
+      return;
+    }
     var page = document.getElementById('page-user-profile');
     if (!page) {
       page = document.createElement('div');
       page.id = 'page-user-profile';
-      page.style.cssText = (
-        'position:fixed;inset:0;background:var(--bg);z-index:250;'
-        + 'display:none;flex-direction:column;max-width:480px;margin:0 auto;'
-        + 'transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);'
-      );
+      page.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:250;display:none;flex-direction:column;max-width:480px;margin:0 auto;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);';
       document.body.appendChild(page);
     }
-
     page.style.display = 'flex';
     page.innerHTML =
-      /* ── TOP BAR ── */
-      '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem 0.5rem;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;">'        + '<button id="user-prof-back" style="background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">'          + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'        + '</button>'        + '<div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;" id="user-prof-topname"></div>'      + '</div>'      /* ── BANNER ── */
-      + '<div id="user-prof-hero" style="height:110px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;">'        + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.38) 0%,transparent 65%);pointer-events:none;"></div>'      + '</div>'      /* ── AVATAR — fuera del scroll para no cortarse ── */
-      + '<div style="padding:0 1rem;margin-top:-36px;flex-shrink:0;position:relative;z-index:4;">'        + '<div id="user-prof-av" style="width:72px;height:72px;border-radius:50%;border:3px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.6rem;overflow:hidden;"></div>'      + '</div>'
-      /* Stats: posts · followers · following — fuera del scroll */
-      + '<div style="display:flex;gap:0;padding:0.35rem 1rem 0.25rem;flex-shrink:0;">'          + '<div style="flex:1;text-align:center;">'            + '<div id="user-prof-post-count" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Posts</div>'          + '</div>'          + '<button class="prof-follow-stat" data-ftype="followers" onclick="window._openFollowSheet(\''+escH(uid)+'\',\'followers\')" style="flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0;">'            + '<div id="user-prof-followers" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;color:var(--text);">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Followers</div>'          + '</button>'          + '<button class="prof-follow-stat" data-ftype="following" onclick="window._openFollowSheet(\''+escH(uid)+'\',\'following\')" style="flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:0;">'            + '<div id="user-prof-following" style="font-family:var(--font-d);font-size:1.1rem;line-height:1;color:var(--text);">-</div>'            + '<div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.1rem;">Following</div>'          + '</button>'        + '</div>'      + '</div>'      /* ── NAME + BADGE + BIO + BUTTONS ── */
-      + '<div style="padding:0.4rem 1rem 0.65rem;flex-shrink:0;">'        + '<div style="font-family:var(--font-d);font-size:1.15rem;letter-spacing:0.04em;margin-bottom:0.15rem;" id="user-prof-name-display"></div>'        + '<div id="user-prof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.55rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-bottom:0.3rem;"></div>'        + '<div id="user-prof-bio" style="font-size:0.8rem;color:var(--text-dim);line-height:1.5;margin-bottom:0.6rem;"></div>'        /* Action buttons row */
-        + '<div style="display:flex;gap:0.5rem;align-items:center;">'          + (window.currentUser && window.currentUser.id !== uid              ? '<button id="user-prof-follow-btn" onclick="window._toggleFollow(this,\'' + escH(uid) + '\')" style="background:var(--fire-orange);color:#fff;border:none;border-radius:8px;padding:0.4rem 1.4rem;font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.05em;cursor:pointer;">Follow</button>'              : '')          + (window._adminIsOn && window._adminIsOn()              ? '<button onclick="window._adminBanUser(\'' + escH(uid) + '\',\'' + escH(name||"User") + '\')" style="flex:1;background:#3a0808;color:#ff5555;border:1px solid #6a1010;border-radius:10px;padding:0.5rem 0;font-size:0.72rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban Account</button>'              : '')        + '</div>'      + '</div>'      /* ── TABS ── */
-      + '<div id="user-prof-tabs" style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">'        + '<button class="upt active" data-tab="posts" style="min-width:72px;padding:0.65rem 0.5rem;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Posts</button>'        + '<button class="upt" data-tab="liked" style="min-width:72px;padding:0.65rem 0.5rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Liked</button>'        + '<button class="upt" data-tab="activity" style="min-width:72px;padding:0.65rem 0.5rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Activity</button>'              + '</div>'      /* ── CONTENT PANELS ── */
-      + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;">'        + '<div id="user-prof-posts" style="padding:0.75rem 1rem 3rem;">'          + '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>'        + '</div>'        + '<div id="user-prof-liked" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="user-prof-activity" style="display:none;padding:0.75rem 1rem 3rem;"></div>'              + '</div>'
+      '<div style="display:flex;align-items:center;padding:0.85rem 1rem 0.5rem;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;gap:0.75rem;">'
+        + '<button id="uprof-back" style="background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">'
+          + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'
+        + '</button>'
+        + '<div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;">'+escH(name||'Profile')+'</div>'
+      + '</div>'
+      + '<div id="uprof-banner" style="width:100%;height:180px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;">'
+        + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(255,69,0,0.45) 0%,transparent 70%);pointer-events:none;"></div>'
+        + '<div style="position:absolute;inset:0;opacity:0.04;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;align-items:center;margin-top:-46px;flex-shrink:0;position:relative;z-index:3;">'
+        + '<div id="uprof-av" style="width:90px;height:90px;border-radius:50%;border:4px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:2rem;overflow:hidden;">'+escH((name||'?').charAt(0).toUpperCase())+'</div>'
+      + '</div>'
+      + '<div style="text-align:center;padding:0.5rem 1rem 0;flex-shrink:0;">'
+        + '<div style="font-family:var(--font-d);font-size:1.3rem;letter-spacing:0.04em;">'+escH(name||'User')+'</div>'
+        + '<div id="uprof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.6rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-top:0.3rem;"></div>'
+      + '</div>'
+      + '<div style="display:flex;justify-content:center;padding:0.65rem 1rem 0.4rem;flex-shrink:0;">'
+        + '<div style="flex:1;text-align:center;"><div id="uprof-pc" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Posts</div></div>'
+        + '<div style="flex:1;text-align:center;"><div id="uprof-fr" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Followers</div></div>'
+        + '<div style="flex:1;text-align:center;"><div id="uprof-fg" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Following</div></div>'
+      + '</div>'
+      + '<div id="uprof-bio" style="text-align:center;font-size:0.78rem;color:var(--text-dim);line-height:1.5;padding:0 1.5rem 0.4rem;flex-shrink:0;"></div>'
+      + (window.currentUser && window.currentUser.id !== uid
+          ? '<div style="padding:0 1rem 0.65rem;flex-shrink:0;"><button id="uprof-fb" style="width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:25px;padding:0.65rem;font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;">Follow</button></div>'
+          : '<div style="height:0.5rem;flex-shrink:0;"></div>')
+      + '<div style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;">'
+        + '<button class="uprof-tab active" data-utab="posts" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'
+        + '<button class="uprof-tab" data-utab="liked" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'
+        + '<button class="uprof-tab" data-utab="activity" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'
+      + '</div>'
+      + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;">'
+        + '<div id="uprof-posts-panel" style="padding:0.75rem 1rem 3rem;"><div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1.5rem;">Loading...</div></div>'
+        + '<div id="uprof-liked-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+        + '<div id="uprof-activity-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
+      + '</div>';
 
-    requestAnimationFrame(function(){ requestAnimationFrame(function(){
-      page.style.transform = 'translateX(0)';
-    }); });
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ page.style.transform='translateX(0)'; }); });
 
-    /* Fill name in topbar and info section */
-    var topName = document.getElementById('user-prof-topname');
-    var nameDisp = document.getElementById('user-prof-name-display');
-    if (topName) topName.textContent = name || 'Profile';
-    if (nameDisp) nameDisp.textContent = name || 'User';
+    function closeUProf(){ page.style.transform='translateX(100%)'; setTimeout(function(){ page.style.display='none'; },330); }
+    document.getElementById('uprof-back').addEventListener('click', closeUProf);
+    var _sx=0,_sy=0;
+    page.addEventListener('touchstart',function(e){_sx=e.touches[0].clientX;_sy=e.touches[0].clientY;},{passive:true});
+    page.addEventListener('touchend',function(e){
+      var dx=e.changedTouches[0].clientX-_sx,dy=Math.abs(e.changedTouches[0].clientY-_sy);
+      if(_sx<35&&dx>60&&dx>dy*2) closeUProf();
+    },{passive:true});
 
-    /* Load follow stats + post count */
-    fetch('/api/user-follows/stats?user_id=' + encodeURIComponent(uid), { credentials: 'include' })
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        var frEl = document.getElementById('user-prof-followers');
-        var fgEl = document.getElementById('user-prof-following');
-        if (frEl) frEl.textContent = d.followers || 0;
-        if (fgEl) fgEl.textContent = d.following || 0;
-        var followBtn = document.getElementById('user-prof-follow-btn');
-        if (followBtn) {
-          followBtn.textContent = d.is_following ? 'Following' : 'Follow';
-          followBtn.style.background = d.is_following ? 'var(--surface-3)' : 'var(--fire-orange)';
-          followBtn.style.color = d.is_following ? 'var(--text-dim)' : '#fff';
-          followBtn.style.border = d.is_following ? '1px solid var(--border)' : 'none';
-          followBtn.style.padding = '0.4rem 1.4rem';
-        }
+    /* Cargar datos */
+    fetch('/api/profile?user_id='+encodeURIComponent(uid),{credentials:'include'})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d.banner_url){var bn=document.getElementById('uprof-banner');if(bn){var bi=document.createElement('img');bi.src=d.banner_url;bi.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;';bn.insertBefore(bi,bn.firstChild);}}
+        var av=document.getElementById('uprof-av');if(av&&d.avatar_url) av.innerHTML='<img src="'+d.avatar_url+'" style="width:100%;height:100%;object-fit:cover;">';
+        var bio=document.getElementById('uprof-bio');if(bio&&d.bio) bio.textContent=d.bio;
       }).catch(function(){});
-    /* Post count */
-    fetch('/api/posts?user_id=' + encodeURIComponent(uid))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        var pc = document.getElementById('user-prof-post-count');
-        if (pc) pc.textContent = (d.posts||[]).length;
+
+    fetch('/api/points?user_id='+encodeURIComponent(uid))
+      .then(function(r){return r.json();}).then(function(d){
+        var b=document.getElementById('uprof-badge');if(b) b.textContent=(d.badge||'')+' '+(d.level||'Rookie');
       }).catch(function(){});
 
-    document.getElementById('user-prof-back').addEventListener('click', closeMiniProfile);
+    fetch('/api/user-follows/stats?user_id='+encodeURIComponent(uid),{credentials:'include'})
+      .then(function(r){return r.json();}).then(function(d){
+        var fr=document.getElementById('uprof-fr'),fg=document.getElementById('uprof-fg');
+        if(fr) fr.textContent=d.followers||0; if(fg) fg.textContent=d.following||0;
+        var fb=document.getElementById('uprof-fb');
+        if(fb){fb.textContent=d.is_following?'Following':'Follow';fb.style.background=d.is_following?'var(--surface-3)':'var(--fire-orange)';fb.style.color=d.is_following?'var(--text-dim)':'#fff';fb.style.border=d.is_following?'1px solid var(--border)':'none';}
+      }).catch(function(){});
 
+    var fb2=document.getElementById('uprof-fb');
+    if(fb2) fb2.addEventListener('click',function(){ if(window._toggleFollow) window._toggleFollow(fb2,uid); });
 
+    fetch('/api/posts?user_id='+encodeURIComponent(uid))
+      .then(function(r){return r.json();}).then(function(d){
+        var posts=d.posts||[];
+        var pc=document.getElementById('uprof-pc');if(pc) pc.textContent=posts.length;
+        var panel=document.getElementById('uprof-posts-panel');if(!panel) return;
+        if(!posts.length){panel.innerHTML='<div style="color:var(--text-muted);text-align:center;padding:2rem 0;font-size:0.8rem;">No posts yet.</div>';return;}
+        panel.innerHTML=posts.map(function(p){
+          var lo=(p.image_url||'').toLowerCase().split('?')[0];
+          var media=p.image_url?(lo.endsWith('.mp4')||lo.endsWith('.webm')
+            ?'<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:260px;object-fit:cover;" src="'+p.image_url+'" muted playsinline controls controlslist="nodownload"></video>'
+            :'<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:260px;object-fit:cover;" src="'+p.image_url+'" loading="lazy">'):'';
+          var body=p.body&&p.body.trim()&&p.body.trim()!==' '?'<div style="font-size:0.85rem;line-height:1.5;color:var(--text);margin-bottom:0.4rem;">'+escH(p.body)+'</div>':'';
+          var t=(Date.now()-new Date(p.created_at).getTime())/1000;
+          var ago=t<60?'just now':t<3600?Math.floor(t/60)+'m ago':t<86400?Math.floor(t/3600)+'h ago':Math.floor(t/86400)+'d ago';
+          return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.75rem;">'+media+body+'<div style="font-size:0.62rem;color:var(--text-muted);">'+ago+'</div></div>';
+        }).join('');
+      }).catch(function(){});
 
-    var sx = 0;
-    page.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; }, {passive:true});
-    page.addEventListener('touchend', function(e){
-      if (e.changedTouches[0].clientX - sx > 70) closeMiniProfile();
-    }, {passive:true});
-
-    /* Tab switching */
-    page.querySelectorAll('.upt').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        page.querySelectorAll('.upt').forEach(function(b){
-          b.style.borderBottomColor = 'transparent';
-          b.style.color = 'var(--text-dim)';
-          b.classList.remove('active');
-        });
-        btn.style.borderBottomColor = 'var(--fire-orange)';
-        btn.style.color = 'var(--fire-orange)';
-        btn.classList.add('active');
-        var t = btn.getAttribute('data-tab');
-        page.querySelectorAll('#user-prof-posts,#user-prof-liked,#user-prof-activity').forEach(function(p){ p.style.display='none'; });
-        document.getElementById('user-prof-'+t).style.display = 'block';
-        if (t === 'liked' && !btn._loaded) { btn._loaded = true; loadPublicLiked(uid); }
-        if (t === 'activity' && !btn._loaded) { btn._loaded = true; loadPublicActivity(uid); }
-
+    page.querySelectorAll('.uprof-tab').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        page.querySelectorAll('.uprof-tab').forEach(function(b){ b.style.borderBottomColor='transparent'; b.style.color='var(--text-dim)'; });
+        btn.style.borderBottomColor='var(--fire-orange)'; btn.style.color='var(--fire-orange)';
+        var tab=btn.getAttribute('data-utab');
+        document.getElementById('uprof-posts-panel').style.display=tab==='posts'?'':'none';
+        document.getElementById('uprof-liked-panel').style.display=tab==='liked'?'':'none';
+        document.getElementById('uprof-activity-panel').style.display=tab==='activity'?'':'none';
       });
     });
-
-    /* Helper render post card */
-    function _renderPubPost(p) {
-      var avUrl = (window._resolveAvatar||function(u,a){return a||'';})(p.user_id, p.user_avatar);
-      var avHtml = avUrl
-        ? '<img src="'+avUrl+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">'
-        : '<div style="width:32px;height:32px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.9rem;">'+escH((p.user_name||'?').charAt(0).toUpperCase())+'</div>';
-      var mediaHtml = '';
-      if (p.image_url) {
-        var lo = p.image_url.toLowerCase().split('?')[0];
-        mediaHtml = lo.endsWith('.mp4')||lo.endsWith('.webm')
-          ? '<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;cursor:pointer;" src="'+p.image_url+'" autoplay loop muted playsinline onclick="if(window._openPMV)window._openPMV(this.src,true)"></video>'
-          : '<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:240px;object-fit:cover;cursor:pointer;" src="'+p.image_url+'" loading="lazy" onclick="if(window._openPMV)window._openPMV(this.src,false)">';
-      }
-      var body = p.body&&p.body.trim()&&p.body.trim()!==' '
-        ? '<div style="font-size:0.85rem;line-height:1.5;color:var(--text);margin-bottom:0.4rem;">'+escH(p.body)+'</div>' : '';
-      var t = (Date.now()-new Date(p.created_at).getTime())/1000;
-      var ago = t<60?'just now':t<3600?Math.floor(t/60)+'m ago':t<86400?Math.floor(t/3600)+'h ago':Math.floor(t/86400)+'d ago';
-      return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.75rem;">'
-        + '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">'
-          + avHtml
-          + '<div>'
-            + '<div style="font-family:var(--font-d);font-size:0.78rem;letter-spacing:0.04em;">'+escH(p.user_name||'User')+'</div>'
-            + '<div style="font-size:0.63rem;color:var(--text-muted);">'+ago+'</div>'
-          + '</div>'
-        + '</div>'
-        + mediaHtml + body
-      + (window._adminIsOn&&window._adminIsOn()
-          ? '<div style="margin-top:0.4rem;"><button class="adm-del-btn" data-upid="'+p.id+'" data-uid="'+escH(p.user_id||'')+'" onclick="window._adminDeleteUserPost('+p.id+',\''+escH(p.user_id||'')+'\',this)" title="Delete post">&#128465; Delete post</button></div>'
-          : '')
-      + '</div>';
-    }
-
-    /* Cargar badge */
-    fetch('/api/points?user_id=' + encodeURIComponent(uid))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        var b = document.getElementById('user-prof-badge');
-        if (b) {
-          b.textContent = (d.badge||'') + ' ' + (d.level||'Rookie');
-          var clsMap = {Rookie:'badge-rookie',Regular:'badge-regular',Soldier:'badge-soldier',VIP:'badge-vip'};
-          b.className = 'prof-badge ' + (clsMap[d.level]||'badge-rookie');
-        }
-      }).catch(function(){});
-
-    /* Cargar bio + avatar + banner */
-    fetch('/api/profile?user_id=' + encodeURIComponent(uid))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        var bio = document.getElementById('user-prof-bio');
-        if (bio && d.bio) bio.textContent = d.bio;
-        if (d.avatar_url) {
-          var avEl = document.getElementById('user-prof-av');
-          if (avEl) avEl.innerHTML = '<img src="'+d.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
-          /* Guardar en caché para _resolveAvatar si es el mismo usuario */
-          if (window.currentUser && window.currentUser.id === uid) window.currentUser.picture = d.avatar_url;
-        }
-        if (d.banner_url) {
-          var heroEl = document.getElementById('user-prof-hero');
-          if (heroEl) {
-            var bImg = document.createElement('img');
-            bImg.src = d.banner_url;
-            bImg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;';
-            heroEl.appendChild(bImg);
-          }
-        }
-      }).catch(function(){});
-
-    /* Cargar Posts */
-    fetch('/api/posts?user_id=' + encodeURIComponent(uid))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        var pf = document.getElementById('user-prof-posts');
-        if (!pf) return;
-        var posts = d.posts || [];
-        if (!posts.length) {
-          pf.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:2rem 0;">No posts yet.</div>';
-          return;
-        }
-        pf.innerHTML = posts.map(_renderPubPost).join('');
-      }).catch(function(){
-        var pf2 = document.getElementById('user-prof-posts');
-        if (pf2) pf2.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Could not load posts.</div>';
-      });
-
-    /* Cargar Liked posts */
-    function loadPublicLiked(userId) {
-      var el = document.getElementById('user-prof-liked');
-      if (!el) return;
-      el.innerHTML = '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>';
-      fetch('/api/likes?user_id=' + encodeURIComponent(userId))
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          var posts = d.posts || [];
-          if (!posts.length) {
-            el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:2rem 0;">No liked posts yet.</div>';
-            return;
-          }
-          el.innerHTML = posts.map(_renderPubPost).join('');
-        }).catch(function(){
-          el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Could not load.</div>';
-        });
-    }
-
-    /* Cargar Activity (comentarios) */
-    function loadPublicActivity(userId) {
-      var el = document.getElementById('user-prof-activity');
-      if (!el) return;
-      el.innerHTML = '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>';
-      fetch('/api/comments?user_id=' + encodeURIComponent(userId))
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          var comments = d.comments || [];
-          if (!comments.length) {
-            el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:2rem 0;">No comments yet.</div>';
-            return;
-          }
-          el.innerHTML = comments.map(function(c){
-            var avUrl = (window._resolveAvatar||function(u,a){return a||'';})(c.user_id, c.user_avatar);
-            var avHtml = avUrl
-              ? '<img src="'+avUrl+'" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;">'
-              : '<div style="width:30px;height:30px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:0.85rem;flex-shrink:0;">'+escH((c.user_name||'?').charAt(0).toUpperCase())+'</div>';
-            var t2 = (Date.now()-new Date(c.created_at).getTime())/1000;
-            var ago2 = t2<60?'just now':t2<3600?Math.floor(t2/60)+'m ago':t2<86400?Math.floor(t2/3600)+'h ago':Math.floor(t2/86400)+'d ago';
-            var stickerMatch = c.body ? c.body.match(/\[sticker\]([^\[]+)\[\/sticker\]/) : null;
-            var textPart = c.body ? c.body.replace(/\[sticker\][^\[]*\[\/sticker\]/g,'').trim() : '';
-            var bodyHtml = textPart ? '<div style="font-size:0.82rem;color:var(--text);line-height:1.4;">'+escH(textPart)+'</div>' : '';
-            if (stickerMatch) bodyHtml += '<video src="'+stickerMatch[1]+'" autoplay loop muted playsinline style="max-width:60px;border-radius:6px;display:block;margin-top:0.25rem;"></video>';
-            return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:0.75rem;margin-bottom:0.6rem;display:flex;gap:0.6rem;align-items:flex-start;">'
-              + avHtml
-              + '<div style="flex:1;min-width:0;">'
-                + '<div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.2rem;">'
-                  + '<span style="font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.04em;">'+escH(c.user_name||'User')+'</span>'
-                  + '<span style="font-size:0.6rem;color:var(--text-muted);">'+ago2+'</span>'
-                + '</div>'
-                + bodyHtml
-              + '</div>'
-            + '</div>';
-          }).join('');
-        }).catch(function(){
-          el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Could not load.</div>';
-        });
-    }
-
-    /* Load followers or following list */
-    function loadFollowList(userId, type) {
-      var el = document.getElementById('user-prof-' + type);
-      if (!el) return;
-      el.innerHTML = '<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Loading...</div>';
-      fetch('/api/user-follows/list?user_id=' + encodeURIComponent(userId) + '&type=' + type, { credentials: 'include' })
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          var users = d.users || [];
-          if (!users.length) {
-            el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;padding:2rem 0;">No ' + type + ' yet.</div>';
-            return;
-          }
-          el.innerHTML = users.map(function(u) {
-            var av = u.avatar_url
-              ? '<img src="' + u.avatar_url + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;">'
-              : '<div style="width:40px;height:40px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1rem;flex-shrink:0;">' + (u.username||'?').charAt(0).toUpperCase() + '</div>';
-            var uid2 = escH(u.user_id);
-            var uname2 = escH(u.username || 'User');
-            return '<div data-open-uid="' + uid2 + '" data-open-name="' + uname2 + '" style="display:flex;align-items:center;gap:0.75rem;padding:0.7rem 0;border-bottom:1px solid var(--border);cursor:pointer;">'
-              + av
-              + '<div style="flex:1;min-width:0;">'
-                + '<div style="font-family:var(--font-d);font-size:0.85rem;">' + uname2 + '</div>'
-              + '</div>'
-              + '</div>';
-          }).join('');
-          el.querySelectorAll('[data-open-uid]').forEach(function(row) {
-            row.addEventListener('click', function() {
-              if (window.openMiniProfile) window.openMiniProfile(row.getAttribute('data-open-uid'), row.getAttribute('data-open-name'));
-            });
-          });
-        })
-        .catch(function() {
-          el.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem;text-align:center;">Could not load.</div>';
-        });
-    }
-  }
+  };
 
   /* ── Delegation: Like comment ── */
   document.addEventListener('click', function(e) {
@@ -6271,9 +6116,9 @@ async function votePoll(postId, idx, poll, container) {
 
     var html = '<div class="post-card" data-post-id="'+p.id+'">'
       + '<div class="post-card-header">'
-        + '<div class="post-card-avatar">'+avatar+'</div>'
+        + '<div class="post-card-avatar" data-profile-uid="'+escH(p.user_id||'')+'" data-profile-name="'+escH(p.user_name||'')+'" style="cursor:pointer;">'+avatar+'</div>'
         + '<div class="post-card-meta">'
-          + '<div class="post-card-name">'+escH(p.user_name)+'</div>'
+          + '<div class="post-card-name" data-profile-uid="'+escH(p.user_id||'')+'" data-profile-name="'+escH(p.user_name||'')+'" style="cursor:pointer;">'+escH(p.user_name)+'</div>'
           + '<div class="post-card-date">'+timeAgo(p.created_at)+'</div>'
         + '</div>'
       + '</div>'
