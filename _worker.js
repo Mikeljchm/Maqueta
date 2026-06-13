@@ -826,6 +826,7 @@ async function handleProfile(request, env, corsH) {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`).run();
   try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN bio TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN display_name TEXT DEFAULT ''").run(); } catch(e){}
   try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN avatar_url TEXT DEFAULT ''").run(); } catch(e){}
   try { await env.DB.prepare("ALTER TABLE user_profiles ADD COLUMN banner_url TEXT DEFAULT ''").run(); } catch(e){}
 
@@ -837,9 +838,9 @@ async function handleProfile(request, env, corsH) {
     const targetId = url.searchParams.get('user_id') || (session ? session.id : null);
     if (!targetId) return apiJson({ error: 'Not authenticated' }, 401, corsH);
     const { results } = await env.DB.prepare(
-      'SELECT username, bio, avatar_url, banner_url FROM user_profiles WHERE user_id=?'
+      'SELECT username, display_name, bio, avatar_url, banner_url FROM user_profiles WHERE user_id=?'
     ).bind(targetId).all();
-    return apiJson({ username: results[0]?.username||null, bio: results[0]?.bio||'', avatar_url: results[0]?.avatar_url||'', banner_url: results[0]?.banner_url||'' }, 200, corsH);
+    return apiJson({ username: results[0]?.username||null, display_name: results[0]?.display_name||'', bio: results[0]?.bio||'', avatar_url: results[0]?.avatar_url||'', banner_url: results[0]?.banner_url||'' }, 200, corsH);
   }
 
   if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
@@ -852,6 +853,12 @@ async function handleProfile(request, env, corsH) {
     const _hasBanner = typeof body.banner_url === 'string';
     if (!username && bio === null && !_hasAvatar && !_hasBanner) return apiJson({ error: 'Nothing to update' }, 400, corsH);
     try {
+      const displayName = typeof body.display_name === 'string' ? body.display_name.trim().slice(0, 50) : null;
+      if (displayName !== null) {
+        await env.DB.prepare(
+          'INSERT INTO user_profiles (user_id, display_name) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET display_name=excluded.display_name'
+        ).bind(session.id, displayName).run();
+      }
       if (username) {
         const uname = username.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 30);
         if (uname.length < 3) return apiJson({ error: 'Username too short' }, 400, corsH);
