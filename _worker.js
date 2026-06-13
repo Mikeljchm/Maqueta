@@ -1842,26 +1842,7 @@ export default {
         return new Response(null, { status: 204, headers: corsH });
       }
 
-      /* ── Rate limiting by IP ── */
-      const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
-      const isWriteOp = request.method === 'POST' || request.method === 'DELETE' || request.method === 'PUT';
-      const isUpload  = path === '/api/upload';
-      const isAuth    = path.startsWith('/auth/');
-
-      if (!isAuth) {
-        /* Reads: 120/min per IP */
-        if (!isWriteOp && await checkRateLimit(env, 'r:'+clientIP, 120, 60)) {
-          return new Response(JSON.stringify({error:'Too many requests'}), {status:429, headers:{...corsH,'Content-Type':'application/json'}});
-        }
-        /* Writes: 30/min per IP */
-        if (isWriteOp && !isUpload && await checkRateLimit(env, 'w:'+clientIP, 30, 60)) {
-          return new Response(JSON.stringify({error:'Too many requests'}), {status:429, headers:{...corsH,'Content-Type':'application/json'}});
-        }
-        /* Uploads: 15/min per IP */
-        if (isUpload && await checkRateLimit(env, 'u:'+clientIP, 15, 60)) {
-          return new Response(JSON.stringify({error:'Too many uploads'}), {status:429, headers:{...corsH,'Content-Type':'application/json'}});
-        }
-      }
+      /* Rate limiting disabled — re-enable when on Workers Paid plan */
       /* ── Admin endpoints ── */
       if (path.startsWith('/api/admin')) {
         const adminCk = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
