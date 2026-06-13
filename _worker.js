@@ -830,7 +830,7 @@ async function handleProfile(request, env, corsH) {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`).run();
   /* Migrate older tables missing columns */
-  const migrations = ['display_name TEXT DEFAULT \'\'','bio TEXT DEFAULT \'\'','avatar_url TEXT DEFAULT \'\'','banner_url TEXT DEFAULT \'\''];
+  const migrations = ['display_name TEXT DEFAULT \'\'','bio TEXT DEFAULT \'\'','avatar_url TEXT DEFAULT \'\'','banner_url TEXT DEFAULT \'\'\'','age INTEGER DEFAULT NULL','age_public INTEGER DEFAULT 0'];
   for (const col of migrations) {
     try { await env.DB.prepare(`ALTER TABLE user_profiles ADD COLUMN ${col}`).run(); } catch(e) {}
   }
@@ -843,9 +843,9 @@ async function handleProfile(request, env, corsH) {
     const targetId = url.searchParams.get('user_id') || (session ? session.id : null);
     if (!targetId) return apiJson({ error: 'Not authenticated' }, 401, corsH);
     const { results } = await env.DB.prepare(
-      'SELECT username, display_name, bio, avatar_url, banner_url FROM user_profiles WHERE user_id=?'
+      'SELECT username, display_name, bio, avatar_url, banner_url, age, age_public FROM user_profiles WHERE user_id=?'
     ).bind(targetId).all();
-    return apiJson({ username: results[0]?.username||null, display_name: results[0]?.display_name||'', bio: results[0]?.bio||'', avatar_url: results[0]?.avatar_url||'', banner_url: results[0]?.banner_url||'' }, 200, corsH);
+    return apiJson({ username: results[0]?.username||null, display_name: results[0]?.display_name||'', bio: results[0]?.bio||'', avatar_url: results[0]?.avatar_url||'', banner_url: results[0]?.banner_url||'', age: results[0]?.age||null, age_public: results[0]?.age_public||0 }, 200, corsH);
   }
 
   if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
@@ -1363,6 +1363,13 @@ async function handleUserPosts(request, env, corsH) {
     /* Admin: desbanear */
     if (action === 'unban' && isAdmin) {
       await env.DB.prepare('DELETE FROM banned_users WHERE user_id=?').bind(body.user_id).run();
+      /* age */
+      if (typeof body.age === 'number' && body.age >= 13 && body.age < 120) {
+        await env.DB.prepare('INSERT INTO user_profiles (user_id,age) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET age=excluded.age').bind(session.id, body.age).run();
+      }
+      if (typeof body.age_public === 'boolean') {
+        await env.DB.prepare('INSERT INTO user_profiles (user_id,age_public) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET age_public=excluded.age_public').bind(session.id, body.age_public?1:0).run();
+      }
       return apiJson({ ok: true }, 200, corsH);
     }
 
