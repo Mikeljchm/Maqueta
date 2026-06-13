@@ -856,6 +856,8 @@ function hwEditName() {
       if (d.ok) {
         if (dnEl) dnEl.textContent = val;
         if (window.currentUser) window.currentUser.display_name = val;
+        /* Invalidate sessionStorage so next reload fetches fresh from D1 */
+        try { sessionStorage.removeItem('hw_s'); } catch(e) {}
         ov.remove();
         var t = document.getElementById('toast');
         if (t) { t.textContent = 'Name updated!'; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 2200); }
