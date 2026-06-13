@@ -4403,13 +4403,26 @@ async function votePoll(postId, idx, poll, container) {
   }
   if(editBtn) editBtn.addEventListener('click', showUsernameInput);
   if(usernameSave) usernameSave.addEventListener('click', async function(){
-    var val=usernameInput?usernameInput.value.trim().replace(/[^a-zA-Z0-9_]/g,''):'';
+    var val=usernameInput?usernameInput.value.trim().replace(/[^a-zA-Z0-9_]/g,'').toLowerCase():'';
     if(!val){ hideUsernameInput(); return; }
+    if(val.length < 3){ alert('Username must be at least 3 characters.'); return; }
+    if(val.length > 30){ alert('Username max 30 characters.'); return; }
+    usernameSave.disabled=true; usernameSave.textContent='...';
     try{
       var r=await fetch('/api/profile',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:val})});
       var d=await r.json();
-      if(d.ok){ if(usernameDisplay) usernameDisplay.textContent='@'+val; hideUsernameInput(); }
+      if(d.ok){
+        if(usernameDisplay) usernameDisplay.textContent='@'+val;
+        hideUsernameInput();
+      } else if(d.error === 'Username taken'){
+        usernameInput.style.borderColor='#ff4444';
+        usernameInput.placeholder='@'+val+' is already taken';
+        usernameInput.value='';
+      } else {
+        alert(d.error||'Error saving username');
+      }
     }catch(e){ hideUsernameInput(); }
+    usernameSave.disabled=false; usernameSave.textContent='Save';
   });
 
   /* Bio */
