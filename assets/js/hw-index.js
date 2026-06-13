@@ -2673,7 +2673,7 @@ async function votePoll(postId, idx, poll, container) {
       if (nameEl) nameEl.textContent = name;
       if (emailEl) emailEl.textContent = email;
       var _neb = document.getElementById('prof-name-edit-btn');
-      if (_neb) _neb.style.display = '';
+      if (_neb) _neb.style.display = 'inline-flex';
       var fpill = document.getElementById('following-pill');
       if (fpill) fpill.style.display = '';
       if (avatarWrap) {
