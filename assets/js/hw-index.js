@@ -2630,16 +2630,20 @@ async function votePoll(postId, idx, poll, container) {
           this._session = d.authenticated ? d.user : null;
         } catch { this._session = null; }
       }
-      /* Step 2: always merge display_name from D1 — never trust Google name */
+      /* Step 2: ALWAYS fetch D1 to get display_name — overrides Google name every time */
       if (this._session) {
         try {
           const pr = await fetch('/api/profile',{credentials:'include'});
           const pd = await pr.json();
           if (pd.display_name) this._session.display_name = pd.display_name;
           if (pd.avatar_url)   this._session.picture      = pd.avatar_url;
+          if (pd.username)     this._session.username     = pd.username;
         } catch(e) {}
-        /* Save enriched session to cache */
-        try { sessionStorage.setItem(this._CACHE_KEY, JSON.stringify({d:this._session,t:Date.now()})); } catch(e){}
+        /* Save enriched session — invalidate old cache first */
+        try {
+          sessionStorage.removeItem(this._CACHE_KEY);
+          sessionStorage.setItem(this._CACHE_KEY, JSON.stringify({d:this._session,t:Date.now()}));
+        } catch(e){}
       }
       this._cb.forEach(fn => fn(this._session)); return this._session;
     },
