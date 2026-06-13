@@ -2666,11 +2666,13 @@ async function votePoll(postId, idx, poll, container) {
     const actionBtn = document.getElementById('user-action-btn');
 
     if (user) {
-      const name = user.name || user.email.split('@')[0];
+      const name = user.display_name || user.name || user.email.split('@')[0];
       const avatar = user.picture || '';
       const email = user.email || '';
 
       if (nameEl) nameEl.textContent = name;
+      var nameEditBtnEl = document.getElementById('prof-name-edit-btn');
+      if (nameEditBtnEl) nameEditBtnEl.style.display = '';
       if (emailEl) emailEl.textContent = email;
       var fpill = document.getElementById('following-pill');
       if (fpill) fpill.style.display = '';
@@ -4425,6 +4427,42 @@ async function votePoll(postId, idx, poll, container) {
     usernameSave.disabled=false; usernameSave.textContent='Save';
   });
 
+  /* Display Name */
+  var nameEditBtn    = document.getElementById('prof-name-edit-btn');
+  var nameInputWrap  = document.getElementById('prof-name-input-wrap');
+  var nameInput      = document.getElementById('prof-name-input');
+  var nameSave       = document.getElementById('prof-name-save');
+  var nameCancel     = document.getElementById('prof-name-cancel');
+  var nameEl         = document.getElementById('user-display-name');
+
+  function showNameInput() {
+    if (nameInputWrap) { nameInputWrap.style.display = 'flex'; }
+    if (nameInput && nameEl) nameInput.value = nameEl.textContent !== 'Sign in to get started' ? nameEl.textContent : '';
+    if (nameInput) nameInput.focus();
+  }
+  function hideNameInput() {
+    if (nameInputWrap) nameInputWrap.style.display = 'none';
+  }
+  if (nameEditBtn) nameEditBtn.addEventListener('click', showNameInput);
+  if (nameCancel)  nameCancel.addEventListener('click', hideNameInput);
+  if (nameSave) nameSave.addEventListener('click', async function() {
+    var val = nameInput ? nameInput.value.trim() : '';
+    if (!val) { hideNameInput(); return; }
+    nameSave.disabled = true; nameSave.textContent = '...';
+    try {
+      var r = await fetch('/api/profile', { method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ display_name: val }) });
+      var d = await r.json();
+      if (d.ok) {
+        if (nameEl) nameEl.textContent = val;
+        if (window.currentUser) window.currentUser.display_name = val;
+        hideNameInput();
+      }
+    } catch(e) { hideNameInput(); }
+    nameSave.disabled = false; nameSave.textContent = 'Save';
+  });
+
   /* Bio */
   var bioEditing = false;
   function showBioInput(){
@@ -4497,6 +4535,10 @@ async function votePoll(postId, idx, poll, container) {
       }).catch(function(){});
       fetch('/api/profile',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
         if(d.username && usernameDisplay) usernameDisplay.textContent='@'+d.username;
+        if(d.display_name){
+          var dnEl=document.getElementById('user-display-name'); if(dnEl) dnEl.textContent=d.display_name;
+          if(window.currentUser) window.currentUser.display_name=d.display_name;
+        }
         if(d.bio){
           var bt=document.getElementById('prof-bio-text'); if(bt) bt.textContent=d.bio;
           var eb=document.getElementById('prof-bio-edit-btn'); if(eb) eb.textContent='Edit bio';
