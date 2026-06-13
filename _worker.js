@@ -853,9 +853,16 @@ async function handleProfile(request, env, corsH) {
     if (!username && bio === null && !_hasAvatar && !_hasBanner) return apiJson({ error: 'Nothing to update' }, 400, corsH);
     try {
       if (username) {
+        const uname = username.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 30);
+        if (uname.length < 3) return apiJson({ error: 'Username too short' }, 400, corsH);
+        /* Check uniqueness — exclude own user_id */
+        const { results: taken } = await env.DB.prepare(
+          'SELECT user_id FROM user_profiles WHERE username=? AND user_id!=?'
+        ).bind(uname, session.id).all();
+        if (taken.length > 0) return apiJson({ error: 'Username taken' }, 409, corsH);
         await env.DB.prepare(
           'INSERT INTO user_profiles (user_id, username) VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET username=excluded.username'
-        ).bind(session.id, username).run();
+        ).bind(session.id, uname).run();
       }
       if (bio !== null) {
         await env.DB.prepare(
