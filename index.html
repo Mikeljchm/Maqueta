@@ -370,7 +370,7 @@ layout: none
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
             </button>
             <div class="prof-dropdown" id="prof-dropdown">
-              <div class="prof-dd-item" onclick="document.getElementById('prof-dropdown').classList.remove('open');document.getElementById('prof-name-input-wrap').style.display='flex';document.getElementById('prof-name-input').focus();" style="cursor:pointer;">
+              <div class="prof-dd-item" onclick="document.getElementById('prof-dropdown').classList.remove('open');window._editDisplayName&&window._editDisplayName();" style="cursor:pointer;">
                 <span>&#9998; Edit Name</span>
               </div>
               <div class="prof-dd-divider"></div>
