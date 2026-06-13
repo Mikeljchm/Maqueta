@@ -4880,6 +4880,82 @@ async function votePoll(postId, idx, poll, container) {
   }
   window.loadProfilePage = loadProfilePage;
 
+  /* ── EDIT DISPLAY NAME MODAL ── */
+  window._editDisplayName = function() {
+    var existing = document.getElementById('hw-name-modal');
+    if (existing) existing.remove();
+
+    var currentName = '';
+    var dnEl = document.getElementById('user-display-name');
+    if (dnEl && dnEl.textContent !== 'Sign in to get started') currentName = dnEl.textContent;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'hw-name-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);';
+
+    var sheet = document.createElement('div');
+    sheet.style.cssText = 'width:100%;max-width:480px;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:1.5rem 1.25rem 2rem;box-sizing:border-box;';
+
+    sheet.innerHTML = ''
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">'
+      +   '<div style="font-family:var(--font-d);font-size:1rem;letter-spacing:0.1em;color:var(--text);">&#9998; EDIT NAME</div>'
+      +   '<button id="hw-name-modal-close" style="background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;padding:0.2rem 0.4rem;border-radius:8px;">&#10005;</button>'
+      + '</div>'
+      + '<input id="hw-name-modal-input" type="text" maxlength="50" placeholder="Your display name"'
+      +   ' style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.7rem 0.9rem;font-size:0.95rem;font-family:var(--font-b);box-sizing:border-box;outline:none;-webkit-appearance:none;" />'
+      + '<div id="hw-name-modal-err" style="display:none;color:#ff4444;font-size:0.75rem;margin-top:0.4rem;padding-left:0.2rem;"></div>'
+      + '<button id="hw-name-modal-save" style="margin-top:1rem;width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:12px;padding:0.8rem;font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;cursor:pointer;">SAVE NAME</button>';
+
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
+
+    var inp = document.getElementById('hw-name-modal-input');
+    var saveBtn = document.getElementById('hw-name-modal-save');
+    var closeBtn = document.getElementById('hw-name-modal-close');
+    var errEl = document.getElementById('hw-name-modal-err');
+
+    inp.value = currentName;
+    setTimeout(function(){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }, 80);
+
+    function closeModal() { overlay.remove(); }
+
+    overlay.addEventListener('click', function(e){ if (e.target === overlay) closeModal(); });
+    closeBtn.addEventListener('click', closeModal);
+
+    saveBtn.addEventListener('click', async function() {
+      var val = inp.value.trim();
+      if (!val) { errEl.textContent = 'Enter a name.'; errEl.style.display = 'block'; return; }
+      if (val.length < 2) { errEl.textContent = 'At least 2 characters.'; errEl.style.display = 'block'; return; }
+      saveBtn.disabled = true; saveBtn.textContent = '...';
+      try {
+        var r = await fetch('/api/profile', { method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ display_name: val }) });
+        var d = await r.json();
+        if (d.ok) {
+          if (dnEl) dnEl.textContent = val;
+          if (window.currentUser) window.currentUser.display_name = val;
+          /* También actualizar el input hidden original por consistencia */
+          var oldInp = document.getElementById('prof-name-input');
+          if (oldInp) oldInp.value = val;
+          closeModal();
+          var t = document.getElementById('toast');
+          if (t) { t.textContent = 'Name updated!'; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 2200); }
+        } else {
+          errEl.textContent = d.error || 'Error saving. Try again.';
+          errEl.style.display = 'block';
+          saveBtn.disabled = false; saveBtn.textContent = 'SAVE NAME';
+        }
+      } catch(e) {
+        errEl.textContent = 'Connection error. Try again.';
+        errEl.style.display = 'block';
+        saveBtn.disabled = false; saveBtn.textContent = 'SAVE NAME';
+      }
+    });
+
+    inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') saveBtn.click(); });
+  };
+
 })();
 
 /* ── ACTIVITY PANEL ── */
