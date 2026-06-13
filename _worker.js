@@ -851,7 +851,8 @@ async function handleProfile(request, env, corsH) {
     const bio = typeof body.bio === 'string' ? body.bio.trim().slice(0,120) : null;
     const _hasAvatar = typeof body.avatar_url === 'string';
     const _hasBanner = typeof body.banner_url === 'string';
-    if (!username && bio === null && !_hasAvatar && !_hasBanner) return apiJson({ error: 'Nothing to update' }, 400, corsH);
+    const _hasDisplayName = typeof body.display_name === 'string';
+    if (!username && bio === null && !_hasAvatar && !_hasBanner && !_hasDisplayName) return apiJson({ error: 'Nothing to update' }, 400, corsH);
     try {
       const displayName = typeof body.display_name === 'string' ? body.display_name.trim().slice(0, 50) : null;
       if (displayName !== null) {
