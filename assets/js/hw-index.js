@@ -4477,6 +4477,10 @@ async function votePoll(postId, idx, poll, container) {
     /* No correr si page-more no está visible */
     var pm=document.getElementById('page-more');
     if(pm && !pm.classList.contains('active')) return;
+    /* Si auth aún no inicializó (HottAuth._session undefined) esperar */
+    if(typeof HottAuth!=='undefined' && typeof HottAuth._session==='undefined'){
+      setTimeout(loadProfilePage, 100); return;
+    }
     var user=window.currentUser;
     var signinCard=document.getElementById('prof-signin-card');
     var tabs=document.getElementById('prof-tabs');
@@ -4562,6 +4566,9 @@ async function votePoll(postId, idx, poll, container) {
       var pc=document.getElementById('posts-feed-container');
       if(pc && typeof window.loadPostsFeed==='function') window.loadPostsFeed(pc, user.id);
     } else {
+      /* Solo mostrar signin si HottAuth ya confirmó que no hay sesión */
+      var authDone = typeof HottAuth==='undefined' || HottAuth._session===null;
+      if(!authDone){ setTimeout(loadProfilePage, 200); return; }
       if(signinCard) signinCard.style.display='';
       if(tabs)       tabs.style.display='none';
       if(stats)      stats.style.display='none';
