@@ -361,8 +361,10 @@
     if (!page) {
       page = document.createElement('div');
       page.id = 'page-user-profile';
-      page.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:250;display:none;flex-direction:column;max-width:480px;margin:0 auto;height:100%;overflow:hidden;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);';
-      document.body.appendChild(page);
+      page.style.cssText = 'position:absolute;inset:0;background:var(--bg);z-index:250;display:none;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);';
+      /* Agregar al #app para heredar dimensiones correctas */
+      var appEl = document.getElementById('app') || document.body;
+      appEl.appendChild(page);
     }
     page.style.display = 'flex';
     page.innerHTML =
@@ -482,7 +484,7 @@
           var lo=(p.image_url||'').toLowerCase().split('?')[0];
           var media=p.image_url?(lo.endsWith('.mp4')||lo.endsWith('.webm')
             ?'<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:260px;object-fit:cover;" src="'+p.image_url+'" muted playsinline controls controlslist="nodownload"></video>'
-            :'<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:260px;object-fit:cover;" src="'+p.image_url+'" loading="lazy">'):'';
+            :'<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:260px;object-fit:cover;cursor:pointer;" src="'+p.image_url+'" loading="lazy" onclick="if(window.openThreadViewer)window.openThreadViewer([\''+p.image_url+'\'],0)">'):'';
           var body=p.body&&p.body.trim()&&p.body.trim()!==' '?'<div style="font-size:0.85rem;line-height:1.5;color:var(--text);margin-bottom:0.4rem;">'+escH(p.body)+'</div>':'';
           var t=(Date.now()-new Date(p.created_at).getTime())/1000;
           var ago=t<60?'just now':t<3600?Math.floor(t/60)+'m ago':t<86400?Math.floor(t/3600)+'h ago':Math.floor(t/86400)+'d ago';
