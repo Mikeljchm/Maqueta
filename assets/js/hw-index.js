@@ -351,6 +351,25 @@
     }
   }
 
+  /* Aplicar estilo al nombre — función global */
+  window.applyNameStyle = function(el, color, font){
+    if(!el) return;
+    el.style.fontFamily = font ? font+',sans-serif' : '';
+    if(color==='gradient'){
+      el.style.background = 'linear-gradient(135deg,#FF4500,#FFB800)';
+      el.style.webkitBackgroundClip = 'text';
+      el.style.webkitTextFillColor = 'transparent';
+      el.style.backgroundClip = 'text';
+      el.style.color = '';
+    } else {
+      el.style.background = '';
+      el.style.webkitBackgroundClip = '';
+      el.style.webkitTextFillColor = '';
+      el.style.backgroundClip = '';
+      el.style.color = color || '';
+    }
+  };
+
   window.openMiniProfile = function openMiniProfile(uid, name) {
     if (window.currentUser && uid === window.currentUser.id) {
       var moreBtn = document.querySelector('.nav-item[data-page="more"]');
@@ -435,9 +454,13 @@
           /* Topbar */
           var topbar=page.querySelector('div[style*="font-family:var(--font-d)"][style*="flex:1"]');
           if(topbar) topbar.textContent=realName;
-          /* Nombre grande */
+          /* Nombre grande con estilo personalizado */
           var nameEl=page.querySelector('[id="uprof-name"]');
-          if(nameEl) nameEl.textContent=realName;
+          if(nameEl){
+            nameEl.textContent=realName;
+            nameEl.style.fontSize='1.8rem';
+            if(window.applyNameStyle) window.applyNameStyle(nameEl, d.name_color||'', d.name_font||'');
+          }
           /* Avatar inicial */
           var avEl=document.getElementById('uprof-av');
           if(avEl&&!d.avatar_url) avEl.textContent=realName.charAt(0).toUpperCase();
@@ -4330,7 +4353,16 @@ async function votePoll(postId, idx, poll, container) {
       '.ep-toggle-label{font-size:0.78rem;color:var(--text-dim);flex:1;}',
       '.ep-save-btn{width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:12px;padding:0.75rem;font-family:var(--font-d);font-size:0.88rem;letter-spacing:0.06em;cursor:pointer;margin-top:0.25rem;}',
       '.ep-save-btn:disabled{opacity:0.5;}',
-      '.ep-edit-profile-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:0.35rem 1.1rem;font-family:var(--font-b);font-size:0.72rem;cursor:pointer;margin-top:0.5rem;display:inline-block;}'
+      '.ep-edit-profile-btn{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:0.35rem 1.1rem;font-family:var(--font-b);font-size:0.72rem;cursor:pointer;margin-top:0.5rem;display:inline-block;}',
+      /* Name style picker */
+      '.ep-colors{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.85rem;}',
+      '.ep-color-btn{width:32px;height:32px;border-radius:50%;border:3px solid transparent;cursor:pointer;flex-shrink:0;transition:transform 0.15s;}',
+      '.ep-color-btn.active{border-color:#fff;transform:scale(1.15);}',
+      '.ep-color-btn.gradient{background:linear-gradient(135deg,#FF4500,#FFB800) !important;}',
+      '.ep-fonts{display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:0.85rem;}',
+      '.ep-font-btn{background:var(--surface-2);border:2px solid var(--border);color:var(--text);border-radius:10px;padding:0.5rem 0.4rem;cursor:pointer;font-size:0.9rem;text-align:center;}',
+      '.ep-font-btn.active{border-color:var(--fire-orange);color:var(--fire-orange);}',
+      '.ep-name-preview{font-size:1.8rem;text-align:center;padding:0.5rem 1rem;margin-bottom:0.85rem;min-height:2.5rem;letter-spacing:0.04em;}'
     ].join('');
     document.head.appendChild(st);
 
@@ -4358,8 +4390,58 @@ async function votePoll(postId, idx, poll, container) {
       +'<input class="ep-input" id="ep-city" type="text" maxlength="60" placeholder="e.g. Medell&#237;n">'
       +'<label class="ep-label">Country</label>'
       +'<input class="ep-input" id="ep-country" type="text" maxlength="60" placeholder="e.g. Colombia">'
+      +'<label class="ep-label">Name Style</label>'
+      /* Preview del nombre */
+      +'<div class="ep-name-preview" id="ep-name-preview">Your Name</div>'
+      /* Colores */
+      +'<div class="ep-colors" id="ep-colors">'
+        +'<button class="ep-color-btn active" data-color="" style="background:var(--text);"></button>'
+        +'<button class="ep-color-btn gradient" data-color="gradient"></button>'
+        +'<button class="ep-color-btn" data-color="#FF4500" style="background:#FF4500;"></button>'
+        +'<button class="ep-color-btn" data-color="#FFB800" style="background:#FFB800;"></button>'
+        +'<button class="ep-color-btn" data-color="#CC1100" style="background:#CC1100;"></button>'
+        +'<button class="ep-color-btn" data-color="#4488FF" style="background:#4488FF;"></button>'
+        +'<button class="ep-color-btn" data-color="#9B59B6" style="background:#9B59B6;"></button>'
+        +'<button class="ep-color-btn" data-color="#27AE60" style="background:#27AE60;"></button>'
+        +'<button class="ep-color-btn" data-color="#FF69B4" style="background:#FF69B4;"></button>'
+      +'</div>'
+      /* Fuentes */
+      +'<div class="ep-fonts" id="ep-fonts">'
+        +'<button class="ep-font-btn active" data-font="" style="font-family:DM Sans,sans-serif;">Default</button>'
+        +'<button class="ep-font-btn" data-font="Bebas Neue" style="font-family:Bebas Neue,sans-serif;letter-spacing:0.08em;">BOLD</button>'
+        +'<button class="ep-font-btn" data-font="Playfair Display" style="font-family:Playfair Display,serif;">Elegant</button>'
+        +'<button class="ep-font-btn" data-font="Anton" style="font-family:Anton,sans-serif;">Sport</button>'
+        +'<button class="ep-font-btn" data-font="Righteous" style="font-family:Righteous,sans-serif;">Retro</button>'
+        +'<button class="ep-font-btn" data-font="Dancing Script" style="font-family:Dancing Script,cursive;">Handwritten</button>'
+      +'</div>'
       +'<button class="ep-save-btn" id="ep-save">Save Profile</button>';
     document.body.appendChild(ov); document.body.appendChild(sh);
+
+    /* Estado del picker */
+    var _pickerColor = '';
+    var _pickerFont  = '';
+
+    function updateNamePreview(){
+      var prev=document.getElementById('ep-name-preview');
+      var nameVal=document.getElementById('ep-name');
+      if(!prev||!nameVal) return;
+      var txt=nameVal.value||'Your Name';
+      prev.textContent=txt;
+      prev.style.fontFamily=_pickerFont?_pickerFont+',sans-serif':'';
+      if(_pickerColor==='gradient'){
+        prev.style.background='linear-gradient(135deg,#FF4500,#FFB800)';
+        prev.style.webkitBackgroundClip='text';
+        prev.style.webkitTextFillColor='transparent';
+        prev.style.backgroundClip='text';
+        prev.style.color='';
+      } else {
+        prev.style.background='';
+        prev.style.webkitBackgroundClip='';
+        prev.style.webkitTextFillColor='';
+        prev.style.backgroundClip='';
+        prev.style.color=_pickerColor||'var(--text)';
+      }
+    }
 
     function openEP(){
       /* Pre-llenar con datos actuales */
@@ -4379,11 +4461,41 @@ async function votePoll(postId, idx, poll, container) {
         var apCb=document.getElementById('ep-age-public'); if(apCb) apCb.checked=!!d.age_public;
         var ecity=document.getElementById('ep-city'); if(ecity&&d.city) ecity.value=d.city;
         var ecountry=document.getElementById('ep-country'); if(ecountry&&d.country) ecountry.value=d.country;
+        /* Cargar color y fuente guardados */
+        _pickerColor=d.name_color||'';
+        _pickerFont=d.name_font||'';
+        /* Marcar activos */
+        document.querySelectorAll('.ep-color-btn').forEach(function(b){
+          b.classList.toggle('active',b.getAttribute('data-color')===_pickerColor);
+        });
+        document.querySelectorAll('.ep-font-btn').forEach(function(b){
+          b.classList.toggle('active',b.getAttribute('data-font')===_pickerFont);
+        });
+        updateNamePreview();
       }).catch(function(){});
       ov.classList.add('open'); sh.classList.add('open'); document.body.style.overflow='hidden';
     }
     function closeEP(){ ov.classList.remove('open'); sh.classList.remove('open'); document.body.style.overflow=''; }
     ov.addEventListener('click',closeEP);
+
+    /* Color picker */
+    document.getElementById('ep-colors').addEventListener('click',function(e){
+      var btn=e.target.closest('.ep-color-btn'); if(!btn) return;
+      document.querySelectorAll('.ep-color-btn').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      _pickerColor=btn.getAttribute('data-color');
+      updateNamePreview();
+    });
+    /* Font picker */
+    document.getElementById('ep-fonts').addEventListener('click',function(e){
+      var btn=e.target.closest('.ep-font-btn'); if(!btn) return;
+      document.querySelectorAll('.ep-font-btn').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      _pickerFont=btn.getAttribute('data-font');
+      updateNamePreview();
+    });
+    /* Live preview mientras escribe */
+    document.getElementById('ep-name').addEventListener('input',updateNamePreview);
     var shY2=0;
     sh.addEventListener('touchstart',function(e){shY2=e.touches[0].clientY;},{passive:true});
     sh.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-shY2>60)closeEP();},{passive:true});
@@ -4411,6 +4523,8 @@ async function votePoll(postId, idx, poll, container) {
         var countryVal=(document.getElementById('ep-country')||{}).value||'';
         if(cityVal.trim()) payload.city=cityVal.trim();
         if(countryVal.trim()) payload.country=countryVal.trim();
+        payload.name_color=_pickerColor;
+        payload.name_font=_pickerFont;
 
         var r=await fetch('/api/profile',{method:'POST',credentials:'include',
           headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -4463,6 +4577,8 @@ async function votePoll(postId, idx, poll, container) {
           }
           locEl.innerHTML='&#128205; '+locStr.replace(/&/g,'&amp;').replace(/</g,'&lt;');
         }
+        /* Aplicar estilo al nombre en el perfil propio */
+        applyNameStyle(document.getElementById('user-display-name'), _pickerColor, _pickerFont);
         closeEP();
         var toast=document.getElementById('toast');
         if(toast){toast.textContent='Profile updated!';toast.classList.add('show');setTimeout(function(){toast.classList.remove('show');},2500);}
@@ -4531,7 +4647,12 @@ async function votePoll(postId, idx, poll, container) {
       fetch('/api/profile',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
         if(d.username && usernameDisplay) usernameDisplay.textContent='@'+d.username;
         if(d.display_name){
-          var dnEl=document.getElementById('user-display-name'); if(dnEl) dnEl.textContent=d.display_name;
+          var dnEl=document.getElementById('user-display-name');
+          if(dnEl){
+            dnEl.textContent=d.display_name;
+            dnEl.style.fontSize='1.8rem';
+            if(window.applyNameStyle) window.applyNameStyle(dnEl, d.name_color||'', d.name_font||'');
+          }
           if(window.currentUser) window.currentUser.display_name=d.display_name;
         }
         if(d.bio){
