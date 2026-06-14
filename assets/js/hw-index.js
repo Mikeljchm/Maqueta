@@ -4360,7 +4360,7 @@ async function votePoll(postId, idx, poll, container) {
     st.textContent=[
       '.ep-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:350;display:none;}',
       '.ep-overlay.open{display:block;}',
-      '.ep-sheet{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);z-index:351;padding:0.5rem 1.1rem calc(1.5rem + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);}',
+      '.ep-sheet{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);z-index:351;padding:0.5rem 1.1rem calc(1.5rem + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}',
       '.ep-sheet.open{transform:translateY(0);}',
       '.ep-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem;}',
       '.ep-title{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;margin-bottom:1rem;}',
@@ -4382,7 +4382,7 @@ async function votePoll(postId, idx, poll, container) {
       '.ep-color-btn{width:32px;height:32px;border-radius:50%;border:3px solid transparent;cursor:pointer;flex-shrink:0;transition:transform 0.15s;}',
       '.ep-color-btn.active{border-color:#fff;transform:scale(1.15);}',
       '.ep-color-btn.gradient{background:linear-gradient(135deg,#FF4500,#FFB800) !important;}',
-      '.ep-fonts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.35rem;margin-bottom:0.85rem;max-height:200px;overflow-y:auto;}',
+      '.ep-fonts{display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:0.85rem;}',
       '.ep-font-btn{background:var(--surface-2);border:2px solid var(--border);color:var(--text);border-radius:10px;padding:0.5rem 0.4rem;cursor:pointer;font-size:0.9rem;text-align:center;}',
       '.ep-font-btn.active{border-color:var(--fire-orange);color:var(--fire-orange);}',
       '.ep-name-preview{font-size:1.8rem;text-align:center;padding:0.5rem 1rem;margin-bottom:0.85rem;min-height:2.5rem;letter-spacing:0.04em;}'
@@ -4429,27 +4429,13 @@ async function votePoll(postId, idx, poll, container) {
         +'<button class="ep-color-btn" data-color="#FF69B4" style="background:#FF69B4;"></button>'
       +'</div>'
       /* Fuentes */
-      +'<div class="ep-fonts" id="ep-fonts" style="grid-template-columns:1fr 1fr 1fr;">'
+      +'<div class="ep-fonts" id="ep-fonts">'
         +'<button class="ep-font-btn active" data-font="" style="font-family:DM Sans,sans-serif;">Default</button>'
-        +'<button class="ep-font-btn" data-font="Bebas Neue" style="font-family:Bebas Neue,sans-serif;letter-spacing:0.06em;">BOLD</button>'
-        +'<button class="ep-font-btn" data-font="Playfair Display" style="font-family:Playfair Display,serif;font-style:italic;">Elegant</button>'
+        +'<button class="ep-font-btn" data-font="Bebas Neue" style="font-family:Bebas Neue,sans-serif;letter-spacing:0.08em;">BOLD</button>'
+        +'<button class="ep-font-btn" data-font="Playfair Display" style="font-family:Playfair Display,serif;">Elegant</button>'
         +'<button class="ep-font-btn" data-font="Anton" style="font-family:Anton,sans-serif;">Sport</button>'
         +'<button class="ep-font-btn" data-font="Righteous" style="font-family:Righteous,sans-serif;">Retro</button>'
-        +'<button class="ep-font-btn" data-font="Dancing Script" style="font-family:Dancing Script,cursive;">Script</button>'
-        +'<button class="ep-font-btn" data-font="Oswald" style="font-family:Oswald,sans-serif;font-weight:700;">Oswald</button>'
-        +'<button class="ep-font-btn" data-font="Russo One" style="font-family:Russo One,sans-serif;">Russo</button>'
-        +'<button class="ep-font-btn" data-font="Pacifico" style="font-family:Pacifico,cursive;">Pacifico</button>'
-        +'<button class="ep-font-btn" data-font="Lobster" style="font-family:Lobster,cursive;">Lobster</button>'
-        +'<button class="ep-font-btn" data-font="Permanent Marker" style="font-family:Permanent Marker,cursive;">Marker</button>'
-        +'<button class="ep-font-btn" data-font="Bungee" style="font-family:Bungee,sans-serif;">Bungee</button>'
-        +'<button class="ep-font-btn" data-font="Monoton" style="font-family:Monoton,cursive;font-size:0.7rem;">Monoton</button>'
-        +'<button class="ep-font-btn" data-font="Creepster" style="font-family:Creepster,cursive;">Creep</button>'
-        +'<button class="ep-font-btn" data-font="Teko" style="font-family:Teko,sans-serif;font-weight:700;">Teko</button>'
-        +'<button class="ep-font-btn" data-font="Exo 2" style="font-family:Exo 2,sans-serif;font-weight:800;">Exo</button>'
-        +'<button class="ep-font-btn" data-font="Rajdhani" style="font-family:Rajdhani,sans-serif;font-weight:700;">Rajdhani</button>'
-        +'<button class="ep-font-btn" data-font="Audiowide" style="font-family:Audiowide,sans-serif;font-size:0.72rem;">Audio</button>'
-        +'<button class="ep-font-btn" data-font="Alfa Slab One" style="font-family:Alfa Slab One,serif;">Alfa</button>'
-        +'<button class="ep-font-btn" data-font="Black Han Sans" style="font-family:Black Han Sans,sans-serif;">Black</button>'
+        +'<button class="ep-font-btn" data-font="Dancing Script" style="font-family:Dancing Script,cursive;">Handwritten</button>'
       +'</div>'
       +'<button class="ep-save-btn" id="ep-save">Save Profile</button>';
     document.body.appendChild(ov); document.body.appendChild(sh);
@@ -4464,11 +4450,7 @@ async function votePoll(postId, idx, poll, container) {
       if(!prev||!nameVal) return;
       var txt=nameVal.value||'Your Name';
       prev.textContent=txt;
-      if(_pickerFont){
-        prev.style.setProperty('font-family',_pickerFont+',cursive,sans-serif','important');
-      } else {
-        prev.style.removeProperty('font-family');
-      }
+      if(_pickerFont){ var pfq=_pickerFont.indexOf(' ')>-1 ? '"'+_pickerFont+'"':_pickerFont; prev.style.setProperty('font-family',pfq+',cursive,sans-serif','important'); } else { prev.style.removeProperty('font-family'); }
       if(_pickerColor==='gradient'){
         prev.style.background='linear-gradient(135deg,#FF4500,#FFB800)';
         prev.style.webkitBackgroundClip='text';
