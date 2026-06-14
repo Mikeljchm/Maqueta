@@ -4360,7 +4360,7 @@ async function votePoll(postId, idx, poll, container) {
     st.textContent=[
       '.ep-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:350;display:none;}',
       '.ep-overlay.open{display:block;}',
-      '.ep-sheet{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);z-index:351;padding:0.5rem 1.1rem calc(1.5rem + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}',
+      '.ep-sheet{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);z-index:351;padding:0.5rem 1.1rem calc(1.5rem + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);}',
       '.ep-sheet.open{transform:translateY(0);}',
       '.ep-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem;}',
       '.ep-title{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;margin-bottom:1rem;}',
@@ -4450,7 +4450,7 @@ async function votePoll(postId, idx, poll, container) {
       if(!prev||!nameVal) return;
       var txt=nameVal.value||'Your Name';
       prev.textContent=txt;
-      if(_pickerFont){ var pfq=_pickerFont.indexOf(' ')>-1 ? '"'+_pickerFont+'"':_pickerFont; prev.style.setProperty('font-family',pfq+',cursive,sans-serif','important'); } else { prev.style.removeProperty('font-family'); }
+      prev.style.fontFamily=_pickerFont?_pickerFont+',sans-serif':'';
       if(_pickerColor==='gradient'){
         prev.style.background='linear-gradient(135deg,#FF4500,#FFB800)';
         prev.style.webkitBackgroundClip='text';
@@ -4519,9 +4519,17 @@ async function votePoll(postId, idx, poll, container) {
     });
     /* Live preview mientras escribe */
     document.getElementById('ep-name').addEventListener('input',updateNamePreview);
-    var shY2=0;
-    sh.addEventListener('touchstart',function(e){shY2=e.touches[0].clientY;},{passive:true});
-    sh.addEventListener('touchend',function(e){if(e.changedTouches[0].clientY-shY2>60)closeEP();},{passive:true});
+    var shY2=0, shX2=0;
+    sh.addEventListener('touchstart',function(e){
+      shY2=e.touches[0].clientY; shX2=e.touches[0].clientX;
+    },{passive:true});
+    sh.addEventListener('touchend',function(e){
+      var dy=e.changedTouches[0].clientY-shY2;
+      var dx=Math.abs(e.changedTouches[0].clientX-shX2);
+      /* Solo cerrar si swipe hacia abajo > 150px, dominante vertical, y el sheet está en el tope */
+      var atTop = sh.scrollTop <= 0;
+      if(atTop && dy>150 && dy>dx*2) closeEP();
+    },{passive:true});
 
     /* Botón Edit Profile en el perfil — lo crearemos dinámicamente */
     window._openEditProfile = openEP;
