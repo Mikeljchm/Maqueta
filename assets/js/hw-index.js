@@ -4474,6 +4474,9 @@ async function votePoll(postId, idx, poll, container) {
 
   /* Load profile */
   function loadProfilePage(){
+    /* No correr si page-more no está visible */
+    var pm=document.getElementById('page-more');
+    if(pm && !pm.classList.contains('active')) return;
     var user=window.currentUser;
     var signinCard=document.getElementById('prof-signin-card');
     var tabs=document.getElementById('prof-tabs');
@@ -4868,7 +4871,10 @@ async function votePoll(postId, idx, poll, container) {
   setupImageUpload(document.getElementById('user-avatar-wrap'), 'avatar');
 
   document.querySelectorAll('.nav-item[data-page="more"]').forEach(function(btn){
-    btn.addEventListener('click', loadProfilePage);
+    btn.addEventListener('click', function(){
+      /* Pequeño delay para que currentUser esté listo antes de renderizar */
+      setTimeout(loadProfilePage, 50);
+    });
   });
   if(typeof HottAuth!=='undefined'){
     HottAuth.onChange(function(){
