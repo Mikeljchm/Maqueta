@@ -458,7 +458,7 @@
           var nameEl=page.querySelector('[id="uprof-name"]');
           if(nameEl){
             nameEl.textContent=realName;
-            nameEl.style.fontSize='1.8rem';
+            nameEl.style.fontSize='2.2rem';
             if(window.applyNameStyle) window.applyNameStyle(nameEl, d.name_color||'', d.name_font||'');
           }
           /* Avatar inicial */
@@ -4539,8 +4539,31 @@ async function votePoll(postId, idx, poll, container) {
 
         /* Actualizar UI */
         if(name){
-          var ne=document.getElementById('user-display-name'); if(ne) ne.textContent=name;
+          var ne=document.getElementById('user-display-name');
+          if(ne){
+            ne.textContent=name;
+            ne.style.fontSize='2.2rem';
+            if(window.applyNameStyle) window.applyNameStyle(ne,_pickerColor,_pickerFont);
+          }
           if(window.currentUser) window.currentUser.display_name=name;
+          /* Actualizar nombre en comentarios y posts visibles en el DOM */
+          var myUid=window.currentUser?window.currentUser.id:null;
+          if(myUid){
+            document.querySelectorAll('[data-profile-uid="'+myUid+'"]').forEach(function(el){
+              /* Solo actualizar si es el nombre, no el avatar */
+              if(el.tagName!=='IMG' && !el.querySelector('img')){
+                el.textContent=name;
+              }
+            });
+            /* Actualizar nombres en comentarios */
+            document.querySelectorAll('.cp-username[data-profile-uid="'+myUid+'"]').forEach(function(el){
+              el.textContent=name;
+            });
+            /* Actualizar nombres en thread posts */
+            document.querySelectorAll('.comm-post-uname[data-profile-uid="'+myUid+'"]').forEach(function(el){
+              el.textContent=name;
+            });
+          }
         }
         if(username.length>=3){
           var ue=document.getElementById('prof-username-display'); if(ue) ue.textContent='@'+username;
@@ -4650,7 +4673,7 @@ async function votePoll(postId, idx, poll, container) {
           var dnEl=document.getElementById('user-display-name');
           if(dnEl){
             dnEl.textContent=d.display_name;
-            dnEl.style.fontSize='1.8rem';
+            dnEl.style.fontSize='2.2rem';
             if(window.applyNameStyle) window.applyNameStyle(dnEl, d.name_color||'', d.name_font||'');
           }
           if(window.currentUser) window.currentUser.display_name=d.display_name;
