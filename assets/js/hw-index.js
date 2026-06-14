@@ -6310,8 +6310,8 @@ async function votePoll(postId, idx, poll, container) {
     '.posts-img-wrap{position:relative;margin-bottom:0.5rem;}',
     /* Post card */
     /* Post card — Tumblr style */
-    '#posts-feed-container{background:var(--bg);padding:0;}',
-    '.post-card{background:var(--surface);margin-bottom:12px;overflow:hidden;}',
+    '#posts-feed-container{background:#080505;padding:0;}',
+    '.post-card{background:#080505;margin-bottom:12px;overflow:hidden;}',
     /* Header */
     '.pc-header{display:flex;align-items:center;gap:0.6rem;padding:0.75rem 0.85rem 0.5rem;}',
     '.pc-av{width:38px;height:38px;border-radius:50%;background:var(--surface-3);flex-shrink:0;overflow:hidden;}',
