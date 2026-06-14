@@ -4641,7 +4641,7 @@ async function votePoll(postId, idx, poll, container) {
         }
         /* Mostrar/ocultar edad en perfil propio */
         var ageEl2=document.getElementById('prof-age-display');
-        if(ageVal&&agePub){
+        if(payload.age&&agePub){
           if(!ageEl2){
             ageEl2=document.createElement('div');
             ageEl2.id='prof-age-display';
@@ -4649,7 +4649,7 @@ async function votePoll(postId, idx, poll, container) {
             var baRef=document.getElementById('prof-bio-area');
             if(baRef) baRef.parentNode.insertBefore(ageEl2, baRef.nextSibling);
           }
-          ageEl2.textContent=ageVal+' years old';
+          ageEl2.textContent=payload.age+' years old';
         } else if(ageEl2 && !agePub){
           ageEl2.textContent='';
         }
