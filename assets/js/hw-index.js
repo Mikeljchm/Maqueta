@@ -6308,18 +6308,43 @@ async function votePoll(postId, idx, poll, container) {
     '.posts-img-preview{width:100%;max-height:200px;object-fit:cover;border-radius:10px;margin-bottom:0.5rem;display:block;}',
     '.posts-img-remove{background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:50%;width:24px;height:24px;font-size:0.8rem;cursor:pointer;position:absolute;top:0.4rem;right:0.4rem;display:flex;align-items:center;justify-content:center;}',
     '.posts-img-wrap{position:relative;margin-bottom:0.5rem;}',
-    '.post-card-img{width:100%;max-height:320px;object-fit:cover;border-radius:10px;margin-bottom:0.55rem;display:block;}',
     /* Post card */
-    '.post-card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.75rem;}',
-    '.post-card-header{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.6rem;}',
-    '.post-card-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--surface-3);flex-shrink:0;overflow:hidden;border:2px solid rgba(255,69,0,0.3);}',
-    '.post-card-avatar img{width:100%;height:100%;object-fit:cover;}',
-    '.post-card-meta{flex:1;min-width:0;}',
-    '.post-card-name{font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;}',
-    '.post-card-badge{font-size:0.6rem;color:var(--text-dim);}',
-    '.post-card-date{font-size:0.68rem;color:var(--text-muted);font-family:var(--font-b);}',
-    '.post-card-body{font-size:0.87rem;line-height:1.55;color:var(--text);white-space:pre-wrap;word-break:break-word;margin-bottom:0.65rem;}',
-    '.post-card-actions{display:flex;gap:0.5rem;align-items:center;}',
+    /* Post card — Tumblr style */
+    '.post-card{background:var(--surface);border-bottom:1px solid var(--border);margin-bottom:0;overflow:hidden;}',
+    /* Header */
+    '.pc-header{display:flex;align-items:center;gap:0.6rem;padding:0.75rem 0.85rem 0.5rem;}',
+    '.pc-av{width:38px;height:38px;border-radius:50%;background:var(--surface-3);flex-shrink:0;overflow:hidden;border:2px solid rgba(255,69,0,0.25);}',
+    '.pc-av img{width:100%;height:100%;object-fit:cover;display:block;}',
+    '.pc-meta{flex:1;min-width:0;}',
+    '.pc-name{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.04em;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+    '.pc-date{font-size:0.62rem;color:var(--text-muted);margin-top:0.05rem;}',
+    '.pc-menu-btn{background:none;border:none;color:var(--text-dim);font-size:1.2rem;cursor:pointer;padding:0.25rem 0.4rem;line-height:1;margin-left:auto;}',
+    /* Media */
+    '.pc-media-wrap{width:100%;cursor:pointer;}',
+    '.pc-media-single{width:100%;display:block;object-fit:contain;}',
+    '.pc-media-single video{width:100%;display:block;}',
+    '.pc-media-2col{display:grid;grid-template-columns:1fr 1fr;gap:2px;}',
+    '.pc-media-cell{overflow:hidden;position:relative;cursor:pointer;}',
+    '.pc-media-cell img{width:100%;height:100%;object-fit:cover;display:block;}',
+    '.pc-media-cell video{width:100%;height:100%;object-fit:cover;display:block;}',
+    '.pc-media-2col .pc-media-cell{aspect-ratio:1;}',
+    '.pc-media-full{aspect-ratio:unset;}',
+    '.pc-media-full img{height:auto;}',
+    '.pc-media-more{position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.5rem;color:#fff;}',
+    /* Tags */
+    '.pc-tags{padding:0.55rem 0.85rem 0.3rem;font-size:0.78rem;color:var(--text-dim);line-height:1.5;word-break:break-word;}',
+    '.pc-tag{color:var(--fire-orange);opacity:0.8;}',
+    '.pc-more-btn{background:none;border:none;color:var(--text-muted);font-size:0.75rem;cursor:pointer;padding:0;margin-left:0.3rem;font-family:var(--font-b);}',
+    /* Actions */
+    '.pc-actions{display:flex;align-items:center;padding:0.35rem 0.6rem 0.65rem;gap:0.25rem;border-top:1px solid var(--border);margin-top:0.4rem;}',
+    '.pc-act-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;gap:0.3rem;padding:0.4rem 0.55rem;border-radius:8px;font-family:var(--font-b);font-size:0.72rem;transition:color 0.15s;}',
+    '.pc-act-btn:active{color:var(--text);}',
+    '.pc-act-btn.liked svg,.pc-act-btn.post-like-btn.liked svg{fill:var(--fire-orange);stroke:var(--fire-orange);}',
+    '.pc-act-btn svg{fill:none;stroke:currentColor;}',
+    '.post-like-btn svg{fill:none;stroke:currentColor;}',
+    '.post-like-btn.liked svg{fill:var(--fire-orange);stroke:var(--fire-orange);}',
+    '.pc-act-count{font-size:0.75rem;}',
+    '.pc-share-btn{margin-left:auto;}',
     '.post-report-btn{background:none;border:none;color:var(--text-muted);font-size:0.68rem;cursor:pointer;padding:0.2rem 0.5rem;border-radius:8px;font-family:var(--font-b);transition:color 0.2s;}',
     '.post-report-btn:active{color:#cc4444;}',
     '.post-report-btn.reported{color:#cc4444;pointer-events:none;}',
@@ -6505,43 +6530,116 @@ async function votePoll(postId, idx, poll, container) {
     var isOwn   = window.currentUser && window.currentUser.id === p.user_id;
     var reported = REPORTED_POSTS.has(String(p.id));
     var _avUrlP = (window._resolveAvatar||function(u,a){return a||'';})(p.user_id, p.user_avatar);
-    var avatar   = _avUrlP
-      ? '<img src="'+_avUrlP+'" loading="lazy" alt="" data-uid="'+escH(p.user_id||'')+'">'      : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+    var avatar = _avUrlP
+      ? '<img src="'+_avUrlP+'" loading="lazy" alt="">'
+      : '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
 
-    var html = '<div class="post-card" data-post-id="'+p.id+'">'
-      + '<div class="post-card-header">'
-        + '<div class="post-card-avatar" data-profile-uid="'+escH(p.user_id||'')+'" data-profile-name="'+escH(p.user_name||'')+'" style="cursor:pointer;">'+avatar+'</div>'
-        + '<div class="post-card-meta">'
-          + '<div class="post-card-name" data-profile-uid="'+escH(p.user_id||'')+'" data-profile-name="'+escH(p.user_name||'')+'" style="cursor:pointer;">'+escH(p.user_name)+'</div>'
-          + '<div class="post-card-date">'+timeAgo(p.created_at)+'</div>'
-        + '</div>'
-      + '</div>'
-      + (p.image_url ? (function(u){
-          var lo = u.toLowerCase().split('?')[0];
-          return lo.endsWith('.mp4')||lo.endsWith('.webm')
-            ? '<video class="post-card-img" src="'+u+'" autoplay loop muted playsinline style="cursor:pointer;" onclick="if(window._openPMV)window._openPMV(this.src,true)"></video>'
-            : '<img class="post-card-img" src="'+u+'" loading="lazy" alt="" style="cursor:pointer;" onclick="if(window.HWViewer)window.HWViewer.open([this.src],0,null,null)">';
-        })(p.image_url) : '')
-      + (p.body && p.body.trim() && p.body.trim() !== ' ' ? '<div class="post-card-body">'+escH(p.body)+'</div>' : '')
-      + '<div class="post-card-actions">'
-        + '<button class="post-like-btn'+(LIKED_POSTS.has(String(p.id))?' liked':'')+'" data-post-id="'+p.id+'" data-like-count="'+(p.like_count||0)+'">'
-          + '<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span class="plc">'+(p.like_count||'')+'</button>'
-      + '<button class="post-comment-btn" data-post-id="'+p.id+'">'
-          + '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Comment'
-        + '</button>';
+    /* ── Recopilar URLs de medios ── */
+    var mediaUrls = [];
+    if (p.image_url) {
+      try {
+        var parsed = JSON.parse(p.image_url);
+        if (Array.isArray(parsed)) mediaUrls = parsed;
+        else mediaUrls = [p.image_url];
+      } catch(e) { mediaUrls = [p.image_url]; }
+    }
+    /* También soportar campo images array */
+    if (!mediaUrls.length && Array.isArray(p.images)) mediaUrls = p.images.filter(Boolean);
 
-    if (!isOwn) {
-      html += '<button class="post-report-btn'+(reported?' reported':'')+'" data-post-id="'+p.id+'">'
-        + (reported ? 'Reported' : 'Report')
-      + '</button>';
+    /* ── Layout de medios estilo Tumblr ── */
+    var mediaHtml = '';
+    if (mediaUrls.length === 1) {
+      var u0 = mediaUrls[0];
+      var lo0 = u0.toLowerCase().split('?')[0];
+      var isV0 = lo0.endsWith('.mp4')||lo0.endsWith('.webm');
+      var enc0 = encodeURIComponent(JSON.stringify(mediaUrls));
+      mediaHtml = '<div class="pc-media-wrap" data-tv-urls="'+enc0+'" data-tv-idx="0">'
+        + (isV0
+          ? '<video class="pc-media-single" src="'+u0+'" muted playsinline controls controlslist="nodownload"></video>'
+          : '<img class="pc-media-single" src="'+u0+'" loading="lazy" alt="">')
+        + '</div>';
+    } else if (mediaUrls.length === 2) {
+      var enc2 = encodeURIComponent(JSON.stringify(mediaUrls));
+      mediaHtml = '<div class="pc-media-wrap pc-media-2col" data-tv-urls="'+enc2+'">';
+      mediaUrls.forEach(function(u,i){
+        var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
+        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'
+          +(isV?'<video src="'+u+'" muted playsinline></video>':'<img src="'+u+'" loading="lazy" alt="">')
+          +'</div>';
+      });
+      mediaHtml += '</div>';
+    } else if (mediaUrls.length >= 3) {
+      var enc3 = encodeURIComponent(JSON.stringify(mediaUrls));
+      mediaHtml = '<div class="pc-media-wrap" data-tv-urls="'+enc3+'">';
+      /* 2 arriba */
+      mediaHtml += '<div class="pc-media-2col">';
+      [0,1].forEach(function(i){
+        var u=mediaUrls[i]; var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
+        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'
+          +(isV?'<video src="'+u+'" muted playsinline></video>':'<img src="'+u+'" loading="lazy" alt="">')
+          +'</div>';
+      });
+      mediaHtml += '</div>';
+      /* 1 abajo completa con +N si hay más */
+      var u2 = mediaUrls[2]; var lo2=u2.toLowerCase().split('?')[0]; var isV2=lo2.endsWith('.mp4')||lo2.endsWith('.webm');
+      var extra = mediaUrls.length > 3
+        ? '<div class="pc-media-more">+' + (mediaUrls.length-3) + '</div>' : '';
+      mediaHtml += '<div class="pc-media-cell pc-media-full" data-tv-idx="2">'
+        +(isV2?'<video src="'+u2+'" muted playsinline></video>':'<img src="'+u2+'" loading="lazy" alt="">')
+        +extra+'</div>';
+      mediaHtml += '</div>';
     }
 
-    html += '</div>';
+    /* ── Tags/body ── */
+    var bodyTxt = (p.body||'').trim();
+    if (bodyTxt === ' ') bodyTxt = '';
+    var tagsHtml = '';
+    if (bodyTxt) {
+      var short = bodyTxt.length > 120 ? bodyTxt.slice(0,120) : bodyTxt;
+      var tagged = short.replace(/#(\w+)/g,'<span class="pc-tag">#$1</span>');
+      tagsHtml = '<div class="pc-tags">'
+        + tagged
+        + (bodyTxt.length > 120 ? '<button class="pc-more-btn" data-post-id="'+p.id+'">Ver más</button>' : '')
+        + '</div>';
+    }
+
+    /* ── HTML del card ── */
+    var html = '<div class="post-card" data-post-id="'+p.id+'">'
+      /* Header: avatar + nombre + fecha */
+      + '<div class="pc-header">'
+        + '<div class="pc-av" data-profile-uid="'+escH(p.user_id||'')+'" data-profile-name="'+escH(p.user_name||'')+'" style="cursor:pointer;">'+avatar+'</div>'
+        + '<div class="pc-meta">'
+          + '<div class="pc-name" data-profile-uid="'+escH(p.user_id||'')+'" data-profile-name="'+escH(p.user_name||'')+'" style="cursor:pointer;">'+escH(p.user_name||'')+'</div>'
+          + '<div class="pc-date">'+timeAgo(p.created_at)+'</div>'
+        + '</div>'
+        + '<button class="pc-menu-btn" data-post-id="'+p.id+'">&#8943;</button>'
+      + '</div>'
+      /* Medios */
+      + mediaHtml
+      /* Tags */
+      + tagsHtml
+      /* Acciones */
+      + '<div class="pc-actions">'
+        + '<button class="pc-act-btn post-comment-btn" data-post-id="'+p.id+'">'
+          + '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+          + '<span class="pc-act-count" id="cc-'+p.id+'"></span>'
+        + '</button>'
+        + '<button class="pc-act-btn post-like-btn'+(LIKED_POSTS.has(String(p.id))?' liked':'')+'" data-post-id="'+p.id+'" data-like-count="'+(p.like_count||0)+'">'
+          + '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+          + '<span class="pc-act-count plc">'+(p.like_count||'')+'</span>'
+        + '</button>'
+        + '<button class="pc-act-btn pc-share-btn" data-post-id="'+p.id+'">'
+          + '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>'
+        + '</button>'
+        + (!isOwn ? '<button class="pc-act-btn post-report-btn'+(reported?' reported':'')+'" data-post-id="'+p.id+'">'
+          + '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+          + '</button>' : '')
+      + '</div>';
 
     if (isAdmin) {
       html += '<div class="post-admin-bar">'
-        + '<button class="adm-del-btn" data-uid="'+escH(p.user_id||'')+'" onclick="window._adminDeletePost('+p.id+',this)" title="Delete post">&#128465; Delete</button>'
-      + '</div>';
+        + '<button class="adm-del-btn" data-uid="'+escH(p.user_id||'')+'" onclick="window._adminDeletePost('+p.id+',this)" title="Delete">&#128465; Delete</button>'
+        + '</div>';
     }
 
     html += '</div>';
@@ -6728,14 +6826,22 @@ async function votePoll(postId, idx, poll, container) {
   /* Delegation: comment on post, report post, admin actions */
   document.addEventListener('click', async function(e) {
     /* Abrir imagen/video de post en fullscreen */
-    var postImg = e.target.closest('.post-card-img');
-    if (postImg && window._openPMV) {
-      if (postImg.tagName === 'VIDEO') {
-        /* Para video, solo dejar que los controles nativos manejen */
+    /* Click en media del post — abrir HWViewer */
+    var mediaCell = e.target.closest('.pc-media-cell, .pc-media-wrap');
+    if (mediaCell) {
+      var wrap = mediaCell.closest('[data-tv-urls]') || mediaCell;
+      if (!wrap.hasAttribute('data-tv-urls')) wrap = mediaCell.querySelector('[data-tv-urls]') || mediaCell;
+      var urlsEnc = wrap.getAttribute('data-tv-urls');
+      var tvIdx = parseInt(mediaCell.getAttribute('data-tv-idx')||'0');
+      if (urlsEnc && window.HWViewer) {
+        try { window.HWViewer.open(JSON.parse(decodeURIComponent(urlsEnc)), tvIdx, null, null); } catch(err){}
         return;
       }
-      window._openPMV(postImg.src, false);
-      return;
+    }
+    /* Fallback imagen suelta */
+    var postImg = e.target.closest('.post-card-img');
+    if (postImg && window.HWViewer) {
+      if (postImg.tagName !== 'VIDEO') { window.HWViewer.open([postImg.src],0,null,null); return; }
     }
 
     /* Comment on post */
