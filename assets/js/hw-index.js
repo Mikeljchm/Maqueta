@@ -1763,21 +1763,28 @@ async function votePoll(postId, idx, poll, container) {
       let scale = 1, pinchDist = 0, pinchScale = 1, swipeSx = 0;
 
       function openViewer(imgs, startIdx, postId, desc) {
-        viewerImgs = imgs; viewerIdx = startIdx || 0; viewerPostId = postId;
-        const track = $('viewer-track');
-        track.innerHTML = '';
-        imgs.forEach(src => {
-          const slide = document.createElement('div'); slide.className = 'viewer-slide';
-          const img = document.createElement('img'); img.src = src; img.alt = '';
-          slide.appendChild(img); track.appendChild(slide);
-        });
-        updateSlide(false);
-        $('viewer-desc').innerHTML = (desc || '').replace(/#(\w+)/g,'<span class="htag">#$1</span>');
-        $('photo-viewer').classList.add('open');
-        document.body.style.overflow = 'hidden';
-        const id = String(postId);
-        $('viewer-like').classList.toggle('liked', liked.has(id));
-        $('viewer-like-count').textContent = fmt(likes[id] || 0);
+        /* Usar el nuevo visor nativo */
+        var urls = imgs.map(function(img){ return img.src || img; });
+        var likeCallback = null;
+        if(postId){
+          likeCallback = function(pid){
+            var id = String(pid);
+            var isLiked = liked.has(id);
+            if(isLiked){ liked.delete(id); } else { liked.add(id); }
+            /* Actualizar botón like del viewer */
+            var lb = document.getElementById('hw-viewer-like');
+            if(lb) lb.classList.toggle('liked', !isLiked);
+            /* Actualizar like en el feed */
+            var feedBtn = document.querySelector('.post-card[data-post-id="'+id+'"] .like-btn');
+            if(feedBtn) feedBtn.classList.toggle('liked', !isLiked);
+            /* Persistir en D1 */
+            fetch('/api/likes', {method:'POST', credentials:'include',
+              headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({post_id:pid, action:isLiked?'unlike':'like'})
+            }).catch(function(){});
+          };
+        }
+        if(window.HWViewer) window.HWViewer.open(urls, startIdx||0, postId||null, likeCallback);
       }
 
       function updateSlide(animate) {
@@ -7019,43 +7026,403 @@ async function votePoll(postId, idx, poll, container) {
   ].join('');
   document.head.appendChild(cs);
 
-  /* ── Thread Media Viewer — se crea una sola vez al cargar ── */
-  if (!document.getElementById('thread-viewer')) {
-    var tv=document.createElement('div'); tv.className='thread-viewer'; tv.id='thread-viewer';
-    tv.innerHTML='<div class="thread-viewer-counter" id="tvc"></div>'
-      +'<button class="thread-viewer-close" id="tvcl">&#10005;</button>'
-      +'<button class="thread-viewer-nav thread-viewer-prev" id="tvp">&#8249;</button>'
-      +'<div id="tvcont" style="display:flex;align-items:center;justify-content:center;max-width:100vw;max-height:100vh;"></div>'
-      +'<button class="thread-viewer-nav thread-viewer-next" id="tvn">&#8250;</button>';
-    document.body.appendChild(tv);
-    var tvU=[],tvI=0;
-    function tvShow(i){
-      tvI=i; var url=tvU[i];
-      var lo=url.toLowerCase().split('?')[0];
-      var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
-      var ct=document.getElementById('tvcont');
-      if(ct) ct.innerHTML=isV
-        ?'<video class="thread-viewer-video" src="'+url+'" controls autoplay></video>'
-        :'<img class="thread-viewer-img" src="'+url+'">';
-      var ctr=document.getElementById('tvc'); if(ctr) ctr.textContent=(i+1)+' / '+tvU.length;
-      var pp=document.getElementById('tvp'),np=document.getElementById('tvn');
-      if(pp) pp.style.display=tvU.length>1?'':'none';
-      if(np) np.style.display=tvU.length>1?'':'none';
-    }
-    window.openThreadViewer=function(urls,idx){ tvU=urls; tv.classList.add('open'); document.body.style.overflow='hidden'; tvShow(idx||0); };
-    document.getElementById('tvcl').addEventListener('click',function(){ tv.classList.remove('open'); document.body.style.overflow=''; });
-    document.getElementById('tvp').addEventListener('click',function(){ tvShow((tvI-1+tvU.length)%tvU.length); });
-    document.getElementById('tvn').addEventListener('click',function(){ tvShow((tvI+1)%tvU.length); });
-    var tvSx=0,tvSy=0;
-    tv.addEventListener('touchstart',function(e){tvSx=e.touches[0].clientX;tvSy=e.touches[0].clientY;},{passive:true});
-    tv.addEventListener('touchend',function(e){
-      var dx=e.changedTouches[0].clientX-tvSx, dy=e.changedTouches[0].clientY-tvSy;
-      if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){ tvShow(dx<0?(tvI+1)%tvU.length:(tvI-1+tvU.length)%tvU.length); }
-      else if(dy>80){ tv.classList.remove('open'); document.body.style.overflow=''; }
-    },{passive:true});
-  }
+  /* ═══════════════════════════════════════════════════════════
+     HW NATIVE VIEWER — 60fps, GPU-accelerated, pinch/zoom/swipe
+     Reemplaza photo-viewer y thread-viewer
+  ═══════════════════════════════════════════════════════════ */
+  (function(){
+    /* CSS */
+    var st = document.createElement('style');
+    st.textContent = [
+      '#hw-viewer{position:fixed;inset:0;z-index:9000;background:#000;display:none;touch-action:none;will-change:transform;overscroll-behavior:none;}',
+      '#hw-viewer.open{display:flex;flex-direction:column;}',
+      '#hw-viewer-bar{position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 1rem;z-index:2;background:linear-gradient(#000a,transparent);}',
+      '#hw-viewer-counter{color:#fff;font-size:0.8rem;font-family:var(--font-b);}',
+      '#hw-viewer-close{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:0.5rem;line-height:1;}',
+      '#hw-viewer-actions{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:space-around;padding:1rem 1rem calc(1rem + env(safe-area-inset-bottom,0));background:linear-gradient(transparent,#000a);z-index:2;}',
+      '#hw-viewer-like{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0.2rem;font-family:var(--font-b);font-size:0.65rem;}',
+      '#hw-viewer-like svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2;transition:all 0.15s;}',
+      '#hw-viewer-like.liked svg{fill:#FF4500;stroke:#FF4500;}',
+      '.hw-viewer-heart-anim{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);pointer-events:none;font-size:5rem;opacity:0;transition:none;z-index:10;}',
+      '.hw-viewer-heart-anim.pop{animation:hwHeartPop 0.6s ease forwards;}',
+      '@keyframes hwHeartPop{0%{transform:translate(-50%,-50%) scale(0);opacity:1;}50%{transform:translate(-50%,-50%) scale(1.3);opacity:1;}100%{transform:translate(-50%,-50%) scale(1);opacity:0;}}',
+      '#hw-viewer-stage{position:absolute;inset:0;overflow:hidden;}'
+    ].join('');
+    document.head.appendChild(st);
 
-  /* State */
+    /* HTML */
+    var viewer = document.createElement('div');
+    viewer.id = 'hw-viewer';
+    viewer.innerHTML =
+      '<div id="hw-viewer-bar">'
+        + '<button id="hw-viewer-close">&#10005;</button>'
+        + '<div id="hw-viewer-counter"></div>'
+        + '<div style="width:40px;"></div>'
+      + '</div>'
+      + '<div id="hw-viewer-stage"></div>'
+      + '<div class="hw-viewer-heart-anim" id="hw-heart">&#10084;&#65039;</div>'
+      + '<div id="hw-viewer-actions" style="display:none;">'
+        + '<button id="hw-viewer-like"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span id="hw-viewer-like-count"></span></button>'
+      + '</div>';
+    document.body.appendChild(viewer);
+
+    /* State */
+    var _urls = [], _idx = 0, _postId = null;
+    var _scale = 1, _minScale = 1, _maxScale = 5;
+    var _tx = 0, _ty = 0;
+    var _vx = 0, _vy = 0; /* velocity para momentum */
+    var _rafId = null;
+    var _imgW = 0, _imgH = 0;
+    var _stageW = 0, _stageH = 0;
+    var _curImg = null;
+    var _onLikeCallback = null;
+
+    /* Helpers */
+    function clamp(v, mn, mx){ return Math.max(mn, Math.min(mx, v)); }
+    function dist(t){ return Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY); }
+    function mid(t){ return {x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2}; }
+
+    function clampTranslate(){
+      if(_scale <= _minScale){ _tx = 0; _ty = 0; return; }
+      var maxX = (_imgW * _scale - _stageW) / 2;
+      var maxY = (_imgH * _scale - _stageH) / 2;
+      _tx = clamp(_tx, -maxX, maxX);
+      _ty = clamp(_ty, -maxY, maxY);
+    }
+
+    function applyTransform(animate){
+      if(!_curImg) return;
+      var tf = 'translate3d('+_tx+'px,'+_ty+'px,0) scale('+_scale+')';
+      if(animate){
+        _curImg.style.transition = 'transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)';
+      } else {
+        _curImg.style.transition = 'none';
+      }
+      _curImg.style.transform = tf;
+    }
+
+    function showSlide(idx, dir){
+      _idx = idx;
+      _scale = _minScale = 1; _tx = 0; _ty = 0;
+      _vx = 0; _vy = 0;
+      var stage = document.getElementById('hw-viewer-stage');
+      if(!stage) return;
+
+      /* Animar salida */
+      var old = stage.querySelector('.hw-slide');
+      if(old && dir){
+        old.style.transition = 'transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)';
+        old.style.transform = 'translate3d('+(dir<0?'100%':'-100%')+',0,0)';
+        setTimeout(function(){ if(old.parentNode) old.parentNode.removeChild(old); }, 260);
+      } else if(old){
+        stage.removeChild(old);
+      }
+
+      _stageW = stage.offsetWidth || window.innerWidth;
+      _stageH = stage.offsetHeight || window.innerHeight;
+
+      var url = _urls[idx];
+      var slide = document.createElement('div');
+      slide.className = 'hw-slide';
+      slide.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;';
+      if(dir){
+        slide.style.transform = 'translate3d('+(dir>0?'100%':'-100%')+',0,0)';
+      }
+
+      var lo = (url||'').toLowerCase().split('?')[0];
+      var isVid = lo.endsWith('.mp4')||lo.endsWith('.webm');
+
+      if(isVid){
+        var vid = document.createElement('video');
+        vid.src = url;
+        vid.controls = true;
+        vid.autoplay = true;
+        vid.setAttribute('playsinline','');
+        vid.setAttribute('controlslist','nodownload');
+        vid.style.cssText = 'max-width:100%;max-height:100vh;display:block;';
+        slide.appendChild(vid);
+        _curImg = vid;
+      } else {
+        var img = new Image();
+        img.style.cssText = 'max-width:100%;max-height:100vh;object-fit:contain;display:block;will-change:transform;touch-action:none;user-select:none;-webkit-user-drag:none;';
+        img.draggable = false;
+        img.onload = function(){
+          _imgW = img.naturalWidth; _imgH = img.naturalHeight;
+          /* Ajustar al stage */
+          var rW = _stageW / _imgW, rH = _stageH / _imgH;
+          _minScale = Math.min(rW, rH, 1);
+          _scale = _minScale;
+        };
+        img.src = url;
+        slide.appendChild(img);
+        _curImg = img;
+      }
+
+      stage.appendChild(slide);
+
+      /* Animar entrada */
+      if(dir){
+        requestAnimationFrame(function(){
+          requestAnimationFrame(function(){
+            slide.style.transition = 'transform 0.25s cubic-bezier(0.25,0.46,0.45,0.94)';
+            slide.style.transform = 'translate3d(0,0,0)';
+          });
+        });
+      }
+
+      /* Counter */
+      var ctr = document.getElementById('hw-viewer-counter');
+      if(ctr) ctr.textContent = _urls.length > 1 ? (_idx+1)+' / '+_urls.length : '';
+
+      /* Prev/next arrows */
+      var prevBtn = document.getElementById('hw-viewer-prev');
+      var nextBtn = document.getElementById('hw-viewer-next');
+      if(prevBtn) prevBtn.style.display = (_urls.length>1&&_idx>0)?'':'none';
+      if(nextBtn) nextBtn.style.display = (_urls.length>1&&_idx<_urls.length-1)?'':'none';
+    }
+
+    /* Touch state */
+    var _touches = [];
+    var _lastDist = 0, _lastMid = null;
+    var _lastTx = 0, _lastTy = 0;
+    var _lastT = 0;
+    var _tapTimer = null, _tapCount = 0;
+    var _swipeStartY = 0, _swipeStartX = 0;
+    var _swipeStartScale = 1;
+    var _swipeActive = false;
+
+    var stage = document.getElementById('hw-viewer-stage');
+
+    stage.addEventListener('touchstart', function(e){
+      e.preventDefault();
+      _touches = Array.from(e.touches);
+      _lastTx = _tx; _lastTy = _ty;
+      _swipeStartY = _touches[0].clientY;
+      _swipeStartX = _touches[0].clientX;
+      _swipeActive = false;
+      if(_rafId){ cancelAnimationFrame(_rafId); _rafId = null; }
+      _vx = 0; _vy = 0;
+
+      if(_touches.length === 2){
+        _lastDist = dist(_touches);
+        _lastMid  = mid(_touches);
+        _swipeStartScale = _scale;
+      }
+
+      /* Doble tap */
+      _tapCount++;
+      if(_tapCount === 1){
+        _tapTimer = setTimeout(function(){ _tapCount = 0; }, 300);
+      } else if(_tapCount >= 2){
+        clearTimeout(_tapTimer); _tapCount = 0;
+        handleDoubleTap(_touches[0].clientX, _touches[0].clientY);
+      }
+    }, {passive:false});
+
+    stage.addEventListener('touchmove', function(e){
+      e.preventDefault();
+      var t = Array.from(e.touches);
+      var now = Date.now();
+
+      if(t.length === 2){
+        /* Pinch zoom */
+        var d2 = dist(t);
+        var m2 = mid(t);
+        var newScale = clamp(_swipeStartScale * (d2 / _lastDist), _minScale, _maxScale);
+
+        /* Zoom desde el punto central del pinch */
+        var stageRect = stage.getBoundingClientRect();
+        var px = m2.x - stageRect.left - _stageW/2;
+        var py = m2.y - stageRect.top  - _stageH/2;
+        var ds = newScale / _scale;
+        _tx = px - ds*(px - _tx);
+        _ty = py - ds*(py - _ty);
+        _scale = newScale;
+        clampTranslate();
+
+        /* Pan con 2 dedos */
+        if(_lastMid){
+          _tx += m2.x - _lastMid.x;
+          _ty += m2.y - _lastMid.y;
+          clampTranslate();
+        }
+
+        _lastMid  = m2;
+        _lastDist = d2;
+        applyTransform(false);
+
+      } else if(t.length === 1){
+        var dx = t[0].clientX - _touches[0].clientX;
+        var dy = t[0].clientY - _touches[0].clientY;
+        var dt = now - _lastT || 16;
+        _vx = dx / dt;
+        _vy = dy / dt;
+        _lastT = now;
+
+        if(_scale > _minScale + 0.01){
+          /* Pan */
+          _tx = _lastTx + (t[0].clientX - _swipeStartX);
+          _ty = _lastTy + (t[0].clientY - _swipeStartY);
+          clampTranslate();
+          applyTransform(false);
+        } else {
+          /* Swipe para cambiar imagen o cerrar */
+          var totalDx = t[0].clientX - _swipeStartX;
+          var totalDy = t[0].clientY - _swipeStartY;
+          if(!_swipeActive && (Math.abs(totalDx)>8||Math.abs(totalDy)>8)){
+            _swipeActive = true;
+          }
+          if(_swipeActive){
+            if(Math.abs(totalDy) > Math.abs(totalDx)){
+              /* Swipe down → preview cierre */
+              if(totalDy > 0){
+                viewer.style.background = 'rgba(0,0,0,'+(1 - Math.min(totalDy/300, 0.6))+')';
+                if(_curImg) _curImg.style.transform = 'translate3d(0,'+totalDy+'px,0) scale('+(1 - totalDy/1200)+')';
+              }
+            } else if(_urls.length > 1){
+              /* Swipe horizontal → preview cambio */
+              if(_curImg) _curImg.style.transform = 'translate3d('+totalDx+'px,0,0)';
+            }
+          }
+        }
+        _touches = t;
+      }
+    }, {passive:false});
+
+    stage.addEventListener('touchend', function(e){
+      e.preventDefault();
+      var t = Array.from(e.changedTouches);
+      var totalDx = t[0].clientX - _swipeStartX;
+      var totalDy = t[0].clientY - _swipeStartY;
+
+      if(_scale <= _minScale + 0.01 && _swipeActive){
+        if(Math.abs(totalDy) > Math.abs(totalDx) && totalDy > 80){
+          /* Cerrar con swipe down */
+          closeViewer();
+          return;
+        } else if(Math.abs(totalDx) > Math.abs(totalDy) && Math.abs(totalDx) > 60){
+          /* Cambiar imagen */
+          viewer.style.background = '';
+          if(totalDx < 0 && _idx < _urls.length-1){ showSlide(_idx+1, 1); }
+          else if(totalDx > 0 && _idx > 0){ showSlide(_idx-1, -1); }
+          else if(_curImg) { _curImg.style.transition='transform 0.2s'; _curImg.style.transform='translate3d(0,0,0)'; }
+          return;
+        } else {
+          /* Reset si no llegó al threshold */
+          viewer.style.background = '';
+          if(_curImg){ _curImg.style.transition='transform 0.2s'; _curImg.style.transform='translate3d(0,0,0) scale(1)'; }
+        }
+      }
+
+      /* Momentum */
+      if(_scale > _minScale + 0.01 && Math.abs(_vx)+Math.abs(_vy) > 0.1){
+        momentum();
+      } else {
+        /* Snap back si fuera de bounds */
+        clampTranslate();
+        applyTransform(true);
+      }
+
+      _touches = Array.from(e.touches);
+    }, {passive:false});
+
+    function momentum(){
+      if(Math.abs(_vx) < 0.01 && Math.abs(_vy) < 0.01){ clampTranslate(); applyTransform(true); return; }
+      _tx += _vx * 16;
+      _ty += _vy * 16;
+      _vx *= 0.92;
+      _vy *= 0.92;
+      clampTranslate();
+      applyTransform(false);
+      _rafId = requestAnimationFrame(momentum);
+    }
+
+    function handleDoubleTap(x, y){
+      if(_scale > _minScale + 0.01){
+        /* Zoom out */
+        _scale = _minScale; _tx = 0; _ty = 0;
+      } else {
+        /* Zoom in x2.5 centrado en el toque */
+        var targetScale = Math.min(_minScale * 2.5, _maxScale);
+        var stageRect = stage.getBoundingClientRect();
+        var px = x - stageRect.left - _stageW/2;
+        var py = y - stageRect.top  - _stageH/2;
+        var ds = targetScale / _scale;
+        _tx = px - ds*(px - _tx);
+        _ty = py - ds*(py - _ty);
+        _scale = targetScale;
+        clampTranslate();
+      }
+      applyTransform(true);
+
+      /* Like con corazón en doble tap */
+      if(_scale <= _minScale + 0.01 && _postId){
+        triggerHeartAnim();
+        if(_onLikeCallback) _onLikeCallback(_postId);
+      }
+    }
+
+    function triggerHeartAnim(){
+      var h = document.getElementById('hw-heart');
+      if(!h) return;
+      h.classList.remove('pop');
+      void h.offsetWidth;
+      h.classList.add('pop');
+    }
+
+    function openViewer_new(urls, startIdx, postId, likeCallback){
+      _urls = Array.isArray(urls) ? urls : [urls];
+      _postId = postId || null;
+      _onLikeCallback = likeCallback || null;
+      _idx = startIdx || 0;
+      _scale = 1; _tx = 0; _ty = 0; _vx = 0; _vy = 0;
+      viewer.style.background = '#000';
+
+      /* Actions bar */
+      var actBar = document.getElementById('hw-viewer-actions');
+      if(actBar) actBar.style.display = _postId ? '' : 'none';
+
+      viewer.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      showSlide(_idx, 0);
+    }
+
+    function closeViewer(){
+      if(_curImg){
+        _curImg.style.transition = 'transform 0.2s, opacity 0.2s';
+        _curImg.style.opacity = '0';
+        _curImg.style.transform = 'translate3d(0,60px,0) scale(0.95)';
+      }
+      viewer.style.transition = 'opacity 0.2s';
+      viewer.style.opacity = '0';
+      setTimeout(function(){
+        viewer.classList.remove('open');
+        viewer.style.opacity = '';
+        viewer.style.transition = '';
+        viewer.style.background = '#000';
+        var stage2 = document.getElementById('hw-viewer-stage');
+        if(stage2) stage2.innerHTML = '';
+        _curImg = null;
+        document.body.style.overflow = '';
+      }, 220);
+    }
+
+    /* Botón cerrar */
+    document.getElementById('hw-viewer-close').addEventListener('click', closeViewer);
+
+    /* Like button */
+    var likeBtn = document.getElementById('hw-viewer-like');
+    if(likeBtn) likeBtn.addEventListener('click', function(){
+      if(_postId && _onLikeCallback){ triggerHeartAnim(); _onLikeCallback(_postId); }
+    });
+
+    /* Exponer globalmente — reemplaza openViewer y openThreadViewer */
+    window.openThreadViewer = function(urls, idx){ openViewer_new(urls, idx||0, null, null); };
+    window.HWViewer = { open: openViewer_new, close: closeViewer };
+
+  })();
+
+    /* State */
   var currentThread    = null;
   var currentSort      = 'trending';
   var currentCategory  = 'all';
