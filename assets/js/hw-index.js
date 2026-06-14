@@ -6520,7 +6520,7 @@ async function votePoll(postId, idx, poll, container) {
           var lo = u.toLowerCase().split('?')[0];
           return lo.endsWith('.mp4')||lo.endsWith('.webm')
             ? '<video class="post-card-img" src="'+u+'" autoplay loop muted playsinline style="cursor:pointer;" onclick="if(window._openPMV)window._openPMV(this.src,true)"></video>'
-            : '<img class="post-card-img" src="'+u+'" loading="lazy" alt="" style="cursor:pointer;">';
+            : '<img class="post-card-img" src="'+u+'" loading="lazy" alt="" style="cursor:pointer;" onclick="if(window.HWViewer)window.HWViewer.open([this.src],0,null,null)">';
         })(p.image_url) : '')
       + (p.body && p.body.trim() && p.body.trim() !== ' ' ? '<div class="post-card-body">'+escH(p.body)+'</div>' : '')
       + '<div class="post-card-actions">'
@@ -6721,47 +6721,9 @@ async function votePoll(postId, idx, poll, container) {
   };
 
   /* Post media viewer — fullscreen al tocar imagen/video de post */
-  (function(){
-    var pmv = document.createElement('div');
-    pmv.className = 'pmv'; pmv.id = 'pmv';
-    pmv.innerHTML = '<button class="pmv-close" id="pmv-close">&#10005;</button><div id="pmv-content"></div>';
-    document.body.appendChild(pmv);
+  /* openPMV → HWViewer */
+  window._openPMV = function(src){ if(window.HWViewer) window.HWViewer.open([src],0,null,null); };
 
-    function openPMV(src, isVideo) {
-      var cont = document.getElementById('pmv-content');
-      if (!cont) return;
-      if (isVideo) {
-        cont.innerHTML = '<video class="pmv-video" src="'+src+'" autoplay controls playsinline style="max-width:100vw;max-height:100vh;"></video>';
-      } else {
-        cont.innerHTML = '<img class="pmv-img" src="'+src+'" alt="">';
-      }
-      pmv.classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-    function closePMV() {
-      pmv.classList.remove('open');
-      document.body.style.overflow = '';
-      var cont = document.getElementById('pmv-content');
-      if (cont) cont.innerHTML = '';
-    }
-
-    document.getElementById('pmv-close').addEventListener('click', closePMV);
-
-    /* Swipe down to close */
-    var sy = 0;
-    pmv.addEventListener('touchstart', function(e){ sy = e.touches[0].clientY; }, {passive:true});
-    pmv.addEventListener('touchend', function(e){
-      if (e.changedTouches[0].clientY - sy > 80) closePMV();
-    }, {passive:true});
-
-    /* Tap backdrop (fuera de img/video) to close */
-    pmv.addEventListener('click', function(e){
-      if (e.target === pmv) closePMV();
-    });
-
-    /* Exponer */
-    window._openPMV = openPMV;
-  })();
 
   /* Delegation: comment on post, report post, admin actions */
   document.addEventListener('click', async function(e) {
