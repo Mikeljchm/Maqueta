@@ -362,9 +362,9 @@
       page = document.createElement('div');
       page.id = 'page-user-profile';
       page.style.cssText = 'position:absolute;inset:0;background:var(--bg);z-index:250;display:none;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);';
-      /* Agregar al #app para heredar dimensiones correctas */
-      var appEl = document.getElementById('app') || document.body;
-      appEl.appendChild(page);
+      /* Agregar a .pages — hereda position:relative y dimensiones correctas */
+      var pagesEl = document.querySelector('.pages') || document.getElementById('app') || document.body;
+      pagesEl.appendChild(page);
     }
     page.style.display = 'flex';
     page.innerHTML =
