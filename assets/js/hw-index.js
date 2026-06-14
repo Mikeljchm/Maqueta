@@ -474,7 +474,11 @@
           if(nameEl){
             nameEl.textContent=realName;
             nameEl.style.fontSize='2.2rem';
-            if(window.applyNameStyle) window.applyNameStyle(nameEl, d.name_color||'', d.name_font||'');
+            if(window.applyNameStyle){
+              var _applyFn=function(){ window.applyNameStyle(nameEl, d.name_color||'', d.name_font||''); };
+              if(document.fonts && document.fonts.ready){ document.fonts.ready.then(_applyFn); }
+              else { setTimeout(_applyFn,1500); }
+            }
           }
           /* Avatar inicial */
           var avEl=document.getElementById('uprof-av');
@@ -2778,7 +2782,14 @@ async function votePoll(postId, idx, poll, container) {
           window.currentUser.name_color=pd.name_color||'';
           window.currentUser.name_font=pd.name_font||'';
         }
-        setTimeout(function(){ if(window.refreshNameStyles) window.refreshNameStyles(); },500);
+        /* Esperar que las fuentes estén listas antes de aplicar */
+        if(document.fonts && document.fonts.ready){
+          document.fonts.ready.then(function(){
+            if(window.refreshNameStyles) window.refreshNameStyles();
+          });
+        } else {
+          setTimeout(function(){ if(window.refreshNameStyles) window.refreshNameStyles(); },1500);
+        }
       }).catch(function(){});
       await updateAuthUI(currentUser);
       fetchUserPoints(session.id);
@@ -4715,7 +4726,11 @@ async function votePoll(postId, idx, poll, container) {
           if(dnEl){
             dnEl.textContent=d.display_name;
             dnEl.style.fontSize='2.2rem';
-            if(window.applyNameStyle) window.applyNameStyle(dnEl, d.name_color||'', d.name_font||'');
+            if(window.applyNameStyle){
+              var _dn=dnEl, _dc=d.name_color||'', _df=d.name_font||'';
+              if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(function(){ window.applyNameStyle(_dn,_dc,_df); }); }
+              else{ setTimeout(function(){ window.applyNameStyle(_dn,_dc,_df); },1500); }
+            }
           }
           if(window.currentUser){
             window.currentUser.display_name=d.display_name;
