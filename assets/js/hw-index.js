@@ -4380,8 +4380,8 @@ async function votePoll(postId, idx, poll, container) {
       '.ep-ta{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.6rem 0.85rem;font-size:0.85rem;font-family:var(--font-b);resize:none;height:80px;margin-bottom:0.85rem;box-sizing:border-box;outline:none;line-height:1.5;}',
       '.ep-ta:focus{border-color:var(--fire-orange);}',
       '.ep-age-row{display:flex;gap:0.75rem;align-items:center;margin-bottom:0.85rem;}',
-      '.ep-age-input{width:80px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.6rem 0.75rem;font-size:0.85rem;font-family:var(--font-b);outline:none;text-align:center;}',
-      '.ep-age-input:focus{border-color:var(--fire-orange);}',
+      '.ep-date-input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.6rem 0.85rem;font-size:0.85rem;font-family:var(--font-b);outline:none;margin-bottom:0.5rem;box-sizing:border-box;-webkit-appearance:none;}',
+      '.ep-date-input:focus{border-color:var(--fire-orange);}',
       '.ep-toggle-row{display:flex;align-items:center;gap:0.75rem;flex:1;background:var(--surface-2);border-radius:10px;padding:0.5rem 0.85rem;border:1px solid var(--border);}',
       '.ep-toggle-label{font-size:0.78rem;color:var(--text-dim);flex:1;}',
       '.ep-save-btn{width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:12px;padding:0.75rem;font-family:var(--font-d);font-size:0.88rem;letter-spacing:0.06em;cursor:pointer;margin-top:0.25rem;}',
@@ -4413,13 +4413,11 @@ async function votePoll(postId, idx, poll, container) {
       +'<input class="ep-input" id="ep-username" type="text" maxlength="30" placeholder="@username">'
       +'<label class="ep-label">Bio</label>'
       +'<textarea class="ep-ta" id="ep-bio" maxlength="150" placeholder="Tell something about yourself..."></textarea>'
-      +'<label class="ep-label">Age</label>'
-      +'<div class="ep-age-row">'
-        +'<input class="ep-age-input" id="ep-age" type="number" min="18" max="99" placeholder="Age">'
-        +'<div class="ep-toggle-row">'
-          +'<span class="ep-toggle-label">Show age publicly</span>'
-          +'<label class="prof-toggle"><input type="checkbox" id="ep-age-public"><span class="prof-toggle-track"></span></label>'
-        +'</div>'
+      +'<label class="ep-label">Date of Birth</label>'
+      +'<input class="ep-date-input" id="ep-birth-date" type="date" max="">'
+      +'<div class="ep-toggle-row" style="margin-bottom:0.85rem;">'
+        +'<span class="ep-toggle-label">Show age publicly</span>'
+        +'<label class="prof-toggle"><input type="checkbox" id="ep-age-public"><span class="prof-toggle-track"></span></label>'
       +'</div>'
       +'<label class="ep-label">City</label>'
       +'<input class="ep-input" id="ep-city" type="text" maxlength="60" placeholder="e.g. Medell&#237;n">'
@@ -4511,7 +4509,10 @@ async function votePoll(postId, idx, poll, container) {
       if(epBio&&bioEl) epBio.value=bioEl.textContent;
       /* Cargar age desde API */
       fetch('/api/profile',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
-        if(epAge&&d.age) epAge.value=d.age;
+        var epBirth=document.getElementById('ep-birth-date');
+        if(epBirth&&d.birth_date) epBirth.value=d.birth_date;
+        /* Poner max = hoy - 18 años */
+        if(epBirth){ var maxD=new Date(); maxD.setFullYear(maxD.getFullYear()-13); epBirth.max=maxD.toISOString().split('T')[0]; }
         var apCb=document.getElementById('ep-age-public'); if(apCb) apCb.checked=!!d.age_public;
         var ecity=document.getElementById('ep-city'); if(ecity&&d.city) ecity.value=d.city;
         var ecountry=document.getElementById('ep-country'); if(ecountry&&d.country) ecountry.value=d.country;
@@ -4569,7 +4570,16 @@ async function votePoll(postId, idx, poll, container) {
         if(name) payload.display_name=name;
         if(username.length>=3) payload.username=username;
         if(bio!==undefined) payload.bio=bio;
-        if(ageVal&&ageVal>=13&&ageVal<120) payload.age=ageVal;
+        var birthVal=(document.getElementById('ep-birth-date')||{}).value||'';
+        if(birthVal){
+          payload.birth_date=birthVal;
+          /* Calcular edad */
+          var bd=new Date(birthVal); var today=new Date();
+          var age=today.getFullYear()-bd.getFullYear();
+          var m=today.getMonth()-bd.getMonth();
+          if(m<0||(m===0&&today.getDate()<bd.getDate())) age--;
+          if(age>=13&&age<120) payload.age=age;
+        }
         payload.age_public=agePub;
         var cityVal=(document.getElementById('ep-city')||{}).value||'';
         var countryVal=(document.getElementById('ep-country')||{}).value||'';
