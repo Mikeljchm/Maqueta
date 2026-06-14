@@ -367,10 +367,11 @@
       el.style.backgroundClip = 'text';
       el.style.color = '';
     } else {
-      el.style.background = '';
-      el.style.webkitBackgroundClip = '';
-      el.style.webkitTextFillColor = '';
-      el.style.backgroundClip = '';
+      /* Limpiar gradiente siempre antes de poner color sólido */
+      el.style.background = 'none';
+      el.style.webkitBackgroundClip = 'unset';
+      el.style.webkitTextFillColor = 'unset';
+      el.style.backgroundClip = 'unset';
       el.style.color = color || '';
     }
   };
@@ -2790,12 +2791,14 @@ async function votePoll(postId, idx, poll, container) {
           window.currentUser.name_font=pd.name_font||'';
         }
         /* Esperar que las fuentes estén listas antes de aplicar */
+        /* Aplicar color inmediatamente, fuente cuando esté lista */
+        if(window.refreshNameStyles) window.refreshNameStyles();
         if(document.fonts && document.fonts.ready){
           document.fonts.ready.then(function(){
             if(window.refreshNameStyles) window.refreshNameStyles();
           });
         } else {
-          setTimeout(function(){ if(window.refreshNameStyles) window.refreshNameStyles(); },1500);
+          setTimeout(function(){ if(window.refreshNameStyles) window.refreshNameStyles(); },800);
         }
       }).catch(function(){});
       await updateAuthUI(currentUser);
@@ -4753,8 +4756,9 @@ async function votePoll(postId, idx, poll, container) {
             dnEl.style.fontSize='2.2rem';
             if(window.applyNameStyle){
               var _dn=dnEl, _dc=d.name_color||'', _df=d.name_font||'';
+              window.applyNameStyle(_dn,_dc,'');
               if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(function(){ window.applyNameStyle(_dn,_dc,_df); }); }
-              else{ setTimeout(function(){ window.applyNameStyle(_dn,_dc,_df); },1500); }
+              else{ setTimeout(function(){ window.applyNameStyle(_dn,_dc,_df); },800); }
             }
           }
           if(window.currentUser){
@@ -6798,7 +6802,15 @@ async function votePoll(postId, idx, poll, container) {
               if(ta2) ta2.value='';
               clearPendingImg();
               closePostSheet();
-              window.loadPostsFeed(container);
+              /* Insertar solo el nuevo post al inicio sin recargar el feed */
+              if(d2.post && window.renderPost){
+                var newCard = window.renderPost(d2.post);
+                container.insertAdjacentHTML('afterbegin', newCard);
+                /* Actualizar likes del nuevo post */
+                setTimeout(function(){ if(window.loadAllLikes) window.loadAllLikes(container); },100);
+              } else {
+                window.loadPostsFeed(container);
+              }
             } else {
               var toast=document.getElementById('toast');
               if(toast){toast.textContent=d2.error||'Error';toast.classList.add('show');setTimeout(function(){toast.classList.remove('show');},3000);}
