@@ -4562,7 +4562,6 @@ async function votePoll(postId, idx, poll, container) {
       var name=document.getElementById('ep-name').value.trim();
       var username=document.getElementById('ep-username').value.trim().replace(/[^a-zA-Z0-9_]/g,'').toLowerCase();
       var bio=document.getElementById('ep-bio').value.trim();
-      var ageVal=parseInt(document.getElementById('ep-age').value)||null;
       var agePub=document.getElementById('ep-age-public').checked;
 
       try{
@@ -4596,6 +4595,11 @@ async function votePoll(postId, idx, poll, container) {
           document.getElementById('ep-username').style.borderColor='#ff4444';
           document.getElementById('ep-username').placeholder='Already taken';
           document.getElementById('ep-username').value='';
+          btn.disabled=false; btn.textContent='Save Profile'; return;
+        }
+        if(d.error && d.error!=='Nothing to update'){
+          var t3=document.getElementById('toast');
+          if(t3){t3.textContent=d.error;t3.classList.add('show');setTimeout(function(){t3.classList.remove('show');},3000);}
           btn.disabled=false; btn.textContent='Save Profile'; return;
         }
 
@@ -4667,7 +4671,11 @@ async function votePoll(postId, idx, poll, container) {
         closeEP();
         var toast=document.getElementById('toast');
         if(toast){toast.textContent='Profile updated!';toast.classList.add('show');setTimeout(function(){toast.classList.remove('show');},2500);}
-      }catch(e){}
+      }catch(e){
+        console.error('Profile save error:',e);
+        var t2=document.getElementById('toast');
+        if(t2){t2.textContent='Error saving. Try again.';t2.classList.add('show');setTimeout(function(){t2.classList.remove('show');},3000);}
+      }
       btn.disabled=false; btn.textContent='Save Profile';
     });
   })();
