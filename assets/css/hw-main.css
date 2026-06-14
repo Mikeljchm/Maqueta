@@ -164,7 +164,7 @@
     /* CATEGORY PILLS */
     .cat-pills { display:flex; gap:0.45rem; padding:0.6rem 1rem; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid #1a1a1a; }
     .cat-pills::-webkit-scrollbar { display:none; }
-    .cat-pill { flex-shrink:0; padding:0.32rem 0.85rem; border-radius:20px; font-size:0.6rem; font-family:var(--font-b); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; border:1px solid #2a2a2a; background:#111; color:#666; transition:all 0.2s var(--ease); white-space:nowrap; }
+    .cat-pill { flex-shrink:0; padding:0.32rem 0.85rem; border-radius:20px; font-size:0.6rem; font-family:var(--font-b); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; border:1px solid #2a2a2a; background:#111; color:#0088ff; transition:all 0.2s var(--ease); white-space:nowrap; }
     .cat-pill:active { transform:scale(0.95); }
     .cat-pill.active { background:var(--fire-orange); border-color:var(--fire-orange); color:#fff; box-shadow:0 0 12px rgba(255,69,0,0.3); }
 
