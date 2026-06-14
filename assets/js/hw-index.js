@@ -354,7 +354,12 @@
   /* Aplicar estilo al nombre — función global */
   window.applyNameStyle = function(el, color, font){
     if(!el) return;
-    el.style.fontFamily = font ? font+',sans-serif' : '';
+    /* Usar cssText para sobreescribir font-family del CSS con mayor especificidad */
+    if(font){
+      el.style.setProperty('font-family', font+',sans-serif', 'important');
+    } else {
+      el.style.removeProperty('font-family');
+    }
     if(color==='gradient'){
       el.style.background = 'linear-gradient(135deg,#FF4500,#FFB800)';
       el.style.webkitBackgroundClip = 'text';
@@ -368,6 +373,16 @@
       el.style.backgroundClip = '';
       el.style.color = color || '';
     }
+  };
+
+  /* Aplicar estilo de nombre del usuario actual si el uid coincide */
+  window.applyCurrentUserNameStyle = function(el, uid){
+    if(!el||!uid||!window.currentUser) return;
+    if(uid !== window.currentUser.id) return;
+    var color = window.currentUser.name_color||'';
+    var font  = window.currentUser.name_font||'';
+    if(!color && !font) return;
+    if(window.applyNameStyle) window.applyNameStyle(el, color, font);
   };
 
   window.openMiniProfile = function openMiniProfile(uid, name) {
@@ -2757,6 +2772,14 @@ async function votePoll(postId, idx, poll, container) {
     const session = await HottAuth.init();
     if (session) {
       currentUser = session; window.currentUser = session;
+      /* Cargar name_color y name_font del perfil */
+      fetch('/api/profile',{credentials:'include'}).then(function(r){return r.json();}).then(function(pd){
+        if(window.currentUser){
+          window.currentUser.name_color=pd.name_color||'';
+          window.currentUser.name_font=pd.name_font||'';
+        }
+        setTimeout(function(){ if(window.refreshNameStyles) window.refreshNameStyles(); },500);
+      }).catch(function(){});
       await updateAuthUI(currentUser);
       fetchUserPoints(session.id);
       /* Cargar avatar/banner custom de D1 — pisa el de Google si el usuario subió uno */
@@ -4676,7 +4699,11 @@ async function votePoll(postId, idx, poll, container) {
             dnEl.style.fontSize='2.2rem';
             if(window.applyNameStyle) window.applyNameStyle(dnEl, d.name_color||'', d.name_font||'');
           }
-          if(window.currentUser) window.currentUser.display_name=d.display_name;
+          if(window.currentUser){
+            window.currentUser.display_name=d.display_name;
+            window.currentUser.name_color=d.name_color||'';
+            window.currentUser.name_font=d.name_font||'';
+          }
         }
         if(d.bio){
           var bt=document.getElementById('prof-bio-text'); if(bt) bt.textContent=d.bio;
@@ -5046,6 +5073,20 @@ async function votePoll(postId, idx, poll, container) {
     });
   }
   window.loadProfilePage = loadProfilePage;
+
+  /* Aplicar estilo personalizado de nombre a todos los elementos visibles */
+  window.refreshNameStyles = function(){
+    var u = window.currentUser;
+    if(!u||(!u.name_color&&!u.name_font)) return;
+    document.querySelectorAll(
+      '[data-profile-uid="'+u.id+'"]'
+    ).forEach(function(el){
+      /* Solo los que son texto, no avatares */
+      if(el.tagName==='IMG') return;
+      if(el.querySelector('img')) return;
+      if(window.applyNameStyle) window.applyNameStyle(el, u.name_color||'', u.name_font||'');
+    });
+  };
 
 })();
 
@@ -7370,6 +7411,7 @@ async function votePoll(postId, idx, poll, container) {
         var posts=d.posts||[];
         if(!posts.length){ scroll.innerHTML='<div class="comm-empty">No posts yet.<br>Be the first to post!</div>'; return; }
         scroll.innerHTML=posts.map(function(p){return renderThreadPost(p,isCreator);}).join('')+'<div style="height:4rem;"></div>';
+        setTimeout(function(){ if(window.refreshNameStyles) window.refreshNameStyles(); },80);
       }).catch(function(){ scroll.innerHTML='<div class="comm-empty">Could not load posts.</div>'; });
   }
 
