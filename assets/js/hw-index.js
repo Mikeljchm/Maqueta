@@ -7046,7 +7046,7 @@ async function votePoll(postId, idx, poll, container) {
       '.hw-viewer-heart-anim{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);pointer-events:none;font-size:5rem;opacity:0;transition:none;z-index:10;}',
       '.hw-viewer-heart-anim.pop{animation:hwHeartPop 0.6s ease forwards;}',
       '@keyframes hwHeartPop{0%{transform:translate(-50%,-50%) scale(0);opacity:1;}50%{transform:translate(-50%,-50%) scale(1.3);opacity:1;}100%{transform:translate(-50%,-50%) scale(1);opacity:0;}}',
-      '#hw-viewer-stage{position:absolute;inset:0;overflow:hidden;}'
+      '#hw-viewer-stage{position:absolute;inset:0;overflow:hidden;display:flex;align-items:center;justify-content:center;}'
     ].join('');
     document.head.appendChild(st);
 
@@ -7084,9 +7084,13 @@ async function votePoll(postId, idx, poll, container) {
     function mid(t){ return {x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2}; }
 
     function clampTranslate(){
-      if(_scale <= _minScale){ _tx = 0; _ty = 0; return; }
-      var maxX = (_imgW * _scale - _stageW) / 2;
-      var maxY = (_imgH * _scale - _stageH) / 2;
+      if(_scale <= _minScale + 0.001){ _tx = 0; _ty = 0; _scale = _minScale; return; }
+      /* El stage es la referencia — al scale=1 la imagen ocupa todo el stage */
+      var maxX = _stageW * (_scale - 1) / 2;
+      var maxY = _stageH * (_scale - 1) / 2;
+      /* Asegurar valores positivos */
+      maxX = Math.max(0, maxX);
+      maxY = Math.max(0, maxY);
       _tx = clamp(_tx, -maxX, maxX);
       _ty = clamp(_ty, -maxY, maxY);
     }
@@ -7125,7 +7129,7 @@ async function votePoll(postId, idx, poll, container) {
       var url = _urls[idx];
       var slide = document.createElement('div');
       slide.className = 'hw-slide';
-      slide.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;';
+      slide.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;';
       if(dir){
         slide.style.transform = 'translate3d('+(dir>0?'100%':'-100%')+',0,0)';
       }
@@ -7145,14 +7149,15 @@ async function votePoll(postId, idx, poll, container) {
         _curImg = vid;
       } else {
         var img = new Image();
-        img.style.cssText = 'max-width:100%;max-height:100vh;object-fit:contain;display:block;will-change:transform;touch-action:none;user-select:none;-webkit-user-drag:none;';
+        img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;will-change:transform;touch-action:none;user-select:none;-webkit-user-drag:none;position:absolute;inset:0;';
         img.draggable = false;
         img.onload = function(){
           _imgW = img.naturalWidth; _imgH = img.naturalHeight;
-          /* Ajustar al stage */
-          var rW = _stageW / _imgW, rH = _stageH / _imgH;
-          _minScale = Math.min(rW, rH, 1);
-          _scale = _minScale;
+          /* minScale = 1 — imagen siempre ocupa el stage completo */
+          _minScale = 1;
+          _scale = 1;
+          _tx = 0; _ty = 0;
+          applyTransform(false);
         };
         img.src = url;
         slide.appendChild(img);
@@ -7344,13 +7349,15 @@ async function votePoll(postId, idx, poll, container) {
     }
 
     function handleDoubleTap(x, y){
-      if(_scale > _minScale + 0.01){
-        /* Zoom out */
+      if(_scale > _minScale + 0.05){
+        /* Zoom out — volver a fit */
         _scale = _minScale; _tx = 0; _ty = 0;
       } else {
-        /* Zoom in x2.5 centrado en el toque */
-        var targetScale = Math.min(_minScale * 2.5, _maxScale);
+        /* Zoom in x2.5 centrado en el punto tocado */
+        var targetScale = 2.5;
         var stageRect = stage.getBoundingClientRect();
+        _stageW = stageRect.width;
+        _stageH = stageRect.height;
         var px = x - stageRect.left - _stageW/2;
         var py = y - stageRect.top  - _stageH/2;
         var ds = targetScale / _scale;
