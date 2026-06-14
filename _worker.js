@@ -829,6 +829,7 @@ async function handleProfile(request, env, corsH) {
     banner_url TEXT DEFAULT '',
     age INTEGER DEFAULT NULL,
     age_public INTEGER DEFAULT 0,
+    birth_date TEXT DEFAULT '',
     city TEXT DEFAULT '',
     country TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -839,7 +840,7 @@ async function handleProfile(request, env, corsH) {
     try { await env.DB.prepare(`ALTER TABLE user_profiles ADD COLUMN ${col}`).run(); } catch(e) {}
   }
   /* Extra migrations for age, city, country */
-  const extraMigs = ['age INTEGER DEFAULT NULL','age_public INTEGER DEFAULT 0',"city TEXT DEFAULT ''","country TEXT DEFAULT ''"];
+  const extraMigs = ['age INTEGER DEFAULT NULL','age_public INTEGER DEFAULT 0',"birth_date TEXT DEFAULT ''","city TEXT DEFAULT ''","country TEXT DEFAULT ''"];
   for (const col of extraMigs) {
     try { await env.DB.prepare(`ALTER TABLE user_profiles ADD COLUMN ${col}`).run(); } catch(e) {}
   }
@@ -852,9 +853,9 @@ async function handleProfile(request, env, corsH) {
     const targetId = url.searchParams.get('user_id') || (session ? session.id : null);
     if (!targetId) return apiJson({ error: 'Not authenticated' }, 401, corsH);
     const { results } = await env.DB.prepare(
-      'SELECT username, display_name, bio, avatar_url, banner_url, age, age_public, city, country, name_color, name_font FROM user_profiles WHERE user_id=?'
+      'SELECT username, display_name, bio, avatar_url, banner_url, age, age_public, birth_date, city, country, name_color, name_font FROM user_profiles WHERE user_id=?'
     ).bind(targetId).all();
-    return apiJson({ username: results[0]?.username||null, display_name: results[0]?.display_name||'', bio: results[0]?.bio||'', avatar_url: results[0]?.avatar_url||'', banner_url: results[0]?.banner_url||'', age: results[0]?.age||null, age_public: results[0]?.age_public||0, city: results[0]?.city||'', country: results[0]?.country||'', name_color: results[0]?.name_color||'', name_font: results[0]?.name_font||'' }, 200, corsH);
+    return apiJson({ username: results[0]?.username||null, display_name: results[0]?.display_name||'', bio: results[0]?.bio||'', avatar_url: results[0]?.avatar_url||'', banner_url: results[0]?.banner_url||'', age: results[0]?.age||null, age_public: results[0]?.age_public||0, birth_date: results[0]?.birth_date||'', city: results[0]?.city||'', country: results[0]?.country||'', name_color: results[0]?.name_color||'', name_font: results[0]?.name_font||'' }, 200, corsH);
   }
 
   if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
@@ -871,7 +872,7 @@ async function handleProfile(request, env, corsH) {
     const age_public = typeof body.age_public === 'boolean' ? (body.age_public ? 1 : 0) : null;
     const city    = typeof body.city    === 'string' ? body.city.trim().slice(0,60)    : null;
     const country = typeof body.country === 'string' ? body.country.trim().slice(0,60) : null;
-    if (!displayName && bio === null && avatar_url === null && banner_url === null && !rawUsername && age === null && age_public === null && city === null && country === null && name_color === null && name_font === null) {
+    if (!displayName && bio === null && avatar_url === null && banner_url === null && !rawUsername && age === null && age_public === null && city === null && country === null) {
       return apiJson({ error: 'Nothing to update' }, 400, corsH);
     }
 
@@ -910,7 +911,18 @@ async function handleProfile(request, env, corsH) {
       if (rawUsername) {
         await env.DB.prepare('UPDATE user_profiles SET username=? WHERE user_id=?').bind(rawUsername, session.id).run();
       }
-      if (age !== null) {
+      const birth_date = typeof body.birth_date === 'string' ? body.birth_date.trim().slice(0,10) : null;
+      if (birth_date) {
+        await env.DB.prepare('UPDATE user_profiles SET birth_date=? WHERE user_id=?').bind(birth_date, session.id).run();
+        /* Calcular edad en el servidor */
+        const bd = new Date(birth_date); const today = new Date();
+        let calcAge = today.getFullYear() - bd.getFullYear();
+        const m = today.getMonth() - bd.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) calcAge--;
+        if (calcAge >= 13 && calcAge < 120) {
+          await env.DB.prepare('UPDATE user_profiles SET age=? WHERE user_id=?').bind(calcAge, session.id).run();
+        }
+      } else if (age !== null) {
         await env.DB.prepare('UPDATE user_profiles SET age=? WHERE user_id=?').bind(age, session.id).run();
       }
       if (age_public !== null) {
@@ -921,14 +933,6 @@ async function handleProfile(request, env, corsH) {
       }
       if (country !== null) {
         await env.DB.prepare('UPDATE user_profiles SET country=? WHERE user_id=?').bind(country, session.id).run();
-      }
-      const name_color = typeof body.name_color === 'string' ? body.name_color.trim().slice(0,30) : null;
-      const name_font  = typeof body.name_font  === 'string' ? body.name_font.trim().slice(0,60)  : null;
-      if (name_color !== null) {
-        await env.DB.prepare('UPDATE user_profiles SET name_color=? WHERE user_id=?').bind(name_color, session.id).run();
-      }
-      if (name_font !== null) {
-        await env.DB.prepare('UPDATE user_profiles SET name_font=? WHERE user_id=?').bind(name_font, session.id).run();
       }
 
       return apiJson({ ok: true, display_name: displayName, username: rawUsername||null, bio, avatar_url, banner_url }, 200, corsH);
