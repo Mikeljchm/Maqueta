@@ -4362,7 +4362,6 @@ async function votePoll(postId, idx, poll, container) {
       '.ep-overlay.open{display:block;}',
       '.ep-sheet{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);z-index:351;padding:0.5rem 1.1rem calc(1.5rem + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);}',
       '.ep-sheet.open{transform:translateY(0);}',
-      '.ep-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem;}',
       '.ep-title{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;margin-bottom:1rem;}',
       '.ep-label{font-size:0.65rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.3rem;display:block;}',
       '.ep-input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.6rem 0.85rem;font-size:0.85rem;font-family:var(--font-b);margin-bottom:0.85rem;box-sizing:border-box;outline:none;}',
@@ -4393,8 +4392,10 @@ async function votePoll(postId, idx, poll, container) {
     var ov=document.createElement('div'); ov.className='ep-overlay'; ov.id='ep-overlay';
     var sh=document.createElement('div'); sh.className='ep-sheet'; sh.id='ep-sheet';
     sh.innerHTML=
-      '<div class="ep-handle"></div>'
-      +'<div class="ep-title">Edit Profile</div>'
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">'
+        +'<div class="ep-title" style="margin-bottom:0;">Edit Profile</div>'
+        +'<button id="ep-close" style="background:none;border:none;color:var(--text-dim);font-size:1.3rem;cursor:pointer;padding:0.2rem 0.4rem;line-height:1;">&#10005;</button>'
+      +'</div>'
       +'<label class="ep-label">Display Name</label>'
       +'<input class="ep-input" id="ep-name" type="text" maxlength="50" placeholder="Your name">'
       +'<label class="ep-label">Username</label>'
@@ -4499,7 +4500,7 @@ async function votePoll(postId, idx, poll, container) {
       ov.classList.add('open'); sh.classList.add('open'); document.body.style.overflow='hidden';
     }
     function closeEP(){ ov.classList.remove('open'); sh.classList.remove('open'); document.body.style.overflow=''; }
-    ov.addEventListener('click',closeEP);
+    document.getElementById('ep-close').addEventListener('click',closeEP);
 
     /* Color picker */
     document.getElementById('ep-colors').addEventListener('click',function(e){
@@ -4519,17 +4520,7 @@ async function votePoll(postId, idx, poll, container) {
     });
     /* Live preview mientras escribe */
     document.getElementById('ep-name').addEventListener('input',updateNamePreview);
-    var shY2=0, shX2=0;
-    sh.addEventListener('touchstart',function(e){
-      shY2=e.touches[0].clientY; shX2=e.touches[0].clientX;
-    },{passive:true});
-    sh.addEventListener('touchend',function(e){
-      var dy=e.changedTouches[0].clientY-shY2;
-      var dx=Math.abs(e.changedTouches[0].clientX-shX2);
-      /* Solo cerrar si swipe hacia abajo > 150px, dominante vertical, y el sheet está en el tope */
-      var atTop = sh.scrollTop <= 0;
-      if(atTop && dy>150 && dy>dx*2) closeEP();
-    },{passive:true});
+
 
     /* Botón Edit Profile en el perfil — lo crearemos dinámicamente */
     window._openEditProfile = openEP;
