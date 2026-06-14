@@ -6338,7 +6338,7 @@ async function votePoll(postId, idx, poll, container) {
     '.pc-more-btn{background:none;border:none;color:var(--text-muted);font-size:0.75rem;cursor:pointer;padding:0;margin-left:0.3rem;font-family:var(--font-b);}',
     /* Actions */
     '.pc-actions{display:flex;align-items:center;padding:0.5rem 0.6rem 0.8rem;gap:0.25rem;margin-top:0.25rem;}',
-    '.pc-act-btn{background:none;border:none;color:#d8d8d8;cursor:pointer;display:flex;align-items:center;gap:0.35rem;padding:0.45rem 0.65rem;border-radius:8px;font-family:var(--font-b);font-size:0.78rem;transition:color 0.15s;}',
+    '.pc-act-btn{background:none;border:none;color:#b8b8b8;cursor:pointer;display:flex;align-items:center;gap:0.35rem;padding:0.45rem 0.65rem;border-radius:8px;font-family:var(--font-b);font-size:0.78rem;transition:color 0.15s;}',
     '.pc-act-btn:active{color:var(--text);}',
     '.pc-act-btn.liked svg,.pc-act-btn.post-like-btn.liked svg{fill:var(--fire-orange);stroke:var(--fire-orange);}',
     '.pc-act-btn svg{fill:none;stroke:currentColor;}',
