@@ -6809,7 +6809,8 @@ async function votePoll(postId, idx, poll, container) {
                 /* Actualizar likes del nuevo post */
                 setTimeout(function(){ if(window.loadAllLikes) window.loadAllLikes(container); },100);
               } else {
-                window.loadPostsFeed(container);
+                /* Recargar solo los posts del usuario actual — usar userId del scope */
+                window.loadPostsFeed(container, userId || (window.currentUser ? window.currentUser.id : null));
               }
             } else {
               var toast=document.getElementById('toast');
