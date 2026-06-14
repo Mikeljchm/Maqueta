@@ -4381,7 +4381,7 @@ async function votePoll(postId, idx, poll, container) {
       '.ep-color-btn{width:32px;height:32px;border-radius:50%;border:3px solid transparent;cursor:pointer;flex-shrink:0;transition:transform 0.15s;}',
       '.ep-color-btn.active{border-color:#fff;transform:scale(1.15);}',
       '.ep-color-btn.gradient{background:linear-gradient(135deg,#FF4500,#FFB800) !important;}',
-      '.ep-fonts{display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:0.85rem;}',
+      '.ep-fonts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.35rem;margin-bottom:0.85rem;max-height:180px;overflow-y:auto;}',
       '.ep-font-btn{background:var(--surface-2);border:2px solid var(--border);color:var(--text);border-radius:10px;padding:0.5rem 0.4rem;cursor:pointer;font-size:0.9rem;text-align:center;}',
       '.ep-font-btn.active{border-color:var(--fire-orange);color:var(--fire-orange);}',
       '.ep-name-preview{font-size:1.8rem;text-align:center;padding:0.5rem 1rem;margin-bottom:0.85rem;min-height:2.5rem;letter-spacing:0.04em;}'
@@ -4431,15 +4431,34 @@ async function votePoll(postId, idx, poll, container) {
       +'</div>'
       /* Fuentes */
       +'<div class="ep-fonts" id="ep-fonts">'
-        +'<button class="ep-font-btn active" data-font="" style="font-family:DM Sans,sans-serif;">Default</button>'
-        +'<button class="ep-font-btn" data-font="Bebas Neue" style="font-family:Bebas Neue,sans-serif;letter-spacing:0.08em;">BOLD</button>'
-        +'<button class="ep-font-btn" data-font="Playfair Display" style="font-family:Playfair Display,serif;">Elegant</button>'
-        +'<button class="ep-font-btn" data-font="Anton" style="font-family:Anton,sans-serif;">Sport</button>'
-        +'<button class="ep-font-btn" data-font="Righteous" style="font-family:Righteous,sans-serif;">Retro</button>'
-        +'<button class="ep-font-btn" data-font="Dancing Script" style="font-family:Dancing Script,cursive;">Handwritten</button>'
+        +'<button class="ep-font-btn active" data-font="">Default</button>'
+        +'<button class="ep-font-btn" data-font="Bebas Neue">Bold</button>'
+        +'<button class="ep-font-btn" data-font="Playfair Display">Elegant</button>'
+        +'<button class="ep-font-btn" data-font="Anton">Sport</button>'
+        +'<button class="ep-font-btn" data-font="Righteous">Retro</button>'
+        +'<button class="ep-font-btn" data-font="Dancing Script">Script</button>'
+        +'<button class="ep-font-btn" data-font="Oswald">Oswald</button>'
+        +'<button class="ep-font-btn" data-font="Russo One">Russo</button>'
+        +'<button class="ep-font-btn" data-font="Pacifico">Pacifico</button>'
+        +'<button class="ep-font-btn" data-font="Lobster">Lobster</button>'
+        +'<button class="ep-font-btn" data-font="Permanent Marker">Marker</button>'
+        +'<button class="ep-font-btn" data-font="Bungee">Bungee</button>'
+        +'<button class="ep-font-btn" data-font="Monoton">Monoton</button>'
+        +'<button class="ep-font-btn" data-font="Creepster">Creep</button>'
+        +'<button class="ep-font-btn" data-font="Teko">Teko</button>'
+        +'<button class="ep-font-btn" data-font="Exo 2">Exo 2</button>'
+        +'<button class="ep-font-btn" data-font="Rajdhani">Rajdhani</button>'
+        +'<button class="ep-font-btn" data-font="Audiowide">Audiowide</button>'
+        +'<button class="ep-font-btn" data-font="Alfa Slab One">Alfa</button>'
+        +'<button class="ep-font-btn" data-font="Black Han Sans">Black</button>'
       +'</div>'
       +'<button class="ep-save-btn" id="ep-save">Save Profile</button>';
     document.body.appendChild(ov); document.body.appendChild(sh);
+    /* Aplicar fuente a cada botón */
+    sh.querySelectorAll('.ep-font-btn[data-font]').forEach(function(btn){
+      var f=btn.getAttribute('data-font');
+      if(f) btn.style.fontFamily='"'+f+'",cursive,sans-serif';
+    });
 
     /* Estado del picker */
     var _pickerColor = '';
