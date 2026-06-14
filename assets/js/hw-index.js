@@ -361,7 +361,7 @@
     if (!page) {
       page = document.createElement('div');
       page.id = 'page-user-profile';
-      page.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:250;display:none;flex-direction:column;max-width:480px;margin:0 auto;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);';
+      page.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:250;display:none;flex-direction:column;max-width:480px;margin:0 auto;height:100%;overflow:hidden;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.16,1,0.3,1);';
       document.body.appendChild(page);
     }
     page.style.display = 'flex';
