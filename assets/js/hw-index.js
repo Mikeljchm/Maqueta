@@ -6310,7 +6310,8 @@ async function votePoll(postId, idx, poll, container) {
     '.posts-img-wrap{position:relative;margin-bottom:0.5rem;}',
     /* Post card */
     /* Post card — Tumblr style */
-    '.post-card{background:var(--surface);border-bottom:1px solid var(--border);margin-bottom:0;overflow:hidden;}',
+    '#posts-feed-container{background:var(--bg);padding:0;}',
+    '.post-card{background:var(--surface);margin-bottom:8px;overflow:hidden;}',
     /* Header */
     '.pc-header{display:flex;align-items:center;gap:0.6rem;padding:0.75rem 0.85rem 0.5rem;}',
     '.pc-av{width:38px;height:38px;border-radius:50%;background:var(--surface-3);flex-shrink:0;overflow:hidden;border:2px solid rgba(255,69,0,0.25);}',
@@ -6336,8 +6337,8 @@ async function votePoll(postId, idx, poll, container) {
     '.pc-tag{color:var(--fire-orange);opacity:0.8;}',
     '.pc-more-btn{background:none;border:none;color:var(--text-muted);font-size:0.75rem;cursor:pointer;padding:0;margin-left:0.3rem;font-family:var(--font-b);}',
     /* Actions */
-    '.pc-actions{display:flex;align-items:center;padding:0.35rem 0.6rem 0.65rem;gap:0.25rem;border-top:1px solid var(--border);margin-top:0.4rem;}',
-    '.pc-act-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;gap:0.3rem;padding:0.4rem 0.55rem;border-radius:8px;font-family:var(--font-b);font-size:0.72rem;transition:color 0.15s;}',
+    '.pc-actions{display:flex;align-items:center;padding:0.4rem 0.6rem 0.7rem;gap:0.25rem;border-top:1px solid rgba(255,255,255,0.06);margin-top:0.35rem;}',
+    '.pc-act-btn{background:none;border:none;color:#888;cursor:pointer;display:flex;align-items:center;gap:0.3rem;padding:0.4rem 0.55rem;border-radius:8px;font-family:var(--font-b);font-size:0.75rem;transition:color 0.15s;}',
     '.pc-act-btn:active{color:var(--text);}',
     '.pc-act-btn.liked svg,.pc-act-btn.post-like-btn.liked svg{fill:var(--fire-orange);stroke:var(--fire-orange);}',
     '.pc-act-btn svg{fill:none;stroke:currentColor;}',
