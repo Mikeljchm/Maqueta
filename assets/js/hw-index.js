@@ -7071,6 +7071,7 @@ async function votePoll(postId, idx, poll, container) {
     var _scale = 1, _minScale = 1, _maxScale = 5;
     var _tx = 0, _ty = 0;
     var _vx = 0, _vy = 0; /* velocity para momentum */
+    var _pinchStartDist = 0, _pinchStartScale = 1;
     var _rafId = null;
     var _imgW = 0, _imgH = 0;
     var _stageW = 0, _stageH = 0;
@@ -7205,6 +7206,8 @@ async function votePoll(postId, idx, poll, container) {
 
       if(_touches.length === 2){
         _lastDist = dist(_touches);
+        _pinchStartDist = _lastDist;
+        _pinchStartScale = _scale;
         _lastMid  = mid(_touches);
         _swipeStartScale = _scale;
       }
@@ -7228,10 +7231,13 @@ async function votePoll(postId, idx, poll, container) {
         /* Pinch zoom */
         var d2 = dist(t);
         var m2 = mid(t);
-        var newScale = clamp(_swipeStartScale * (d2 / _lastDist), _minScale, _maxScale);
+        /* Calcular scale relativo a la distancia inicial del pinch */
+        var newScale = clamp(_pinchStartScale * (d2 / _pinchStartDist), _minScale, _maxScale);
 
         /* Zoom desde el punto central del pinch */
         var stageRect = stage.getBoundingClientRect();
+        _stageW = stageRect.width;
+        _stageH = stageRect.height;
         var px = m2.x - stageRect.left - _stageW/2;
         var py = m2.y - stageRect.top  - _stageH/2;
         var ds = newScale / _scale;
