@@ -368,42 +368,52 @@
     }
     page.style.display = 'flex';
     page.innerHTML =
+      /* TOPBAR — único elemento fijo */
       '<div style="display:flex;align-items:center;padding:0.85rem 1rem 0.5rem;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;gap:0.75rem;">'
         + '<button id="uprof-back" style="background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">'
           + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'
         + '</button>'
         + '<div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;">'+escH(name||'Profile')+'</div>'
       + '</div>'
-      + '<div id="uprof-banner" style="width:100%;height:180px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;">'
-        + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(255,69,0,0.45) 0%,transparent 70%);pointer-events:none;"></div>'
-        + '<div style="position:absolute;inset:0;opacity:0.04;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'
-      + '</div>'
-      + '<div style="display:flex;flex-direction:column;align-items:center;margin-top:-46px;flex-shrink:0;position:relative;z-index:3;">'
-        + '<div id="uprof-av" style="width:90px;height:90px;border-radius:50%;border:4px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:2rem;overflow:hidden;">'+escH((name||'?').charAt(0).toUpperCase())+'</div>'
-      + '</div>'
-      + '<div style="text-align:center;padding:0.5rem 1rem 0;flex-shrink:0;">'
-        + '<div id="uprof-name" style="font-family:var(--font-d);font-size:1.3rem;letter-spacing:0.04em;">'+escH(name||'User')+'</div>'
-        + '<div id="uprof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.6rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-top:0.3rem;"></div>'
-      + '</div>'
-      + '<div style="display:flex;justify-content:center;padding:0.65rem 1rem 0.4rem;flex-shrink:0;">'
-        + '<div style="flex:1;text-align:center;"><div id="uprof-pc" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Posts</div></div>'
-        + '<div style="flex:1;text-align:center;"><div id="uprof-fr" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Followers</div></div>'
-        + '<div style="flex:1;text-align:center;"><div id="uprof-fg" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Following</div></div>'
-      + '</div>'
-      + '<div id="uprof-bio" style="text-align:center;font-size:0.78rem;color:var(--text-dim);line-height:1.5;padding:0 1.5rem 0.4rem;flex-shrink:0;"></div>'
-      + (window.currentUser && window.currentUser.id !== uid
-          ? '<div style="padding:0 1rem 0.65rem;flex-shrink:0;"><button id="uprof-fb" style="width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:25px;padding:0.65rem;font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;">Follow</button></div>'
-          : '<div style="height:0.5rem;flex-shrink:0;"></div>')
-      + '<div style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;">'
-        + '<button class="uprof-tab active" data-utab="posts" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'
-        + '<button class="uprof-tab" data-utab="liked" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'
-        + '<button class="uprof-tab" data-utab="activity" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'
-      + '</div>'
-      + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;">'
+      /* TODO lo demás en UN SOLO div que scrollea */
+      + '<div style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;">'
+        /* BANNER */
+        + '<div id="uprof-banner" style="width:100%;height:180px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;">'
+          + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(255,69,0,0.45) 0%,transparent 70%);pointer-events:none;"></div>'
+          + '<div style="position:absolute;inset:0;opacity:0.04;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'
+        + '</div>'
+        /* AVATAR */
+        + '<div style="display:flex;flex-direction:column;align-items:center;margin-top:-46px;position:relative;z-index:3;">'
+          + '<div id="uprof-av" style="width:90px;height:90px;border-radius:50%;border:4px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:2rem;overflow:hidden;">'+escH((name||'?').charAt(0).toUpperCase())+'</div>'
+        + '</div>'
+        /* NOMBRE + BADGE */
+        + '<div style="text-align:center;padding:0.5rem 1rem 0;">'
+          + '<div id="uprof-name" style="font-family:var(--font-d);font-size:1.3rem;letter-spacing:0.04em;">'+escH(name||'User')+'</div>'
+          + '<div id="uprof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.6rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-top:0.3rem;"></div>'
+        + '</div>'
+        /* STATS */
+        + '<div style="display:flex;justify-content:center;padding:0.65rem 1rem 0.4rem;">'
+          + '<div style="flex:1;text-align:center;"><div id="uprof-pc" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Posts</div></div>'
+          + '<div style="flex:1;text-align:center;"><div id="uprof-fr" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Followers</div></div>'
+          + '<div style="flex:1;text-align:center;"><div id="uprof-fg" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Following</div></div>'
+        + '</div>'
+        /* BIO */
+        + '<div id="uprof-bio" style="text-align:center;font-size:0.78rem;color:var(--text-dim);line-height:1.5;padding:0 1.5rem 0.4rem;"></div>'
+        /* FOLLOW BUTTON */
+        + (window.currentUser && window.currentUser.id !== uid
+            ? '<div style="padding:0 1rem 0.65rem;"><button id="uprof-fb" style="width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:25px;padding:0.65rem;font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;">Follow</button></div>'
+            : '<div style="height:0.5rem;"></div>')
+        /* TABS */
+        + '<div style="display:flex;border-bottom:1px solid var(--border);border-top:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:2;">'
+          + '<button class="uprof-tab active" data-utab="posts" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'
+          + '<button class="uprof-tab" data-utab="liked" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'
+          + '<button class="uprof-tab" data-utab="activity" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'
+        + '</div>'
+        /* CONTENIDO */
         + '<div id="uprof-posts-panel" style="padding:0.75rem 1rem 3rem;"><div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1.5rem;">Loading...</div></div>'
         + '<div id="uprof-liked-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
         + '<div id="uprof-activity-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
-      + '</div>';
+      + '</div>'
 
     requestAnimationFrame(function(){ requestAnimationFrame(function(){ page.style.transform='translateX(0)'; }); });
 
