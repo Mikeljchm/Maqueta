@@ -164,7 +164,7 @@
     /* CATEGORY PILLS */
     .cat-pills { display:flex; gap:0.45rem; padding:0.6rem 1rem; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid #1a1a1a; }
     .cat-pills::-webkit-scrollbar { display:none; }
-    .cat-pill { flex-shrink:0; padding:0.32rem 0.85rem; border-radius:20px; font-size:0.6rem; font-family:var(--font-b); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; border:1px solid #2a2a2a; background:#111; color:#0088ff; transition:all 0.2s var(--ease); white-space:nowrap; }
+    .cat-pill { flex-shrink:0; padding:0.32rem 0.85rem; border-radius:20px; font-size:0.6rem; font-family:var(--font-b); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; border:1px solid #2a2a2a; background:#111; color:#C0C0C0; transition:all 0.2s var(--ease); white-space:nowrap; }
     .cat-pill:active { transform:scale(0.95); }
     .cat-pill.active { background:var(--fire-orange); border-color:var(--fire-orange); color:#fff; box-shadow:0 0 12px rgba(255,69,0,0.3); }
 
@@ -234,7 +234,7 @@
 
     /* CARD ACTIONS */
     .card-actions { display:flex; align-items:center; padding:0.6rem 0 0.85rem; border-top:1px solid #222; margin-top:0.6rem; }
-    .card-act-btn { flex:1; background:none; border:none; display:flex; align-items:center; justify-content:center; gap:0.45rem; padding:0.5rem 0; color:#666; font-size:0.85rem; font-family:var(--font-b); cursor:pointer; border-radius:8px; transition:all 0.2s; }
+    .card-act-btn { flex:1; background:none; border:none; display:flex; align-items:center; justify-content:center; gap:0.45rem; padding:0.5rem 0; color:#C0C0C0; font-size:0.85rem; font-family:var(--font-b); cursor:pointer; border-radius:8px; transition:all 0.2s; }
     .card-act-btn svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:all 0.2s; }
     .card-act-btn:active { transform:scale(0.88); }
     .like-btn:active { color:#ff3b5c; }
