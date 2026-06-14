@@ -831,8 +831,6 @@ async function handleProfile(request, env, corsH) {
     age_public INTEGER DEFAULT 0,
     city TEXT DEFAULT '',
     country TEXT DEFAULT '',
-    name_color TEXT DEFAULT '',
-    name_font TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`).run();
   /* Migrate older tables missing columns */
@@ -841,7 +839,7 @@ async function handleProfile(request, env, corsH) {
     try { await env.DB.prepare(`ALTER TABLE user_profiles ADD COLUMN ${col}`).run(); } catch(e) {}
   }
   /* Extra migrations for age, city, country */
-  const extraMigs = ['age INTEGER DEFAULT NULL','age_public INTEGER DEFAULT 0',"city TEXT DEFAULT ''","country TEXT DEFAULT ''","name_color TEXT DEFAULT ''","name_font TEXT DEFAULT ''"];
+  const extraMigs = ['age INTEGER DEFAULT NULL','age_public INTEGER DEFAULT 0',"city TEXT DEFAULT ''","country TEXT DEFAULT ''"];
   for (const col of extraMigs) {
     try { await env.DB.prepare(`ALTER TABLE user_profiles ADD COLUMN ${col}`).run(); } catch(e) {}
   }
@@ -873,7 +871,7 @@ async function handleProfile(request, env, corsH) {
     const age_public = typeof body.age_public === 'boolean' ? (body.age_public ? 1 : 0) : null;
     const city    = typeof body.city    === 'string' ? body.city.trim().slice(0,60)    : null;
     const country = typeof body.country === 'string' ? body.country.trim().slice(0,60) : null;
-    if (!displayName && bio === null && avatar_url === null && banner_url === null && !rawUsername && age === null && age_public === null && city === null && country === null && name_color === null && name_font === null) {
+    if (!displayName && bio === null && avatar_url === null && banner_url === null && !rawUsername && age === null && age_public === null && city === null && country === null) {
       return apiJson({ error: 'Nothing to update' }, 400, corsH);
     }
 
@@ -895,6 +893,10 @@ async function handleProfile(request, env, corsH) {
       /* Update only the fields that were sent */
       if (displayName !== null) {
         await env.DB.prepare('UPDATE user_profiles SET display_name=? WHERE user_id=?').bind(displayName, session.id).run();
+        /* Propagar nombre a posts, comentarios y thread_posts */
+        await env.DB.prepare('UPDATE user_posts SET user_name=? WHERE user_id=?').bind(displayName, session.id).run();
+        await env.DB.prepare('UPDATE comments SET user_name=? WHERE user_id=?').bind(displayName, session.id).run();
+        await env.DB.prepare('UPDATE thread_posts SET user_name=? WHERE user_id=?').bind(displayName, session.id).run();
       }
       if (bio !== null) {
         await env.DB.prepare('UPDATE user_profiles SET bio=? WHERE user_id=?').bind(bio, session.id).run();
@@ -919,14 +921,6 @@ async function handleProfile(request, env, corsH) {
       }
       if (country !== null) {
         await env.DB.prepare('UPDATE user_profiles SET country=? WHERE user_id=?').bind(country, session.id).run();
-      }
-      const name_color = typeof body.name_color === 'string' ? body.name_color.trim().slice(0,30) : null;
-      const name_font  = typeof body.name_font  === 'string' ? body.name_font.trim().slice(0,50)  : null;
-      if (name_color !== null) {
-        await env.DB.prepare('UPDATE user_profiles SET name_color=? WHERE user_id=?').bind(name_color, session.id).run();
-      }
-      if (name_font !== null) {
-        await env.DB.prepare('UPDATE user_profiles SET name_font=? WHERE user_id=?').bind(name_font, session.id).run();
       }
 
       return apiJson({ ok: true, display_name: displayName, username: rawUsername||null, bio, avatar_url, banner_url }, 200, corsH);
