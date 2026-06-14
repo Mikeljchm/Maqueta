@@ -1362,7 +1362,10 @@ async function handleUserPosts(request, env, corsH) {
         'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url) VALUES (?,?,?,?,?)'
       ).bind(session.id, session.name||session.email, await getUserAvatar(session.id, session.picture, env), text, image_url).run();
       await addPoints(env, session.id, 1);
-      return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
+      const newPostId = result.meta.last_row_id;
+      const avatarUrl = await getUserAvatar(session.id, session.picture, env);
+      const newPost = { id: newPostId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl, body: text, image_url: image_url, like_count: 0, comment_count: 0, created_at: new Date().toISOString() };
+      return apiJson({ ok: true, id: newPostId, post: newPost }, 200, corsH);
     }
 
     /* Reportar post */
