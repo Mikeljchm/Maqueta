@@ -4727,6 +4727,13 @@ async function votePoll(postId, idx, poll, container) {
       if(unWrap)     unWrap.style.display='flex';
       if(bioAreaEl)  bioAreaEl.style.display='';
       var editProfBtn=document.getElementById('prof-name-edit-btn'); if(editProfBtn) editProfBtn.style.display='';
+      /* Registrar upload de foto/banner una sola vez */
+      if(!window._imgUploadBound){
+        window._imgUploadBound = true;
+        var pg2=document.getElementById('page-more');
+        setupImageUpload(pg2&&pg2.querySelector('.prof-hero'),'banner');
+        setupImageUpload(document.getElementById('user-avatar-wrap'),'avatar');
+      }
       if(badge){
         var lvl=(user.level)||'Rookie';
         var bdg=(user.badge)||'&#128304;';
@@ -5123,9 +5130,7 @@ async function votePoll(postId, idx, poll, container) {
     });
   }
 
-  var pg2 = document.getElementById('page-more');
-  setupImageUpload(pg2 && pg2.querySelector('.prof-hero'), 'banner');
-  setupImageUpload(document.getElementById('user-avatar-wrap'), 'avatar');
+  /* setupImageUpload se llama desde loadProfilePage cuando el DOM esté listo */
 
   document.querySelectorAll('.nav-item[data-page="more"]').forEach(function(btn){
     btn.addEventListener('click', function(){
