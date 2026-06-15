@@ -6487,6 +6487,28 @@ async function votePoll(postId, idx, poll, container) {
     try { localStorage.setItem('hw_post_likes', JSON.stringify([...LIKED_POSTS])); } catch(e){}
   }
 
+  /* ── Lazy GIF: muestra primer frame inmediatamente, anima al cargar ── */
+  function _activateLazyGifs(container) {
+    if (!container) return;
+    container.querySelectorAll('img[data-lazygif]').forEach(function(img) {
+      var src = img.getAttribute('data-lazygif');
+      if (!src) return;
+      /* Cargar GIF completo en background */
+      var loader = new Image();
+      loader.onload = function() {
+        img.src = src;
+        img.removeAttribute('data-lazygif');
+      };
+      loader.src = src;
+      /* Mientras carga: mostrar el primer frame via src con ?_ trick no funciona en todos
+         los navegadores — en su lugar cargamos directo y el browser muestra el primer frame
+         antes de que el GIF empiece a animar en muchos casos. Para Android Chrome
+         lo mejor es src directo con loading=eager para que empiece cuanto antes. */
+      img.src = src;
+      img.removeAttribute('data-lazygif');
+    });
+  }
+
   function renderPost(p) {
     var isAdmin = document.body.classList.contains('is-admin');
     var isOwn   = window.currentUser && window.currentUser.id === p.user_id;
@@ -6518,7 +6540,9 @@ async function votePoll(postId, idx, poll, container) {
       mediaHtml = '<div class="pc-media-wrap" data-tv-urls="'+enc0+'" data-tv-idx="0">'
         + (isV0
           ? '<video class="pc-media-single" src="'+u0+'" muted playsinline controls controlslist="nodownload"></video>'
-          : '<img class="pc-media-single" src="'+u0+'" loading="lazy" alt="">')
+          : (lo0.endsWith('.gif')
+            ? '<img class="pc-media-single" data-lazygif="'+u0+'" alt="">'
+            : '<img class="pc-media-single" src="'+u0+'" loading="lazy" alt="">'))
         + '</div>';
     } else if (mediaUrls.length === 2) {
       var enc2 = encodeURIComponent(JSON.stringify(mediaUrls));
@@ -6526,7 +6550,7 @@ async function votePoll(postId, idx, poll, container) {
       mediaUrls.forEach(function(u,i){
         var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
         mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'
-          +(isV?'<video src="'+u+'" muted playsinline></video>':'<img src="'+u+'" loading="lazy" alt="">')
+          +(isV?'<video src="'+u+'" muted playsinline></video>':(lo.endsWith('.gif')?'<img data-lazygif="'+u+'" alt="">':'<img src="'+u+'" loading="lazy" alt="">'))
           +'</div>';
       });
       mediaHtml += '</div>';
@@ -6538,7 +6562,7 @@ async function votePoll(postId, idx, poll, container) {
       [0,1].forEach(function(i){
         var u=mediaUrls[i]; var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
         mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'
-          +(isV?'<video src="'+u+'" muted playsinline></video>':'<img src="'+u+'" loading="lazy" alt="">')
+          +(isV?'<video src="'+u+'" muted playsinline></video>':(lo.endsWith('.gif')?'<img data-lazygif="'+u+'" alt="">':'<img src="'+u+'" loading="lazy" alt="">'))
           +'</div>';
       });
       mediaHtml += '</div>';
@@ -6547,7 +6571,7 @@ async function votePoll(postId, idx, poll, container) {
       var extra = mediaUrls.length > 3
         ? '<div class="pc-media-more">+' + (mediaUrls.length-3) + '</div>' : '';
       mediaHtml += '<div class="pc-media-cell pc-media-full" data-tv-idx="2">'
-        +(isV2?'<video src="'+u2+'" muted playsinline></video>':'<img src="'+u2+'" loading="lazy" alt="">')
+        +(isV2?'<video src="'+u2+'" muted playsinline></video>':(lo2.endsWith('.gif')?'<img data-lazygif="'+u2+'" alt="">':'<img src="'+u2+'" loading="lazy" alt="">'))
         +extra+'</div>';
       mediaHtml += '</div>';
     }
@@ -6630,6 +6654,7 @@ async function votePoll(postId, idx, poll, container) {
         container.innerHTML = newBtnHtml + '<div class="posts-empty">No posts yet. Be the first!</div>';
       } else {
         container.innerHTML = newBtnHtml + posts.map(renderPost).join('');
+        _activateLazyGifs(container);
       }
 
       /* Sheet de compose — crear una sola vez en body */
