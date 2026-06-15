@@ -13,9 +13,9 @@
   /* ── CSS ── */
   var s = document.createElement('style');
   s.textContent = [
-    '.cp-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.25s;}',
+    '.cp-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;opacity:0;pointer-events:none;transition:opacity 0.25s;}',
     '.cp-overlay.open{opacity:1;pointer-events:all;}',
-    '.cp-panel{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:201;max-height:85vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}',
+    '.cp-panel{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:301;max-height:85vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}',
     '.cp-panel.open{transform:translateY(0);}',
     '.cp-header{display:flex;align-items:center;padding:0.75rem 1rem 0.6rem;border-bottom:1px solid var(--border);flex-shrink:0;}',
     '.cp-title{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;flex:1;}',
@@ -486,16 +486,10 @@
         var pc=document.getElementById('uprof-pc');if(pc) pc.textContent=posts.length;
         var panel=document.getElementById('uprof-posts-panel');if(!panel) return;
         if(!posts.length){panel.innerHTML='<div style="color:var(--text-muted);text-align:center;padding:2rem 0;font-size:0.8rem;">No posts yet.</div>';return;}
-        panel.innerHTML=posts.map(function(p){
-          var lo=(p.image_url||'').toLowerCase().split('?')[0];
-          var media=p.image_url?(lo.endsWith('.mp4')||lo.endsWith('.webm')
-            ?'<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:260px;object-fit:cover;" src="'+p.image_url+'" muted playsinline controls controlslist="nodownload"></video>'
-            :'<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:260px;object-fit:cover;cursor:pointer;" src="'+p.image_url+'" loading="lazy" onclick="if(window.openThreadViewer)window.openThreadViewer([\''+p.image_url+'\'],0)">'):'';
-          var body=p.body&&p.body.trim()&&p.body.trim()!==' '?'<div style="font-size:0.85rem;line-height:1.5;color:var(--text);margin-bottom:0.4rem;">'+escH(p.body)+'</div>':'';
-          var t=(Date.now()-new Date(p.created_at).getTime())/1000;
-          var ago=t<60?'just now':t<3600?Math.floor(t/60)+'m ago':t<86400?Math.floor(t/3600)+'h ago':Math.floor(t/86400)+'d ago';
-          return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.75rem;">'+media+body+'<div style="font-size:0.62rem;color:var(--text-muted);">'+ago+'</div></div>';
-        }).join('');
+        panel.innerHTML=posts.map(renderPost).join('');
+        if(typeof _activateLazyGifs==='function') _activateLazyGifs(panel);
+        if(typeof window.loadAllLikes==='function') window.loadAllLikes();
+        if(typeof window.loadAllCommentCounts==='function') window.loadAllCommentCounts();
       }).catch(function(){});
 
     page.querySelectorAll('.uprof-tab').forEach(function(btn){
