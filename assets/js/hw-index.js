@@ -405,54 +405,8 @@
     }
     page.style.display = 'flex';
     page.innerHTML =
-      /* TOPBAR — único elemento fijo */
-      '<div style="display:flex;align-items:center;padding:0.85rem 1rem 0.5rem;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;gap:0.75rem;">'
-        + '<button id="uprof-back" style="background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">'
-          + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'
-        + '</button>'
-        + '<div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;">'+escH(name||'Profile')+'</div>'
-      + '</div>'
-      /* TODO lo demás en UN SOLO div que scrollea */
-      + '<div style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;">'
-        /* BANNER */
-        + '<div id="uprof-banner" style="width:100%;aspect-ratio:3/1;min-height:100px;max-height:200px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;">'
-          + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(255,69,0,0.45) 0%,transparent 70%);pointer-events:none;"></div>'
-          + '<div style="position:absolute;inset:0;opacity:0.04;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'
-        + '</div>'
-        /* AVATAR */
-        + '<div style="display:flex;flex-direction:column;align-items:center;margin-top:-46px;position:relative;z-index:3;">'
-          + '<div id="uprof-av" style="width:90px;height:90px;border-radius:50%;border:4px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:2rem;overflow:hidden;">'+escH((name||'?').charAt(0).toUpperCase())+'</div>'
-        + '</div>'
-        /* NOMBRE + BADGE */
-        + '<div style="text-align:center;padding:0.5rem 1rem 0;">'
-          + '<div id="uprof-name" style="font-family:var(--font-d);font-size:1.3rem;letter-spacing:0.04em;">'+escH(name||'User')+'</div>'
-          + '<div id="uprof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.6rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-top:0.3rem;"></div>'
-        + '</div>'
-        /* STATS */
-        + '<div style="display:flex;justify-content:center;padding:0.65rem 1rem 0.4rem;">'
-          + '<div style="flex:1;text-align:center;"><div id="uprof-pc" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Posts</div></div>'
-          + '<div style="flex:1;text-align:center;"><div id="uprof-fr" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Followers</div></div>'
-          + '<div style="flex:1;text-align:center;"><div id="uprof-fg" style="font-family:var(--font-d);font-size:1.1rem;">-</div><div style="font-size:0.62rem;color:var(--text-dim);">Following</div></div>'
-        + '</div>'
-        /* BIO */
-        + '<div id="uprof-bio" style="text-align:center;font-size:0.78rem;color:var(--text-dim);line-height:1.5;padding:0 1.5rem 0.4rem;"></div>'
-        /* FOLLOW BUTTON */
-        + (window.currentUser && window.currentUser.id !== uid
-            ? '<div style="padding:0 1rem 0.65rem;"><button id="uprof-fb" style="width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:25px;padding:0.65rem;font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;">Follow</button></div>'
-            : '<div style="height:0.5rem;"></div>')
-        /* TABS */
-        + '<div style="display:flex;border-bottom:1px solid var(--border);border-top:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:2;">'
-          + '<button class="uprof-tab active" data-utab="posts" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'
-          + '<button class="uprof-tab" data-utab="liked" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'
-          + '<button class="uprof-tab" data-utab="activity" style="flex:1;padding:0.65rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'
-        + '</div>'
-        /* CONTENIDO */
-        + '<div id="uprof-posts-panel" style="padding:0.75rem 1rem 3rem;"><div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1.5rem;">Loading...</div></div>'
-        + '<div id="uprof-liked-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
-        + '<div id="uprof-activity-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'
-      + '</div>'
-
-    requestAnimationFrame(function(){ requestAnimationFrame(function(){ page.style.transform='translateX(0)'; }); });
+      '<div style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;">'        + '<div style="position:relative;flex-shrink:0;">'          + '<div id="uprof-banner" style="width:100%;height:260px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;overflow:hidden;">'            + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(255,69,0,0.45) 0%,transparent 70%);pointer-events:none;"></div>'            + '<div style="position:absolute;inset:0;opacity:0.04;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'          + '</div>'          + '<button id="uprof-back" style="position:absolute;top:0.6rem;left:0.75rem;z-index:20;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;color:#fff;cursor:pointer;">'            + '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'          + '</button>'          + '<div style="position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);z-index:5;">'            + '<div id="uprof-av" style="width:84px;height:84px;border-radius:50%;border:3px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:2rem;overflow:hidden;">'+escH((name||'?').charAt(0).toUpperCase())+'</div>'          + '</div>'        + '</div>'        + '<div style="height:38px;"></div>'        + '<div style="text-align:center;padding:0 1rem 0;">'          + '<div id="uprof-name" style="font-family:var(--font-d);font-size:1.3rem;letter-spacing:0.04em;margin-bottom:0.05rem;">'+escH(name||'User')+'</div>'          + '<div id="uprof-username-display" style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.05rem;"></div>'          + '<div id="uprof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.6rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-top:0.1rem;"></div>'        + '</div>'        + '<div id="uprof-bio" style="text-align:center;font-size:0.78rem;color:var(--text-dim);line-height:1.5;padding:0.1rem 1.5rem 0;"></div>'        + (window.currentUser && window.currentUser.id !== uid            ? '<div style="padding:0.2rem 1rem 0;"><button id="uprof-fb" style="width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:25px;padding:0.5rem;font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;">Follow</button></div>'            : '')        + '<div style="display:flex;justify-content:center;padding:0.15rem 1rem 0.1rem;">'          + '<div style="flex:1;text-align:center;"><div id="uprof-pc" style="font-family:var(--font-d);font-size:1.05rem;line-height:1;">-</div><div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.15rem;">Posts</div></div>'          + '<div style="flex:1;text-align:center;"><div id="uprof-fr" style="font-family:var(--font-d);font-size:1.05rem;line-height:1;">-</div><div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.15rem;">Followers</div></div>'          + '<div style="flex:1;text-align:center;"><div id="uprof-fg" style="font-family:var(--font-d);font-size:1.05rem;line-height:1;">-</div><div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.15rem;">Following</div></div>'        + '</div>'        + '<div style="display:flex;border-bottom:1px solid var(--border);border-top:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:2;">'          + '<button class="uprof-tab active" data-utab="posts" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'          + '<button class="uprof-tab" data-utab="liked" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'          + '<button class="uprof-tab" data-utab="activity" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'        + '</div>'        + '<div id="uprof-posts-panel" style="padding:0.75rem 1rem 3rem;"><div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1.5rem;">Loading...</div></div>'        + '<div id="uprof-liked-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="uprof-activity-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'      + '</div>'
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ page.style.transform='translateX(0)'; }); });
 
     function closeUProf(){ page.style.transform='translateX(100%)'; setTimeout(function(){ page.style.display='none'; },330); }
     document.getElementById('uprof-back').addEventListener('click', closeUProf);
@@ -469,11 +423,7 @@
         /* Actualizar nombre real desde D1 */
         var realName = d.display_name || name || '';
         if(realName){
-          /* Topbar */
-          var topbar=page.querySelector('div[style*="font-family:var(--font-d)"][style*="flex:1"]');
-          if(topbar) topbar.textContent=realName;
-          /* Nombre grande con estilo personalizado */
-          var nameEl=page.querySelector('[id="uprof-name"]');
+          var nameEl=document.getElementById('uprof-name');
           if(nameEl){
             nameEl.textContent=realName;
             nameEl.style.fontSize='2.2rem';
@@ -482,10 +432,12 @@
               if(d.name_font) setTimeout(function(){ window.applyNameStyle(nameEl, d.name_color||'', d.name_font||''); }, 600);
             }
           }
-          /* Avatar inicial */
           var avEl=document.getElementById('uprof-av');
           if(avEl&&!d.avatar_url) avEl.textContent=realName.charAt(0).toUpperCase();
         }
+        /* Username @handle */
+        var unEl=document.getElementById('uprof-username-display');
+        if(unEl&&d.username) unEl.textContent='@'+d.username;
         if(d.banner_url){var bn=document.getElementById('uprof-banner');if(bn){var bi=document.createElement('img');bi.src=d.banner_url;bi.style.cssText='width:100%;height:100%;object-fit:cover;object-position:top;position:absolute;inset:0;z-index:0;';bn.insertBefore(bi,bn.firstChild);}}
         var av=document.getElementById('uprof-av');if(av&&d.avatar_url) av.innerHTML='<img src="'+d.avatar_url+'" style="width:100%;height:100%;object-fit:cover;">';
         var bio=document.getElementById('uprof-bio');if(bio&&d.bio) bio.textContent=d.bio;
@@ -4727,13 +4679,6 @@ async function votePoll(postId, idx, poll, container) {
       if(unWrap)     unWrap.style.display='flex';
       if(bioAreaEl)  bioAreaEl.style.display='';
       var editProfBtn=document.getElementById('prof-name-edit-btn'); if(editProfBtn) editProfBtn.style.display='';
-      /* Registrar upload de foto/banner una sola vez */
-      if(!window._imgUploadBound){
-        window._imgUploadBound = true;
-        var pg2=document.getElementById('page-more');
-        setupImageUpload(pg2&&pg2.querySelector('.prof-hero'),'banner');
-        setupImageUpload(document.getElementById('user-avatar-wrap'),'avatar');
-      }
       if(badge){
         var lvl=(user.level)||'Rookie';
         var bdg=(user.badge)||'&#128304;';
@@ -5130,7 +5075,9 @@ async function votePoll(postId, idx, poll, container) {
     });
   }
 
-  /* setupImageUpload se llama desde loadProfilePage cuando el DOM esté listo */
+  var pg2 = document.getElementById('page-more');
+  setupImageUpload(pg2 && pg2.querySelector('.prof-hero'), 'banner');
+  setupImageUpload(document.getElementById('user-avatar-wrap'), 'avatar');
 
   document.querySelectorAll('.nav-item[data-page="more"]').forEach(function(btn){
     btn.addEventListener('click', function(){
