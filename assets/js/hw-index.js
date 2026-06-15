@@ -4267,7 +4267,7 @@ async function votePoll(postId, idx, poll, container) {
     '.prof-toggle-track::before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform 0.2s;}',
     '.prof-toggle input:checked + .prof-toggle-track{background:var(--fire-orange);}',
     '.prof-toggle input:checked + .prof-toggle-track::before{transform:translateX(16px);}',
-    '.prof-hero{aspect-ratio:3/1;min-height:100px;max-height:200px;background:linear-gradient(135deg,#1a0505 0%,#2d0a00 45%,#1a0505 100%);position:relative;cursor:pointer;overflow:hidden;}',
+    '.prof-hero{background:linear-gradient(135deg,#1a0505 0%,#2d0a00 45%,#1a0505 100%);position:relative;cursor:pointer;overflow:hidden;}',
     '.prof-hero img{width:100%;height:100%;object-fit:cover;display:block;}',
     '.prof-hero-edit-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);transition:background 0.2s;pointer-events:none;}',
     '.prof-hero:active .prof-hero-edit-hint{background:rgba(0,0,0,0.35);}',
