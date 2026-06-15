@@ -354,25 +354,27 @@
   /* Aplicar estilo al nombre — función global */
   window.applyNameStyle = function(el, color, font){
     if(!el) return;
-    /* Usar cssText para sobreescribir font-family del CSS con mayor especificidad */
-    if(font){
-      el.style.setProperty('font-family', font+',sans-serif', 'important');
+    /* Siempre limpiar el gradiente primero */
+    el.style.background = '';
+    el.style.webkitBackgroundClip = '';
+    el.style.webkitTextFillColor = '';
+    el.style.backgroundClip = '';
+    el.style.color = '';
+    /* Fuente */
+    if(font && font.trim()){
+      var fq = font.indexOf(' ') > -1 ? '"'+font+'"' : font;
+      el.style.setProperty('font-family', fq+',cursive,sans-serif', 'important');
     } else {
       el.style.removeProperty('font-family');
     }
-    if(color==='gradient'){
+    /* Color */
+    if(color === 'gradient'){
       el.style.background = 'linear-gradient(135deg,#FF4500,#FFB800)';
       el.style.webkitBackgroundClip = 'text';
       el.style.webkitTextFillColor = 'transparent';
       el.style.backgroundClip = 'text';
-      el.style.color = '';
-    } else {
-      /* Limpiar gradiente siempre antes de poner color sólido */
-      el.style.background = 'none';
-      el.style.webkitBackgroundClip = 'unset';
-      el.style.webkitTextFillColor = 'unset';
-      el.style.backgroundClip = 'unset';
-      el.style.color = color || '';
+    } else if(color && color.trim()){
+      el.style.color = color;
     }
   };
 
@@ -476,9 +478,8 @@
             nameEl.textContent=realName;
             nameEl.style.fontSize='2.2rem';
             if(window.applyNameStyle){
-              var _applyFn=function(){ window.applyNameStyle(nameEl, d.name_color||'', d.name_font||''); };
-              if(document.fonts && document.fonts.ready){ document.fonts.ready.then(_applyFn); }
-              else { setTimeout(_applyFn,1500); }
+              window.applyNameStyle(nameEl, d.name_color||'', d.name_font||'');
+              if(d.name_font) setTimeout(function(){ window.applyNameStyle(nameEl, d.name_color||'', d.name_font||''); }, 600);
             }
           }
           /* Avatar inicial */
@@ -2791,15 +2792,9 @@ async function votePoll(postId, idx, poll, container) {
           window.currentUser.name_font=pd.name_font||'';
         }
         /* Esperar que las fuentes estén listas antes de aplicar */
-        /* Aplicar color inmediatamente, fuente cuando esté lista */
+        /* Aplicar estilo inmediatamente y reintentar para fuentes */
         if(window.refreshNameStyles) window.refreshNameStyles();
-        if(document.fonts && document.fonts.ready){
-          document.fonts.ready.then(function(){
-            if(window.refreshNameStyles) window.refreshNameStyles();
-          });
-        } else {
-          setTimeout(function(){ if(window.refreshNameStyles) window.refreshNameStyles(); },800);
-        }
+        setTimeout(function(){ if(window.refreshNameStyles) window.refreshNameStyles(); }, 600);
       }).catch(function(){});
       await updateAuthUI(currentUser);
       fetchUserPoints(session.id);
@@ -4489,7 +4484,12 @@ async function votePoll(postId, idx, poll, container) {
       if(!prev||!nameVal) return;
       var txt=nameVal.value||'Your Name';
       prev.textContent=txt;
-      prev.style.fontFamily=_pickerFont?_pickerFont+',sans-serif':'';
+      if(_pickerFont && _pickerFont.trim()){
+        var pfq=_pickerFont.indexOf(' ')>-1?'"'+_pickerFont+'"':_pickerFont;
+        prev.style.setProperty('font-family',pfq+',cursive,sans-serif','important');
+      } else {
+        prev.style.removeProperty('font-family');
+      }
       if(_pickerColor==='gradient'){
         prev.style.background='linear-gradient(135deg,#FF4500,#FFB800)';
         prev.style.webkitBackgroundClip='text';
@@ -4755,10 +4755,12 @@ async function votePoll(postId, idx, poll, container) {
             dnEl.textContent=d.display_name;
             dnEl.style.fontSize='2.2rem';
             if(window.applyNameStyle){
-              var _dn=dnEl, _dc=d.name_color||'', _df=d.name_font||'';
-              window.applyNameStyle(_dn,_dc,'');
-              if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(function(){ window.applyNameStyle(_dn,_dc,_df); }); }
-              else{ setTimeout(function(){ window.applyNameStyle(_dn,_dc,_df); },800); }
+              /* Aplicar color Y fuente de una vez — sans fonts.ready que falla en Android */
+              window.applyNameStyle(dnEl, d.name_color||'', d.name_font||'');
+              /* Reintentar fuente después de 600ms por si Google Fonts no cargó aún */
+              if(d.name_font){
+                setTimeout(function(){ window.applyNameStyle(dnEl, d.name_color||'', d.name_font||''); }, 600);
+              }
             }
           }
           if(window.currentUser){
