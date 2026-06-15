@@ -373,7 +373,7 @@ layout: none
               <button class="prof-menu-btn" id="prof-menu-btn" aria-label="Settings" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;color:#fff;cursor:pointer;">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
               </button>
-              <div class="prof-dropdown" id="prof-dropdown">
+              <div class="prof-dropdown" id="prof-dropdown" style="position:fixed;top:auto;right:0.75rem;">
                 <div class="prof-dd-item">
                   <span>Adult Content</span>
                   <label class="prof-toggle"><input type="checkbox" id="toggle-adult"><span class="prof-toggle-track"></span></label>
@@ -405,8 +405,8 @@ layout: none
               </div>
             </div>
           </div>
-          <!-- AVATAR solapado: mitad dentro del banner, mitad afuera -->
-          <div style="position:absolute;bottom:-48px;left:50%;transform:translateX(-50%);z-index:5;">
+          <!-- AVATAR solapado: 70% dentro del banner, estilo Tumblr -->
+          <div style="position:absolute;bottom:-34px;left:50%;transform:translateX(-50%);z-index:5;">
             <div class="prof-avatar-wrap" id="user-avatar-wrap" style="width:84px;height:84px;border:3px solid var(--bg);">
               <div class="user-avatar-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
               <div class="prof-avatar-cam"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
@@ -414,24 +414,24 @@ layout: none
           </div>
         </div>
         <!-- Espaciado para compensar el avatar solapado -->
-        <div style="height:46px;"></div>
+        <div style="height:52px;"></div>
 
         <!-- NOMBRE + BADGE + BIO — centrado, solo display -->
-        <div style="text-align:center;padding:0.5rem 1rem 0;">
+        <div style="text-align:center;padding:0.25rem 1rem 0;">
           <div class="prof-fullname" id="user-display-name" style="font-size:2.2rem;transition:all 0.2s;">Sign in to get started</div>
           <div class="prof-username-wrap" id="prof-username-wrap" style="display:none;justify-content:center;">
             <span class="prof-username" id="prof-username-display">@username</span>
           </div>
-          <div class="prof-badge" id="prof-badge" style="display:none;justify-content:center;margin-top:0.25rem;"></div>
-          <div class="prof-bio-area" id="prof-bio-area" style="display:none;text-align:center;margin-top:0.25rem;">
+          <div class="prof-badge" id="prof-badge" style="display:none;justify-content:center;margin-top:0.1rem;"></div>
+          <div class="prof-bio-area" id="prof-bio-area" style="display:none;text-align:center;margin-top:0.1rem;">
             <div class="prof-bio-text" id="prof-bio-text"></div>
           </div>
           <!-- Botón único de edición -->
-          <button id="prof-name-edit-btn" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:0.35rem 1.1rem;font-family:var(--font-b);font-size:0.72rem;cursor:pointer;margin-top:0.5rem;display:none;">Edit Profile</button>
+          <button id="prof-name-edit-btn" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:0.3rem 1rem;font-family:var(--font-b);font-size:0.72rem;cursor:pointer;margin-top:0.3rem;display:none;">Edit Profile</button>
         </div>
 
         <!-- STATS — Posts · Followers · Following centrados -->
-        <div class="prof-ig-stats" id="prof-ig-stats" style="display:none;justify-content:center;padding:0.65rem 1rem 0.5rem;">
+        <div class="prof-ig-stats" id="prof-ig-stats" style="display:none;justify-content:center;padding:0.3rem 1rem 0.25rem;">
           <button class="prof-ig-stat" id="own-stat-posts">
             <span class="prof-ig-stat-n" id="own-posts-count">0</span>
             <span class="prof-ig-stat-l">Posts</span>
