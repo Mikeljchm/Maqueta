@@ -13,9 +13,9 @@
   /* ── CSS ── */
   var s = document.createElement('style');
   s.textContent = [
-    '.cp-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.25s;}',
+    '.cp-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;opacity:0;pointer-events:none;transition:opacity 0.25s;}',
     '.cp-overlay.open{opacity:1;pointer-events:all;}',
-    '.cp-panel{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:201;max-height:85vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}',
+    '.cp-panel{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:301;max-height:85vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}',
     '.cp-panel.open{transform:translateY(0);}',
     '.cp-header{display:flex;align-items:center;padding:0.75rem 1rem 0.6rem;border-bottom:1px solid var(--border);flex-shrink:0;}',
     '.cp-title{font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;flex:1;}',
