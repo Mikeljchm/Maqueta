@@ -6699,7 +6699,7 @@ async function votePoll(postId, idx, poll, container) {
           var img = new Image();
           var url = URL.createObjectURL(file);
           img.onload = function(){
-            var maxW = 1080;
+            var maxW = 1440;
             var ratio = Math.min(maxW / img.width, 1);
             var canvas = document.createElement('canvas');
             canvas.width  = Math.round(img.width  * ratio);
@@ -6720,7 +6720,7 @@ async function votePoll(postId, idx, poll, container) {
                 if (rmBtn) rmBtn.addEventListener('click', function(){ clearPendingImg(); e.target.value=''; });
               };
               reader.readAsDataURL(blob);
-            }, 'image/webp', 0.82);
+            }, 'image/webp', 0.88);
           };
           img.src = url;
         });
@@ -7648,7 +7648,7 @@ async function votePoll(postId, idx, poll, container) {
             await new Promise(function(res){
               var img2=new Image(); var u2=URL.createObjectURL(file);
               img2.onload=function(){
-                var maxW=1080; var ratio=Math.min(maxW/img2.width,1);
+                var maxW=1440; var ratio=Math.min(maxW/img2.width,1);
                 var canvas=document.createElement('canvas');
                 canvas.width=Math.round(img2.width*ratio); canvas.height=Math.round(img2.height*ratio);
                 canvas.getContext('2d').drawImage(img2,0,0,canvas.width,canvas.height);
@@ -7658,7 +7658,7 @@ async function votePoll(postId, idx, poll, container) {
                     pendingFiles.push({blob:blob,type:'image/webp',previewUrl:ev.target.result});
                     res();
                   }; reader.readAsDataURL(blob);
-                },'image/webp',0.82);
+                },'image/webp',0.88);
               }; img2.src=u2;
             });
           }
