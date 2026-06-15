@@ -462,6 +462,18 @@
             ubio2.parentNode.insertBefore(locSpan, ubio2.nextSibling);
           }
         }
+        /* Admin bar — solo visible para admin */
+        if(document.body.classList.contains('is-admin')){
+          var adminBar=document.getElementById('uprof-admin-bar');
+          if(!adminBar){
+            adminBar=document.createElement('div');
+            adminBar.id='uprof-admin-bar';
+            adminBar.style.cssText='margin:0.5rem 1rem 0;padding:0.6rem 0.75rem;background:#1a0505;border:1px solid #4a1010;border-radius:10px;display:flex;flex-wrap:wrap;gap:0.4rem;';
+            adminBar.innerHTML='<div style="font-size:0.58rem;color:#ff5555;letter-spacing:0.1em;font-family:var(--font-d);width:100%;margin-bottom:0.2rem;">&#9888; ADMIN ACTIONS</div>'              +'<button onclick="window._adminBanUser(this.dataset.uid,this.dataset.nm)" data-uid="'+uid+'" data-nm="'+escH(d.display_name||'User')+'" style="font-size:0.68rem;background:#3a0a0a;color:#ff5555;border:1px solid #6a1a1a;border-radius:6px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban User</button>'              +'<button onclick="window._adminClearBanner(this.dataset.uid)" data-uid="'+uid+'" style="font-size:0.68rem;background:#1a1a0a;color:#ffaa00;border:1px solid #4a3a00;border-radius:6px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);">&#128247; Clear Banner</button>'              +'<button onclick="window._adminClearAvatar(this.dataset.uid)" data-uid="'+uid+'" style="font-size:0.68rem;background:#1a1a0a;color:#ffaa00;border:1px solid #4a3a00;border-radius:6px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);">&#128100; Clear Avatar</button>'              +'<button onclick="window._adminClearBio(this.dataset.uid)" data-uid="'+uid+'" style="font-size:0.68rem;background:#0a0a1a;color:#aaaaff;border:1px solid #1a1a4a;border-radius:6px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);">&#128221; Clear Bio</button>';
+            var profBio=document.getElementById('uprof-bio');
+            if(profBio&&profBio.parentNode) profBio.parentNode.insertBefore(adminBar, profBio.nextSibling);
+          }
+        }
       }).catch(function(){});
 
     fetch('/api/points?user_id='+encodeURIComponent(uid))
@@ -486,16 +498,13 @@
         var pc=document.getElementById('uprof-pc');if(pc) pc.textContent=posts.length;
         var panel=document.getElementById('uprof-posts-panel');if(!panel) return;
         if(!posts.length){panel.innerHTML='<div style="color:var(--text-muted);text-align:center;padding:2rem 0;font-size:0.8rem;">No posts yet.</div>';return;}
-        panel.innerHTML=posts.map(function(p){
-          var lo=(p.image_url||'').toLowerCase().split('?')[0];
-          var media=p.image_url?(lo.endsWith('.mp4')||lo.endsWith('.webm')
-            ?'<video style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:260px;object-fit:cover;" src="'+p.image_url+'" muted playsinline controls controlslist="nodownload"></video>'
-            :'<img style="width:100%;border-radius:10px;margin-bottom:0.4rem;max-height:260px;object-fit:cover;cursor:pointer;" src="'+p.image_url+'" loading="lazy" onclick="if(window.openThreadViewer)window.openThreadViewer([\''+p.image_url+'\'],0)">'):'';
-          var body=p.body&&p.body.trim()&&p.body.trim()!==' '?'<div style="font-size:0.85rem;line-height:1.5;color:var(--text);margin-bottom:0.4rem;">'+escH(p.body)+'</div>':'';
-          var t=(Date.now()-new Date(p.created_at).getTime())/1000;
-          var ago=t<60?'just now':t<3600?Math.floor(t/60)+'m ago':t<86400?Math.floor(t/3600)+'h ago':Math.floor(t/86400)+'d ago';
-          return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.75rem;">'+media+body+'<div style="font-size:0.62rem;color:var(--text-muted);">'+ago+'</div></div>';
-        }).join('');
+        /* Usar renderPost — likes, comentarios y admin delete incluidos */
+        panel.innerHTML='';
+        posts.forEach(function(p){
+          if(window.renderPost) panel.innerHTML+=window.renderPost(p);
+        });
+        /* Re-init interacciones en el panel */
+        if(window._bindPostCardEvents) window._bindPostCardEvents(panel);
       }).catch(function(){});
 
     page.querySelectorAll('.uprof-tab').forEach(function(btn){
@@ -3507,6 +3516,33 @@ async function votePoll(postId, idx, poll, container) {
       .catch(function() { btn.disabled = false; });
   };
 
+  window._adminClearBanner = function(uid) {
+    if(!window._adminIsOn()) return;
+    if(!confirm('Clear banner for this user?')) return;
+    fetch('/api/admin/clear-media?user_id='+encodeURIComponent(uid)+'&field=banner_url',{method:'POST',credentials:'include'})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d.ok){ var bn=document.getElementById('uprof-banner'); if(bn){ var img=bn.querySelector('img'); if(img) img.remove(); } alert('Banner cleared.'); }
+        else alert('Error: '+(d.error||'Unknown'));
+      }).catch(function(){ alert('Request failed'); });
+  };
+  window._adminClearAvatar = function(uid) {
+    if(!window._adminIsOn()) return;
+    if(!confirm('Clear avatar for this user?')) return;
+    fetch('/api/admin/clear-media?user_id='+encodeURIComponent(uid)+'&field=avatar_url',{method:'POST',credentials:'include'})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d.ok){ var av=document.getElementById('uprof-av'); if(av){ av.innerHTML=av.textContent.charAt(0)||'?'; } alert('Avatar cleared.'); }
+        else alert('Error: '+(d.error||'Unknown'));
+      }).catch(function(){ alert('Request failed'); });
+  };
+  window._adminClearBio = function(uid) {
+    if(!window._adminIsOn()) return;
+    if(!confirm('Clear bio for this user?')) return;
+    fetch('/api/admin/clear-media?user_id='+encodeURIComponent(uid)+'&field=bio',{method:'POST',credentials:'include'})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d.ok){ var bio=document.getElementById('uprof-bio'); if(bio) bio.textContent=''; alert('Bio cleared.'); }
+        else alert('Error: '+(d.error||'Unknown'));
+      }).catch(function(){ alert('Request failed'); });
+  };
   window._adminBanUser = function(uid, uname) {
     if (!window._adminIsOn()) return;
     var reason = prompt('Ban reason for ' + uname + ' (shown to user):');
@@ -6536,6 +6572,7 @@ async function votePoll(postId, idx, poll, container) {
     return '<canvas id="'+uid+'"'+cls+sty+'></canvas>';
   }
 
+  window.renderPost = function(p){ return renderPost(p); };
   function renderPost(p) {
     var isAdmin = document.body.classList.contains('is-admin');
     var isOwn   = window.currentUser && window.currentUser.id === p.user_id;
