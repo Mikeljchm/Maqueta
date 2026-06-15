@@ -4849,8 +4849,8 @@ async function votePoll(postId, idx, poll, container) {
       '#hw-crop-modal.avatar #hw-crop-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:84%;aspect-ratio:1/1;border:2px solid rgba(255,255,255,0.7);border-radius:50%;pointer-events:none;}',
       /* Banner: rectángulo recortador */
       '#hw-crop-modal.banner #hw-crop-mask{position:absolute;inset:0;pointer-events:none;}',
-      '#hw-crop-modal.banner #hw-crop-mask::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,0.55);-webkit-mask:polygon(0 0,100% 0,100% 100%,0 100%) exclude,polygon(4% 35%,96% 35%,96% 65%,4% 65%);}',
-      '#hw-crop-modal.banner #hw-crop-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:92%;height:30%;border:2px solid rgba(255,255,255,0.7);border-radius:8px;pointer-events:none;}',
+      '#hw-crop-modal.banner #hw-crop-mask::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,0.55);-webkit-mask:polygon(0 0,100% 0,100% 100%,0 100%) exclude,polygon(4% 30%,96% 30%,96% 70%,4% 70%);}',
+      '#hw-crop-modal.banner #hw-crop-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:92%;height:40%;border:2px solid rgba(255,255,255,0.7);border-radius:8px;pointer-events:none;}',
     ].join('');
     document.head.appendChild(s);
   })();
@@ -4956,7 +4956,7 @@ async function votePoll(postId, idx, poll, container) {
     var scaledW = _imgNatW * _scale;
     var scaledH = _imgNatH * _scale;
     var cropW = _cropType === 'avatar' ? _vpW * 0.84 : _vpW * 0.92;
-    var cropH = _cropType === 'avatar' ? _vpW * 0.84 : _vpH * 0.30;
+    var cropH = _cropType === 'avatar' ? _vpW * 0.84 : _vpH * 0.40;
     var maxTX = (scaledW - cropW) / 2;
     var maxTY = (scaledH - cropH) / 2;
     _tx = Math.max(-maxTX, Math.min(maxTX, _tx));
@@ -4983,7 +4983,7 @@ async function votePoll(postId, idx, poll, container) {
       _vpW = vpr.width; _vpH = vpr.height;
       /* Escala mínima: imagen cubre el área de recorte */
       var cropW = type === 'avatar' ? _vpW * 0.84 : _vpW * 0.92;
-      var cropH = type === 'avatar' ? _vpW * 0.84 : _vpH * 0.30;
+      var cropH = type === 'avatar' ? _vpW * 0.84 : _vpH * 0.40;
       _minScale = Math.max(cropW / _imgNatW, cropH / _imgNatH);
       _scale = _minScale;
       /* Centrar */
@@ -5014,13 +5014,13 @@ async function votePoll(postId, idx, poll, container) {
     if (!vp || !imgEl) { cb(null); return; }
 
     var outW = _cropType === 'avatar' ? 400 : 1200;
-    var outH = _cropType === 'avatar' ? 400 : 400;
+    var outH = _cropType === 'avatar' ? 400 : 800;
 
     var vpRect  = vp.getBoundingClientRect();
     var imgRect = imgEl.getBoundingClientRect();
 
     var cropW = _cropType === 'avatar' ? vpRect.width * 0.84 : vpRect.width * 0.92;
-    var cropH = _cropType === 'avatar' ? vpRect.width * 0.84 : vpRect.height * 0.30;
+    var cropH = _cropType === 'avatar' ? vpRect.width * 0.84 : vpRect.height * 0.40;
     var cropOffX = (vpRect.left + (vpRect.width  - cropW) / 2) - imgRect.left;
     var cropOffY = (vpRect.top  + (vpRect.height - cropH) / 2) - imgRect.top;
     var rx = _imgNatW / imgRect.width;
