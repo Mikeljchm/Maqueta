@@ -492,21 +492,20 @@
     var fb2=document.getElementById('uprof-fb');
     if(fb2) fb2.addEventListener('click',function(){ if(window._toggleFollow) window._toggleFollow(fb2,uid); });
 
-    fetch('/api/posts?user_id='+encodeURIComponent(uid))
-      .then(function(r){return r.json();}).then(function(d){
-        var posts=d.posts||[];
-        var pc=document.getElementById('uprof-pc');if(pc) pc.textContent=posts.length;
-        var panel=document.getElementById('uprof-posts-panel');if(!panel) return;
-        if(!posts.length){panel.innerHTML='<div style="color:var(--text-muted);text-align:center;padding:2rem 0;font-size:0.8rem;">No posts yet.</div>';return;}
-        /* Usar renderPost — likes, comentarios y admin delete incluidos */
-        panel.innerHTML='';
-        posts.forEach(function(p){
-          if(window.renderPost) panel.innerHTML+=window.renderPost(p);
-        });
-        /* Re-init contadores */
-        if(window.loadAllLikes) window.loadAllLikes();
-        if(window.loadAllCommentCounts) window.loadAllCommentCounts();
-      }).catch(function(){});
+    /* Usar loadPostsFeed — mismo render q el feed principal, con likes/comentarios/admin */
+    setTimeout(function(){
+      var panel=document.getElementById('uprof-posts-panel');
+      if(panel && window.loadPostsFeed){
+        window.loadPostsFeed(panel, uid).then(function(){
+          /* Ocultar botón New Post (no aplica en perfil ajeno) */
+          var newBtn=panel.querySelector('.posts-new-btn,.posts-signin-note');
+          if(newBtn) newBtn.style.display='none';
+          /* Actualizar contador */
+          var pc=document.getElementById('uprof-pc');
+          if(pc){ pc.textContent=panel.querySelectorAll('.post-card').length; }
+        }).catch(function(e){ console.error('uprof loadPostsFeed:', e); });
+      }
+    }, 50);
 
     page.querySelectorAll('.uprof-tab').forEach(function(btn){
       btn.addEventListener('click',function(){
@@ -6713,7 +6712,20 @@ async function votePoll(postId, idx, poll, container) {
       if (!posts.length) {
         container.innerHTML = newBtnHtml + '<div class="posts-empty">No posts yet. Be the first!</div>';
       } else {
-        container.innerHTML = newBtnHtml + posts.map(renderPost).join('');
+        try {
+          container.innerHTML = newBtnHtml + posts.map(renderPost).join('');
+        } catch(renderErr) {
+          console.error('renderPost error:', renderErr, renderErr&&renderErr.stack);
+          /* Fallback: render posts one by one to isolate which one fails */
+          container.innerHTML = newBtnHtml;
+          posts.forEach(function(p) {
+            try {
+              container.innerHTML += renderPost(p);
+            } catch(e2) {
+              console.error('renderPost failed for post', p.id, e2);
+            }
+          });
+        }
       }
 
       /* Sheet de compose — crear una sola vez en body */
