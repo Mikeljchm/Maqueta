@@ -6607,14 +6607,16 @@ async function votePoll(postId, idx, poll, container) {
       mediaHtml = '<div class="pc-media-wrap" data-tv-urls="'+enc0+'" data-tv-idx="0">'
         + (isV0
           ? '<video class="pc-media-single" src="'+u0+'" muted playsinline controls controlslist="nodownload"></video>'
-          : (lo0.endsWith('.gif') ? lazyGif(u0,'pc-media-single','') : '<img class="pc-media-single" src="'+u0+'" loading="lazy" alt="">'))
+          : '<img class="pc-media-single" src="'+u0+'" loading="lazy" alt="">')
         + '</div>';
     } else if (mediaUrls.length === 2) {
       var enc2 = encodeURIComponent(JSON.stringify(mediaUrls));
       mediaHtml = '<div class="pc-media-wrap pc-media-2col" data-tv-urls="'+enc2+'">';
       mediaUrls.forEach(function(u,i){
         var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
-        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'+(isV?'<video src="'+u+'" muted playsinline></video>':lo.endsWith('.gif')?lazyGif(u,'',''):'<img src="'+u+'" loading="lazy" alt="">')+'</div>';
+        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'
+          +(isV?'<video src="'+u+'" muted playsinline></video>':'<img src="'+u+'" loading="lazy" alt="">')
+          +'</div>';
       });
       mediaHtml += '</div>';
     } else if (mediaUrls.length >= 3) {
@@ -6624,19 +6626,21 @@ async function votePoll(postId, idx, poll, container) {
       mediaHtml += '<div class="pc-media-2col">';
       [0,1].forEach(function(i){
         var u=mediaUrls[i]; var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
-        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'+(isV?'<video src="'+u+'" muted playsinline></video>':lo.endsWith('.gif')?lazyGif(u,'',''):'<img src="'+u+'" loading="lazy" alt="">')+'</div>';
+        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'
+          +(isV?'<video src="'+u+'" muted playsinline></video>':'<img src="'+u+'" loading="lazy" alt="">')
+          +'</div>';
       });
       mediaHtml += '</div>';
       /* 1 abajo completa con +N si hay más */
       var u2 = mediaUrls[2]; var lo2=u2.toLowerCase().split('?')[0]; var isV2=lo2.endsWith('.mp4')||lo2.endsWith('.webm');
       var extra = mediaUrls.length > 3
         ? '<div class="pc-media-more">+' + (mediaUrls.length-3) + '</div>' : '';
-      var isGif2 = lo2.endsWith('.gif');
       mediaHtml += '<div class="pc-media-cell pc-media-full" data-tv-idx="2">'
-        +(isV2?'<video src="'+u2+'" muted playsinline></video>':isGif2?lazyGif(u2,'',''):'<img src="'+u2+'" loading="lazy" alt="">')
+        +(isV2?'<video src="'+u2+'" muted playsinline></video>':'<img src="'+u2+'" loading="lazy" alt="">')
         +extra+'</div>';
       mediaHtml += '</div>';
     }
+
     /* ── Tags/body ── */
     var bodyTxt = (p.body||'').trim();
     if (bodyTxt === ' ') bodyTxt = '';
