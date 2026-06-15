@@ -5007,14 +5007,14 @@ async function votePoll(postId, idx, poll, container) {
   }
 
   function _exportCrop(cb) {
-    /* Usar _cropFile directamente — el blob URL del imgEl ya fue revocado */
     if (!_cropFile) { cb(null); return; }
     var vp = document.getElementById('hw-crop-viewport');
     var imgEl = document.getElementById('hw-crop-img');
     if (!vp || !imgEl) { cb(null); return; }
 
-    var outW = _cropType === 'avatar' ? 400 : 1200;
-    var outH = _cropType === 'avatar' ? 400 : 800;
+    /* Resolución más pequeña — Android no aguanta 1200x800 en WebP */
+    var outW = _cropType === 'avatar' ? 400 : 800;
+    var outH = _cropType === 'avatar' ? 400 : 534; /* 3:2 ratio */
 
     var vpRect  = vp.getBoundingClientRect();
     var imgRect = imgEl.getBoundingClientRect();
@@ -5030,7 +5030,6 @@ async function votePoll(postId, idx, poll, container) {
     var srcW = Math.min(Math.max(cropW * rx, 1), _imgNatW - srcX);
     var srcH = Math.min(Math.max(cropH * ry, 1), _imgNatH - srcY);
 
-    /* Crear URL fresco desde el File original — nunca ha sido revocado */
     var freshURL = URL.createObjectURL(_cropFile);
     var freshImg = new Image();
     freshImg.onerror = function() { URL.revokeObjectURL(freshURL); cb(null); };
@@ -5040,18 +5039,22 @@ async function votePoll(postId, idx, poll, container) {
       canvas.width = outW; canvas.height = outH;
       var ctx = canvas.getContext('2d');
       ctx.drawImage(freshImg, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
+
+      /* Intento 1: WebP */
       canvas.toBlob(function(blob) {
-        if (!blob || blob.size < 500) {
-          var c2 = document.createElement('canvas');
-          c2.width = outW; c2.height = outH;
-          var ctx2 = c2.getContext('2d');
-          var s2 = Math.max(outW/freshImg.naturalWidth, outH/freshImg.naturalHeight);
-          var dw2 = freshImg.naturalWidth*s2, dh2 = freshImg.naturalHeight*s2;
-          ctx2.drawImage(freshImg, (outW-dw2)/2, (outH-dh2)/2, dw2, dh2);
-          c2.toBlob(function(b2){ cb(b2); }, 'image/webp', 0.88);
-          return;
-        }
-        cb(blob);
+        if (blob && blob.size > 500) { cb(blob); return; }
+        /* Intento 2: JPEG (más compatible en Android) */
+        canvas.toBlob(function(b2) {
+          if (b2 && b2.size > 500) { cb(b2); return; }
+          /* Intento 3: drawImage con cover y JPEG */
+          var c3 = document.createElement('canvas');
+          c3.width = outW; c3.height = outH;
+          var ctx3 = c3.getContext('2d');
+          var s3 = Math.max(outW / freshImg.naturalWidth, outH / freshImg.naturalHeight);
+          var dw3 = freshImg.naturalWidth * s3, dh3 = freshImg.naturalHeight * s3;
+          ctx3.drawImage(freshImg, (outW - dw3) / 2, (outH - dh3) / 2, dw3, dh3);
+          c3.toBlob(function(b3) { cb(b3 && b3.size > 500 ? b3 : null); }, 'image/jpeg', 0.92);
+        }, 'image/jpeg', 0.92);
       }, 'image/webp', 0.88);
     };
     freshImg.src = freshURL;
