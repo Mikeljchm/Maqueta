@@ -486,8 +486,9 @@
         var pc=document.getElementById('uprof-pc');if(pc) pc.textContent=posts.length;
         var panel=document.getElementById('uprof-posts-panel');if(!panel) return;
         if(!posts.length){panel.innerHTML='<div style="color:var(--text-muted);text-align:center;padding:2rem 0;font-size:0.8rem;">No posts yet.</div>';return;}
-        panel.innerHTML=posts.map(renderPost).join('');
-        if(typeof _activateLazyGifs==='function') _activateLazyGifs(panel);
+        var _rp = window.renderPost || function(p){return '<div style="padding:0.5rem;color:var(--text-dim);font-size:0.8rem;">'+(p.body||'')+'</div>';};
+        panel.innerHTML=posts.map(_rp).join('');
+        if(typeof window._activateLazyGifs==='function') window._activateLazyGifs(panel);
         if(typeof window.loadAllLikes==='function') window.loadAllLikes();
         if(typeof window.loadAllCommentCounts==='function') window.loadAllCommentCounts();
       }).catch(function(){});
@@ -6941,7 +6942,8 @@ async function votePoll(postId, idx, poll, container) {
     }
   });
 
-  /* Exponer loadPostsFeed para que el Profile page lo llame */
+  /* Exponer renderPost y loadPostsFeed para uso cross-IIFE */
+  window.renderPost = renderPost;
   window.loadPostsFeed = window.loadPostsFeed;
 
 })();
