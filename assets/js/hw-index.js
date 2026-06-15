@@ -486,7 +486,7 @@
           var avEl=document.getElementById('uprof-av');
           if(avEl&&!d.avatar_url) avEl.textContent=realName.charAt(0).toUpperCase();
         }
-        if(d.banner_url){var bn=document.getElementById('uprof-banner');if(bn){var bi=document.createElement('img');bi.src=d.banner_url;bi.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;';bn.insertBefore(bi,bn.firstChild);}}
+        if(d.banner_url){var bn=document.getElementById('uprof-banner');if(bn){var bi=document.createElement('img');bi.src=d.banner_url;bi.style.cssText='width:100%;height:100%;object-fit:cover;object-position:top;position:absolute;inset:0;z-index:0;';bn.insertBefore(bi,bn.firstChild);}}
         var av=document.getElementById('uprof-av');if(av&&d.avatar_url) av.innerHTML='<img src="'+d.avatar_url+'" style="width:100%;height:100%;object-fit:cover;">';
         var bio=document.getElementById('uprof-bio');if(bio&&d.bio) bio.textContent=d.bio;
         /* Edad pública */
@@ -2723,7 +2723,7 @@ async function votePoll(postId, idx, poll, container) {
           var ni = document.createElement('img');
           ni.className = 'prof-banner-img';
           ni.src = d.banner_url;
-          ni.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;';
+          ni.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:top;position:absolute;inset:0;z-index:0;';
           hero.insertBefore(ni, hero.firstChild);
         } else if (hero) {
           var ex = hero.querySelector('img.prof-banner-img');
@@ -4268,7 +4268,7 @@ async function votePoll(postId, idx, poll, container) {
     '.prof-toggle input:checked + .prof-toggle-track{background:var(--fire-orange);}',
     '.prof-toggle input:checked + .prof-toggle-track::before{transform:translateX(16px);}',
     '.prof-hero{background:linear-gradient(135deg,#1a0505 0%,#2d0a00 45%,#1a0505 100%);position:relative;cursor:pointer;overflow:hidden;}',
-    '.prof-hero img{width:100%;height:100%;object-fit:cover;display:block;}',
+    '.prof-hero img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}',
     '.prof-hero-edit-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);transition:background 0.2s;pointer-events:none;}',
     '.prof-hero:active .prof-hero-edit-hint{background:rgba(0,0,0,0.35);}',
     '.prof-hero-edit-icon{opacity:0;transition:opacity 0.2s;background:rgba(0,0,0,0.55);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;}',
@@ -4285,7 +4285,7 @@ async function votePoll(postId, idx, poll, container) {
     '.user-avatar-placeholder svg{width:28px;height:28px;stroke:var(--text-muted);fill:none;stroke-width:1.5;}',
     '.prof-info{padding:0 1rem 0.65rem;}',
     '.prof-fullname{font-family:var(--font-d);font-size:1.2rem;letter-spacing:0.05em;margin-bottom:0.05rem;}',
-    '.prof-username-wrap{display:flex;align-items:center;gap:0.4rem;margin-bottom:0.1rem;}',
+    '.prof-username-wrap{display:flex;align-items:center;gap:0.4rem;margin-bottom:0.05rem;}',
     '.prof-username{font-size:0.75rem;color:var(--text-dim);}',
     '.prof-username-edit-btn{background:none;border:none;color:var(--text-muted);padding:0.1rem;cursor:pointer;display:flex;}',
     '.prof-username-input-wrap{display:flex;gap:0.4rem;margin-bottom:0.35rem;}',
@@ -4781,7 +4781,7 @@ async function votePoll(postId, idx, poll, container) {
         /* Banner guardado en D1 */
         if(d.banner_url){
           var hero=document.getElementById('page-more')&&document.getElementById('page-more').querySelector('.prof-hero');
-          if(hero){ var bImg=document.createElement('img'); bImg.src=d.banner_url; bImg.style.cssText='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;'; hero.insertBefore(bImg,hero.firstChild); }
+          if(hero){ var bImg=document.createElement('img'); bImg.src=d.banner_url; bImg.style.cssText='width:100%;height:100%;object-fit:cover;object-position:top;position:absolute;inset:0;'; hero.insertBefore(bImg,hero.firstChild); }
         }
         /* Edad */
         if(d.age && d.age_public){
@@ -5078,7 +5078,7 @@ async function votePoll(postId, idx, poll, container) {
           var ni = document.createElement('img');
           ni.className = 'prof-banner-img';
           ni.src = cdnUrl;
-          ni.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:0;';
+          ni.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:top;position:absolute;inset:0;z-index:0;';
           hero.insertBefore(ni, hero.firstChild);
         }
       }
