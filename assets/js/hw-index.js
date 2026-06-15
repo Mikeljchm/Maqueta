@@ -462,6 +462,18 @@
             ubio2.parentNode.insertBefore(locSpan, ubio2.nextSibling);
           }
         }
+        /* Admin bar en perfil ajeno */
+        if(document.body.classList.contains('is-admin')){
+          var adminBar=document.createElement('div');
+          adminBar.style.cssText='margin:0.5rem 1rem 0;padding:0.6rem 0.75rem;background:#1a0505;border:1px solid #4a1010;border-radius:10px;display:flex;flex-wrap:wrap;gap:0.4rem;';
+          adminBar.innerHTML='<div style="font-size:0.58rem;color:#ff5555;letter-spacing:0.1em;font-family:var(--font-d);width:100%;margin-bottom:0.2rem;">&#9888; ADMIN ACTIONS</div>'
+            +'<button onclick="window._adminBanUser(this.dataset.uid,this.dataset.nm)" data-uid="'+uid+'" data-nm="'+escH(d.display_name||'User')+'" style="font-size:0.68rem;background:#3a0a0a;color:#ff5555;border:1px solid #6a1a1a;border-radius:6px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);">&#128683; Ban User</button>'
+            +'<button onclick="window._adminClearBanner(this.dataset.uid)" data-uid="'+uid+'" style="font-size:0.68rem;background:#1a1a0a;color:#ffaa00;border:1px solid #4a3a00;border-radius:6px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);">&#128247; Clear Banner</button>'
+            +'<button onclick="window._adminClearAvatar(this.dataset.uid)" data-uid="'+uid+'" style="font-size:0.68rem;background:#1a1a0a;color:#ffaa00;border:1px solid #4a3a00;border-radius:6px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);">&#128100; Clear Avatar</button>'
+            +'<button onclick="window._adminClearBio(this.dataset.uid)" data-uid="'+uid+'" style="font-size:0.68rem;background:#0a0a1a;color:#aaaaff;border:1px solid #1a1a4a;border-radius:6px;padding:0.25rem 0.6rem;cursor:pointer;font-family:var(--font-b);">&#128221; Clear Bio</button>';
+          var profBio=document.getElementById('uprof-bio');
+          if(profBio&&profBio.parentNode) profBio.parentNode.insertBefore(adminBar, profBio.nextSibling);
+        }
       }).catch(function(){});
 
     fetch('/api/points?user_id='+encodeURIComponent(uid))
@@ -3500,6 +3512,34 @@ async function votePoll(postId, idx, poll, container) {
         else { btn.closest('div[style]') && (btn.closest('div[style]').style.opacity = '0.3'); }
       })
       .catch(function() { btn.disabled = false; });
+  };
+
+  window._adminClearBanner = function(uid) {
+    if(!window._adminIsOn()) return;
+    if(!confirm('Clear banner for this user?')) return;
+    fetch('/api/admin/clear-media?user_id='+encodeURIComponent(uid)+'&field=banner_url',{method:'POST',credentials:'include'})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d.ok){ var bn=document.getElementById('uprof-banner'); if(bn){ var img=bn.querySelector('img'); if(img) img.remove(); } alert('Banner cleared.'); }
+        else alert('Error: '+(d.error||'Unknown'));
+      }).catch(function(){ alert('Request failed'); });
+  };
+  window._adminClearAvatar = function(uid) {
+    if(!window._adminIsOn()) return;
+    if(!confirm('Clear avatar for this user?')) return;
+    fetch('/api/admin/clear-media?user_id='+encodeURIComponent(uid)+'&field=avatar_url',{method:'POST',credentials:'include'})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d.ok){ var av=document.getElementById('uprof-av'); if(av){ av.innerHTML=av.textContent.charAt(0)||'?'; } alert('Avatar cleared.'); }
+        else alert('Error: '+(d.error||'Unknown'));
+      }).catch(function(){ alert('Request failed'); });
+  };
+  window._adminClearBio = function(uid) {
+    if(!window._adminIsOn()) return;
+    if(!confirm('Clear bio for this user?')) return;
+    fetch('/api/admin/clear-media?user_id='+encodeURIComponent(uid)+'&field=bio',{method:'POST',credentials:'include'})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d.ok){ var bio=document.getElementById('uprof-bio'); if(bio) bio.textContent=''; alert('Bio cleared.'); }
+        else alert('Error: '+(d.error||'Unknown'));
+      }).catch(function(){ alert('Request failed'); });
   };
 
   window._adminBanUser = function(uid, uname) {
