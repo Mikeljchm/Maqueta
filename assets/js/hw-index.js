@@ -6487,6 +6487,55 @@ async function votePoll(postId, idx, poll, container) {
     try { localStorage.setItem('hw_post_likes', JSON.stringify([...LIKED_POSTS])); } catch(e){}
   }
 
+
+  /* Lazy GIF loader — primer frame inmediato, animación cuando carga (estilo Tumblr) */
+  (function(){
+    if (document.getElementById('hw-gif-spin')) return;
+    var s = document.createElement('style');
+    s.id = 'hw-gif-spin';
+    s.textContent = '@keyframes hwGifSpin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(s);
+  })();
+
+  function lazyGif(src, className, extraStyle) {
+    var uid = 'lg' + Math.random().toString(36).slice(2,7);
+    var cls = className ? ' class="'+className+'"' : '';
+    var sty = extraStyle ? ' style="'+extraStyle+'"' : '';
+    setTimeout(function(){
+      var wrap = document.getElementById(uid);
+      if (!wrap) return;
+      /* Hidden img to load the full GIF */
+      var fullImg = new Image();
+      fullImg.onload = function() {
+        var el = document.getElementById(uid);
+        if (!el) return;
+        /* Swap placeholder canvas with real animated img */
+        var img = document.createElement('img');
+        img.src = src;
+        if (className) img.className = className;
+        if (extraStyle) img.style.cssText = extraStyle;
+        /* Copy data attrs */
+        Array.from(el.attributes).forEach(function(a){
+          if (a.name.startsWith('data-') || a.name === 'onclick') img.setAttribute(a.name, a.value);
+        });
+        el.parentNode && el.parentNode.replaceChild(img, el);
+      };
+      fullImg.src = src;
+      /* Draw first frame into canvas immediately */
+      try {
+        var ctx = wrap.getContext('2d');
+        wrap.width  = wrap.offsetWidth  || 300;
+        wrap.height = wrap.offsetHeight || 200;
+        var tmp = new Image();
+        tmp.crossOrigin = 'anonymous';
+        tmp.onload = function(){ try{ ctx.drawImage(tmp,0,0,wrap.width,wrap.height); }catch(e){} };
+        tmp.src = src;
+      } catch(e) {}
+    }, 0);
+    /* Canvas as placeholder — same class/style so layout is identical */
+    return '<canvas id="'+uid+'"'+cls+sty+'></canvas>';
+  }
+
   function renderPost(p) {
     var isAdmin = document.body.classList.contains('is-admin');
     var isOwn   = window.currentUser && window.currentUser.id === p.user_id;
@@ -6518,16 +6567,15 @@ async function votePoll(postId, idx, poll, container) {
       mediaHtml = '<div class="pc-media-wrap" data-tv-urls="'+enc0+'" data-tv-idx="0">'
         + (isV0
           ? '<video class="pc-media-single" src="'+u0+'" muted playsinline controls controlslist="nodownload"></video>'
-          : '<img class="pc-media-single" src="'+u0+'" loading="lazy" alt="">')
+          : (lo0.endsWith('.gif') ? lazyGif(u0,'pc-media-single','') : '<img class="pc-media-single" src="'+u0+'" loading="lazy" alt="">'))
         + '</div>';
     } else if (mediaUrls.length === 2) {
       var enc2 = encodeURIComponent(JSON.stringify(mediaUrls));
       mediaHtml = '<div class="pc-media-wrap pc-media-2col" data-tv-urls="'+enc2+'">';
       mediaUrls.forEach(function(u,i){
         var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
-        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'
-          +(isV?'<video src="'+u+'" muted playsinline></video>':'<img src="'+u+'" loading="lazy" alt="">')
-          +'</div>';
+        var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
+        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'+(isV?'<video src="'+u+'" muted playsinline></video>':lo.endsWith('.gif')?lazyGif(u,'',''):'<img src="'+u+'" loading="lazy" alt="">')+'</div>';
       });
       mediaHtml += '</div>';
     } else if (mediaUrls.length >= 3) {
@@ -6537,8 +6585,7 @@ async function votePoll(postId, idx, poll, container) {
       mediaHtml += '<div class="pc-media-2col">';
       [0,1].forEach(function(i){
         var u=mediaUrls[i]; var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
-        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'
-          +(isV?'<video src="'+u+'" muted playsinline></video>':'<img src="'+u+'" loading="lazy" alt="">')
+        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'+(isV?'<video src="'+u+'" muted playsinline></video>':lo.endsWith('.gif')?lazyGif(u,'',''):'<img src="'+u+'" loading="lazy" alt="">')+'</div>';
           +'</div>';
       });
       mediaHtml += '</div>';
@@ -6547,7 +6594,7 @@ async function votePoll(postId, idx, poll, container) {
       var extra = mediaUrls.length > 3
         ? '<div class="pc-media-more">+' + (mediaUrls.length-3) + '</div>' : '';
       mediaHtml += '<div class="pc-media-cell pc-media-full" data-tv-idx="2">'
-        +(isV2?'<video src="'+u2+'" muted playsinline></video>':'<img src="'+u2+'" loading="lazy" alt="">')
+        +(isV2?'<video src="'+u2+'" muted playsinline></video>':lo2.endsWith('.gif')?lazyGif(u2,'',''):'<img src="'+u2+'" loading="lazy" alt="">')
         +extra+'</div>';
       mediaHtml += '</div>';
     }
@@ -7816,6 +7863,8 @@ async function votePoll(postId, idx, poll, container) {
       var tvSingleEnc=encodeURIComponent(JSON.stringify(mediaList));
       mediaHtml=lo.endsWith('.mp4')||lo.endsWith('.webm')
         ?'<video class="comm-post-vid" src="'+mediaList[0]+'" muted playsinline controls controlslist="nodownload" oncontextmenu="return false"></video>'
+        :lo.endsWith('.gif')?lazyGif(mediaList[0],'comm-post-img','cursor:pointer')
+        +'<span style="display:none" data-tv-idx="0" data-tv-urls="'+tvSingleEnc+'"></span>'
         :'<img class="comm-post-img" src="'+mediaList[0]+'" loading="lazy" style="cursor:pointer;" data-tv-idx="0" data-tv-urls="'+tvSingleEnc+'">';
     } else if(mediaList.length>1){
       /* Álbum grid */
