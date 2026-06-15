@@ -2014,6 +2014,16 @@ export default {
           return apiJson({ok:true},200,corsH);
         }
 
+        /* POST /api/admin/clear-media?user_id=X&field=banner_url|avatar_url|bio */
+        if (path === '/api/admin/clear-media' && request.method === 'POST') {
+          const uid = url.searchParams.get('user_id');
+          const field = url.searchParams.get('field');
+          const allowed = ['banner_url','avatar_url','bio'];
+          if (!uid || !allowed.includes(field)) return apiJson({ error: 'Invalid params' }, 400, corsH);
+          await env.DB.prepare('UPDATE user_profiles SET '+field+'=NULL WHERE user_id=?').bind(uid).run();
+          return apiJson({ ok: true }, 200, corsH);
+        }
+
         /* DELETE /api/admin/user?user_id=X — ban + wipe all content */
         if (path === '/api/admin/user' && request.method === 'DELETE') {
           const uid = url.searchParams.get('user_id');
