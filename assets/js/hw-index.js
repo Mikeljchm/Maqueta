@@ -6624,19 +6624,18 @@ async function votePoll(postId, idx, poll, container) {
       [0,1].forEach(function(i){
         var u=mediaUrls[i]; var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
         mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'+(isV?'<video src="'+u+'" muted playsinline></video>':lo.endsWith('.gif')?lazyGif(u,'',''):'<img src="'+u+'" loading="lazy" alt="">')+'</div>';
-          +'</div>';
       });
       mediaHtml += '</div>';
       /* 1 abajo completa con +N si hay más */
       var u2 = mediaUrls[2]; var lo2=u2.toLowerCase().split('?')[0]; var isV2=lo2.endsWith('.mp4')||lo2.endsWith('.webm');
       var extra = mediaUrls.length > 3
         ? '<div class="pc-media-more">+' + (mediaUrls.length-3) + '</div>' : '';
+      var isGif2 = lo2.endsWith('.gif');
       mediaHtml += '<div class="pc-media-cell pc-media-full" data-tv-idx="2">'
-        +(isV2?'<video src="'+u2+'" muted playsinline></video>':lo2.endsWith('.gif')?lazyGif(u2,'',''):'<img src="'+u2+'" loading="lazy" alt="">')
+        +(isV2?'<video src="'+u2+'" muted playsinline></video>':isGif2?lazyGif(u2,'',''):'<img src="'+u2+'" loading="lazy" alt="">')
         +extra+'</div>';
       mediaHtml += '</div>';
     }
-
     /* ── Tags/body ── */
     var bodyTxt = (p.body||'').trim();
     if (bodyTxt === ' ') bodyTxt = '';
@@ -6870,6 +6869,7 @@ async function votePoll(postId, idx, poll, container) {
       if(newBtn) newBtn.addEventListener('click', function(){ if(window._openPostSheet) window._openPostSheet(); });
 
     } catch(e) {
+      console.error('loadPostsFeed error:', e);
       container.innerHTML = '<div class="posts-empty">Could not load posts.</div>';
     }
   };
