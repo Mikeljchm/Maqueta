@@ -492,20 +492,23 @@
     var fb2=document.getElementById('uprof-fb');
     if(fb2) fb2.addEventListener('click',function(){ if(window._toggleFollow) window._toggleFollow(fb2,uid); });
 
-    /* Usar loadPostsFeed — mismo render q el feed principal, con likes/comentarios/admin */
-    setTimeout(function(){
-      var panel=document.getElementById('uprof-posts-panel');
-      if(panel && window.loadPostsFeed){
-        window.loadPostsFeed(panel, uid).then(function(){
-          /* Ocultar botón New Post (no aplica en perfil ajeno) */
-          var newBtn=panel.querySelector('.posts-new-btn,.posts-signin-note');
-          if(newBtn) newBtn.style.display='none';
-          /* Actualizar contador */
-          var pc=document.getElementById('uprof-pc');
-          if(pc){ pc.textContent=panel.querySelectorAll('.post-card').length; }
-        }).catch(function(e){ console.error('uprof loadPostsFeed:', e); });
-      }
-    }, 50);
+    fetch('/api/posts?user_id='+encodeURIComponent(uid),{credentials:'include'})
+      .then(function(r){return r.json();}).then(function(d){
+        var posts=d.posts||[];
+        var pc=document.getElementById('uprof-pc'); if(pc) pc.textContent=posts.length;
+        var panel=document.getElementById('uprof-posts-panel'); if(!panel) return;
+        if(!posts.length){
+          panel.innerHTML='<div style="color:var(--text-muted);text-align:center;padding:2rem 0;font-size:0.8rem;">No posts yet.</div>';
+          return;
+        }
+        var html='';
+        posts.forEach(function(p){
+          try{ html+=renderPost(p); }catch(e){ console.error('renderPost err',p.id,e); }
+        });
+        panel.innerHTML=html;
+        if(window.loadAllLikes) window.loadAllLikes();
+        if(window.loadAllCommentCounts) window.loadAllCommentCounts();
+      }).catch(function(e){ console.error('uprof posts fetch err',e); });
 
     page.querySelectorAll('.uprof-tab').forEach(function(btn){
       btn.addEventListener('click',function(){
@@ -6610,7 +6613,6 @@ async function votePoll(postId, idx, poll, container) {
       var enc2 = encodeURIComponent(JSON.stringify(mediaUrls));
       mediaHtml = '<div class="pc-media-wrap pc-media-2col" data-tv-urls="'+enc2+'">';
       mediaUrls.forEach(function(u,i){
-        var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
         var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
         mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'+(isV?'<video src="'+u+'" muted playsinline></video>':lo.endsWith('.gif')?lazyGif(u,'',''):'<img src="'+u+'" loading="lazy" alt="">')+'</div>';
       });
