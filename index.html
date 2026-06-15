@@ -364,13 +364,13 @@ layout: none
 
         <!-- BANNER full-bleed con menú flotante encima — estilo Tumblr -->
         <div style="position:relative;flex-shrink:0;">
-          <div class="prof-hero" style="cursor:pointer;">
+          <div class="prof-hero" style="cursor:pointer;aspect-ratio:2/1;min-height:160px;max-height:240px;">
             <div class="prof-hero-glow"></div>
             <div class="prof-hero-pattern"></div>
             <div class="prof-hero-edit-hint"><div class="prof-hero-edit-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div></div>
             <!-- Menú 3 puntos flotando sobre el banner — esquina superior derecha -->
-            <div style="position:absolute;top:0.6rem;right:0.75rem;z-index:10;">
-              <button class="prof-menu-btn" id="prof-menu-btn" aria-label="Settings" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(6px);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:none;color:#fff;cursor:pointer;">
+            <div style="position:absolute;top:0.6rem;right:0.75rem;z-index:20;" onclick="event.stopPropagation()">
+              <button class="prof-menu-btn" id="prof-menu-btn" aria-label="Settings" style="background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;color:#fff;cursor:pointer;">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
               </button>
               <div class="prof-dropdown" id="prof-dropdown">
@@ -406,7 +406,7 @@ layout: none
             </div>
           </div>
           <!-- AVATAR solapado: mitad dentro del banner, mitad afuera -->
-          <div style="position:absolute;bottom:-42px;left:50%;transform:translateX(-50%);z-index:5;">
+          <div style="position:absolute;bottom:-48px;left:50%;transform:translateX(-50%);z-index:5;">
             <div class="prof-avatar-wrap" id="user-avatar-wrap" style="width:84px;height:84px;border:3px solid var(--bg);">
               <div class="user-avatar-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
               <div class="prof-avatar-cam"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
@@ -414,7 +414,7 @@ layout: none
           </div>
         </div>
         <!-- Espaciado para compensar el avatar solapado -->
-        <div style="height:50px;"></div>
+        <div style="height:46px;"></div>
 
         <!-- NOMBRE + BADGE + BIO — centrado, solo display -->
         <div style="text-align:center;padding:0.5rem 1rem 0;">
