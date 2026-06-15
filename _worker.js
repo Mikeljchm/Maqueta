@@ -1263,6 +1263,7 @@ async function handleUserPosts(request, env, corsH) {
   )`).run();
   try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN image_url TEXT DEFAULT ''").run(); } catch(e){}
   try { await env.DB.prepare('ALTER TABLE user_posts ADD COLUMN like_count INTEGER DEFAULT 0').run(); } catch(e){}
+  try { await env.DB.prepare('ALTER TABLE user_posts ADD COLUMN comment_count INTEGER DEFAULT 0').run(); } catch(e){}
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS post_reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     post_id INTEGER NOT NULL,
