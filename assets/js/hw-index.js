@@ -503,8 +503,9 @@
         posts.forEach(function(p){
           if(window.renderPost) panel.innerHTML+=window.renderPost(p);
         });
-        /* Re-init interacciones en el panel */
-        if(window._bindPostCardEvents) window._bindPostCardEvents(panel);
+        /* Re-init contadores */
+        if(window.loadAllLikes) window.loadAllLikes();
+        if(window.loadAllCommentCounts) window.loadAllCommentCounts();
       }).catch(function(){});
 
     page.querySelectorAll('.uprof-tab').forEach(function(btn){
