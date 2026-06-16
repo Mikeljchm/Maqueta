@@ -2592,7 +2592,7 @@ async function handleUserFollows(request, env, corsH) {
       ).bind(uid).all());
     } else {
       ({ results } = await env.DB.prepare(
-        'SELECT uf.following_id as user_id, up.username, up.avatar_url FROM user_follows uf LEFT JOIN user_profiles up ON up.user_id=uf.following_id WHERE uf.follower_id=? ORDER BY uf.created_at DESC LIMIT 100'
+        'SELECT uf.following_id as user_id, up.username, up.display_name, up.avatar_url FROM user_follows uf LEFT JOIN user_profiles up ON up.user_id=uf.following_id WHERE uf.follower_id=? ORDER BY uf.created_at DESC LIMIT 100'
       ).bind(uid).all());
     }
     return apiJson({ users: results }, 200, corsH);
