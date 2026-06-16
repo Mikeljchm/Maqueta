@@ -2862,8 +2862,7 @@ async function votePoll(postId, idx, poll, container) {
       } catch(e) {}
 
       if (nameEl) nameEl.textContent = displayName;
-      var fpill = document.getElementById('following-pill');
-      if (fpill) fpill.style.display = '';
+      /* following-tab always visible — no show/hide needed */
       const avatar = user.picture || '';
       if (avatarWrap) {
         if (avatar) {
@@ -2878,8 +2877,7 @@ async function votePoll(postId, idx, poll, container) {
         actionBtn.className = 'user-logout-btn';
       }
     } else {
-      var fpill2 = document.getElementById('following-pill');
-      if (fpill2) fpill2.style.display = 'none';
+      /* following-tab always visible — no show/hide needed */
       if (nameEl) nameEl.textContent = 'Sign in to unlock +18 content';
       if (emailEl) emailEl.textContent = 'Free \u00b7 No credit card needed';
       if (avatarWrap) avatarWrap.innerHTML = '<div class="user-avatar-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>';
