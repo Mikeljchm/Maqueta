@@ -120,9 +120,23 @@ layout: none
 
       <!-- HOME FEED -->
       <div class="page active" id="page-home">
+        <!-- SECCIÓN SIGUIENDO — visible solo cuando estás logueado y sigues a alguien -->
+        <div id="following-section" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1rem 0.4rem;">
+            <div style="font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.1em;color:var(--fire-orange);">&#10024; SIGUIENDO</div>
+            <button id="following-see-all" style="background:none;border:none;color:var(--text-dim);font-size:0.65rem;cursor:pointer;font-family:var(--font-b);">Ver todo</button>
+          </div>
+          <div id="following-strip" style="display:flex;overflow-x:auto;gap:0.6rem;padding:0 1rem 0.75rem;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
+          <div style="height:1px;background:var(--border);margin:0 0 0.5rem;"></div>
+        </div>
+        <!-- POSTS D1 DE USUARIOS — mezclados en el feed -->
+        <div id="community-feed-section">
+          <div id="community-feed-container"></div>
+        </div>
         <div id="feed-container">
           <!-- Posts cargados dinámicamente desde /assets/data/posts.json -->
         </div>
+        </div><!-- /community-feed-section -->
         <div id="feed-sentinel" style="height:60px;display:flex;align-items:center;justify-content:center;">
           <div id="feed-loader" style="display:none;">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--fire-orange)" stroke-width="2" style="animation:spin 1s linear infinite;">
