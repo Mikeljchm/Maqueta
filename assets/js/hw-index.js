@@ -1332,11 +1332,10 @@ async function votePoll(postId, idx, poll, container) {
     }
     /* Restore normal feed */
     var fc2 = document.getElementById('feed-container');
-    var pc2 = document.getElementById('posts-feed-container');
     if (fc2) fc2.style.display = '';
-    if (pc2 && cat === 'all') {
-      /* Reload D1 feed normally */
-      if (window.currentUser && window.loadPostsFeed) window.loadPostsFeed(pc2, null);
+    /* Reiniciar community feed al volver a All */
+    if (cat === 'all' && window._initCommunityFeed) {
+      setTimeout(window._initCommunityFeed, 100);
     }
     resetFeed();
   };
@@ -1403,30 +1402,82 @@ async function votePoll(postId, idx, poll, container) {
     document.head.appendChild(s);
   })();
 
-  /* ── Feed mezclado: D1 posts + Jekyll ── */
-  window._initCommunityFeed = async function() {
+  /* ── Feed de comunidad paginado — 12 posts por carga ── */
+  var _cfOffset   = 0;
+  var _cfLimit    = 12;
+  var _cfLoading  = false;
+  var _cfHasMore  = true;
+  var _cfObserver = null;
+
+  function _cfRenderPosts(posts, append) {
     var cc = document.getElementById('community-feed-container');
     if (!cc) return;
-
-    /* Solo cargar si hay usuario logueado o igual mostramos posts públicos */
-    try {
-      var r = await fetch('/api/posts', {credentials:'include'});
-      var d = await r.json();
-      var posts = (d.posts||[]).filter(function(p){ return !p.hidden; });
-      if (!posts.length) { cc.innerHTML = ''; return; }
-
-      /* Separador visual antes del contenido Jekyll */
+    if (!append) {
+      /* Primera carga — poner separador + posts */
       var divider = '<div class="cf-divider"><div class="cf-divider-line"></div><div class="cf-divider-label">&#128101; COMMUNITY POSTS</div><div class="cf-divider-line"></div></div>';
-
-      cc.innerHTML = divider + posts.map(window.renderPost||function(){ return ''; }).join('');
-      if (window._activateLazyGifs) window._activateLazyGifs(cc);
-      if (window.loadAllLikes) window.loadAllLikes();
-      if (window.loadAllCommentCounts) window.loadAllCommentCounts();
-    } catch(e) {
-      /* Si falla no romper el feed */
-      var cc2 = document.getElementById('community-feed-container');
-      if (cc2) cc2.innerHTML = '';
+      cc.innerHTML = divider;
     }
+    var frag = document.createDocumentFragment();
+    posts.forEach(function(p) {
+      var div = document.createElement('div');
+      div.innerHTML = (window.renderPost||function(){ return ''; })(p);
+      while (div.firstChild) frag.appendChild(div.firstChild);
+    });
+    cc.appendChild(frag);
+    if (window._activateLazyGifs) window._activateLazyGifs(cc);
+    if (window.loadAllLikes) window.loadAllLikes();
+    if (window.loadAllCommentCounts) window.loadAllCommentCounts();
+  }
+
+  async function _cfLoadPage() {
+    if (_cfLoading || !_cfHasMore) return;
+    _cfLoading = true;
+    /* Mostrar spinner en el sentinel del community feed */
+    var sentinel = document.getElementById('cf-sentinel');
+    if (sentinel) sentinel.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--fire-orange)" stroke-width="2" style="animation:spin 1s linear infinite;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>';
+    try {
+      var r = await fetch('/api/posts?limit='+_cfLimit+'&offset='+_cfOffset, {credentials:'include'});
+      var d = await r.json();
+      var posts = d.posts || [];
+      _cfHasMore = d.has_more || false;
+      if (posts.length) {
+        _cfRenderPosts(posts, _cfOffset > 0);
+        _cfOffset += posts.length;
+      }
+      if (sentinel) sentinel.innerHTML = '';
+      /* Ocultar sentinel si no hay más */
+      if (!_cfHasMore && sentinel) sentinel.style.display = 'none';
+    } catch(e) {
+      if (sentinel) sentinel.innerHTML = '';
+    }
+    _cfLoading = false;
+  }
+
+  window._initCommunityFeed = function() {
+    /* Reset */
+    _cfOffset = 0; _cfHasMore = true; _cfLoading = false;
+    var cc = document.getElementById('community-feed-container');
+    if (!cc) return;
+    cc.innerHTML = '';
+    /* Agregar sentinel para IntersectionObserver */
+    var sentinel = document.getElementById('cf-sentinel');
+    if (!sentinel) {
+      sentinel = document.createElement('div');
+      sentinel.id = 'cf-sentinel';
+      sentinel.style.cssText = 'height:48px;display:flex;align-items:center;justify-content:center;';
+      cc.parentNode.insertBefore(sentinel, cc.nextSibling);
+    } else {
+      sentinel.style.display = '';
+      sentinel.innerHTML = '';
+    }
+    /* IntersectionObserver — cargar más al llegar al sentinel */
+    if (_cfObserver) _cfObserver.disconnect();
+    _cfObserver = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting) _cfLoadPage();
+    }, { rootMargin: '200px' });
+    _cfObserver.observe(sentinel);
+    /* Carga inicial */
+    _cfLoadPage();
   };
 
   /* ── Sección Siguiendo — avatares horizontales con últimos posts ── */
