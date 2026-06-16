@@ -1327,24 +1327,7 @@ async function votePoll(postId, idx, poll, container) {
     if (tb) { tb.style.maxHeight = '0'; tb.style.padding = '0 0.75rem'; }
     /* Following filter — load from D1 via separate endpoint */
     if (cat === 'following') {
-      var fc = document.getElementById('feed-container');
-      var pc = document.getElementById('posts-feed-container');
-      if (fc) fc.style.display = 'none';
-      if (pc) {
-        pc.style.display = 'block';
-        pc.innerHTML = '<div class="posts-empty">Loading following feed...</div>';
-        fetch('/api/user-follows/feed', { credentials: 'include' })
-          .then(function(r) { return r.json(); })
-          .then(function(d) {
-            var posts = d.posts || [];
-            if (!posts.length) {
-              pc.innerHTML = '<div class="posts-empty" style="padding:2rem;text-align:center;color:var(--text-dim);">Follow some users to see their posts here.</div>';
-              return;
-            }
-            if (window.loadPostsFeed) window.loadPostsFeed(pc, null, posts);
-          })
-          .catch(function() { pc.innerHTML = '<div class="posts-empty">Could not load.</div>'; });
-      }
+      window._openFollowingFeed();
       return;
     }
     /* Restore normal feed */
@@ -1490,17 +1473,74 @@ async function votePoll(postId, idx, poll, container) {
         });
       });
 
-      /* Botón "Ver todo" → pill Following */
+      /* Botón "VER FEED" → abre el following feed */
       var seeAll = document.getElementById('following-see-all');
-      if (seeAll) seeAll.addEventListener('click', function(){
-        var pill = document.getElementById('following-pill');
-        if (pill) pill.click();
-      });
+      if (seeAll) {
+        seeAll.replaceWith(seeAll.cloneNode(true)); /* quitar listeners viejos */
+        var seeAll2 = document.getElementById('following-see-all');
+        if (seeAll2) seeAll2.addEventListener('click', function(){ window._openFollowingFeed(); });
+      }
+      /* Botón Volver */
+      var backBtn = document.getElementById('following-feed-back');
+      if (backBtn) {
+        backBtn.replaceWith(backBtn.cloneNode(true));
+        var backBtn2 = document.getElementById('following-feed-back');
+        if (backBtn2) backBtn2.addEventListener('click', function(){ window._closeFollowingFeed(); });
+      }
 
     } catch(e) {
       var sec2 = document.getElementById('following-section');
       if (sec2) sec2.style.display = 'none';
     }
+  };
+
+  /* ── Following feed — abre la vista de posts de seguidos ── */
+  window._openFollowingFeed = function() {
+    var homeEl   = document.getElementById('feed-container');
+    var commEl   = document.getElementById('community-feed-section');
+    var followEl = document.getElementById('following-section');
+    var ffSection = document.getElementById('following-feed-section');
+    var ffContainer = document.getElementById('following-feed-container');
+    if (!ffSection || !ffContainer) return;
+
+    /* Ocultar feed normal, mostrar following feed */
+    if (homeEl) homeEl.style.display = 'none';
+    if (commEl) commEl.style.display = 'none';
+    if (followEl) followEl.style.display = 'none';
+    ffSection.style.display = 'block';
+
+    /* Solo cargar si el container está vacío */
+    if (ffContainer.children.length > 0) return;
+
+    ffContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Loading...</div>';
+
+    fetch('/api/user-follows/feed', {credentials:'include'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var posts = d.posts || [];
+        if (!posts.length) {
+          ffContainer.innerHTML = '<div style="padding:2.5rem;text-align:center;color:var(--text-dim);font-size:0.85rem;">No posts yet from people you follow.<br><span style="font-size:0.75rem;color:var(--text-muted);">Follow more users to see their posts here.</span></div>';
+          return;
+        }
+        ffContainer.innerHTML = posts.map(window.renderPost||function(){ return ''; }).join('');
+        if (window._activateLazyGifs) window._activateLazyGifs(ffContainer);
+        if (window.loadAllLikes) window.loadAllLikes();
+        if (window.loadAllCommentCounts) window.loadAllCommentCounts();
+      })
+      .catch(function(){
+        ffContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-dim);">Could not load feed.</div>';
+      });
+  };
+
+  window._closeFollowingFeed = function() {
+    var homeEl   = document.getElementById('feed-container');
+    var commEl   = document.getElementById('community-feed-section');
+    var followEl = document.getElementById('following-section');
+    var ffSection = document.getElementById('following-feed-section');
+    if (homeEl) homeEl.style.display = '';
+    if (commEl) commEl.style.display = 'block';
+    if (followEl && window.currentUser) followEl.style.display = 'block';
+    if (ffSection) ffSection.style.display = 'none';
   };
 
   function initFeed() {
