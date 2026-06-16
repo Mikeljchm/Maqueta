@@ -2803,14 +2803,18 @@ async function votePoll(postId, idx, poll, container) {
     const session = await HottAuth.init();
     if (session) {
       currentUser = session; window.currentUser = session;
-      /* Cargar name_color y name_font del perfil */
+      /* Cargar name_color y name_font del perfil — y verificar age_verified */
       fetch('/api/profile',{credentials:'include'}).then(function(r){return r.json();}).then(function(pd){
         if(window.currentUser){
           window.currentUser.name_color=pd.name_color||'';
           window.currentUser.name_font=pd.name_font||'';
+          window.currentUser.age_verified=pd.age_verified||0;
         }
-        /* Esperar que las fuentes estén listas antes de aplicar */
-        /* Aplicar estilo inmediatamente y reintentar para fuentes */
+        /* Mostrar age verification si no ha verificado edad */
+        if (!pd.age_verified && window._showAgeVerification) {
+          window._showAgeVerification();
+        }
+        /* Aplicar estilos de nombre */
         if(window.refreshNameStyles) window.refreshNameStyles();
         setTimeout(function(){ if(window.refreshNameStyles) window.refreshNameStyles(); }, 600);
       }).catch(function(){});
@@ -6520,6 +6524,30 @@ async function votePoll(postId, idx, poll, container) {
   ].join('');
   document.head.appendChild(cs);
 
+  /* ─── Age Verification Screen CSS ─── */
+  (function(){
+    var av = document.createElement('style');
+    av.textContent = [
+      '#av-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;}',
+      '#av-screen.open{display:flex;}',
+      '.av-logo{font-family:var(--font-d);font-size:2rem;letter-spacing:0.1em;color:var(--fire-orange);margin-bottom:0.5rem;}',
+      '.av-sub{font-size:0.75rem;color:var(--text-dim);text-align:center;margin-bottom:1.5rem;line-height:1.6;}',
+      '.av-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.5rem 1.25rem;width:100%;max-width:360px;}',
+      '.av-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.08em;margin-bottom:0.25rem;color:#fff;}',
+      '.av-desc{font-size:0.72rem;color:var(--text-dim);margin-bottom:1.1rem;line-height:1.55;}',
+      '.av-label{font-size:0.68rem;color:var(--text-dim);letter-spacing:0.06em;margin-bottom:0.3rem;display:block;}',
+      '.av-dob{display:flex;gap:0.5rem;margin-bottom:1rem;}',
+      '.av-dob select{flex:1;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.55rem 0.4rem;font-size:0.78rem;font-family:var(--font-b);outline:none;appearance:none;-webkit-appearance:none;text-align:center;}',
+      '.av-dob select:focus{border-color:var(--fire-orange);}',
+      '.av-declare{font-size:0.65rem;color:var(--text-dim);line-height:1.55;background:var(--surface-2);border-radius:10px;padding:0.75rem;margin-bottom:1rem;border:1px solid var(--border);}',
+      '.av-btn{width:100%;background:linear-gradient(135deg,var(--fire-orange),var(--fire-red));color:#fff;border:none;border-radius:25px;padding:0.75rem;font-family:var(--font-d);font-size:0.9rem;letter-spacing:0.08em;cursor:pointer;transition:opacity 0.2s;}',
+      '.av-btn:disabled{opacity:0.4;cursor:not-allowed;}',
+      '.av-error{font-size:0.7rem;color:#ff5555;text-align:center;margin-top:0.6rem;min-height:1rem;}',
+      '.av-logout{background:none;border:none;color:var(--text-muted);font-size:0.65rem;margin-top:1rem;cursor:pointer;text-decoration:underline;}'
+    ].join('');
+    document.head.appendChild(av);
+  })();
+
   /* ─── Helpers ─── */
   function timeAgo(d) {
     var s = (Date.now() - new Date(d).getTime()) / 1000;
@@ -7433,6 +7461,80 @@ async function votePoll(postId, idx, poll, container) {
       if (toast) { toast.textContent = 'Link copied!'; toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 2500); }
     }
   }
+
+  /* ─── Age Verification Screen DOM + Logic ─── */
+  (function(){
+    var screen = document.createElement('div');
+    screen.id = 'av-screen';
+    // Generar opciones de días, meses, años
+    var days = '<option value="">DD</option>';
+    for(var d=1;d<=31;d++) days += '<option value="'+(d<10?'0':'')+d+'">'+(d<10?'0':'')+d+'</option>';
+    var months = '<option value="">MM</option>';
+    var mns = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    mns.forEach(function(m,i){ var v=(i+1<10?'0':'')+(i+1); months+='<option value="'+v+'">'+m+'</option>'; });
+    var years = '<option value="">YYYY</option>';
+    var curY = new Date().getFullYear();
+    for(var y=curY-18;y>=curY-100;y--) years += '<option value="'+y+'">'+y+'</option>';
+
+    screen.innerHTML = '<div class="av-logo">🔥 HOTT WRESTLING</div>'
+      + '<div class="av-sub">Adult content site &middot; 18+ only<br>Verify your age to continue</div>'
+      + '<div class="av-card">'
+        + '<div class="av-title">AGE VERIFICATION</div>'
+        + '<div class="av-desc">We need to confirm you are 18 or older. This information is stored securely and used only for compliance purposes.</div>'
+        + '<label class="av-label">DATE OF BIRTH</label>'
+        + '<div class="av-dob">'
+          + '<select id="av-day">'+days+'</select>'
+          + '<select id="av-month">'+months+'</select>'
+          + '<select id="av-year">'+years+'</select>'
+        + '</div>'
+        + '<div class="av-declare">&#128274; By clicking Confirm, I declare under my responsibility that I am 18 years of age or older and I voluntarily access adult content.</div>'
+        + '<button class="av-btn" id="av-confirm">CONFIRM &amp; ENTER</button>'
+        + '<div class="av-error" id="av-error"></div>'
+        + '<button class="av-logout" id="av-logout-btn">Not you? Sign out</button>'
+      + '</div>';
+    document.body.appendChild(screen);
+
+    window._showAgeVerification = function() {
+      screen.classList.add('open');
+    };
+
+    document.getElementById('av-confirm').addEventListener('click', async function() {
+      var day   = document.getElementById('av-day').value;
+      var month = document.getElementById('av-month').value;
+      var year  = document.getElementById('av-year').value;
+      var errEl = document.getElementById('av-error');
+      if (!day || !month || !year) { errEl.textContent = 'Please select your complete date of birth.'; return; }
+      var birthdate = year + '-' + month + '-' + day;
+      var btn = document.getElementById('av-confirm');
+      btn.disabled = true; btn.textContent = 'Verifying...';
+      errEl.textContent = '';
+      try {
+        var r = await fetch('/api/verify-age', {
+          method: 'POST', credentials: 'include',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ birthdate: birthdate })
+        });
+        var data = await r.json();
+        if (data.ok) {
+          screen.classList.remove('open');
+          /* Actualizar session para no volver a pedir */
+          if (window.currentUser) window.currentUser.age_verified = 1;
+          try { sessionStorage.removeItem('hw_s'); } catch(e) {}
+        } else {
+          errEl.textContent = data.error || 'Verification failed. Please try again.';
+          btn.disabled = false; btn.textContent = 'CONFIRM & ENTER';
+        }
+      } catch(e) {
+        errEl.textContent = 'Connection error. Please try again.';
+        btn.disabled = false; btn.textContent = 'CONFIRM & ENTER';
+      }
+    });
+
+    var logoutBtn = document.getElementById('av-logout-btn');
+    if (logoutBtn) logoutBtn.addEventListener('click', function() {
+      if (typeof HottAuth !== 'undefined') HottAuth.logout();
+    });
+  })();
 
   /* Exponer renderPost, _activateLazyGifs y loadPostsFeed para uso cross-IIFE */
   window.renderPost = renderPost;
