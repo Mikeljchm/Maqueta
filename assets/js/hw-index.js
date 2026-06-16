@@ -499,6 +499,11 @@
         var posts=d.posts||[];
         var pc=document.getElementById('uprof-pc');if(pc) pc.textContent=posts.length;
         var panel=document.getElementById('uprof-posts-panel');if(!panel) return;
+        /* Limpiar guards de lazy-load para que cada perfil cargue fresh */
+        var cp3=document.getElementById('uprof-clips-panel');
+        var colP3=document.getElementById('uprof-collections-panel');
+        if(cp3) { cp3.dataset.loaded=''; cp3.innerHTML=''; }
+        if(colP3) { colP3.dataset.loaded=''; colP3.innerHTML=''; }
         if(!posts.length){panel.innerHTML='<div style="color:var(--text-muted);text-align:center;padding:2rem 0;font-size:0.8rem;">No posts yet.</div>';return;}
         var _rp = window.renderPost || function(p){return '<div style="padding:0.5rem;color:var(--text-dim);font-size:0.8rem;">'+(p.body||'')+'</div>';};
         panel.innerHTML=posts.map(_rp).join('');
@@ -4387,6 +4392,23 @@ async function votePoll(postId, idx, poll, container) {
       var pc=document.getElementById('posts-feed-container');
       var uid = window.currentUser ? window.currentUser.id : null;
       if (pc && typeof window.loadPostsFeed==='function') window.loadPostsFeed(pc, uid);
+    }
+    if (id==='clips'){
+      var cc=document.getElementById('clips-feed-container');
+      if (cc && !cc.dataset.loaded && window.currentUser) {
+        cc.dataset.loaded='1';
+        cc.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Loading...</div>';
+        fetch('/api/posts?action=clips&user_id='+encodeURIComponent(window.currentUser.id))
+          .then(function(r){return r.json();})
+          .then(function(d){
+            var posts=d.posts||[];
+            if(!posts.length){cc.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">No clips yet. Post a video to see it here.</div>';return;}
+            cc.innerHTML=posts.map(window.renderPost||function(p){return '';}).join('');
+            if(window._activateLazyGifs)window._activateLazyGifs(cc);
+            if(window.loadAllLikes)window.loadAllLikes();
+            if(window.loadAllCommentCounts)window.loadAllCommentCounts();
+          }).catch(function(){cc.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Could not load.</div>';});
+      }
     }
   });
 
