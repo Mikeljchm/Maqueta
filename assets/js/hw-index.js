@@ -405,7 +405,7 @@
     }
     page.style.display = 'flex';
     page.innerHTML =
-      '<div style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;">'        + '<div style="position:relative;flex-shrink:0;">'          + '<div id="uprof-banner" style="width:100%;height:260px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;overflow:hidden;">'            + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(255,69,0,0.45) 0%,transparent 70%);pointer-events:none;"></div>'            + '<div style="position:absolute;inset:0;opacity:0.04;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'          + '</div>'          + '<button id="uprof-back" style="position:absolute;top:0.6rem;left:0.75rem;z-index:20;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;color:#fff;cursor:pointer;">'            + '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'          + '</button>'          + '<div style="position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);z-index:5;">'            + '<div id="uprof-av" style="width:84px;height:84px;border-radius:50%;border:3px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:2rem;overflow:hidden;">'+escH((name||'?').charAt(0).toUpperCase())+'</div>'          + '</div>'        + '</div>'        + '<div style="height:38px;"></div>'        + '<div style="text-align:center;padding:0 1rem 0;">'          + '<div id="uprof-name" style="font-family:var(--font-d);font-size:1.3rem;letter-spacing:0.04em;margin-bottom:0.05rem;">'+escH(name||'User')+'</div>'          + '<div id="uprof-username-display" style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.05rem;"></div>'          + '<div id="uprof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.6rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-top:0.1rem;"></div>'        + '</div>'        + '<div id="uprof-bio" style="text-align:center;font-size:0.78rem;color:var(--text-dim);line-height:1.5;padding:0.1rem 1.5rem 0;"></div>'        + (window.currentUser && window.currentUser.id !== uid            ? '<div style="padding:0.2rem 1rem 0;"><button id="uprof-fb" style="width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:25px;padding:0.5rem;font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;">Follow</button></div>'            : '')        + '<div style="display:flex;justify-content:center;padding:0.15rem 1rem 0.1rem;">'          + '<div style="flex:1;text-align:center;"><div id="uprof-pc" style="font-family:var(--font-d);font-size:1.05rem;line-height:1;">-</div><div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.15rem;">Posts</div></div>'          + '<div style="flex:1;text-align:center;"><div id="uprof-fr" style="font-family:var(--font-d);font-size:1.05rem;line-height:1;">-</div><div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.15rem;">Followers</div></div>'          + '<div style="flex:1;text-align:center;"><div id="uprof-fg" style="font-family:var(--font-d);font-size:1.05rem;line-height:1;">-</div><div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.15rem;">Following</div></div>'        + '</div>'        + '<div style="display:flex;border-bottom:1px solid var(--border);border-top:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:2;">'          + '<button class="uprof-tab active" data-utab="posts" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'          + '<button class="uprof-tab" data-utab="liked" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'          + '<button class="uprof-tab" data-utab="activity" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'        + '</div>'        + '<div id="uprof-posts-panel" style="padding:0.75rem 1rem 3rem;"><div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1.5rem;">Loading...</div></div>'        + '<div id="uprof-liked-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="uprof-activity-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'      + '</div>'
+      '<div style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;">'        + '<div style="position:relative;flex-shrink:0;">'          + '<div id="uprof-banner" style="width:100%;height:260px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;overflow:hidden;">'            + '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(255,69,0,0.45) 0%,transparent 70%);pointer-events:none;"></div>'            + '<div style="position:absolute;inset:0;opacity:0.04;background-image:repeating-linear-gradient(45deg,#FF4500 0,#FF4500 1px,transparent 0,transparent 50%);background-size:12px 12px;pointer-events:none;"></div>'          + '</div>'          + '<button id="uprof-back" style="position:absolute;top:0.6rem;left:0.75rem;z-index:20;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;color:#fff;cursor:pointer;">'            + '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'          + '</button>'          + '<div style="position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);z-index:5;">'            + '<div id="uprof-av" style="width:84px;height:84px;border-radius:50%;border:3px solid var(--bg);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:2rem;overflow:hidden;">'+escH((name||'?').charAt(0).toUpperCase())+'</div>'          + '</div>'        + '</div>'        + '<div style="height:38px;"></div>'        + '<div style="text-align:center;padding:0 1rem 0;">'          + '<div id="uprof-name" style="font-family:var(--font-d);font-size:1.3rem;letter-spacing:0.04em;margin-bottom:0.05rem;">'+escH(name||'User')+'</div>'          + '<div id="uprof-username-display" style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.05rem;"></div>'          + '<div id="uprof-badge" style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;letter-spacing:0.1em;padding:0.18rem 0.6rem;border-radius:20px;background:var(--surface-3);color:var(--text-dim);font-family:var(--font-d);margin-top:0.1rem;"></div>'        + '</div>'        + '<div id="uprof-bio" style="text-align:center;font-size:0.78rem;color:var(--text-dim);line-height:1.5;padding:0.1rem 1.5rem 0;"></div>'        + (window.currentUser && window.currentUser.id !== uid            ? '<div style="padding:0.2rem 1rem 0;"><button id="uprof-fb" style="width:100%;background:var(--fire-orange);color:#fff;border:none;border-radius:25px;padding:0.5rem;font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.06em;cursor:pointer;">Follow</button></div>'            : '')        + '<div style="display:flex;justify-content:center;padding:0.15rem 1rem 0.1rem;">'          + '<div style="flex:1;text-align:center;"><div id="uprof-pc" style="font-family:var(--font-d);font-size:1.05rem;line-height:1;">-</div><div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.15rem;">Posts</div></div>'          + '<div style="flex:1;text-align:center;"><div id="uprof-fr" style="font-family:var(--font-d);font-size:1.05rem;line-height:1;">-</div><div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.15rem;">Followers</div></div>'          + '<div style="flex:1;text-align:center;"><div id="uprof-fg" style="font-family:var(--font-d);font-size:1.05rem;line-height:1;">-</div><div style="font-size:0.62rem;color:var(--text-dim);margin-top:0.15rem;">Following</div></div>'        + '</div>'        + '<div style="display:flex;border-bottom:1px solid var(--border);border-top:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:2;">'          + '<button class="uprof-tab active" data-utab="posts" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid var(--fire-orange);color:var(--fire-orange);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Posts</button>'          + '<button class="uprof-tab" data-utab="liked" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Liked</button>'          + '<button class="uprof-tab" data-utab="activity" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Activity</button>'        + '</div>'        + '<div id="uprof-posts-panel" style="padding:0.75rem 1rem 3rem;"><div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1.5rem;">Loading...</div></div>'        + '<div id="uprof-clips-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="uprof-collections-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'      + '</div>'
         requestAnimationFrame(function(){ requestAnimationFrame(function(){ page.style.transform='translateX(0)'; }); });
 
     function closeUProf(){ page.style.transform='translateX(100%)'; setTimeout(function(){ page.style.display='none'; },330); }
@@ -511,8 +511,40 @@
         btn.style.borderBottomColor='var(--fire-orange)'; btn.style.color='var(--fire-orange)';
         var tab=btn.getAttribute('data-utab');
         document.getElementById('uprof-posts-panel').style.display=tab==='posts'?'':'none';
-        document.getElementById('uprof-liked-panel').style.display=tab==='liked'?'':'none';
-        document.getElementById('uprof-activity-panel').style.display=tab==='activity'?'':'none';
+        document.getElementById('uprof-clips-panel').style.display=tab==='clips'?'':'none';
+        document.getElementById('uprof-collections-panel').style.display=tab==='collections'?'':'none';
+        if(tab==='clips'){
+          var cp2=document.getElementById('uprof-clips-panel');
+          if(cp2&&!cp2.dataset.loaded){
+            cp2.dataset.loaded='1';
+            cp2.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Loading...</div>';
+            fetch('/api/posts?action=clips&user_id='+encodeURIComponent(uid))
+              .then(function(r){return r.json();}).then(function(d){
+                var posts=d.posts||[];
+                if(!posts.length){cp2.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">No clips yet.</div>';return;}
+                cp2.innerHTML=posts.map(window.renderPost||function(p){return '';}).join('');
+                if(window._activateLazyGifs)window._activateLazyGifs(cp2);
+                if(window.loadAllLikes)window.loadAllLikes();
+                if(window.loadAllCommentCounts)window.loadAllCommentCounts();
+              }).catch(function(){cp2.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Could not load.</div>';});
+          }
+        }
+        if(tab==='collections'){
+          var colP=document.getElementById('uprof-collections-panel');
+          if(colP&&!colP.dataset.loaded){
+            colP.dataset.loaded='1';
+            colP.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Loading...</div>';
+            fetch('/api/posts?action=saved&user_id='+encodeURIComponent(uid),{credentials:'include'})
+              .then(function(r){return r.json();}).then(function(d){
+                var posts=d.posts||[];
+                if(!posts.length){colP.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">No saved posts.</div>';return;}
+                colP.innerHTML=posts.map(window.renderPost||function(p){return '';}).join('');
+                if(window._activateLazyGifs)window._activateLazyGifs(colP);
+                if(window.loadAllLikes)window.loadAllLikes();
+                if(window.loadAllCommentCounts)window.loadAllCommentCounts();
+              }).catch(function(){colP.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Could not load.</div>';});
+          }
+        }
       });
     });
   };
@@ -6354,7 +6386,8 @@ async function votePoll(postId, idx, poll, container) {
     '.pc-act-btn.liked svg,.pc-act-btn.post-like-btn.liked svg{fill:var(--fire-orange);stroke:var(--fire-orange);}',
     '.pc-act-btn svg{fill:none;stroke:currentColor;}',
     '.post-like-btn svg{fill:none;stroke:currentColor;}',
-    '.post-like-btn.liked svg{fill:var(--fire-orange);stroke:var(--fire-orange);}',
+    '.post-like-btn.liked svg{fill:var(--fire-orange);stroke:var(--fire-orange);}'
+    +'.pc-save-btn.saved svg{fill:var(--fire-orange);stroke:var(--fire-orange);}',
     '.pc-act-count{font-size:0.75rem;}',
     '.pc-share-btn{margin-left:auto;}',
     '.post-report-btn{background:none;border:none;color:var(--text-muted);font-size:0.68rem;cursor:pointer;padding:0.2rem 0.5rem;border-radius:8px;font-family:var(--font-b);transition:color 0.2s;}',
@@ -6578,6 +6611,11 @@ async function votePoll(postId, idx, poll, container) {
   function saveLikedPosts() {
     try { localStorage.setItem('hw_post_likes', JSON.stringify([...LIKED_POSTS])); } catch(e){}
   }
+  var SAVED_POSTS = new Set();
+  try { SAVED_POSTS = new Set(JSON.parse(localStorage.getItem('hw_post_saves')||'[]')); } catch(e){}
+  function saveSavedPosts() {
+    try { localStorage.setItem('hw_post_saves', JSON.stringify([...SAVED_POSTS])); } catch(e){}
+  }
 
   /* ── Lazy GIF: muestra primer frame inmediatamente, anima al cargar ── */
   function _activateLazyGifs(container) {
@@ -6736,6 +6774,7 @@ async function votePoll(postId, idx, poll, container) {
           + '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
           + '<span class="pc-act-count plc">'+(p.like_count||'')+'</span>'
         + '</button>'
+        + '<button class="pc-act-btn pc-save-btn" data-post-id="'+p.id+'" title="Save"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>'
         + '<button class="pc-act-btn pc-repost-btn" data-post-id="'+p.id+'" title="Repost">'
           + '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
         + '</button>'
@@ -7091,6 +7130,29 @@ async function votePoll(postId, idx, poll, container) {
           toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 3000);
         }
       } catch(e){}
+      return;
+    }
+
+    /* Save / unsave post */
+    var saveBtn = e.target.closest('.pc-save-btn[data-post-id]');
+    if (saveBtn) {
+      if (!window.currentUser) {
+        var toast = document.getElementById('toast');
+        if (toast) { toast.textContent = 'Sign in to save posts'; toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 2500); }
+        return;
+      }
+      var pid = String(saveBtn.getAttribute('data-post-id'));
+      var wasSaved = SAVED_POSTS.has(pid);
+      if (wasSaved) { SAVED_POSTS.delete(pid); saveBtn.classList.remove('saved'); }
+      else           { SAVED_POSTS.add(pid);    saveBtn.classList.add('saved'); }
+      saveSavedPosts();
+      fetch('/api/posts', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action: wasSaved ? 'unsave' : 'save', post_id: parseInt(pid) })
+      }).catch(function(){});
+      var toast2 = document.getElementById('toast');
+      if (toast2) { toast2.textContent = wasSaved ? 'Removed from collections' : 'Saved to collections'; toast2.classList.add('show'); setTimeout(function(){ toast2.classList.remove('show'); }, 2000); }
       return;
     }
 
