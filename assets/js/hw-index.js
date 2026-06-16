@@ -7217,7 +7217,7 @@ async function votePoll(postId, idx, poll, container) {
           + '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
           + '<span class="pc-act-count plc">'+(p.like_count||'')+'</span>'
         + '</button>'
-        + (function(){ var _sv=SAVED_POSTS.has(String(p.id)); return '<button class="pc-act-btn pc-save-btn'+(_sv?' saved':'')+'" data-post-id="'+p.id+'" title="Save"><svg viewBox="0 0 24 24" width="20" height="20" fill="'+(_sv?'var(--fire-orange)':'none')+'" stroke="'+(_sv?'var(--fire-orange)':'currentColor')+'" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>'; })()
+        + '<button class="pc-act-btn pc-save-btn" data-post-id="'+p.id+'" title="Save to collection"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>'
         + '<button class="pc-act-btn pc-repost-btn" data-post-id="'+p.id+'" title="Repost">'
           + '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
         + '</button>'
@@ -7579,7 +7579,7 @@ async function votePoll(postId, idx, poll, container) {
       return;
     }
 
-    /* Save / unsave post */
+    /* Save post → abrir sheet de colecciones */
     var saveBtn = e.target.closest('.pc-save-btn[data-post-id]');
     if (saveBtn) {
       if (!window.currentUser) {
@@ -7587,18 +7587,20 @@ async function votePoll(postId, idx, poll, container) {
         if (toast) { toast.textContent = 'Sign in to save posts'; toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 2500); }
         return;
       }
-      var pid = String(saveBtn.getAttribute('data-post-id'));
-      var wasSaved = SAVED_POSTS.has(pid);
-      if (wasSaved) { SAVED_POSTS.delete(pid); saveBtn.classList.remove('saved'); }
-      else           { SAVED_POSTS.add(pid);    saveBtn.classList.add('saved'); }
-      saveSavedPosts();
-      fetch('/api/posts', {
-        method:'POST', credentials:'include',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ action: wasSaved ? 'unsave' : 'save', post_id: parseInt(pid) })
-      }).catch(function(){});
-      var toast2 = document.getElementById('toast');
-      if (toast2) { toast2.textContent = wasSaved ? 'Removed from collections' : 'Saved to collections'; toast2.classList.add('show'); setTimeout(function(){ toast2.classList.remove('show'); }, 2000); }
+      var pid = saveBtn.getAttribute('data-post-id');
+      var card = saveBtn.closest('.post-card');
+      var postImg = '';
+      var postBody = '';
+      if (card) {
+        var imgEl = card.querySelector('.pc-media-single') || card.querySelector('.pc-media-cell img');
+        if (imgEl) postImg = imgEl.src || imgEl.getAttribute('data-lazygif') || '';
+        var bodyEl = card.querySelector('.pc-tags');
+        if (bodyEl) postBody = bodyEl.textContent.slice(0, 100);
+      }
+      /* Abrir el panel de colecciones con los datos del post */
+      if (typeof window.openCollectionsPanel === 'function') {
+        window.openCollectionsPanel(parseInt(pid), window.location.href, postImg, postBody);
+      }
       return;
     }
 
