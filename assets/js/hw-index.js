@@ -412,6 +412,14 @@
 
     function closeUProf(){ page.style.transform='translateX(100%)'; setTimeout(function(){ page.style.display='none'; },330); }
     document.getElementById('uprof-back').addEventListener('click', closeUProf);
+    /* Click en colección del perfil ajeno */
+    page.addEventListener('click', function(ev){
+      var card = ev.target.closest('.my-col-card[data-col-id]');
+      if (!card) return;
+      var cid = card.getAttribute('data-col-id');
+      var cname = decodeURIComponent(card.getAttribute('data-col-name')||'');
+      if (window.openCollection) window.openCollection(parseInt(cid), cname);
+    });
     var _sx=0,_sy=0;
     page.addEventListener('touchstart',function(e){_sx=e.touches[0].clientX;_sy=e.touches[0].clientY;},{passive:true});
     page.addEventListener('touchend',function(e){
@@ -541,14 +549,26 @@
           if(colP&&!colP.dataset.loaded){
             colP.dataset.loaded='1';
             colP.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Loading...</div>';
-            fetch('/api/posts?action=saved&user_id='+encodeURIComponent(uid),{credentials:'include'})
+            fetch('/api/collections?user_id='+encodeURIComponent(uid))
               .then(function(r){return r.json();}).then(function(d){
-                var posts=d.posts||[];
-                if(!posts.length){colP.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">No saved posts.</div>';return;}
-                colP.innerHTML=posts.map(window.renderPost||function(p){return '';}).join('');
-                if(window._activateLazyGifs)window._activateLazyGifs(colP);
-                if(window.loadAllLikes)window.loadAllLikes();
-                if(window.loadAllCommentCounts)window.loadAllCommentCounts();
+                var cols=d.collections||[];
+                if(!cols.length){colP.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">No collections yet.</div>';return;}
+                var html='<div class="my-cols-grid">';
+                cols.forEach(function(col){
+                  var cells=['','','',''].map(function(_,i){
+                    return col.images&&col.images[i]
+                      ?'<img src="'+col.images[i]+'" loading="lazy">'
+                      :'<div class="empty-cell"></div>';
+                  }).join('');
+                  html+='<div class="my-col-card" data-col-id="'+col.id+'" data-col-name="'+encodeURIComponent(col.name)+'">' 
+                    +'<div class="my-col-card-thumb">'+cells+'</div>'
+                    +'<div class="my-col-card-info">'
+                    +'<div class="my-col-card-name">'+col.name.toUpperCase()+'</div>'
+                    +'<div class="my-col-card-count">'+(col.count||0)+' posts</div>'
+                    +'</div></div>';
+                });
+                html+='</div>';
+                colP.innerHTML=html;
               }).catch(function(){colP.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Could not load.</div>';});
           }
         }
