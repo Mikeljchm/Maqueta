@@ -6304,6 +6304,21 @@ async function votePoll(postId, idx, poll, container) {
     '.posts-img-preview{width:100%;max-height:200px;object-fit:cover;border-radius:10px;margin-bottom:0.5rem;display:block;}',
     '.posts-img-remove{background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:50%;width:24px;height:24px;font-size:0.8rem;cursor:pointer;position:absolute;top:0.4rem;right:0.4rem;display:flex;align-items:center;justify-content:center;}',
     '.posts-img-wrap{position:relative;margin-bottom:0.5rem;}',
+    /* Multi-media grid preview */
+    '.pm-grid{display:grid;gap:3px;border-radius:12px;overflow:hidden;margin-bottom:0.6rem;}',
+    '.pm-grid-1{grid-template-columns:1fr;}',
+    '.pm-grid-2{grid-template-columns:1fr 1fr;}',
+    '.pm-grid-3{grid-template-columns:1fr 1fr;}',
+    '.pm-cell{position:relative;aspect-ratio:1;overflow:hidden;background:var(--surface-3);}',
+    '.pm-cell-full{aspect-ratio:unset;}',
+    '.pm-cell img,.pm-cell video{width:100%;height:100%;object-fit:cover;display:block;}',
+    '.pm-cell-full img,.pm-cell-full video{height:auto;max-height:280px;object-fit:contain;}',
+    '.pm-rm{position:absolute;top:0.3rem;right:0.3rem;background:rgba(0,0,0,0.65);border:none;color:#fff;border-radius:50%;width:22px;height:22px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;}',
+    '.pm-count{position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.4rem;color:#fff;}',
+    '.pm-add-btn{background:none;border:1px dashed var(--border);color:var(--text-dim);border-radius:10px;padding:0.3rem 0.75rem;font-size:0.72rem;font-family:var(--font-b);cursor:pointer;display:flex;align-items:center;gap:0.35rem;}',
+    '.pm-add-btn:active{border-color:var(--fire-orange);color:var(--fire-orange);}',
+    '.pm-counter{font-size:0.65rem;color:var(--text-muted);margin-left:0.25rem;}',
+
     /* Post card */
     /* Post card — Tumblr style */
     '#posts-feed-container{background:#080505;padding:0;}',
@@ -6780,84 +6795,127 @@ async function votePoll(postId, idx, poll, container) {
           + '<div class="posts-sheet-toolbar">'
             + '<button class="posts-photo-btn" id="posts-photo-btn">'
               + '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
-              + 'Photo / Video</button>'
-            + '<input type="file" id="posts-file-input" accept="image/*,video/mp4,video/webm,.gif" style="display:none">'
+              + 'Photo / Video / GIF</button>'
+            + '<span class="pm-counter" id="pm-counter"></span>'
+            + '<input type="file" id="posts-file-input" accept="image/*,video/mp4,video/webm,.gif" multiple style="display:none">'
           + '</div>'
           + '<div class="posts-sheet-footer">'
-            + '<div class="posts-sheet-rules">No links &bull; No religion hate &bull; Keep it real &bull; Violations = ban</div>'
+            + '<div class="posts-sheet-rules">Max 10 archivos &bull; No links &bull; No odio &bull; Violations = ban</div>'
             + '<button class="posts-sheet-send" id="posts-sheet-send">Post</button>'
           + '</div>';
         document.body.appendChild(shOverlay);
         document.body.appendChild(sheet);
 
         /* ── Foto: Canvas compressor ── */
-        var pendingImgBlob = null;
-        var pendingImgUrl  = null;
-        var pendingImgType = 'image/webp';
+        /* ── Multi-media: hasta 10 archivos ── */
+        /* Cada item: { blob, type, previewUrl } */
+        var pendingFiles = [];
+        var MAX_FILES = 10;
 
-        function clearPendingImg() {
-          pendingImgBlob = null; pendingImgUrl = null;
-          var wrap = document.getElementById('posts-img-wrap-area');
-          if (wrap) wrap.innerHTML = '';
+        function updateCounter() {
+          var ct = document.getElementById('pm-counter');
+          if (ct) ct.textContent = pendingFiles.length > 0 ? pendingFiles.length+'/'+MAX_FILES : '';
         }
 
-        document.getElementById('posts-photo-btn').addEventListener('click', function(){
+        function renderPreviewGrid() {
+          var wrap = document.getElementById('posts-img-wrap-area');
+          if (!wrap) return;
+          if (!pendingFiles.length) { wrap.innerHTML = ''; updateCounter(); return; }
+          var n = pendingFiles.length;
+          var gridClass = n === 1 ? 'pm-grid pm-grid-1' : n === 2 ? 'pm-grid pm-grid-2' : 'pm-grid pm-grid-3';
+          var html = '<div class="'+gridClass+'">';
+          var show = Math.min(n, 3);
+          pendingFiles.slice(0, show).forEach(function(item, i) {
+            var isV = item.type.startsWith('video/');
+            var isLast = i === show - 1;
+            var isFull = n === 1 || (n >= 3 && i === 2);
+            var cellClass = 'pm-cell' + (isFull ? ' pm-cell-full' : '');
+            var media = isV
+              ? '<video src="'+item.previewUrl+'" muted playsinline autoplay loop></video>'
+              : '<img src="'+item.previewUrl+'" loading="lazy">';
+            var extra = (isLast && n > 3) ? '<div class="pm-count">+' + (n - 3) + '</div>' : '';
+            html += '<div class="'+cellClass+'" data-pm-idx="'+i+'">'+media+extra
+              + '<button class="pm-rm" data-pm-rm="'+i+'">&#10005;</button></div>';
+          });
+          html += '</div>';
+          wrap.innerHTML = html;
+          /* Bind remove buttons */
+          wrap.querySelectorAll('[data-pm-rm]').forEach(function(btn) {
+            btn.addEventListener('click', function(ev) {
+              ev.stopPropagation();
+              var idx = parseInt(btn.getAttribute('data-pm-rm'));
+              URL.revokeObjectURL(pendingFiles[idx].previewUrl);
+              pendingFiles.splice(idx, 1);
+              renderPreviewGrid();
+              /* Reset file input para poder volver a elegir los mismos archivos */
+              var fi = document.getElementById('posts-file-input');
+              if (fi) fi.value = '';
+            });
+          });
+          updateCounter();
+        }
+
+        function clearPendingImg() {
+          pendingFiles.forEach(function(f){ URL.revokeObjectURL(f.previewUrl); });
+          pendingFiles = [];
+          renderPreviewGrid();
+        }
+
+        function processFile(file, cb) {
+          var isVideo = file.type.startsWith('video/');
+          var isGif   = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+          if (isVideo || isGif) {
+            if (file.size > 30 * 1024 * 1024) {
+              var t = document.getElementById('toast');
+              if (t) { t.textContent = file.name+': Max 30MB'; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 3000); }
+              cb(null); return;
+            }
+            cb({ blob: file, type: file.type, previewUrl: URL.createObjectURL(file) });
+          } else {
+            /* Imagen — comprimir con Canvas a WebP */
+            var img2 = new Image();
+            var tmpUrl = URL.createObjectURL(file);
+            img2.onload = function() {
+              var maxW = 1440;
+              var ratio = Math.min(maxW / img2.width, 1);
+              var cv = document.createElement('canvas');
+              cv.width  = Math.round(img2.width  * ratio);
+              cv.height = Math.round(img2.height * ratio);
+              cv.getContext('2d').drawImage(img2, 0, 0, cv.width, cv.height);
+              URL.revokeObjectURL(tmpUrl);
+              cv.toBlob(function(blob) {
+                var pUrl = URL.createObjectURL(blob);
+                cb({ blob: blob, type: 'image/webp', previewUrl: pUrl });
+              }, 'image/webp', 0.85);
+            };
+            img2.onerror = function() { URL.revokeObjectURL(tmpUrl); cb(null); };
+            img2.src = tmpUrl;
+          }
+        }
+
+        document.getElementById('posts-photo-btn').addEventListener('click', function() {
           document.getElementById('posts-file-input').click();
         });
 
-        document.getElementById('posts-file-input').addEventListener('change', function(e){
-          var file = e.target.files[0];
-          if (!file) return;
-          var isVideo = file.type.startsWith('video/');
-          var isGif   = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
-
-          if (isVideo || isGif) {
-            /* Skip Canvas — subir directo */
-            if (file.size > 30 * 1024 * 1024) {
-              var t=document.getElementById('toast'); if(t){t.textContent='Max 30MB';t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);} return;
-            }
-            pendingImgBlob = file;
-            pendingImgType = file.type;
-            var url2 = URL.createObjectURL(file);
-            var wrap = document.getElementById('posts-img-wrap-area');
-            var mediaTag = isVideo
-              ? '<video class="posts-img-preview" src="'+url2+'" autoplay loop muted playsinline></video>'
-              : '<img class="posts-img-preview" src="'+url2+'">';
-            if (wrap) wrap.innerHTML = '<div class="posts-img-wrap">'+mediaTag
-              + '<button class="posts-img-remove" id="posts-img-remove">&#10005;</button></div>';
-            var rmBtn = document.getElementById('posts-img-remove');
-            if (rmBtn) rmBtn.addEventListener('click', function(){ clearPendingImg(); e.target.value=''; });
+        document.getElementById('posts-file-input').addEventListener('change', function(e) {
+          var files = Array.from(e.target.files || []);
+          if (!files.length) return;
+          var slots = MAX_FILES - pendingFiles.length;
+          if (slots <= 0) {
+            var t = document.getElementById('toast');
+            if (t) { t.textContent = 'Max '+MAX_FILES+' files reached'; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 2500); }
             return;
           }
-
-          /* Imagen normal — comprimir con Canvas */
-          var img = new Image();
-          var url = URL.createObjectURL(file);
-          img.onload = function(){
-            var maxW = 1440;
-            var ratio = Math.min(maxW / img.width, 1);
-            var canvas = document.createElement('canvas');
-            canvas.width  = Math.round(img.width  * ratio);
-            canvas.height = Math.round(img.height * ratio);
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob(function(blob){
-              URL.revokeObjectURL(url);
-              pendingImgBlob = blob;
-              pendingImgType = 'image/webp';
-              var reader = new FileReader();
-              reader.onload = function(ev){
-                var wrap = document.getElementById('posts-img-wrap-area');
-                if (wrap) wrap.innerHTML = '<div class="posts-img-wrap">'
-                  + '<img class="posts-img-preview" src="'+ev.target.result+'">'
-                  + '<button class="posts-img-remove" id="posts-img-remove">&#10005;</button>'
-                  + '</div>';
-                var rmBtn = document.getElementById('posts-img-remove');
-                if (rmBtn) rmBtn.addEventListener('click', function(){ clearPendingImg(); e.target.value=''; });
-              };
-              reader.readAsDataURL(blob);
-            }, 'image/webp', 0.88);
-          };
-          img.src = url;
+          files = files.slice(0, slots);
+          var pending = files.length;
+          files.forEach(function(file) {
+            processFile(file, function(item) {
+              if (item) pendingFiles.push(item);
+              pending--;
+              if (pending === 0) renderPreviewGrid();
+            });
+          });
+          e.target.value = '';
         });
 
         function openPostSheet(){ shOverlay.classList.add('open'); sheet.classList.add('open'); document.body.style.overflow='hidden'; var ta2=document.getElementById('posts-sheet-ta'); if(ta2) ta2.focus(); }
@@ -6870,25 +6928,27 @@ async function votePoll(postId, idx, poll, container) {
         document.getElementById('posts-sheet-send').addEventListener('click', async function(){
           var ta2=document.getElementById('posts-sheet-ta');
           var text=ta2?ta2.value.trim():'';
-          if(!text && !pendingImgBlob) return;
+          if(!text && !pendingFiles.length) return;
           var sendBtn2=document.getElementById('posts-sheet-send');
           sendBtn2.disabled=true;
           sendBtn2.textContent='Posting...';
           try{
+            /* 1. Subir todos los archivos en paralelo */
             var imageUrl = '';
-            /* 1. Subir imagen si hay */
-            if (pendingImgBlob) {
-              var upRes = await fetch('/api/upload', {
-                method:'PUT', credentials:'include',
-                headers:{'Content-Type': pendingImgType || 'image/webp'},
-                body: pendingImgBlob
-              });
-              var upData = await upRes.json();
-              if (upData.ok) imageUrl = upData.url;
+            if (pendingFiles.length) {
+              var uploadResults = await Promise.all(pendingFiles.map(function(item) {
+                return fetch('/api/upload', {
+                  method: 'PUT', credentials: 'include',
+                  headers: { 'Content-Type': item.type },
+                  body: item.blob
+                }).then(function(r){ return r.json(); }).then(function(d){ return d.ok ? d.url : null; }).catch(function(){ return null; });
+              }));
+              var urls = uploadResults.filter(Boolean);
+              imageUrl = urls.length === 1 ? urls[0] : JSON.stringify(urls);
             }
             /* 2. Guardar post en D1 */
             var r2=await fetch('/api/posts',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
-              body:JSON.stringify({action:'post',body:text||' ',image_url:imageUrl})});
+              body:JSON.stringify({action:'post',body:text||' ',image_url:imageUrl})}); 
             var d2=await r2.json();
             if(d2.ok){
               if(ta2) ta2.value='';
