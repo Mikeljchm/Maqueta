@@ -1332,12 +1332,25 @@ async function handleUserPosts(request, env, corsH) {
     const action = url.searchParams.get('action');
     const userId = url.searchParams.get('user_id');
 
-    /* Feed global — solo posts no ocultos */
+    /* Feed global — paginado con limit/offset */
     if (!action && !userId) {
+      const limit  = Math.min(parseInt(url.searchParams.get('limit')  || '12'), 50);
+      const offset = Math.max(parseInt(url.searchParams.get('offset') || '0'),  0);
       const { results } = await env.DB.prepare(
-        'SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,report_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT 50'
+        'SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,report_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
+      ).bind(limit, offset).all();
+      /* Total para que el frontend sepa si hay más */
+      const { results: countRes } = await env.DB.prepare(
+        'SELECT COUNT(*) as total FROM user_posts WHERE hidden=0'
       ).all();
-      return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
+      const total = countRes[0]?.total || 0;
+      return apiJson({
+        posts: await enrichAvatars(results, env),
+        total,
+        offset,
+        limit,
+        has_more: offset + results.length < total
+      }, 200, corsH);
     }
     /* Clips de un usuario — posts con video */
     if (action === 'clips' && userId) {
