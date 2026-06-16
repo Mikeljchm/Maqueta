@@ -2140,12 +2140,28 @@ export default {
           return apiJson({posts: await enrichAvatars(results,env)},200,corsH);
         }
 
-        /* GET /api/admin/threads */
+        /* GET /api/admin/threads — lista de hilos con conteo de posts */
         if (path === '/api/admin/threads' && request.method === 'GET') {
           const {results} = await env.DB.prepare(
-            'SELECT id,name,description,creator_id,member_count,post_count,cover_url,created_at FROM threads ORDER BY created_at DESC LIMIT 100'
+            'SELECT t.id, t.name, t.description, t.creator_id, t.cover_url, t.created_at, COUNT(tp.id) as total_posts, SUM(CASE WHEN tp.hidden=0 AND tp.hidden_by_creator=0 THEN 1 ELSE 0 END) as visible_posts FROM threads t LEFT JOIN thread_posts tp ON tp.thread_id=t.id GROUP BY t.id ORDER BY t.created_at DESC LIMIT 100'
           ).all();
           return apiJson({threads:results},200,corsH);
+        }
+        /* GET /api/admin/thread-posts?thread_id=X — posts de un hilo específico */
+        if (path === '/api/admin/thread-posts' && request.method === 'GET') {
+          const tid = url.searchParams.get('thread_id');
+          if (!tid) return apiJson({error:'thread_id required'},400,corsH);
+          const {results} = await env.DB.prepare(
+            'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,like_count,comment_count,hidden,hidden_by_creator,is_pinned,created_at FROM thread_posts WHERE thread_id=? ORDER BY created_at DESC LIMIT 200'
+          ).bind(tid).all();
+          return apiJson({posts:results},200,corsH);
+        }
+        /* POST /api/admin/thread-post-hide?id=X — ocultar post de hilo */
+        if (path === '/api/admin/thread-post-hide' && request.method === 'POST') {
+          const pid = url.searchParams.get('id');
+          if (!pid) return apiJson({error:'id required'},400,corsH);
+          await env.DB.prepare('UPDATE thread_posts SET hidden=1 WHERE id=?').bind(pid).run();
+          return apiJson({ok:true},200,corsH);
         }
 
         /* DELETE /api/admin/avatar?user_id=X — borrar foto de perfil */
