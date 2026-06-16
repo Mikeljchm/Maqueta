@@ -1370,11 +1370,10 @@ async function handleUserPosts(request, env, corsH) {
       if (banned.length) return apiJson({ error: 'Your account has been suspended.' }, 403, corsH);
 
       const text = (body.body||'').trim();
-      if (!text) return apiJson({ error: 'Empty post' }, 400, corsH);
+      const image_url = (body.image_url || '').trim().slice(0, 5000);
+      if (!text && !image_url) return apiJson({ error: 'Empty post' }, 400, corsH);
       if (text.length > 500) return apiJson({ error: 'Max 500 characters.' }, 400, corsH);
       if (containsLink(text)) return apiJson({ error: 'Links are not allowed in posts.' }, 400, corsH);
-
-      const image_url = (body.image_url || '').trim().slice(0, 500);
       const result = await env.DB.prepare(
         'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url) VALUES (?,?,?,?,?)'
       ).bind(session.id, session.name||session.email, await getUserAvatar(session.id, session.picture, env), text, image_url).run();
