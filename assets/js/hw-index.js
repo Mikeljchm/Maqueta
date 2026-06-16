@@ -3609,7 +3609,8 @@ async function votePoll(postId, idx, poll, container) {
                 '<div style="font-size:0.62rem;color:var(--text-dim);margin-bottom:0.4rem;">'
                   +(rep.reporter_name?'&#128100; '+escH(rep.reporter_name)+' &nbsp;':'')
                   +(rep.reporter_email?'&#128140; '+escH(rep.reporter_email)+'<br>':'')
-                  +(rep.original_url?'&#128279; <a href="'+escH(rep.original_url)+'" target="_blank" style="color:var(--fire-orange);">View original</a>':'')
+                  +(rep.original_url?'&#128279; <a href="'+escH(rep.original_url)+'" target="_blank" style="color:var(--fire-orange);">View original</a><br>':'')
+                  +(rep.details?'&#128221; '+escH(rep.details):'')
                 +'</div>' : '';
                var actions = status==='pending' ? (
                  '<button class="adm-btn adm-btn-dismiss" data-adm-rid="'+rep.id+'" data-adm-action="dismiss" data-adm-pid="'+rep.post_id+'" data-adm-owner="'+escH(rep.post_owner||'')+'">&#10003; Dismiss</button>'
@@ -7928,7 +7929,10 @@ async function votePoll(postId, idx, poll, container) {
 
     window._openDmcaForm = function(postId) {
       _dmcaPostId = postId;
-      sheet.innerHTML = '<div class="dmca-handle"></div>'
+      sheet.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">'
+          + '<div class="dmca-handle" style="margin:0 auto 0 0;"></div>'
+          + '<button id="dmca-close-btn" style="background:none;border:none;color:var(--text-dim);font-size:1.4rem;cursor:pointer;padding:0.1rem 0.4rem;line-height:1;flex-shrink:0;">&#10005;</button>'
+          + '</div>'
         + '<div class="dmca-title">&#169; COPYRIGHT / DMCA NOTICE</div>'
         + '<div class="dmca-sub">Complete this form to submit a DMCA takedown notice. False claims may result in legal liability.</div>'
         + '<label class="dmca-label">YOUR FULL NAME *</label>'
@@ -7946,6 +7950,8 @@ async function votePoll(postId, idx, poll, container) {
         + '<button class="dmca-send" id="dmca-send">SUBMIT DMCA NOTICE</button>'
         + '<div class="dmca-err" id="dmca-err"></div>';
       overlay.classList.add('open');
+      var closeBtn = document.getElementById('dmca-close-btn');
+      if (closeBtn) closeBtn.addEventListener('click', function(){ overlay.classList.remove('open'); });
 
       document.getElementById('dmca-send').addEventListener('click', async function() {
         var name  = document.getElementById('dmca-name').value.trim();
