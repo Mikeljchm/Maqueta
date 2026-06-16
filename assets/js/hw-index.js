@@ -1387,6 +1387,9 @@ async function votePoll(postId, idx, poll, container) {
     var s = document.createElement('style');
     s.textContent = [
       '#following-strip::-webkit-scrollbar{display:none;}',
+      /* Pill Following destacado */
+      '#following-pill{background:linear-gradient(135deg,var(--fire-orange),var(--fire-red)) !important;color:#fff !important;border-color:transparent !important;font-weight:600;}',
+      '#following-pill:before{content:"\2728 ";}',,
       '.fw-avatar-card{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0.35rem;cursor:pointer;width:58px;}',
       '.fw-avatar-ring{width:52px;height:52px;border-radius:50%;padding:2px;background:linear-gradient(135deg,var(--fire-orange),var(--fire-red));flex-shrink:0;}',
       '.fw-avatar-ring.has-post{background:linear-gradient(135deg,var(--fire-orange),var(--fire-yellow));}',
@@ -1438,9 +1441,12 @@ async function votePoll(postId, idx, poll, container) {
       var r = await fetch('/api/user-follows?user_id='+encodeURIComponent(window.currentUser.id)+'&type=following', {credentials:'include'});
       var d = await r.json();
       var following = d.users || d.following || [];
-      if (!following.length) { section.style.display='none'; return; }
-
+      /* Mostrar la sección siempre que estés logueado — con o sin seguidos */
       section.style.display = 'block';
+      if (!following.length) {
+        strip.innerHTML = '<div style="color:var(--text-muted);font-size:0.72rem;padding:0.5rem 0;">Sigue a otros usuarios para ver sus posts aquí</div>';
+        return;
+      }
 
       /* Traer sus posts recientes para saber quién publicó algo */
       var r2 = await fetch('/api/user-follows/feed', {credentials:'include'});
