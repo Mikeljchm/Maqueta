@@ -6670,7 +6670,7 @@ async function votePoll(postId, idx, poll, container) {
 
     /* ── Repost embed (si es un repost) ── */
     var repostHtml = '';
-    if (p.repost_of_id) {
+    if (p.repost_of_id != null && p.repost_of_id !== '') {
       var rpAvSrc = p.repost_avatar || '';
       var rpAvHtml = rpAvSrc
         ? '<img src="'+rpAvSrc+'" alt="">'
@@ -7328,8 +7328,9 @@ async function votePoll(postId, idx, poll, container) {
     }
   }
 
-  /* Exponer renderPost y loadPostsFeed para uso cross-IIFE */
+  /* Exponer renderPost, _activateLazyGifs y loadPostsFeed para uso cross-IIFE */
   window.renderPost = renderPost;
+  window._activateLazyGifs = _activateLazyGifs;
   window.loadPostsFeed = window.loadPostsFeed;
 
 })();
