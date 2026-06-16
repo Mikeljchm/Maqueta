@@ -395,6 +395,9 @@
       return;
     }
     window._viewingProfileOf = uid; /* Flag para renderPost — siempre mostrar report en perfil ajeno */
+    /* Guard: si ya está abriendo este uid, no duplicar */
+    if (window._currentMiniProfileUid === uid && document.getElementById('page-user-profile')?.style.display !== 'none') return;
+    window._currentMiniProfileUid = uid;
     var page = document.getElementById('page-user-profile');
     if (!page) {
       page = document.createElement('div');
@@ -411,7 +414,7 @@
           + '<button class="uprof-tab" data-utab="collections" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Collections</button>'        + '</div>'        + '<div id="uprof-posts-panel" style="padding:0.75rem 1rem 3rem;"><div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1.5rem;">Loading...</div></div>'        + '<div id="uprof-clips-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="uprof-collections-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'      + '</div>'
         requestAnimationFrame(function(){ requestAnimationFrame(function(){ page.style.transform='translateX(0)'; }); });
 
-    function closeUProf(){ page.style.transform='translateX(100%)'; setTimeout(function(){ page.style.display='none'; window._viewingProfileOf=null; },330); }
+    function closeUProf(){ page.style.transform='translateX(100%)'; setTimeout(function(){ page.style.display='none'; window._viewingProfileOf=null; window._currentMiniProfileUid=null; },330); }
     document.getElementById('uprof-back').addEventListener('click', closeUProf);
     /* Click en colección del perfil ajeno */
     page.addEventListener('click', function(ev){
@@ -1371,7 +1374,8 @@ async function votePoll(postId, idx, poll, container) {
     var sentinel = document.getElementById('feed-sentinel');
     if (!sentinel) return;
     var observer = new IntersectionObserver(function(entries) {
-      if (entries[0].isIntersecting && !LOADING && LOADED < getFilteredPosts().length) {
+      /* Solo cargar Jekyll si community feed ya terminó o no existe */
+      if (entries[0].isIntersecting && !LOADING && LOADED < getFilteredPosts().length && !_cfHasMore) {
         LOADING = true;
         var loader = document.getElementById('feed-loader');
         if (loader) loader.style.display = 'flex';
@@ -1459,22 +1463,15 @@ async function votePoll(postId, idx, poll, container) {
     var cc = document.getElementById('community-feed-container');
     if (!cc) return;
     cc.innerHTML = '';
-    /* Agregar sentinel para IntersectionObserver */
-    var sentinel = document.getElementById('cf-sentinel');
-    if (!sentinel) {
-      sentinel = document.createElement('div');
-      sentinel.id = 'cf-sentinel';
-      sentinel.style.cssText = 'height:48px;display:flex;align-items:center;justify-content:center;';
-      cc.parentNode.insertBefore(sentinel, cc.nextSibling);
-    } else {
-      sentinel.style.display = '';
-      sentinel.innerHTML = '';
-    }
-    /* IntersectionObserver — cargar más al llegar al sentinel */
+    /* Usar el feed-sentinel existente para IntersectionObserver */
+    var sentinel = document.getElementById('feed-sentinel');
+    if (!sentinel) return;
+    sentinel.style.display = '';
+    sentinel.innerHTML = '';
     if (_cfObserver) _cfObserver.disconnect();
     _cfObserver = new IntersectionObserver(function(entries) {
-      if (entries[0].isIntersecting) _cfLoadPage();
-    }, { rootMargin: '200px' });
+      if (entries[0].isIntersecting && !_cfLoading) _cfLoadPage();
+    }, { rootMargin: '300px' });
     _cfObserver.observe(sentinel);
     /* Carga inicial */
     _cfLoadPage();
@@ -1550,6 +1547,16 @@ async function votePoll(postId, idx, poll, container) {
       if (sec2) sec2.style.display = 'none';
     }
   };
+
+  /* ── Bindear botones VER FEED y Volver al DOMContentLoaded ── */
+  document.addEventListener('click', function(e){
+    if (e.target.id === 'following-see-all' || e.target.closest('#following-see-all')) {
+      if (window._openFollowingFeed) window._openFollowingFeed();
+    }
+    if (e.target.id === 'following-feed-back' || e.target.closest('#following-feed-back')) {
+      if (window._closeFollowingFeed) window._closeFollowingFeed();
+    }
+  });
 
   /* ── Following feed — abre la vista de posts de seguidos ── */
   window._openFollowingFeed = function() {
