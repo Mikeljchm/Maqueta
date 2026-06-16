@@ -844,7 +844,7 @@ async function handleProfile(request, env, corsH) {
     try { await env.DB.prepare(`ALTER TABLE user_profiles ADD COLUMN ${col}`).run(); } catch(e) {}
   }
   /* Extra migrations for age, city, country */
-  const extraMigs = ['age INTEGER DEFAULT NULL','age_public INTEGER DEFAULT 0',"birth_date TEXT DEFAULT ''","city TEXT DEFAULT ''","country TEXT DEFAULT ''"];
+  const extraMigs = ['age INTEGER DEFAULT NULL','age_public INTEGER DEFAULT 0',"birth_date TEXT DEFAULT ''","city TEXT DEFAULT ''","country TEXT DEFAULT ''","age_verified INTEGER DEFAULT 0","age_verified_at TEXT DEFAULT ''"];
   for (const col of extraMigs) {
     try { await env.DB.prepare(`ALTER TABLE user_profiles ADD COLUMN ${col}`).run(); } catch(e) {}
   }
@@ -857,9 +857,9 @@ async function handleProfile(request, env, corsH) {
     const targetId = url.searchParams.get('user_id') || (session ? session.id : null);
     if (!targetId) return apiJson({ error: 'Not authenticated' }, 401, corsH);
     const { results } = await env.DB.prepare(
-      'SELECT username, display_name, bio, avatar_url, banner_url, age, age_public, birth_date, city, country, name_color, name_font FROM user_profiles WHERE user_id=?'
+      'SELECT username, display_name, bio, avatar_url, banner_url, age, age_public, birth_date, city, country, name_color, name_font, age_verified, age_verified_at FROM user_profiles WHERE user_id=?'
     ).bind(targetId).all();
-    return apiJson({ username: results[0]?.username||null, display_name: results[0]?.display_name||'', bio: results[0]?.bio||'', avatar_url: results[0]?.avatar_url||'', banner_url: results[0]?.banner_url||'', age: results[0]?.age||null, age_public: results[0]?.age_public||0, birth_date: results[0]?.birth_date||'', city: results[0]?.city||'', country: results[0]?.country||'', name_color: results[0]?.name_color||'', name_font: results[0]?.name_font||'' }, 200, corsH);
+    return apiJson({ username: results[0]?.username||null, display_name: results[0]?.display_name||'', bio: results[0]?.bio||'', avatar_url: results[0]?.avatar_url||'', banner_url: results[0]?.banner_url||'', age: results[0]?.age||null, age_public: results[0]?.age_public||0, birth_date: results[0]?.birth_date||'', city: results[0]?.city||'', country: results[0]?.country||'', name_color: results[0]?.name_color||'', name_font: results[0]?.name_font||'', age_verified: results[0]?.age_verified||0, age_verified_at: results[0]?.age_verified_at||'' }, 200, corsH);
   }
 
   if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
@@ -2235,10 +2235,10 @@ export default {
         if (mo < 0 || (mo === 0 && today.getDate() < bd.getDate())) age--;
         if (isNaN(age) || age < 18) return apiJson({ error: 'Debes ser mayor de 18 años para acceder.' }, 403, corsH);
         if (age > 110) return apiJson({ error: 'Fecha inválida.' }, 400, corsH);
-        /* Garantizar que existe el perfil — puede no existir en user_profiles aún */
+        /* Upsert seguro — crea el perfil si no existe, luego actualiza age_verified */
         await env.DB.prepare(
-          'INSERT OR IGNORE INTO user_profiles (user_id) VALUES (?)'
-        ).bind(session.id).run();
+          'INSERT OR IGNORE INTO user_profiles (user_id, display_name, bio, avatar_url, banner_url) VALUES (?,?,?,?,?)'
+        ).bind(session.id, session.name||'', '', session.picture||'', '').run();
         await env.DB.prepare(
           'UPDATE user_profiles SET birth_date=?, age=?, age_verified=1, age_verified_at=? WHERE user_id=?'
         ).bind(birthdate, age, new Date().toISOString(), session.id).run();
