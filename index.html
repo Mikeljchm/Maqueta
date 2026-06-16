@@ -454,11 +454,11 @@ layout: none
           <button class="prof-signin-btn" onclick="openAuthModal()">Sign in with Google</button>
         </div>
 
-        <!-- TABS: Posts | Collections | Activity -->
+        <!-- TABS: Posts | Clips | Collections -->
         <div class="prof-tabs" id="prof-tabs" style="display:none">
           <button class="prof-tab active" data-ptab="posts">Posts</button>
+          <button class="prof-tab" data-ptab="clips">Clips</button>
           <button class="prof-tab" data-ptab="collections">Collections</button>
-          <button class="prof-tab" data-ptab="activity">Activity</button>
         </div>
 
         <!-- TAB: Posts -->
@@ -466,9 +466,14 @@ layout: none
           <div id="posts-feed-container" style="padding:0;"></div>
         </div>
 
-        <!-- TAB: Collections -->
+        <!-- TAB: Clips -->
+        <div class="prof-tab-pane" id="ptab-clips" style="display:none">
+          <div id="clips-feed-container" style="padding:0;"></div>
+        </div>
+
+        <!-- TAB: Collections (saved posts) -->
         <div class="prof-tab-pane" id="ptab-collections" style="display:none">
-          <div id="my-collections-container" style="padding:0.75rem 0.85rem 0.5rem;"></div>
+          <div id="saved-posts-container" style="padding:0;"></div>
         </div>
 
         <!-- TAB: Activity -->
