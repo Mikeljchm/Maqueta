@@ -1335,9 +1335,18 @@ async function votePoll(postId, idx, poll, container) {
       p.classList.toggle('active', p.getAttribute('data-cat') === cat);
     });
     if (cat === 'following') {
+      /* Si no está logueado → redirigir a login */
+      if (!window.currentUser) {
+        if (typeof window.openLoginSheet === 'function') window.openLoginSheet();
+        else if (typeof window.openAuthModal === 'function') window.openAuthModal();
+        /* Devolver tab a ALL */
+        document.querySelectorAll('.feed-tab[data-cat]').forEach(function(p){
+          p.classList.toggle('active', p.getAttribute('data-cat') === 'all');
+        });
+        return;
+      }
       if (allView) allView.style.display = 'none';
       if (fwView)  fwView.style.display  = 'block';
-      /* Resetear cache para forzar recarga fresca */
       window._resetFollowingFeed();
       window._loadFollowingFeed();
     } else {
