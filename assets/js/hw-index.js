@@ -3486,6 +3486,8 @@ async function votePoll(postId, idx, poll, container) {
     /* ── ADMIN ACTION FUNCTIONS ── */
   /* ── PANEL ADMIN CENTRAL ── */
   (function(){
+    /* escH local — el IIFE de posts no está en scope aquí */
+    function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     var s = document.createElement('style');
     s.textContent = [
       '#adm-panel{position:fixed;inset:0;background:var(--bg);z-index:800;display:none;flex-direction:column;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}',
@@ -7804,6 +7806,7 @@ async function votePoll(postId, idx, poll, container) {
 
   /* ── DMCA Form completo ── */
   (function(){
+    function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     var s = document.createElement('style');
     s.textContent = '.dmca-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:none;align-items:flex-end;justify-content:center;}'
       +'.dmca-overlay.open{display:flex;}'
