@@ -1331,7 +1331,7 @@ async function votePoll(postId, idx, poll, container) {
     var allView = document.getElementById('all-feed-view');
     var fwView  = document.getElementById('following-feed-view');
     /* Pills */
-    document.querySelectorAll('.cat-pill[data-cat]').forEach(function(p){
+    document.querySelectorAll('.feed-tab[data-cat]').forEach(function(p){
       p.classList.toggle('active', p.getAttribute('data-cat') === cat);
     });
     if (cat === 'following') {
@@ -1536,9 +1536,13 @@ async function votePoll(postId, idx, poll, container) {
     }
   };
 
-  /* Listeners globales del feed */
+  /* Feed tabs click — ALL / FOLLOWING */
   document.addEventListener('click', function(e){
-    /* Pill click manejado por setFeedFilter — no necesitamos listener extra aquí */
+    var tab = e.target.closest('.feed-tab[data-cat]');
+    if (tab) {
+      var cat = tab.getAttribute('data-cat');
+      if (typeof window.setFeedFilter === 'function') window.setFeedFilter(cat);
+    }
   });
 
   /* ── Following feed — abre la vista de posts de seguidos ── */
