@@ -2235,6 +2235,10 @@ export default {
         if (mo < 0 || (mo === 0 && today.getDate() < bd.getDate())) age--;
         if (isNaN(age) || age < 18) return apiJson({ error: 'Debes ser mayor de 18 años para acceder.' }, 403, corsH);
         if (age > 110) return apiJson({ error: 'Fecha inválida.' }, 400, corsH);
+        /* Garantizar que existe el perfil — puede no existir en user_profiles aún */
+        await env.DB.prepare(
+          'INSERT OR IGNORE INTO user_profiles (user_id) VALUES (?)'
+        ).bind(session.id).run();
         await env.DB.prepare(
           'UPDATE user_profiles SET birth_date=?, age=?, age_verified=1, age_verified_at=? WHERE user_id=?'
         ).bind(birthdate, age, new Date().toISOString(), session.id).run();
