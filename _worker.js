@@ -1264,6 +1264,12 @@ async function handleUserPosts(request, env, corsH) {
   try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN image_url TEXT DEFAULT ''").run(); } catch(e){}
   try { await env.DB.prepare('ALTER TABLE user_posts ADD COLUMN like_count INTEGER DEFAULT 0').run(); } catch(e){}
   try { await env.DB.prepare('ALTER TABLE user_posts ADD COLUMN comment_count INTEGER DEFAULT 0').run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN repost_of_id INTEGER DEFAULT NULL").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN repost_body TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN repost_user_name TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN repost_user_id TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN repost_image_url TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN repost_avatar TEXT DEFAULT ''").run(); } catch(e){}
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS post_reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     post_id INTEGER NOT NULL,
@@ -1292,14 +1298,14 @@ async function handleUserPosts(request, env, corsH) {
     /* Feed global — solo posts no ocultos */
     if (!action && !userId) {
       const { results } = await env.DB.prepare(
-        'SELECT id,user_id,user_name,user_avatar,body,image_url,report_count,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT 50'
+        'SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,report_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT 50'
       ).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
     /* Posts de un usuario específico */
     if (userId) {
       const { results } = await env.DB.prepare(
-        'SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
+        'SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
       ).bind(userId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
@@ -1377,6 +1383,40 @@ async function handleUserPosts(request, env, corsH) {
       const avatarUrl = await getUserAvatar(session.id, session.picture, env);
       const newPost = { id: newPostId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl, body: text, image_url: image_url, like_count: 0, comment_count: 0, created_at: new Date().toISOString() };
       return apiJson({ ok: true, id: newPostId, post: newPost }, 200, corsH);
+    }
+
+    /* Repostear */
+    if (action === 'repost') {
+      if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+      const { results: banned } = await env.DB.prepare('SELECT user_id FROM banned_users WHERE user_id=?').bind(session.id).all();
+      if (banned.length) return apiJson({ error: 'Your account has been suspended.' }, 403, corsH);
+      const origId   = parseInt(body.post_id);
+      const caption  = (body.caption||'').trim().slice(0,500);
+      if (!origId)   return apiJson({ error: 'post_id required' }, 400, corsH);
+      /* Traer datos del post original */
+      const { results: origRows } = await env.DB.prepare(
+        'SELECT id,user_id,user_name,user_avatar,body,image_url FROM user_posts WHERE id=? AND hidden=0'
+      ).bind(origId).all();
+      if (!origRows.length) return apiJson({ error: 'Post not found' }, 404, corsH);
+      const orig = origRows[0];
+      const avatarUrl = await getUserAvatar(session.id, session.picture, env);
+      const origAvatar = await getUserAvatar(orig.user_id, orig.user_avatar, env);
+      const result = await env.DB.prepare(
+        'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
+      ).bind(
+        session.id, session.name||session.email, avatarUrl,
+        caption, '',
+        orig.id, orig.body||'', orig.user_name||'', orig.user_id||'', orig.image_url||'', origAvatar
+      ).run();
+      const newId = result.meta.last_row_id;
+      await addPoints(env, session.id, 1);
+      const newPost = {
+        id: newId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl,
+        body: caption, image_url: '', like_count: 0, comment_count: 0, created_at: new Date().toISOString(),
+        repost_of_id: orig.id, repost_body: orig.body||'', repost_user_name: orig.user_name||'',
+        repost_user_id: orig.user_id||'', repost_image_url: orig.image_url||'', repost_avatar: origAvatar
+      };
+      return apiJson({ ok: true, post: newPost }, 200, corsH);
     }
 
     /* Reportar post */
