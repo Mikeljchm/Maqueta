@@ -1326,21 +1326,25 @@ async function votePoll(postId, idx, poll, container) {
 
   window.setFeedFilter = function(cat) {
     activeFilter = cat || 'all';
-    var tb = document.getElementById('trending-bar');
-    if (tb) { tb.style.maxHeight = '0'; tb.style.padding = '0 0.75rem'; }
-    /* Following filter — load from D1 via separate endpoint */
+    var allView  = document.getElementById('all-feed-view');
+    var fwView   = document.getElementById('following-feed-view');
+    /* Actualizar pills */
+    document.querySelectorAll('.cat-pill[data-cat]').forEach(function(p){
+      p.classList.toggle('active', p.getAttribute('data-cat') === cat);
+    });
     if (cat === 'following') {
-      window._openFollowingFeed();
-      return;
+      /* Mostrar solo el feed de siguiendo */
+      if (allView) allView.style.display = 'none';
+      if (fwView)  fwView.style.display  = 'block';
+      window._loadFollowingFeed();
+    } else {
+      /* All — mostrar el feed normal */
+      if (allView) allView.style.display = 'block';
+      if (fwView)  fwView.style.display  = 'none';
+      /* Resetear y recargar solo si ya estaba en following */
+      if (activeFilter !== 'all') resetFeed();
     }
-    /* Restore normal feed */
-    var fc2 = document.getElementById('feed-container');
-    if (fc2) fc2.style.display = '';
-    /* Reiniciar community feed al volver a All */
-    if (cat === 'all' && window._initCommunityFeed) {
-      setTimeout(window._initCommunityFeed, 100);
-    }
-    resetFeed();
+    activeFilter = cat || 'all';
   };
 
   /* Renderizar una lista custom de posts (para Trending) */
@@ -1374,8 +1378,7 @@ async function votePoll(postId, idx, poll, container) {
     var sentinel = document.getElementById('feed-sentinel');
     if (!sentinel) return;
     var observer = new IntersectionObserver(function(entries) {
-      /* Solo cargar Jekyll si community feed ya terminó o no existe */
-      if (entries[0].isIntersecting && !LOADING && LOADED < getFilteredPosts().length && !_cfHasMore) {
+      if (entries[0].isIntersecting && !LOADING && LOADED < getFilteredPosts().length) {
         LOADING = true;
         var loader = document.getElementById('feed-loader');
         if (loader) loader.style.display = 'flex';
@@ -1450,7 +1453,11 @@ async function votePoll(postId, idx, poll, container) {
       }
       if (sentinel) sentinel.innerHTML = '';
       /* Ocultar sentinel si no hay más */
-      if (!_cfHasMore && sentinel) sentinel.style.display = 'none';
+      /* Cuando community feed termina, iniciar el feed Jekyll */
+      if (!_cfHasMore) {
+        LOADED = 0;
+        renderBatch();
+      }
     } catch(e) {
       if (sentinel) sentinel.innerHTML = '';
     }
@@ -1458,12 +1465,10 @@ async function votePoll(postId, idx, poll, container) {
   }
 
   window._initCommunityFeed = function() {
-    /* Reset */
     _cfOffset = 0; _cfHasMore = true; _cfLoading = false;
     var cc = document.getElementById('community-feed-container');
     if (!cc) return;
     cc.innerHTML = '';
-    /* Usar el feed-sentinel existente para IntersectionObserver */
     var sentinel = document.getElementById('feed-sentinel');
     if (!sentinel) return;
     sentinel.style.display = '';
@@ -1471,9 +1476,8 @@ async function votePoll(postId, idx, poll, container) {
     if (_cfObserver) _cfObserver.disconnect();
     _cfObserver = new IntersectionObserver(function(entries) {
       if (entries[0].isIntersecting && !_cfLoading) _cfLoadPage();
-    }, { rootMargin: '300px' });
+    }, { rootMargin: '400px' });
     _cfObserver.observe(sentinel);
-    /* Carga inicial */
     _cfLoadPage();
   };
 
@@ -1527,20 +1531,7 @@ async function votePoll(postId, idx, poll, container) {
         });
       });
 
-      /* Botón "VER FEED" → abre el following feed */
-      var seeAll = document.getElementById('following-see-all');
-      if (seeAll) {
-        seeAll.replaceWith(seeAll.cloneNode(true)); /* quitar listeners viejos */
-        var seeAll2 = document.getElementById('following-see-all');
-        if (seeAll2) seeAll2.addEventListener('click', function(){ window._openFollowingFeed(); });
-      }
-      /* Botón Volver */
-      var backBtn = document.getElementById('following-feed-back');
-      if (backBtn) {
-        backBtn.replaceWith(backBtn.cloneNode(true));
-        var backBtn2 = document.getElementById('following-feed-back');
-        if (backBtn2) backBtn2.addEventListener('click', function(){ window._closeFollowingFeed(); });
-      }
+      /* Strip de avatares — el pill maneja la navegación */
 
     } catch(e) {
       var sec2 = document.getElementById('following-section');
@@ -1548,63 +1539,42 @@ async function votePoll(postId, idx, poll, container) {
     }
   };
 
-  /* ── Bindear botones VER FEED y Volver al DOMContentLoaded ── */
+  /* Listeners globales del feed */
   document.addEventListener('click', function(e){
-    if (e.target.id === 'following-see-all' || e.target.closest('#following-see-all')) {
-      if (window._openFollowingFeed) window._openFollowingFeed();
-    }
-    if (e.target.id === 'following-feed-back' || e.target.closest('#following-feed-back')) {
-      if (window._closeFollowingFeed) window._closeFollowingFeed();
-    }
+    /* Pill click manejado por setFeedFilter — no necesitamos listener extra aquí */
   });
 
   /* ── Following feed — abre la vista de posts de seguidos ── */
-  window._openFollowingFeed = function() {
-    var homeEl   = document.getElementById('feed-container');
-    var commEl   = document.getElementById('community-feed-container');
-    var followEl = document.getElementById('following-section');
-    var ffSection = document.getElementById('following-feed-section');
-    var ffContainer = document.getElementById('following-feed-container');
-    if (!ffSection || !ffContainer) return;
-
-    /* Ocultar feed normal, mostrar following feed */
-    if (homeEl) homeEl.style.display = 'none';
-    if (commEl) commEl.style.display = 'none';
-    if (followEl) followEl.style.display = 'none';
-    ffSection.style.display = 'block';
-
-    /* Solo cargar si el container está vacío */
-    if (ffContainer.children.length > 0) return;
-
-    ffContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Loading...</div>';
-
+  /* Cargar feed de siguiendo */
+  window._loadFollowingFeed = function() {
+    var fc = document.getElementById('following-feed-container');
+    if (!fc) return;
+    /* Si ya tiene contenido no recargar */
+    if (fc.dataset.loaded === '1') return;
+    fc.dataset.loaded = '1';
+    fc.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Cargando...</div>';
     fetch('/api/user-follows/feed', {credentials:'include'})
       .then(function(r){ return r.json(); })
       .then(function(d){
         var posts = d.posts || [];
         if (!posts.length) {
-          ffContainer.innerHTML = '<div style="padding:2.5rem;text-align:center;color:var(--text-dim);font-size:0.85rem;">No posts yet from people you follow.<br><span style="font-size:0.75rem;color:var(--text-muted);">Follow more users to see their posts here.</span></div>';
+          fc.innerHTML = '<div style="padding:2.5rem;text-align:center;color:var(--text-dim);font-size:0.85rem;">Aún no hay posts.<br><span style="font-size:0.75rem;color:var(--text-muted);">Sigue a más usuarios para ver su contenido aquí.</span></div>';
           return;
         }
-        ffContainer.innerHTML = posts.map(window.renderPost||function(){ return ''; }).join('');
-        if (window._activateLazyGifs) window._activateLazyGifs(ffContainer);
+        fc.innerHTML = posts.map(window.renderPost||function(){ return ''; }).join('');
+        if (window._activateLazyGifs) window._activateLazyGifs(fc);
         if (window.loadAllLikes) window.loadAllLikes();
         if (window.loadAllCommentCounts) window.loadAllCommentCounts();
       })
       .catch(function(){
-        ffContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-dim);">Could not load feed.</div>';
+        fc.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-dim);">Error cargando feed.</div>';
+        delete fc.dataset.loaded;
       });
   };
-
-  window._closeFollowingFeed = function() {
-    var homeEl   = document.getElementById('feed-container');
-    var commEl   = document.getElementById('community-feed-container');
-    var followEl = document.getElementById('following-section');
-    var ffSection = document.getElementById('following-feed-section');
-    if (homeEl) homeEl.style.display = '';
-    if (commEl) commEl.style.display = '';
-    if (followEl && window.currentUser) followEl.style.display = 'block';
-    if (ffSection) ffSection.style.display = 'none';
+  /* Resetear following feed al cambiar de tab */
+  window._resetFollowingFeed = function() {
+    var fc = document.getElementById('following-feed-container');
+    if (fc) { fc.innerHTML = ''; delete fc.dataset.loaded; }
   };
 
   function initFeed() {
