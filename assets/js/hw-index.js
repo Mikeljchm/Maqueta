@@ -1394,7 +1394,7 @@ async function votePoll(postId, idx, poll, container) {
       '#following-strip::-webkit-scrollbar{display:none;}',
       /* Pill Following destacado */
       '#following-pill{background:linear-gradient(135deg,var(--fire-orange),var(--fire-red)) !important;color:#fff !important;border-color:transparent !important;font-weight:600;}',
-      '#following-pill:before{content:"\2728 ";}'
+      '#following-pill:before{content:"\2728 ";}'  ,
       '.fw-avatar-card{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0.35rem;cursor:pointer;width:58px;}',
       '.fw-avatar-ring{width:52px;height:52px;border-radius:50%;padding:2px;background:linear-gradient(135deg,var(--fire-orange),var(--fire-red));flex-shrink:0;}',
       '.fw-avatar-ring.has-post{background:linear-gradient(135deg,var(--fire-orange),var(--fire-yellow));}',
