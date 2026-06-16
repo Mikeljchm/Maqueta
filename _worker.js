@@ -2221,6 +2221,25 @@ export default {
       if (path === '/api/points') return handlePoints(request, env, corsH);
       if (path === '/api/trending') return handleTrending(request, env, corsH);
       if (path === '/api/activity') return handleActivity(request, env, corsH);
+      if (path === '/api/verify-age' && request.method === 'POST') {
+        const session = getSession(request);
+        if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+        let body;
+        try { body = await request.json(); } catch(e) { return apiJson({ error: 'Invalid JSON' }, 400, corsH); }
+        const birthdate = (body.birthdate||'').trim();
+        if (!birthdate || birthdate.length !== 10) return apiJson({ error: 'Invalid birthdate' }, 400, corsH);
+        const bd = new Date(birthdate);
+        const today = new Date();
+        let age = today.getFullYear() - bd.getFullYear();
+        const mo = today.getMonth() - bd.getMonth();
+        if (mo < 0 || (mo === 0 && today.getDate() < bd.getDate())) age--;
+        if (isNaN(age) || age < 18) return apiJson({ error: 'Debes ser mayor de 18 años para acceder.' }, 403, corsH);
+        if (age > 110) return apiJson({ error: 'Fecha inválida.' }, 400, corsH);
+        await env.DB.prepare(
+          'UPDATE user_profiles SET birth_date=?, age=?, age_verified=1, age_verified_at=? WHERE user_id=?'
+        ).bind(birthdate, age, new Date().toISOString(), session.id).run();
+        return apiJson({ ok: true, age }, 200, corsH);
+      }
       if (path === '/api/profile') return handleProfile(request, env, corsH);
       if (path === '/api/debug-profiles') {
         const { results } = await env.DB.prepare('SELECT user_id, display_name, username, bio FROM user_profiles LIMIT 20').all();
