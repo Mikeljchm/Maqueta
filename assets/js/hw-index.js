@@ -7514,25 +7514,31 @@ async function votePoll(postId, idx, poll, container) {
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ birthdate: birthdate })
         });
-        var data = await r.json();
+        var rawText = await r.text();
+        var data;
+        try { data = JSON.parse(rawText); } catch(je) {
+          errEl.textContent = 'Server error ('+r.status+'). Please try again.';
+          btn.disabled = false; btn.textContent = 'CONFIRM & ENTER';
+          return;
+        }
         if (data.ok) {
           screen.classList.remove('open');
-          /* Actualizar session para no volver a pedir */
           if (window.currentUser) window.currentUser.age_verified = 1;
           try { sessionStorage.removeItem('hw_s'); } catch(e) {}
         } else {
-          errEl.textContent = data.error || 'Verification failed. Please try again.';
+          errEl.textContent = data.error || 'Verification failed ('+r.status+').';
           btn.disabled = false; btn.textContent = 'CONFIRM & ENTER';
         }
       } catch(e) {
-        errEl.textContent = 'Connection error. Please try again.';
+        errEl.textContent = 'Network error: ' + (e.message||'unknown');
         btn.disabled = false; btn.textContent = 'CONFIRM & ENTER';
       }
     });
 
     var logoutBtn = document.getElementById('av-logout-btn');
     if (logoutBtn) logoutBtn.addEventListener('click', function() {
-      if (typeof HottAuth !== 'undefined') HottAuth.logout();
+      sessionStorage.removeItem('hw_s');
+      window.location.href = '/auth/google/logout?redirect=' + encodeURIComponent(window.location.href);
     });
   })();
 
