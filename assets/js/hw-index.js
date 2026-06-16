@@ -394,6 +394,7 @@
       if (moreBtn) moreBtn.click();
       return;
     }
+    window._viewingProfileOf = uid; /* Flag para renderPost — siempre mostrar report en perfil ajeno */
     var page = document.getElementById('page-user-profile');
     if (!page) {
       page = document.createElement('div');
@@ -410,7 +411,7 @@
           + '<button class="uprof-tab" data-utab="collections" style="flex:1;padding:0.55rem 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;">Collections</button>'        + '</div>'        + '<div id="uprof-posts-panel" style="padding:0.75rem 1rem 3rem;"><div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1.5rem;">Loading...</div></div>'        + '<div id="uprof-clips-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'        + '<div id="uprof-collections-panel" style="display:none;padding:0.75rem 1rem 3rem;"></div>'      + '</div>'
         requestAnimationFrame(function(){ requestAnimationFrame(function(){ page.style.transform='translateX(0)'; }); });
 
-    function closeUProf(){ page.style.transform='translateX(100%)'; setTimeout(function(){ page.style.display='none'; },330); }
+    function closeUProf(){ page.style.transform='translateX(100%)'; setTimeout(function(){ page.style.display='none'; window._viewingProfileOf=null; },330); }
     document.getElementById('uprof-back').addEventListener('click', closeUProf);
     /* Click en colección del perfil ajeno */
     page.addEventListener('click', function(ev){
@@ -7067,7 +7068,7 @@ async function votePoll(postId, idx, poll, container) {
 
   function renderPost(p) {
     var isAdmin = document.body.classList.contains('is-admin');
-    var isOwn   = window.currentUser && window.currentUser.id === p.user_id;
+    var isOwn   = window.currentUser && window.currentUser.id === p.user_id && !window._viewingProfileOf;
     var reported = REPORTED_POSTS.has(String(p.id));
     var _avUrlP = (window._resolveAvatar||function(u,a){return a||'';})(p.user_id, p.user_avatar);
     var avatar = _avUrlP
