@@ -7873,9 +7873,12 @@ async function votePoll(postId, idx, poll, container) {
           if (d.ok) {
             overlay.classList.remove('open');
             var toast = document.getElementById('toast');
-            if (toast) { toast.textContent = 'DMCA notice submitted. We will review within 48h.'; toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 4000); }
+            if (toast) { toast.textContent = 'DMCA notice submitted — content hidden pending review.'; toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 4000); }
             var repBtn = document.querySelector('.post-report-btn[data-post-id="'+_dmcaPostId+'"]');
             if (repBtn) { repBtn.textContent = 'Reported'; repBtn.classList.add('reported'); }
+            /* Ocultar la card inmediatamente en el DOM */
+            var card = document.querySelector('.post-card[data-post-id="'+_dmcaPostId+'"]');
+            if (card) { card.style.opacity='0.25'; card.style.pointerEvents='none'; }
           } else {
             errEl.textContent = d.error || 'Submission failed.';
             btn.disabled = false; btn.textContent = 'SUBMIT DMCA NOTICE';
