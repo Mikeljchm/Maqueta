@@ -108,13 +108,14 @@ async function enrichAvatars(rows, env) {
   try {
     const ph = uids.map(() => '?').join(',');
     const { results } = await env.DB.prepare(
-      'SELECT user_id, avatar_url FROM user_profiles WHERE user_id IN ('+ph+') AND avatar_url IS NOT NULL AND avatar_url != \'\''
+      'SELECT user_id, avatar_url, display_name FROM user_profiles WHERE user_id IN ('+ph+')'
     ).bind(...uids).all();
-    const avatarMap = {};
-    results.forEach(r => { avatarMap[r.user_id] = r.avatar_url; });
+    const profileMap = {};
+    results.forEach(r => { profileMap[r.user_id] = r; });
     return rows.map(r => ({
       ...r,
-      user_avatar: avatarMap[r.user_id] || r.user_avatar || ''
+      user_avatar: (profileMap[r.user_id] && profileMap[r.user_id].avatar_url) || r.user_avatar || '',
+      user_name:   (profileMap[r.user_id] && profileMap[r.user_id].display_name) || r.user_name || ''
     }));
   } catch(e) { return rows; }
 }
