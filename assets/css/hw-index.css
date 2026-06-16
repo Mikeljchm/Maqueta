@@ -164,6 +164,11 @@
     .user-logout-btn { background:none; border:1px solid var(--border); border-radius:20px; padding:0.45rem 1rem; font-size:0.72rem; color:var(--text-muted); cursor:pointer; }
 
     /* CATEGORY PILLS */
+    .feed-tabs { display:flex; background:#000; border-bottom:2px solid var(--border); }
+    .feed-tab { flex:1; padding:0.85rem 0; background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-2px; font-family:var(--font-d); font-size:0.82rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted); cursor:pointer; transition:color 0.2s var(--ease), border-color 0.2s var(--ease); }
+    .feed-tab:active { opacity:0.7; }
+    .feed-tab.active { color:var(--fire-orange); border-bottom-color:var(--fire-orange); }
+    /* keep old cat-pill for wrestlers/studs pages */
     .cat-pills { display:flex; gap:0.5rem; padding:0.65rem 1rem; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid rgba(255,69,0,0.08); background:#000; }
     .cat-pills::-webkit-scrollbar { display:none; }
     .cat-pill { flex-shrink:0; padding:0.42rem 1rem; border-radius:20px; font-size:0.65rem; font-family:var(--font-d); font-weight:400; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; border:1px solid #2a2a2a; background:#111; color:#666; transition:all 0.2s var(--ease); white-space:nowrap; }
