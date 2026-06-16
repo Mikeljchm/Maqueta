@@ -844,7 +844,7 @@ async function handleProfile(request, env, corsH) {
     try { await env.DB.prepare(`ALTER TABLE user_profiles ADD COLUMN ${col}`).run(); } catch(e) {}
   }
   /* Extra migrations for age, city, country */
-  const extraMigs = ['age INTEGER DEFAULT NULL','age_public INTEGER DEFAULT 0',"birth_date TEXT DEFAULT ''","city TEXT DEFAULT ''","country TEXT DEFAULT ''","age_verified INTEGER DEFAULT 0","age_verified_at TEXT DEFAULT ''"];
+  const extraMigs = ['age INTEGER DEFAULT NULL','age_public INTEGER DEFAULT 0',"birth_date TEXT DEFAULT ''","city TEXT DEFAULT ''","country TEXT DEFAULT ''","age_verified INTEGER DEFAULT 0","age_verified_at TEXT DEFAULT ''","dmca_strikes INTEGER DEFAULT 0","suspended INTEGER DEFAULT 0"];
   for (const col of extraMigs) {
     try { await env.DB.prepare(`ALTER TABLE user_profiles ADD COLUMN ${col}`).run(); } catch(e) {}
   }
@@ -1268,6 +1268,22 @@ async function handleUserPosts(request, env, corsH) {
   try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN image_url TEXT DEFAULT ''").run(); } catch(e){}
   try { await env.DB.prepare('ALTER TABLE user_posts ADD COLUMN like_count INTEGER DEFAULT 0').run(); } catch(e){}
   try { await env.DB.prepare('ALTER TABLE user_posts ADD COLUMN comment_count INTEGER DEFAULT 0').run(); } catch(e){}
+  /* Tabla de reportes DMCA */
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id INTEGER,
+    reporter_user_id TEXT,
+    reporter_email TEXT DEFAULT '',
+    reason TEXT NOT NULL,
+    details TEXT DEFAULT '',
+    original_url TEXT DEFAULT '',
+    reporter_name TEXT DEFAULT '',
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    resolved_at DATETIME,
+    resolved_by TEXT DEFAULT ''
+  )`).run();
+
   /* Tabla de posts guardados */
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS post_saves (
     post_id INTEGER NOT NULL,
@@ -2042,9 +2058,71 @@ export default {
         /* GET /api/admin/users */
         if (path === '/api/admin/users' && request.method === 'GET') {
           const {results} = await env.DB.prepare(
-            'SELECT u.user_id,u.username,u.avatar_url FROM user_profiles u ORDER BY u.user_id DESC LIMIT 100'
+            'SELECT user_id, username, display_name, avatar_url, dmca_strikes, suspended, age_verified, created_at FROM user_profiles ORDER BY rowid DESC LIMIT 200'
           ).all();
           return apiJson({users:results},200,corsH);
+        }
+        /* GET /api/admin/reports */
+        if (path === '/api/admin/reports' && request.method === 'GET') {
+          const status = url.searchParams.get('status') || 'pending';
+          const {results} = await env.DB.prepare(
+            'SELECT r.*, p.body as post_body, p.image_url as post_image, p.user_id as post_owner, p.hidden as post_hidden FROM reports r LEFT JOIN user_posts p ON p.id=r.post_id WHERE r.status=? ORDER BY r.created_at DESC LIMIT 100'
+          ).bind(status).all();
+          return apiJson({reports:results},200,corsH);
+        }
+        /* GET /api/admin/stats */
+        if (path === '/api/admin/stats' && request.method === 'GET') {
+          const [{results:u},{results:p},{results:rp},{results:h}] = await Promise.all([
+            env.DB.prepare('SELECT COUNT(*) as n FROM user_profiles').all(),
+            env.DB.prepare('SELECT COUNT(*) as n FROM user_posts WHERE hidden=0').all(),
+            env.DB.prepare("SELECT COUNT(*) as n FROM reports WHERE status='pending'").all(),
+            env.DB.prepare('SELECT COUNT(*) as n FROM user_posts WHERE hidden=1').all(),
+          ]);
+          return apiJson({users:u[0]?.n||0, posts:p[0]?.n||0, pending_reports:rp[0]?.n||0, hidden_posts:h[0]?.n||0},200,corsH);
+        }
+        /* POST /api/admin/report-action — resolver un reporte */
+        if (path === '/api/admin/report-action' && request.method === 'POST') {
+          let body; try { body = await request.json(); } catch(e) { return apiJson({error:'Invalid JSON'},400,corsH); }
+          const {report_id, action, post_id, post_owner_id} = body;
+          if (!report_id || !action) return apiJson({error:'report_id and action required'},400,corsH);
+          const now = new Date().toISOString();
+          if (action === 'dismiss') {
+            /* Rechazar reporte — restaurar post si estaba oculto */
+            await env.DB.prepare("UPDATE reports SET status='dismissed', resolved_at=? WHERE id=?").bind(now, report_id).run();
+            if (post_id) await env.DB.prepare('UPDATE user_posts SET hidden=0 WHERE id=?').bind(post_id).run();
+          } else if (action === 'confirm') {
+            /* Confirmar infracción — ocultar post + strike al usuario */
+            await env.DB.prepare("UPDATE reports SET status='resolved', resolved_at=? WHERE id=?").bind(now, report_id).run();
+            if (post_id) await env.DB.prepare('UPDATE user_posts SET hidden=1 WHERE id=?').bind(post_id).run();
+            if (post_owner_id) {
+              await env.DB.prepare('UPDATE user_profiles SET dmca_strikes = COALESCE(dmca_strikes,0)+1 WHERE user_id=?').bind(post_owner_id).run();
+              /* Auto-suspender a 2 strikes */
+              const {results:strikes} = await env.DB.prepare('SELECT dmca_strikes FROM user_profiles WHERE user_id=?').bind(post_owner_id).all();
+              if (strikes.length && strikes[0].dmca_strikes >= 2) {
+                await env.DB.prepare('UPDATE user_profiles SET suspended=1 WHERE user_id=?').bind(post_owner_id).run();
+              }
+            }
+          } else if (action === 'delete') {
+            /* Eliminar post permanentemente */
+            await env.DB.prepare("UPDATE reports SET status='resolved', resolved_at=? WHERE id=?").bind(now, report_id).run();
+            if (post_id) {
+              await env.DB.prepare('DELETE FROM comments WHERE post_id=?').bind(String(post_id)).run();
+              await env.DB.prepare('DELETE FROM likes WHERE post_id=?').bind(String(post_id)).run();
+              await env.DB.prepare('DELETE FROM user_posts WHERE id=?').bind(post_id).run();
+            }
+            if (post_owner_id) {
+              await env.DB.prepare('UPDATE user_profiles SET dmca_strikes = COALESCE(dmca_strikes,0)+1 WHERE user_id=?').bind(post_owner_id).run();
+              const {results:strikes2} = await env.DB.prepare('SELECT dmca_strikes FROM user_profiles WHERE user_id=?').bind(post_owner_id).all();
+              if (strikes2.length && strikes2[0].dmca_strikes >= 2) {
+                await env.DB.prepare('UPDATE user_profiles SET suspended=1 WHERE user_id=?').bind(post_owner_id).run();
+              }
+            }
+          } else if (action === 'unsuspend') {
+            if (post_owner_id) await env.DB.prepare('UPDATE user_profiles SET suspended=0 WHERE user_id=?').bind(post_owner_id).run();
+          } else if (action === 'clear-strikes') {
+            if (post_owner_id) await env.DB.prepare('UPDATE user_profiles SET dmca_strikes=0 WHERE user_id=?').bind(post_owner_id).run();
+          }
+          return apiJson({ok:true},200,corsH);
         }
 
         /* GET /api/admin/posts */
@@ -2221,6 +2299,33 @@ export default {
       if (path === '/api/points') return handlePoints(request, env, corsH);
       if (path === '/api/trending') return handleTrending(request, env, corsH);
       if (path === '/api/activity') return handleActivity(request, env, corsH);
+      /* POST /api/report — denunciar un post */
+      if (path === '/api/report' && request.method === 'POST') {
+        const session = getSession(request);
+        let body; try { body = await request.json(); } catch(e) { return apiJson({error:'Invalid JSON'},400,corsH); }
+        const { post_id, reason, details, original_url, reporter_email, reporter_name } = body;
+        if (!post_id || !reason) return apiJson({error:'post_id and reason required'},400,corsH);
+        const allowedReasons = ['copyright','illegal','spam','underage','harassment','other'];
+        if (!allowedReasons.includes(reason)) return apiJson({error:'Invalid reason'},400,corsH);
+        const reporterUid = session ? session.id : 'anonymous';
+        /* Insertar reporte */
+        await env.DB.prepare(
+          'INSERT INTO reports (post_id, reporter_user_id, reporter_email, reason, details, original_url, reporter_name) VALUES (?,?,?,?,?,?,?)'
+        ).bind(post_id, reporterUid, reporter_email||'', reason, details||'', original_url||'', reporter_name||'').run();
+        /* Incrementar report_count en el post */
+        await env.DB.prepare('UPDATE user_posts SET report_count = COALESCE(report_count,0)+1 WHERE id=?').bind(post_id).run();
+        /* Auto-ocultar si reason=underage o report_count >= 3 */
+        if (reason === 'underage') {
+          await env.DB.prepare('UPDATE user_posts SET hidden=1 WHERE id=?').bind(post_id).run();
+        } else {
+          const {results:rc} = await env.DB.prepare('SELECT report_count FROM user_posts WHERE id=?').bind(post_id).all();
+          if (rc.length && rc[0].report_count >= 3) {
+            await env.DB.prepare('UPDATE user_posts SET hidden=1 WHERE id=?').bind(post_id).run();
+          }
+        }
+        return apiJson({ok:true}, 200, corsH);
+      }
+
       if (path === '/api/verify-age' && request.method === 'POST') {
         const session = getSession(request);
         if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
@@ -2359,6 +2464,13 @@ export default {
           headers: { 'Content-Type': 'application/json', 'Set-Cookie': makeCookie('', 0), ...corsH }
         });
       }
+      /* Verificar si el usuario está suspendido */
+      try {
+        const {results:sp} = await env.DB.prepare('SELECT suspended FROM user_profiles WHERE user_id=?').bind(session.id).all();
+        if (sp.length && sp[0].suspended) {
+          return jsonRes({ authenticated: false, suspended: true, error: 'Your account has been suspended for DMCA violations.' }, corsH);
+        }
+      } catch(e) {}
       return jsonRes({ authenticated: true, user: session }, corsH);
     }
 
