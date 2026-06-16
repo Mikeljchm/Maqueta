@@ -7904,7 +7904,7 @@ async function votePoll(postId, idx, poll, container) {
     var s = document.createElement('style');
     s.textContent = '.dmca-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:none;align-items:flex-end;justify-content:center;}'
       +'.dmca-overlay.open{display:flex;}'
-      +'.dmca-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;padding:1.25rem 1.1rem calc(2rem + env(safe-area-inset-bottom,0px));}'
+      +'.dmca-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;padding:1.25rem 1.1rem calc(2rem + env(safe-area-inset-bottom,0px));position:relative;z-index:901;}'
       +'.dmca-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem;}'
       +'.dmca-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.08em;margin-bottom:0.25rem;}'
       +'.dmca-sub{font-size:0.68rem;color:var(--text-dim);margin-bottom:1rem;line-height:1.5;}'
