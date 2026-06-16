@@ -98,13 +98,6 @@ layout: none
           <button class="cat-pill active" data-cat="all">All</button>
           <button class="cat-pill" id="following-pill" data-cat="following" style="display:none;">&#10024; Siguiendo</button>
           <button class="cat-pill" data-cat="trending">&#128293; Trending</button>
-          <button class="cat-pill" data-cat="wrestling">Wrestling</button>
-          <button class="cat-pill" data-cat="military">Military</button>
-          <button class="cat-pill" data-cat="bulge">Bulge</button>
-          <button class="cat-pill" data-cat="badboys">Studs</button>
-          <button class="cat-pill" data-cat="fan">Fan Files</button>
-          <button class="cat-pill" data-cat="hall">Hall of Flame</button>
-          <button class="cat-pill" data-cat="audio">Audio</button>
       </div>
       <!-- Trending sub-selector: overflow:hidden + max-height para transición suave -->
       <div id="trending-bar" style="max-height:0;overflow:hidden;transition:max-height 0.28s cubic-bezier(0.16,1,0.3,1),padding 0.28s;padding:0 0.75rem;white-space:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
@@ -120,34 +113,31 @@ layout: none
 
       <!-- HOME FEED -->
       <div class="page active" id="page-home">
-        <!-- SECCIÓN SIGUIENDO — visible solo cuando estás logueado y sigues a alguien -->
+        <!-- SECCIÓN SIGUIENDO — avatares horizontales -->
         <div id="following-section" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1rem 0.4rem;">
-            <div style="font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.1em;color:var(--fire-orange);">&#10024; SIGUIENDO</div>
-            <button id="following-see-all" style="background:linear-gradient(135deg,var(--fire-orange),var(--fire-red));color:#fff;border:none;border-radius:20px;padding:0.25rem 0.85rem;font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.06em;cursor:pointer;">VER FEED</button>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1rem 0.35rem;">
+            <div style="font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.1em;color:var(--fire-orange);">&#10024; SIGUIENDO</div>
+            <button id="following-see-all" style="background:linear-gradient(135deg,var(--fire-orange),var(--fire-red));color:#fff;border:none;border-radius:20px;padding:0.22rem 0.75rem;font-family:var(--font-d);font-size:0.62rem;letter-spacing:0.06em;cursor:pointer;">VER FEED</button>
           </div>
-          <div id="following-strip" style="display:flex;overflow-x:auto;gap:0.6rem;padding:0 1rem 0.75rem;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
-          <div style="height:1px;background:var(--border);margin:0 0 0.5rem;"></div>
+          <div id="following-strip" style="display:flex;overflow-x:auto;gap:0.6rem;padding:0 1rem 0.65rem;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
+          <div style="height:1px;background:var(--border);"></div>
         </div>
-        <!-- FOLLOWING FEED — visible al tocar VER FEED -->
+        <!-- FOLLOWING FEED — vista completa al tocar VER FEED -->
         <div id="following-feed-section" style="display:none;">
           <div style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 1rem 0.5rem;border-bottom:1px solid var(--border);">
             <button id="following-feed-back" style="background:none;border:none;color:var(--text-dim);cursor:pointer;padding:0;display:flex;align-items:center;gap:0.35rem;font-family:var(--font-b);font-size:0.75rem;">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-              Volver
+              Volver al feed
             </button>
             <div style="font-family:var(--font-d);font-size:0.82rem;letter-spacing:0.08em;color:var(--fire-orange);">&#10024; SIGUIENDO</div>
           </div>
           <div id="following-feed-container" style="padding:0;"></div>
         </div>
-        <!-- POSTS D1 DE USUARIOS — mezclados en el feed -->
-        <div id="community-feed-section">
-          <div id="community-feed-container"></div>
-        </div>
-        <div id="feed-container">
-          <!-- Posts cargados dinámicamente desde /assets/data/posts.json -->
-        </div>
-        </div><!-- /community-feed-section -->
+        <!-- COMMUNITY POSTS D1 -->
+        <div id="community-feed-container"></div>
+        <!-- JEKYLL STATIC FEED -->
+        <div id="feed-container"></div>
+        <!-- SENTINEL UNIFICADO — carga más de ambos feeds -->
         <div id="feed-sentinel" style="height:60px;display:flex;align-items:center;justify-content:center;">
           <div id="feed-loader" style="display:none;">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--fire-orange)" stroke-width="2" style="animation:spin 1s linear infinite;">
