@@ -660,10 +660,13 @@ async function handleCollections(request, env, corsH) {
   )`).run();
 
   const session = getSession(request);
-  if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
-  const uid = session.id;
+  const uid = session ? session.id : null;
   const url = new URL(request.url);
   const action = url.searchParams.get('action');
+  /* GET público: colecciones de un perfil ajeno no requieren auth */
+  if (request.method !== 'GET' && !session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+  /* GET de items o saved_posts sí requiere auth (datos propios) */
+  if (request.method === 'GET' && (action === 'items' || action === 'saved_posts') && !session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
 
   if (request.method === 'GET') {
     if (action === 'items') {
@@ -682,10 +685,11 @@ async function handleCollections(request, env, corsH) {
       ).bind(uid).all();
       return apiJson({ post_ids: sp.map(function(r){ return r.post_id; }) }, 200, corsH);
     }
-    // Get all collections for user
+    // Get all collections — acepta user_id externo para perfil ajeno
+    const targetUid = url.searchParams.get('user_id') || uid;
     const { results } = await env.DB.prepare(
       'SELECT c.*, COUNT(ci.id) as count FROM collections c LEFT JOIN collection_items ci ON c.id=ci.collection_id WHERE c.user_id=? GROUP BY c.id ORDER BY c.created_at DESC'
-    ).bind(uid).all();
+    ).bind(targetUid).all();
     // For each collection get first 4 images
     for (var col of results) {
       const { results: imgs } = await env.DB.prepare(
