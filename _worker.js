@@ -79,6 +79,16 @@ function getSession(request) {
 }
 
 /* Obtiene el avatar del usuario: D1 primero, fallback a Google picture */
+async function getUserDisplayName(userId, fallback, env) {
+  try {
+    var r = await env.DB.prepare(
+      'SELECT display_name FROM user_profiles WHERE user_id=?'
+    ).bind(userId).first();
+    if (r && r.display_name) return r.display_name;
+  } catch(e) {}
+  return fallback || '';
+}
+
 async function getUserAvatar(userId, fallback, env) {
   try {
     var r = await env.DB.prepare(
@@ -186,7 +196,7 @@ async function handleComments(request, env, corsH) {
     if (containsLink(body)) return apiJson({ error: 'Links are not allowed in comments.' }, 400, corsH);
     const result = await env.DB.prepare(
       'INSERT INTO comments (post_id, user_id, user_name, user_avatar, body, parent_id) VALUES (?, ?, ?, ?, ?, ?)'
-    ).bind(post_id, session.id, session.name || session.email, await getUserAvatar(session.id, session.picture, env), body.trim(), parent_id || null).run();
+    ).bind(post_id, session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), body.trim(), parent_id || null).run();
     await addPoints(env, session.id, 2);
     return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
   }
@@ -1427,7 +1437,7 @@ async function handleUserPosts(request, env, corsH) {
       if (containsLink(text)) return apiJson({ error: 'Links are not allowed in posts.' }, 400, corsH);
       const result = await env.DB.prepare(
         'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url) VALUES (?,?,?,?,?)'
-      ).bind(session.id, session.name||session.email, await getUserAvatar(session.id, session.picture, env), text, image_url).run();
+      ).bind(session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), text, image_url).run();
       await addPoints(env, session.id, 1);
       const newPostId = result.meta.last_row_id;
       const avatarUrl = await getUserAvatar(session.id, session.picture, env);
@@ -1467,14 +1477,14 @@ async function handleUserPosts(request, env, corsH) {
       const result = await env.DB.prepare(
         'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
       ).bind(
-        session.id, session.name||session.email, avatarUrl,
+        session.id, await getUserDisplayName(session.id, session.name||session.email, env), avatarUrl,
         caption, '',
         orig.id, orig.body||'', orig.user_name||'', orig.user_id||'', orig.image_url||'', origAvatar
       ).run();
       const newId = result.meta.last_row_id;
       await addPoints(env, session.id, 1);
       const newPost = {
-        id: newId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl,
+        id: newId, user_id: session.id, user_name: await getUserDisplayName(session.id, session.name||session.email, env), user_avatar: avatarUrl,
         body: caption, image_url: '', like_count: 0, comment_count: 0, created_at: new Date().toISOString(),
         repost_of_id: orig.id, repost_body: orig.body||'', repost_user_name: orig.user_name||'',
         repost_user_id: orig.user_id||'', repost_image_url: orig.image_url||'', repost_avatar: origAvatar
