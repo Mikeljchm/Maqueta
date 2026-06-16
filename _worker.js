@@ -2029,6 +2029,13 @@ export default {
           return apiJson({ok:true},200,corsH);
         }
 
+        /* POST /api/admin/post-hide?id=X */
+        if (path === '/api/admin/post-hide' && request.method === 'POST') {
+          const pid = url.searchParams.get('id');
+          if (!pid) return apiJson({error:'id required'},400,corsH);
+          await env.DB.prepare('UPDATE user_posts SET hidden=1 WHERE id=?').bind(pid).run();
+          return apiJson({ok:true},200,corsH);
+        }
         /* DELETE /api/admin/post?id=X */
         if (path === '/api/admin/post' && request.method === 'DELETE') {
           const pid = url.searchParams.get('id');
