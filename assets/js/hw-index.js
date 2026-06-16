@@ -3549,6 +3549,7 @@ async function votePoll(postId, idx, poll, container) {
         + '<button class="adm-tab" data-adm-tab="reports">&#128681; Reports</button>'
         + '<button class="adm-tab" data-adm-tab="users">&#128101; Users</button>'
         + '<button class="adm-tab" data-adm-tab="posts">&#128444; Posts</button>'
+        + '<button class="adm-tab" data-adm-tab="threads">&#128172; Threads</button>'
       + '</div>'
       + '<div class="adm-body" id="adm-body"></div>';
     document.body.appendChild(panel);
@@ -3714,6 +3715,91 @@ async function votePoll(postId, idx, poll, container) {
           };
         } catch(e) { body.innerHTML='<div class="adm-empty">Error loading posts</div>'; }
       }
+
+      else if (tab === 'threads') {
+        try {
+          var r = await fetch('/api/admin/threads', {credentials:'include'});
+          var d = await r.json();
+          var threads = d.threads||[];
+          if (!threads.length) { body.innerHTML='<div class="adm-empty">No threads yet</div>'; return; }
+
+          /* Mostrar lista de hilos — al tocar uno expande sus posts */
+          body.innerHTML = '<div class="adm-section" id="adm-threads-list">'
+            + threads.map(function(t){
+                var totalBadge = '<span style="font-size:0.6rem;background:var(--surface-3);color:var(--text-dim);border-radius:10px;padding:0.1rem 0.45rem;margin-left:0.3rem;">'+(t.total_posts||0)+' posts</span>';
+                var hiddenCount = (t.total_posts||0) - (t.visible_posts||0);
+                var hiddenBadge = hiddenCount > 0 ? '<span style="font-size:0.6rem;background:rgba(204,0,0,0.15);color:#ff4444;border-radius:10px;padding:0.1rem 0.45rem;margin-left:0.3rem;">'+hiddenCount+' hidden</span>' : '';
+                return '<div class="adm-report" style="cursor:pointer;" data-adm-thread-id="'+t.id+'" data-adm-thread-name="'+escH(t.name||'')+'">'
+                  + '<div style="display:flex;align-items:center;justify-content:space-between;">'
+                    + '<div>'
+                      + '<div style="font-family:var(--font-d);font-size:0.88rem;color:var(--text);">'+escH(t.name||'Unnamed')+'</div>'
+                      + '<div style="font-size:0.65rem;color:var(--text-muted);margin-top:0.15rem;">'+new Date(t.created_at).toLocaleDateString()+'</div>'
+                    + '</div>'
+                    + '<div>'+totalBadge+hiddenBadge+'</div>'
+                  + '</div>'
+                  + '<div id="adm-thread-posts-'+t.id+'" style="display:none;margin-top:0.75rem;"></div>'
+                + '</div>';
+              }).join('')
+          + '</div>';
+
+          /* Click en un hilo — expandir/colapsar sus posts */
+          body.addEventListener('click', async function(ev){
+            var card = ev.target.closest('[data-adm-thread-id]');
+            if (!card) return;
+            /* Ignorar clicks en botones internos */
+            if (ev.target.closest('button')) return;
+            var tid   = card.getAttribute('data-adm-thread-id');
+            var tname = card.getAttribute('data-adm-thread-name');
+            var postsDiv = document.getElementById('adm-thread-posts-'+tid);
+            if (!postsDiv) return;
+            if (postsDiv.style.display !== 'none') {
+              postsDiv.style.display = 'none'; return;
+            }
+            postsDiv.style.display = 'block';
+            postsDiv.innerHTML = '<div class="adm-empty" style="padding:0.75rem 0;">Loading...</div>';
+            try {
+              var rp = await fetch('/api/admin/thread-posts?thread_id='+tid, {credentials:'include'});
+              var dp = await rp.json();
+              var posts = dp.posts||[];
+              if (!posts.length) { postsDiv.innerHTML='<div class="adm-empty" style="padding:0.5rem 0;">No posts in this thread</div>'; return; }
+              postsDiv.innerHTML = posts.map(function(p){
+                var isHidden = p.hidden || p.hidden_by_creator;
+                var media = '';
+                if (p.image_url) {
+                  var lo=(p.image_url||'').toLowerCase().split('?')[0];
+                  media = lo.endsWith('.mp4')||lo.endsWith('.webm')
+                    ? '<video src="'+p.image_url+'" muted style="width:100%;max-height:100px;object-fit:cover;border-radius:6px;margin-bottom:0.3rem;"></video>'
+                    : '<img src="'+p.image_url+'" style="width:100%;max-height:100px;object-fit:cover;border-radius:6px;margin-bottom:0.3rem;">';
+                }
+                return '<div style="border:1px solid var(--border);border-radius:10px;padding:0.6rem;margin-bottom:0.5rem;'+(isHidden?'opacity:0.45;':'')+'">'
+                  + (isHidden?'<span style="font-size:0.58rem;color:#ff4444;display:block;margin-bottom:0.25rem;">HIDDEN</span>':'')
+                  + media
+                  + (p.body?'<div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.3rem;">'+escH(p.body.slice(0,120))+'</div>':'')
+                  + '<div style="font-size:0.6rem;color:var(--text-muted);margin-bottom:0.35rem;">'+escH(p.user_name||'')+'&nbsp;&#183;&nbsp;'+new Date(p.created_at).toLocaleDateString()+'</div>'
+                  + '<div style="display:flex;gap:0.35rem;">'
+                    + (!isHidden ? '<button class="adm-btn adm-btn-confirm" data-adm-action="hide-tpost" data-adm-pid="'+p.id+'" data-adm-tid="'+tid+'">&#128065; Hide</button>' : '')
+                    + '<button class="adm-btn adm-btn-delete" data-adm-action="del-tpost" data-adm-pid="'+p.id+'" data-adm-tid="'+tid+'">&#128465; Delete</button>'
+                  + '</div>'
+                + '</div>';
+              }).join('');
+            } catch(e) { postsDiv.innerHTML='<div class="adm-empty" style="padding:0.5rem 0;">Error loading posts</div>'; }
+          });
+
+          window._admHideThreadPost = async function(pid, tid) {
+            await fetch('/api/admin/thread-post-hide?id='+pid, {method:'POST',credentials:'include'});
+            var el = document.getElementById('adm-thread-posts-'+tid);
+            if (el) { el.style.display='none'; el.innerHTML=''; }
+            loadAdmTab('threads');
+          };
+          window._admDelThreadPostPanel = async function(pid, tid) {
+            if (!confirm('Delete this thread post permanently?')) return;
+            await fetch('/api/admin/thread-post?id='+pid, {method:'DELETE',credentials:'include'});
+            var el = document.getElementById('adm-thread-posts-'+tid);
+            if (el) { el.style.display='none'; el.innerHTML=''; }
+            loadAdmTab('threads');
+          };
+        } catch(e) { body.innerHTML='<div class="adm-empty">Error loading threads</div>'; }
+      }
     }
 
     /* Exponer el panel */
@@ -3738,6 +3824,14 @@ async function votePoll(postId, idx, poll, container) {
       if (window._admBanFromPanel) window._admBanFromPanel(owner, uname||owner);
     } else if ((action === 'dismiss' || action === 'confirm' || action === 'delete') && rid) {
       if (window._admReportAction) window._admReportAction(parseInt(rid), action, pid ? parseInt(pid) : null, owner||'');
+    } else if (action === 'hide-tpost') {
+      var tpid = btn.getAttribute('data-adm-pid');
+      var ttid = btn.getAttribute('data-adm-tid');
+      if (window._admHideThreadPost) window._admHideThreadPost(tpid, ttid);
+    } else if (action === 'del-tpost') {
+      var tpid2 = btn.getAttribute('data-adm-pid');
+      var ttid2 = btn.getAttribute('data-adm-tid');
+      if (window._admDelThreadPostPanel) window._admDelThreadPostPanel(tpid2, ttid2);
     }
   });
 
