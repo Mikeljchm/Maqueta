@@ -1394,7 +1394,7 @@ async function votePoll(postId, idx, poll, container) {
       '#following-strip::-webkit-scrollbar{display:none;}',
       /* Pill Following destacado */
       '#following-pill{background:linear-gradient(135deg,var(--fire-orange),var(--fire-red)) !important;color:#fff !important;border-color:transparent !important;font-weight:600;}',
-      '#following-pill:before{content:"\2728 ";}',,
+      '#following-pill:before{content:"\2728 ";}'
       '.fw-avatar-card{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0.35rem;cursor:pointer;width:58px;}',
       '.fw-avatar-ring{width:52px;height:52px;border-radius:50%;padding:2px;background:linear-gradient(135deg,var(--fire-orange),var(--fire-red));flex-shrink:0;}',
       '.fw-avatar-ring.has-post{background:linear-gradient(135deg,var(--fire-orange),var(--fire-yellow));}',
@@ -1436,6 +1436,8 @@ async function votePoll(postId, idx, poll, container) {
   }
 
   async function _cfLoadPage() {
+    var _aw = document.getElementById('all-feed-view');
+    if (_aw && _aw.style.display === 'none') return;
     if (_cfLoading || !_cfHasMore) return;
     _cfLoading = true;
     /* Mostrar spinner en el sentinel del community feed */
@@ -1556,7 +1558,7 @@ async function votePoll(postId, idx, poll, container) {
           fc.innerHTML = '<div style="padding:2.5rem;text-align:center;color:var(--text-dim);font-size:0.85rem;">No hay posts aún.<br><span style="font-size:0.72rem;color:var(--text-muted);">Sigue a usuarios para ver su contenido aquí.</span></div>';
           return;
         }
-        fc.innerHTML = posts.map(window.renderPost||function(){ return ''; }).join('');
+        fc.innerHTML = posts.map(function(p){ return (window.renderPost||function(){ return ''; })(p); }).join('');
         if (window._activateLazyGifs) window._activateLazyGifs(fc);
         if (window.loadAllLikes) window.loadAllLikes();
         if (window.loadAllCommentCounts) window.loadAllCommentCounts();
