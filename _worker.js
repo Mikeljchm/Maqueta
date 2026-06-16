@@ -1309,17 +1309,17 @@ async function handleUserPosts(request, env, corsH) {
       ).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
+    /* Clips de un usuario — posts con video — ANTES del genérico userId */
+    if (action === 'clips' && userId) {
+      const { results } = await env.DB.prepare(
+        "SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 AND (image_url LIKE '%.mp4%' OR image_url LIKE '%.webm%') ORDER BY created_at DESC LIMIT 50"
+      ).bind(userId).all();
+      return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
+    }
     /* Posts de un usuario específico */
     if (userId) {
       const { results } = await env.DB.prepare(
         'SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
-      ).bind(userId).all();
-      return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
-    }
-    /* Clips de un usuario — posts con video */
-    if (action === 'clips' && userId) {
-      const { results } = await env.DB.prepare(
-        "SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 AND (image_url LIKE '%.mp4%' OR image_url LIKE '%.webm%') ORDER BY created_at DESC LIMIT 50"
       ).bind(userId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
