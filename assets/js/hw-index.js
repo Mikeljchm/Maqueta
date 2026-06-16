@@ -1321,7 +1321,7 @@ async function votePoll(postId, idx, poll, container) {
     LOADED = 0;
     var container = document.getElementById('feed-container');
     if (container) container.innerHTML = '';
-    renderBatch();
+    /* El observer dispara renderBatch cuando llega al sentinel */
   }
 
   window.setFeedFilter = function(cat) {
@@ -1341,8 +1341,6 @@ async function votePoll(postId, idx, poll, container) {
       /* All — mostrar el feed normal */
       if (allView) allView.style.display = 'block';
       if (fwView)  fwView.style.display  = 'none';
-      /* Resetear y recargar solo si ya estaba en following */
-      if (activeFilter !== 'all') resetFeed();
     }
     activeFilter = cat || 'all';
   };
@@ -1378,11 +1376,11 @@ async function votePoll(postId, idx, poll, container) {
     var sentinel = document.getElementById('feed-sentinel');
     if (!sentinel) return;
     var observer = new IntersectionObserver(function(entries) {
-      if (entries[0].isIntersecting && !LOADING && LOADED < getFilteredPosts().length) {
+      if (entries[0].isIntersecting && !LOADING && !_cfLoading && LOADED < getFilteredPosts().length) {
         LOADING = true;
         var loader = document.getElementById('feed-loader');
         if (loader) loader.style.display = 'flex';
-        setTimeout(renderBatch, 100);
+        setTimeout(renderBatch, 50);
       }
     }, { rootMargin: '200px' });
     observer.observe(sentinel);
@@ -1453,11 +1451,7 @@ async function votePoll(postId, idx, poll, container) {
       }
       if (sentinel) sentinel.innerHTML = '';
       /* Ocultar sentinel si no hay más */
-      /* Cuando community feed termina, iniciar el feed Jekyll */
-      if (!_cfHasMore) {
-        LOADED = 0;
-        renderBatch();
-      }
+      /* Cuando community feed termina, el observer dispara Jekyll automáticamente */
     } catch(e) {
       if (sentinel) sentinel.innerHTML = '';
     }
@@ -1582,12 +1576,10 @@ async function votePoll(postId, idx, poll, container) {
       .then(function(r){ return r.json(); })
       .then(function(data) {
         ALL_POSTS = data || [];
-        window.ALL_POSTS = ALL_POSTS; /* expuesto para Activity Panel */
-        renderBatch();
+        window.ALL_POSTS = ALL_POSTS;
+        /* NO llamar renderBatch aquí — el observer lo dispara cuando llega al sentinel */
         initObserver();
-        // Marcar botones guardados + cargar reacciones una vez el feed esté listo
         if (typeof window._markSavedBtns === 'function') window._markSavedBtns();
-
       })
       .catch(function() {
         var container = document.getElementById('feed-container');
