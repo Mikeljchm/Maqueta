@@ -2321,8 +2321,9 @@ export default {
         ).bind(post_id, reporterUid, reporter_email||'', reason, details||'', original_url||'', reporter_name||'').run();
         /* Incrementar report_count en el post */
         await env.DB.prepare('UPDATE user_posts SET report_count = COALESCE(report_count,0)+1 WHERE id=?').bind(post_id).run();
-        /* Auto-ocultar si reason=underage o report_count >= 3 */
-        if (reason === 'underage') {
+        /* Auto-ocultar inmediatamente si: underage, copyright, illegal — o report_count >= 3 */
+        const autoHideReasons = ['underage', 'copyright', 'illegal'];
+        if (autoHideReasons.includes(reason)) {
           await env.DB.prepare('UPDATE user_posts SET hidden=1 WHERE id=?').bind(post_id).run();
         } else {
           const {results:rc} = await env.DB.prepare('SELECT report_count FROM user_posts WHERE id=?').bind(post_id).all();
