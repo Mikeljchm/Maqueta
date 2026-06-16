@@ -1316,6 +1316,15 @@ async function handleUserPosts(request, env, corsH) {
       ).bind(userId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
+    /* Posts guardados por el usuario */
+    if (action === 'saved') {
+      if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+      const targetId = userId || session.id;
+      const { results } = await env.DB.prepare(
+        'SELECT p.id,p.user_id,p.user_name,p.user_avatar,p.body,p.image_url,p.like_count,p.comment_count,p.repost_of_id,p.repost_body,p.repost_user_name,p.repost_user_id,p.repost_image_url,p.repost_avatar,p.created_at FROM user_posts p INNER JOIN post_saves s ON s.post_id=p.id WHERE s.user_id=? AND p.hidden=0 ORDER BY s.saved_at DESC LIMIT 50'
+      ).bind(targetId).all();
+      return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
+    }
     /* Posts de un usuario específico */
     if (userId) {
       const { results } = await env.DB.prepare(
@@ -1323,8 +1332,7 @@ async function handleUserPosts(request, env, corsH) {
       ).bind(userId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
-    /* Posts guardados por el usuario */
-    if (action === 'saved') {
+    /* Admin: posts reportados */
       if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
       const targetId = userId || session.id;
       const { results } = await env.DB.prepare(
