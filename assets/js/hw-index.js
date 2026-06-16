@@ -7068,7 +7068,9 @@ async function votePoll(postId, idx, poll, container) {
 
   function renderPost(p) {
     var isAdmin = document.body.classList.contains('is-admin');
-    var isOwn   = window.currentUser && window.currentUser.id === p.user_id && !window._viewingProfileOf;
+    /* isOwn = false si es un repost de contenido ajeno (para poder reportarlo) */
+    var _isRepostOfOther = p.repost_of_id && p.repost_user_id && window.currentUser && p.repost_user_id !== window.currentUser.id;
+    var isOwn   = window.currentUser && window.currentUser.id === p.user_id && !window._viewingProfileOf && !_isRepostOfOther;
     var reported = REPORTED_POSTS.has(String(p.id));
     var _avUrlP = (window._resolveAvatar||function(u,a){return a||'';})(p.user_id, p.user_avatar);
     var avatar = _avUrlP
