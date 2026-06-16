@@ -2878,6 +2878,8 @@ async function votePoll(postId, idx, poll, container) {
     const session = getAdminSession();
     if (session && session.login === ADMIN_LOGIN) {
       document.body.classList.add('is-admin');
+      var admPanBtn = document.getElementById('adm-panel-btn');
+      if (admPanBtn) admPanBtn.style.display = 'flex';
       /* _initBroadcast se define en un IIFE posterior — defer para que ya exista */
       setTimeout(function() { if (window._initBroadcast) window._initBroadcast(); if (window._initSuggestionsBtn) window._initSuggestionsBtn(); }, 0);
       /* Agregar botón Confessions al panel admin */
@@ -3482,6 +3484,261 @@ async function votePoll(postId, idx, poll, container) {
   })();
 
     /* ── ADMIN ACTION FUNCTIONS ── */
+  /* ── PANEL ADMIN CENTRAL ── */
+  (function(){
+    var s = document.createElement('style');
+    s.textContent = [
+      '#adm-panel{position:fixed;inset:0;background:var(--bg);z-index:800;display:none;flex-direction:column;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}',
+      '#adm-panel.open{display:flex;transform:translateX(0);}',
+      '.adm-header{display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}',
+      '.adm-back{background:none;border:none;color:var(--text);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}',
+      '.adm-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.08em;flex:1;}',
+      '.adm-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;overflow-x:auto;}',
+      '.adm-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:var(--font-b);font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;padding:0.6rem 0.85rem;cursor:pointer;white-space:nowrap;}',
+      '.adm-tab.active{color:var(--fire-orange);border-bottom-color:var(--fire-orange);}',
+      '.adm-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}',
+      '.adm-section{padding:0.85rem;}',
+      /* Stats */
+      '.adm-stats{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.85rem;}',
+      '.adm-stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0.85rem;text-align:center;}',
+      '.adm-stat-n{font-family:var(--font-d);font-size:1.6rem;color:var(--fire-orange);}',
+      '.adm-stat-l{font-size:0.62rem;color:var(--text-dim);letter-spacing:0.06em;margin-top:0.15rem;}',
+      /* Report cards */
+      '.adm-report{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0.85rem;margin-bottom:0.65rem;}',
+      '.adm-report-reason{display:inline-block;font-size:0.6rem;letter-spacing:0.08em;font-family:var(--font-d);padding:0.15rem 0.5rem;border-radius:10px;margin-bottom:0.4rem;}',
+      '.adm-report-reason.copyright{background:rgba(255,69,0,0.15);color:var(--fire-orange);}',
+      '.adm-report-reason.underage{background:rgba(204,0,0,0.2);color:#ff4444;}',
+      '.adm-report-reason.spam{background:rgba(255,184,0,0.12);color:var(--fire-yellow);}',
+      '.adm-report-reason.other,.adm-report-reason.harassment,.adm-report-reason.illegal{background:var(--surface-3);color:var(--text-dim);}',
+      '.adm-report-body{font-size:0.75rem;color:var(--text-dim);margin-bottom:0.5rem;line-height:1.4;}',
+      '.adm-report-meta{font-size:0.62rem;color:var(--text-muted);margin-bottom:0.6rem;}',
+      '.adm-report-actions{display:flex;gap:0.4rem;flex-wrap:wrap;}',
+      '.adm-btn{border:none;border-radius:8px;padding:0.3rem 0.65rem;font-size:0.68rem;font-family:var(--font-b);cursor:pointer;}',
+      '.adm-btn-dismiss{background:var(--surface-3);color:var(--text-dim);}',
+      '.adm-btn-confirm{background:rgba(255,69,0,0.15);color:var(--fire-orange);}',
+      '.adm-btn-delete{background:rgba(204,0,0,0.15);color:#ff4444;}',
+      '.adm-btn-view{background:var(--surface-2);color:var(--text);}',
+      /* User cards */
+      '.adm-user{display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0;border-bottom:1px solid var(--border);}',
+      '.adm-user-av{width:38px;height:38px;border-radius:50%;background:var(--surface-3);overflow:hidden;flex-shrink:0;}',
+      '.adm-user-av img{width:100%;height:100%;object-fit:cover;}',
+      '.adm-user-info{flex:1;min-width:0;}',
+      '.adm-user-name{font-size:0.8rem;color:var(--text);font-family:var(--font-b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.adm-user-meta{font-size:0.62rem;color:var(--text-muted);}',
+      '.adm-user-actions{display:flex;gap:0.3rem;flex-shrink:0;}',
+      '.adm-badge-suspended{background:rgba(204,0,0,0.2);color:#ff4444;font-size:0.58rem;padding:0.1rem 0.4rem;border-radius:8px;font-family:var(--font-d);}',
+      '.adm-badge-strikes{background:rgba(255,69,0,0.15);color:var(--fire-orange);font-size:0.58rem;padding:0.1rem 0.4rem;border-radius:8px;font-family:var(--font-d);}',
+      '.adm-search{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.5rem 0.75rem;font-size:0.8rem;outline:none;box-sizing:border-box;margin-bottom:0.75rem;}',
+      '.adm-filter-tabs{display:flex;gap:0.4rem;margin-bottom:0.75rem;flex-wrap:wrap;}',
+      '.adm-filter-tab{background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-size:0.62rem;padding:0.25rem 0.65rem;border-radius:20px;cursor:pointer;font-family:var(--font-b);}',
+      '.adm-filter-tab.active{background:var(--fire-orange);color:#fff;border-color:var(--fire-orange);}',
+      '.adm-empty{text-align:center;padding:2.5rem 1rem;color:var(--text-muted);font-size:0.8rem;}',
+    ].join('');
+    document.head.appendChild(s);
+
+    /* Crear el panel */
+    var panel = document.createElement('div'); panel.id='adm-panel';
+    panel.innerHTML = '<div class="adm-header">'
+      + '<button class="adm-back" id="adm-back"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>'
+      + '<div class="adm-title">&#128272; ADMIN PANEL</div>'
+      + '</div>'
+      + '<div class="adm-tabs">'
+        + '<button class="adm-tab active" data-adm-tab="dashboard">&#128200; Dashboard</button>'
+        + '<button class="adm-tab" data-adm-tab="reports">&#128681; Reports</button>'
+        + '<button class="adm-tab" data-adm-tab="users">&#128101; Users</button>'
+        + '<button class="adm-tab" data-adm-tab="posts">&#128444; Posts</button>'
+      + '</div>'
+      + '<div class="adm-body" id="adm-body"></div>';
+    document.body.appendChild(panel);
+
+    document.getElementById('adm-back').addEventListener('click', function(){ panel.classList.remove('open'); });
+
+    /* Tab switcher */
+    panel.querySelectorAll('.adm-tab[data-adm-tab]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        panel.querySelectorAll('.adm-tab').forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        loadAdmTab(btn.getAttribute('data-adm-tab'));
+      });
+    });
+
+    async function loadAdmTab(tab) {
+      var body = document.getElementById('adm-body');
+      body.innerHTML = '<div class="adm-section adm-empty">Loading...</div>';
+
+      if (tab === 'dashboard') {
+        try {
+          var r = await fetch('/api/admin/stats', {credentials:'include'});
+          var d = await r.json();
+          body.innerHTML = '<div class="adm-section">'
+            + '<div class="adm-stats">'
+              + '<div class="adm-stat"><div class="adm-stat-n">'+d.users+'</div><div class="adm-stat-l">USERS</div></div>'
+              + '<div class="adm-stat"><div class="adm-stat-n">'+d.posts+'</div><div class="adm-stat-l">POSTS</div></div>'
+              + '<div class="adm-stat" style="border-color:rgba(255,69,0,0.3)"><div class="adm-stat-n" style="color:#ff4444">'+d.pending_reports+'</div><div class="adm-stat-l">PENDING REPORTS</div></div>'
+              + '<div class="adm-stat"><div class="adm-stat-n" style="color:var(--text-dim)">'+d.hidden_posts+'</div><div class="adm-stat-l">HIDDEN POSTS</div></div>'
+            + '</div>'
+            + (d.pending_reports > 0 ? '<div style="background:rgba(255,69,0,0.08);border:1px solid rgba(255,69,0,0.2);border-radius:12px;padding:0.75rem;font-size:0.75rem;color:var(--fire-orange);">&#9888; '+d.pending_reports+' report(s) need your attention</div>' : '')
+          + '</div>';
+        } catch(e) { body.innerHTML = '<div class="adm-empty">Error loading stats</div>'; }
+      }
+
+      else if (tab === 'reports') {
+        var currentStatus = 'pending';
+        async function loadReports(status) {
+          currentStatus = status;
+          body.innerHTML = '<div class="adm-section"><div class="adm-filter-tabs">'
+            + ['pending','resolved','dismissed'].map(function(s){
+                return '<button class="adm-filter-tab'+(s===status?' active':'')+'" data-rs="'+s+'">'+s.charAt(0).toUpperCase()+s.slice(1)+'</button>';
+              }).join('')
+            + '</div><div id="adm-reports-list"><div class="adm-empty">Loading...</div></div></div>';
+          body.querySelectorAll('.adm-filter-tab[data-rs]').forEach(function(b){
+            b.addEventListener('click', function(){ loadReports(b.getAttribute('data-rs')); });
+          });
+          try {
+            var r = await fetch('/api/admin/reports?status='+status, {credentials:'include'});
+            var d = await r.json();
+            var list = document.getElementById('adm-reports-list');
+            if (!d.reports || !d.reports.length) { list.innerHTML='<div class="adm-empty">No '+status+' reports</div>'; return; }
+            list.innerHTML = d.reports.map(function(rep){
+              var mediaHtml = rep.post_image ? '<img src="'+rep.post_image+'" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-bottom:0.4rem;">' : '';
+              var postBodyHtml = rep.post_body ? '<div class="adm-report-body">'+escH(rep.post_body.slice(0,120))+'</div>' : '';
+              var dmcaExtra = rep.reason==='copyright' && (rep.reporter_email||rep.original_url||rep.reporter_name) ?
+                '<div style="font-size:0.62rem;color:var(--text-dim);margin-bottom:0.4rem;">'
+                  +(rep.reporter_name?'&#128100; '+escH(rep.reporter_name)+' &nbsp;':'')
+                  +(rep.reporter_email?'&#128140; '+escH(rep.reporter_email)+'<br>':'')
+                  +(rep.original_url?'&#128279; <a href="'+escH(rep.original_url)+'" target="_blank" style="color:var(--fire-orange);">View original</a>':'')
+                +'</div>' : '';
+               var actions = status==='pending' ? (
+                 '<button class="adm-btn adm-btn-dismiss" data-adm-rid="'+rep.id+'" data-adm-action="dismiss" data-adm-pid="'+rep.post_id+'" data-adm-owner="'+escH(rep.post_owner||'')+'">&#10003; Dismiss</button>'
+                 +'<button class="adm-btn adm-btn-confirm" data-adm-rid="'+rep.id+'" data-adm-action="confirm" data-adm-pid="'+rep.post_id+'" data-adm-owner="'+escH(rep.post_owner||'')+'">&#9888; Confirm + Hide</button>'
+                 +'<button class="adm-btn adm-btn-delete" data-adm-rid="'+rep.id+'" data-adm-action="delete" data-adm-pid="'+rep.post_id+'" data-adm-owner="'+escH(rep.post_owner||'')+'">&#128465; Delete Post</button>'
+              ) : '<span style="font-size:0.65rem;color:var(--text-muted);">'+status+'</span>';
+              return '<div class="adm-report">'
+                + '<span class="adm-report-reason '+rep.reason+'">'+rep.reason.toUpperCase()+'</span>'
+                + (rep.post_hidden ? '<span style="font-size:0.6rem;color:#ff4444;margin-left:0.4rem;">HIDDEN</span>' : '')
+                + mediaHtml + postBodyHtml + dmcaExtra
+                + '<div class="adm-report-meta">Post #'+rep.post_id+' &nbsp;&#183;&nbsp; '+new Date(rep.created_at).toLocaleDateString()+'</div>'
+                + '<div class="adm-report-actions">'+actions+'</div>'
+              + '</div>';
+            }).join('');
+          } catch(e) { var list2=document.getElementById('adm-reports-list'); if(list2) list2.innerHTML='<div class="adm-empty">Error loading reports</div>'; }
+        }
+        loadReports('pending');
+        window._admReportAction = async function(repId, action, postId, ownerId) {
+          try {
+            await fetch('/api/admin/report-action', {
+              method:'POST', credentials:'include',
+              headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({report_id:repId, action:action, post_id:postId, post_owner_id:ownerId})
+            });
+            loadReports(currentStatus);
+          } catch(e) { alert('Error: '+e.message); }
+        };
+      }
+
+      else if (tab === 'users') {
+        try {
+          var r = await fetch('/api/admin/users', {credentials:'include'});
+          var d = await r.json();
+          var users = d.users||[];
+          function renderUsers(list) {
+            document.getElementById('adm-users-list').innerHTML = !list.length ? '<div class="adm-empty">No users found</div>' :
+              list.map(function(u){
+                var avHtml = u.avatar_url ? '<img src="'+u.avatar_url+'">' : '';
+                var strikes = u.dmca_strikes > 0 ? '<span class="adm-badge-strikes">'+u.dmca_strikes+' strike'+(u.dmca_strikes>1?'s':'')+'</span>' : '';
+                var susp = u.suspended ? '<span class="adm-badge-suspended">SUSPENDED</span>' : '';
+                var actBtn = u.suspended
+                  ? '<button class="adm-btn adm-btn-confirm" data-adm-action="unsuspend" data-adm-owner="'+escH(u.user_id)+'">&#9654; Unsuspend</button>'
+                  : '<button class="adm-btn adm-btn-delete" data-adm-action="ban" data-adm-owner="'+escH(u.user_id)+'" data-adm-uname="'+escH(u.display_name||u.username||'User')+'">&#128683; Ban</button>';
+                return '<div class="adm-user">'
+                  + '<div class="adm-user-av">'+avHtml+'</div>'
+                  + '<div class="adm-user-info">'
+                    + '<div class="adm-user-name">'+(u.display_name||u.username||u.user_id.slice(0,12))+' '+strikes+' '+susp+'</div>'
+                    + '<div class="adm-user-meta">'+(u.age_verified?'&#9989; Verified':'&#10060; Unverified')+' &nbsp;&#183;&nbsp; ID: '+u.user_id.slice(0,10)+'...</div>'
+                  + '</div>'
+                  + '<div class="adm-user-actions">'+actBtn+'</div>'
+                + '</div>';
+              }).join('');
+          }
+          body.innerHTML = '<div class="adm-section">'
+            + '<input class="adm-search" id="adm-user-search" placeholder="&#128269; Search by name or ID...">'
+            + '<div id="adm-users-list"></div></div>';
+          renderUsers(users);
+          document.getElementById('adm-user-search').addEventListener('input', function(){
+            var q = this.value.toLowerCase();
+            renderUsers(users.filter(function(u){ return (u.display_name||'').toLowerCase().includes(q)||(u.username||'').toLowerCase().includes(q)||u.user_id.toLowerCase().includes(q); }));
+          });
+          window._admUserAction = async function(action, uid) {
+            await fetch('/api/admin/report-action', {method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({report_id:0,action:action,post_owner_id:uid})});
+            loadAdmTab('users');
+          };
+          window._admBanFromPanel = function(uid, name) {
+            if (window._adminBanUser) window._adminBanUser(uid, name);
+          };
+        } catch(e) { body.innerHTML='<div class="adm-empty">Error loading users</div>'; }
+      }
+
+      else if (tab === 'posts') {
+        try {
+          var r = await fetch('/api/admin/posts', {credentials:'include'});
+          var d = await r.json();
+          var posts = d.posts||[];
+          if (!posts.length) { body.innerHTML='<div class="adm-empty">No posts</div>'; return; }
+          body.innerHTML = '<div class="adm-section" id="adm-posts-list"></div>';
+          var list3 = document.getElementById('adm-posts-list');
+          list3.innerHTML = posts.map(function(p){
+            var media = p.image_url ? (function(){
+              var lo=(p.image_url||'').toLowerCase().split('?')[0];
+              return lo.endsWith('.mp4')||lo.endsWith('.webm')
+                ? '<video src="'+p.image_url+'" muted style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-bottom:0.35rem;"></video>'
+                : '<img src="'+p.image_url+'" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-bottom:0.35rem;">';
+            })() : '';
+            return '<div class="adm-report">'
+              + media
+              + '<div class="adm-report-body">'+(p.body||'').slice(0,120)+'</div>'
+              + '<div class="adm-report-meta">By: '+escH(p.user_name||p.user_id||'')+'&nbsp;&#183;&nbsp;'+new Date(p.created_at).toLocaleDateString()+'&nbsp;&#183;&nbsp;Reports: '+(p.report_count||0)+'</div>'
+              + '<div class="adm-report-actions"><button class="adm-btn adm-btn-delete" onclick="window._admDeletePost('+p.id+')">&#128465; Delete</button>'
+              +'<button class="adm-btn adm-btn-confirm" onclick="window._admHidePost('+p.id+')">&#128065; Hide</button></div>'
+            + '</div>';
+          }).join('');
+          window._admDeletePost = async function(id) {
+            if (!confirm('Delete post #'+id+' permanently?')) return;
+            await fetch('/api/admin/post?id='+id, {method:'DELETE',credentials:'include'});
+            loadAdmTab('posts');
+          };
+          window._admHidePost = async function(id) {
+            await fetch('/api/admin/post-hide?id='+id, {method:'POST',credentials:'include'});
+            loadAdmTab('posts');
+          };
+        } catch(e) { body.innerHTML='<div class="adm-empty">Error loading posts</div>'; }
+      }
+    }
+
+    /* Exponer el panel */
+    window._openAdminPanel = function() {
+      panel.classList.add('open');
+      loadAdmTab('dashboard');
+    };
+  })();
+
+  /* Delegation para botones del panel admin */
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-adm-action]');
+    if (!btn) return;
+    var action = btn.getAttribute('data-adm-action');
+    var rid    = btn.getAttribute('data-adm-rid');
+    var pid    = btn.getAttribute('data-adm-pid');
+    var owner  = btn.getAttribute('data-adm-owner');
+    var uname  = btn.getAttribute('data-adm-uname');
+    if (action === 'unsuspend' || action === 'clear-strikes') {
+      if (window._admUserAction) window._admUserAction(action, owner);
+    } else if (action === 'ban') {
+      if (window._admBanFromPanel) window._admBanFromPanel(owner, uname||owner);
+    } else if ((action === 'dismiss' || action === 'confirm' || action === 'delete') && rid) {
+      if (window._admReportAction) window._admReportAction(parseInt(rid), action, pid ? parseInt(pid) : null, owner||'');
+    }
+  });
+
   window._adminIsOn = function() {
     try {
       var m = document.cookie.match(/hw_admin=([^;]+)/);
@@ -7179,26 +7436,29 @@ async function votePoll(postId, idx, poll, container) {
     if (catBtn && currentReportPostId) {
       var cat = catBtn.getAttribute('data-rep-cat');
       var pid = currentReportPostId;
+      /* Copyright/DMCA → mostrar formulario extendido */
+      if (cat === 'copyright') {
+        closeReportSheet();
+        window._openDmcaForm(pid);
+        return;
+      }
       closeReportSheet();
       try {
-        await fetch('/api/posts', {
+        await fetch('/api/report', {
           method:'POST', credentials:'include',
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({action:'report', post_id: parseInt(pid), category: cat})
+          body: JSON.stringify({post_id: parseInt(pid), reason: cat})
         });
-        /* Marcar como reportado en el DOM */
         var btn2 = document.querySelector('.post-report-btn[data-post-id="'+pid+'"]');
         if (btn2) { btn2.textContent = 'Reported'; btn2.classList.add('reported'); }
         REPORTED_POSTS.add(pid); saveReported();
-        /* Si es underage — ocultar la card inmediatamente */
         if (cat === 'underage') {
           var card = document.querySelector('.post-card[data-post-id="'+pid+'"]');
           if (card) { card.style.opacity='0.3'; card.style.pointerEvents='none'; }
         }
-        /* Toast */
         var toast = document.getElementById('toast');
         if (toast) {
-          toast.textContent = cat==='underage' ? '⚠ Reported and removed — thank you' : 'Reported — thank you';
+          toast.textContent = cat==='underage' ? '&#9888; Reported and hidden — thank you' : 'Reported — thank you';
           toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 3000);
         }
       } catch(e){}
@@ -7540,6 +7800,93 @@ async function votePoll(postId, idx, poll, container) {
       sessionStorage.removeItem('hw_s');
       window.location.href = '/auth/google/logout?redirect=' + encodeURIComponent(window.location.href);
     });
+  })();
+
+  /* ── DMCA Form completo ── */
+  (function(){
+    var s = document.createElement('style');
+    s.textContent = '.dmca-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:none;align-items:flex-end;justify-content:center;}'
+      +'.dmca-overlay.open{display:flex;}'
+      +'.dmca-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;padding:1.25rem 1.1rem calc(2rem + env(safe-area-inset-bottom,0px));}'
+      +'.dmca-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem;}'
+      +'.dmca-title{font-family:var(--font-d);font-size:1rem;letter-spacing:0.08em;margin-bottom:0.25rem;}'
+      +'.dmca-sub{font-size:0.68rem;color:var(--text-dim);margin-bottom:1rem;line-height:1.5;}'
+      +'.dmca-label{font-size:0.65rem;color:var(--text-dim);letter-spacing:0.06em;display:block;margin-bottom:0.3rem;margin-top:0.75rem;}'
+      +'.dmca-input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:0.55rem 0.75rem;font-size:0.8rem;font-family:var(--font-b);outline:none;box-sizing:border-box;}'
+      +'.dmca-input:focus{border-color:var(--fire-orange);}'
+      +'.dmca-warn{background:rgba(204,0,0,0.08);border:1px solid rgba(204,0,0,0.25);border-radius:10px;padding:0.75rem;font-size:0.65rem;color:#ffaaaa;line-height:1.55;margin-top:0.85rem;}'
+      +'.dmca-check{display:flex;align-items:flex-start;gap:0.5rem;margin-top:0.65rem;font-size:0.68rem;color:var(--text-dim);line-height:1.5;cursor:pointer;}'
+      +'.dmca-check input{margin-top:0.15rem;flex-shrink:0;accent-color:var(--fire-orange);}'
+      +'.dmca-send{width:100%;margin-top:1rem;background:var(--fire-orange);color:#fff;border:none;border-radius:25px;padding:0.65rem;font-family:var(--font-d);font-size:0.85rem;letter-spacing:0.07em;cursor:pointer;}'
+      +'.dmca-send:disabled{opacity:0.4;}'
+      +'.dmca-err{font-size:0.68rem;color:#ff5555;text-align:center;margin-top:0.5rem;min-height:1rem;}';
+    document.head.appendChild(s);
+
+    var overlay = document.createElement('div'); overlay.className='dmca-overlay'; overlay.id='dmca-overlay';
+    var sheet   = document.createElement('div'); sheet.className='dmca-sheet';
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
+
+    var _dmcaPostId = null;
+
+    window._openDmcaForm = function(postId) {
+      _dmcaPostId = postId;
+      sheet.innerHTML = '<div class="dmca-handle"></div>'
+        + '<div class="dmca-title">&#169; COPYRIGHT / DMCA NOTICE</div>'
+        + '<div class="dmca-sub">Complete this form to submit a DMCA takedown notice. False claims may result in legal liability.</div>'
+        + '<label class="dmca-label">YOUR FULL NAME *</label>'
+        + '<input class="dmca-input" id="dmca-name" placeholder="Full legal name" maxlength="100">'
+        + '<label class="dmca-label">YOUR EMAIL *</label>'
+        + '<input class="dmca-input" id="dmca-email" type="email" placeholder="contact@email.com" maxlength="200">'
+        + '<label class="dmca-label">URL OF ORIGINAL COPYRIGHTED WORK *</label>'
+        + '<input class="dmca-input" id="dmca-url" placeholder="https://..." maxlength="500">'
+        + '<label class="dmca-label">DESCRIPTION OF YOUR WORK</label>'
+        + '<input class="dmca-input" id="dmca-desc" placeholder="Brief description of the original work" maxlength="500">'
+        + '<div class="dmca-warn">&#9888; LEGAL NOTICE: False or fraudulent DMCA notices may result in legal liability under 17 U.S.C. &#167;512(f). HOTT WRESTLING reserves the right to take legal action against those who abuse this system.</div>'
+        + '<label class="dmca-check"><input type="checkbox" id="dmca-check1"> I have a good faith belief that the use of the described material is not authorized by the copyright owner, its agent, or the law.</label>'
+        + '<label class="dmca-check"><input type="checkbox" id="dmca-check2"> I declare, under penalty of perjury, that I am the copyright owner or authorized to act on their behalf, and the information is accurate.</label>'
+        + '<label class="dmca-check"><input type="checkbox" id="dmca-check3"> I have read and agree to the legal notice above and confirm my notification is truthful and made in good faith.</label>'
+        + '<button class="dmca-send" id="dmca-send">SUBMIT DMCA NOTICE</button>'
+        + '<div class="dmca-err" id="dmca-err"></div>';
+      overlay.classList.add('open');
+
+      document.getElementById('dmca-send').addEventListener('click', async function() {
+        var name  = document.getElementById('dmca-name').value.trim();
+        var email = document.getElementById('dmca-email').value.trim();
+        var url   = document.getElementById('dmca-url').value.trim();
+        var desc  = document.getElementById('dmca-desc').value.trim();
+        var c1 = document.getElementById('dmca-check1').checked;
+        var c2 = document.getElementById('dmca-check2').checked;
+        var c3 = document.getElementById('dmca-check3').checked;
+        var errEl = document.getElementById('dmca-err');
+        if (!name || !email || !url) { errEl.textContent = 'Name, email and original URL are required.'; return; }
+        if (!c1 || !c2 || !c3) { errEl.textContent = 'You must check all three declarations.'; return; }
+        var btn = document.getElementById('dmca-send');
+        btn.disabled = true; btn.textContent = 'Submitting...';
+        try {
+          var r = await fetch('/api/report', {
+            method:'POST', credentials:'include',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({post_id:parseInt(_dmcaPostId), reason:'copyright', details:desc, original_url:url, reporter_email:email, reporter_name:name})
+          });
+          var d = await r.json();
+          if (d.ok) {
+            overlay.classList.remove('open');
+            var toast = document.getElementById('toast');
+            if (toast) { toast.textContent = 'DMCA notice submitted. We will review within 48h.'; toast.classList.add('show'); setTimeout(function(){ toast.classList.remove('show'); }, 4000); }
+            var repBtn = document.querySelector('.post-report-btn[data-post-id="'+_dmcaPostId+'"]');
+            if (repBtn) { repBtn.textContent = 'Reported'; repBtn.classList.add('reported'); }
+          } else {
+            errEl.textContent = d.error || 'Submission failed.';
+            btn.disabled = false; btn.textContent = 'SUBMIT DMCA NOTICE';
+          }
+        } catch(e) {
+          errEl.textContent = 'Network error. Please try again.';
+          btn.disabled = false; btn.textContent = 'SUBMIT DMCA NOTICE';
+        }
+      });
+    };
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.classList.remove('open'); });
   })();
 
   /* Exponer renderPost, _activateLazyGifs y loadPostsFeed para uso cross-IIFE */
