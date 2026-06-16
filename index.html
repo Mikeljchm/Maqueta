@@ -97,13 +97,6 @@ layout: none
       <div class="cat-pills" id="cat-pills">
           <button class="cat-pill active" data-cat="all">All</button>
           <button class="cat-pill" id="following-pill" data-cat="following" style="display:none;">&#10024; Siguiendo</button>
-          <button class="cat-pill" data-cat="trending">&#128293; Trending</button>
-      </div>
-      <!-- Trending sub-selector: overflow:hidden + max-height para transición suave -->
-      <div id="trending-bar" style="max-height:0;overflow:hidden;transition:max-height 0.28s cubic-bezier(0.16,1,0.3,1),padding 0.28s;padding:0 0.75rem;white-space:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
-        <button class="trd-pill active" data-trd="hot">&#128293; Hot Today</button>
-        <button class="trd-pill" data-trd="saved">&#11088; Most Saved</button>
-        <button class="trd-pill" data-trd="new">&#128640; New This Week</button>
       </div>
     </div><!-- end top-strip -->
 
@@ -113,42 +106,33 @@ layout: none
 
       <!-- HOME FEED -->
       <div class="page active" id="page-home">
-        <!-- SECCIÓN SIGUIENDO — avatares horizontales -->
-        <div id="following-section" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1rem 0.35rem;">
-            <div style="font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.1em;color:var(--fire-orange);">&#10024; SIGUIENDO</div>
-            <button id="following-see-all" style="background:linear-gradient(135deg,var(--fire-orange),var(--fire-red));color:#fff;border:none;border-radius:20px;padding:0.22rem 0.75rem;font-family:var(--font-d);font-size:0.62rem;letter-spacing:0.06em;cursor:pointer;">VER FEED</button>
+        <!-- ALL: avatares de siguiendo + community posts + jekyll feed -->
+        <div id="all-feed-view">
+          <!-- Strip de avatares de siguiendo (solo cuando estás logueado) -->
+          <div id="following-section" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1rem 0.35rem;">
+              <div style="font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.1em;color:var(--fire-orange);">&#10024; SIGUIENDO</div>
+            </div>
+            <div id="following-strip" style="display:flex;overflow-x:auto;gap:0.6rem;padding:0 1rem 0.65rem;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
+            <div style="height:1px;background:var(--border);"></div>
           </div>
-          <div id="following-strip" style="display:flex;overflow-x:auto;gap:0.6rem;padding:0 1rem 0.65rem;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
-          <div style="height:1px;background:var(--border);"></div>
-        </div>
-        <!-- FOLLOWING FEED — vista completa al tocar VER FEED -->
-        <div id="following-feed-section" style="display:none;">
-          <div style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 1rem 0.5rem;border-bottom:1px solid var(--border);">
-            <button id="following-feed-back" style="background:none;border:none;color:var(--text-dim);cursor:pointer;padding:0;display:flex;align-items:center;gap:0.35rem;font-family:var(--font-b);font-size:0.75rem;">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-              Volver al feed
-            </button>
-            <div style="font-family:var(--font-d);font-size:0.82rem;letter-spacing:0.08em;color:var(--fire-orange);">&#10024; SIGUIENDO</div>
+          <!-- Community posts D1 + Jekyll posts — van aquí -->
+          <div id="community-feed-container"></div>
+          <div id="feed-container"></div>
+          <div id="feed-sentinel" style="height:60px;display:flex;align-items:center;justify-content:center;">
+            <div id="feed-loader" style="display:none;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--fire-orange)" stroke-width="2" style="animation:spin 1s linear infinite;">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+            </div>
           </div>
-          <div id="following-feed-container" style="padding:0;"></div>
+          <button id="load-more-btn" style="display:none;width:calc(100% - 2rem);margin:0.75rem 1rem 1.5rem;padding:0.85rem;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;color:var(--fire-orange);font-family:var(--font-d);font-size:1rem;letter-spacing:0.1em;cursor:pointer;">LOAD MORE</button>
         </div>
-        <!-- COMMUNITY POSTS D1 -->
-        <div id="community-feed-container"></div>
-        <!-- JEKYLL STATIC FEED -->
-        <div id="feed-container"></div>
-        <!-- SENTINEL UNIFICADO — carga más de ambos feeds -->
-        <div id="feed-sentinel" style="height:60px;display:flex;align-items:center;justify-content:center;">
-          <div id="feed-loader" style="display:none;">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--fire-orange)" stroke-width="2" style="animation:spin 1s linear infinite;">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-            </svg>
-          </div>
+        <!-- SIGUIENDO: solo posts de gente que sigues -->
+        <div id="following-feed-view" style="display:none;">
+          <div id="following-feed-container"></div>
+          <div id="following-sentinel" style="height:60px;display:flex;align-items:center;justify-content:center;"></div>
         </div>
-        <!-- LOAD MORE BUTTON -->
-        <button id="load-more-btn" style="display:none;width:calc(100% - 2rem);margin:0.75rem 1rem 1.5rem;padding:0.85rem;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;color:var(--fire-orange);font-family:var(--font-d);font-size:1rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s var(--ease);">
-          LOAD MORE
-        </button>
       </div>
 
       <!-- THE WRESTLERS -->
