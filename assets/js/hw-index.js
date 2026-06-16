@@ -1622,6 +1622,110 @@ async function votePoll(postId, idx, poll, container) {
   }
 })();
 
+  /* ── Pull-to-refresh ── */
+  (function(){
+    var _ptrEl      = null;
+    var _ptrStart   = 0;
+    var _ptrDist    = 0;
+    var _ptrActive  = false;
+    var _ptrRefresh = false;
+    var THRESHOLD   = 72;
+    var MAX_PULL    = 100;
+
+    function _ptrCreate() {
+      if (_ptrEl) return;
+      _ptrEl = document.createElement('div');
+      _ptrEl.id = 'ptr-indicator';
+      _ptrEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;z-index:9999;display:flex;align-items:center;justify-content:center;height:0;overflow:hidden;background:linear-gradient(180deg,var(--surface) 0%,transparent 100%);transition:height 0.18s var(--ease);pointer-events:none;';
+      _ptrEl.innerHTML = '<div id="ptr-icon" style="display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;transition:opacity 0.15s,transform 0.15s;"><svg id="ptr-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--fire-orange)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.3s var(--ease);"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg><span id="ptr-label" style="font-family:var(--font-d);font-size:0.55rem;letter-spacing:0.14em;color:var(--fire-orange);white-space:nowrap;"></span></div>';
+      document.body.appendChild(_ptrEl);
+    }
+
+    function _ptrGetScroll() {
+      var pages = document.querySelector('.pages');
+      return pages ? pages.scrollTop : window.scrollY;
+    }
+
+    function _ptrOnStart(e) {
+      if (_ptrGetScroll() > 4) return;
+      var touch = e.touches ? e.touches[0] : e;
+      _ptrStart   = touch.clientY;
+      _ptrActive  = true;
+      _ptrRefresh = false;
+    }
+
+    function _ptrOnMove(e) {
+      if (!_ptrActive) return;
+      if (_ptrGetScroll() > 4) { _ptrActive = false; _ptrHide(); return; }
+      var touch = e.touches ? e.touches[0] : e;
+      _ptrDist = Math.max(0, touch.clientY - _ptrStart);
+      if (_ptrDist < 6) return;
+      var pull = Math.min(MAX_PULL, _ptrDist * 0.45);
+      _ptrEl.style.height = pull + 'px';
+      var icon  = document.getElementById('ptr-icon');
+      var svg   = document.getElementById('ptr-svg');
+      var label = document.getElementById('ptr-label');
+      if (icon)  icon.style.opacity = String(Math.min(1, pull / THRESHOLD * 1.4));
+      if (svg)   svg.style.transform = 'rotate(' + (pull / MAX_PULL * 340) + 'deg)';
+      if (label) label.textContent = (pull >= THRESHOLD * 0.95) ? 'RELEASE' : 'PULL TO REFRESH';
+      _ptrRefresh = (pull >= THRESHOLD * 0.95);
+      if (_ptrDist > 8 && e.cancelable) e.preventDefault();
+    }
+
+    function _ptrOnEnd() {
+      if (!_ptrActive) return;
+      _ptrActive = false;
+      if (_ptrRefresh) { _ptrTrigger(); } else { _ptrHide(); }
+      _ptrDist = 0;
+    }
+
+    function _ptrHide() {
+      if (!_ptrEl) return;
+      _ptrEl.style.height = '0';
+      var icon = document.getElementById('ptr-icon');
+      if (icon) icon.style.opacity = '0';
+    }
+
+    function _ptrTrigger() {
+      var label = document.getElementById('ptr-label');
+      var svg   = document.getElementById('ptr-svg');
+      if (label) label.textContent = 'REFRESHING...';
+      if (svg)   svg.style.animation = 'spin 0.7s linear infinite';
+      var af = window._getActiveFilter ? window._getActiveFilter() : 'all';
+      setTimeout(function(){
+        if (af === 'following') {
+          if (window._resetFollowingFeed) window._resetFollowingFeed();
+          if (window._loadFollowingFeed)  window._loadFollowingFeed();
+        } else {
+          var fc = document.getElementById('feed-container');
+          if (fc) fc.innerHTML = '';
+          if (window._initCommunityFeed) window._initCommunityFeed();
+        }
+        setTimeout(_ptrHide, 600);
+      }, 500);
+    }
+
+    function _ptrInit() {
+      _ptrCreate();
+      var target = document.querySelector('.pages') || document;
+      target.addEventListener('touchstart', _ptrOnStart, {passive:true});
+      target.addEventListener('touchmove',  _ptrOnMove,  {passive:false});
+      target.addEventListener('touchend',   _ptrOnEnd,   {passive:true});
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', _ptrInit);
+    } else {
+      _ptrInit();
+    }
+  })();
+
+  window._getActiveFilter = function() {
+    var tab = document.querySelector('.feed-tab.active');
+    return tab ? tab.getAttribute('data-cat') : 'all';
+  };
+
+
   /* AGE GATE — fuera del IIFE para q siempre funcione */
   (function() {
     const ageKey = 'hw_age_ok';
