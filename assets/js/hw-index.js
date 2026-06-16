@@ -1489,7 +1489,7 @@ async function votePoll(postId, idx, poll, container) {
 
     try {
       /* Traer los que sigo */
-      var r = await fetch('/api/user-follows?user_id='+encodeURIComponent(window.currentUser.id)+'&type=following', {credentials:'include'});
+      var r = await fetch('/api/user-follows/list?user_id='+encodeURIComponent(window.currentUser.id)+'&type=following', {credentials:'include'});
       var d = await r.json();
       var following = d.users || d.following || [];
       /* Mostrar la sección siempre que estés logueado — con o sin seguidos */
@@ -1507,7 +1507,7 @@ async function votePoll(postId, idx, poll, container) {
 
       strip.innerHTML = following.map(function(u){
         var uid   = u.user_id || u.id || '';
-        var name  = u.display_name || u.username || u.name || 'User';
+        var name  = u.display_name || u.username || u.name || u.user_id?.slice(0,8) || 'User';
         var av    = u.avatar_url || u.picture || '';
         var avHtml = av
           ? '<img src="'+av+'" alt="">'
@@ -1554,7 +1554,7 @@ async function votePoll(postId, idx, poll, container) {
   /* ── Following feed — abre la vista de posts de seguidos ── */
   window._openFollowingFeed = function() {
     var homeEl   = document.getElementById('feed-container');
-    var commEl   = document.getElementById('community-feed-section');
+    var commEl   = document.getElementById('community-feed-container');
     var followEl = document.getElementById('following-section');
     var ffSection = document.getElementById('following-feed-section');
     var ffContainer = document.getElementById('following-feed-container');
@@ -1591,11 +1591,11 @@ async function votePoll(postId, idx, poll, container) {
 
   window._closeFollowingFeed = function() {
     var homeEl   = document.getElementById('feed-container');
-    var commEl   = document.getElementById('community-feed-section');
+    var commEl   = document.getElementById('community-feed-container');
     var followEl = document.getElementById('following-section');
     var ffSection = document.getElementById('following-feed-section');
     if (homeEl) homeEl.style.display = '';
-    if (commEl) commEl.style.display = 'block';
+    if (commEl) commEl.style.display = '';
     if (followEl && window.currentUser) followEl.style.display = 'block';
     if (ffSection) ffSection.style.display = 'none';
   };
@@ -1621,9 +1621,15 @@ async function votePoll(postId, idx, poll, container) {
     document.addEventListener('DOMContentLoaded', function(){
       initFeed();
       /* Community feed y Following strip se inician después de que auth esté listo */
-      setTimeout(function(){
-        if (window._initCommunityFeed) window._initCommunityFeed();
-      }, 800);
+      /* Esperar a que renderPost esté disponible */
+      var _cfRetries = 0;
+      var _cfInterval = setInterval(function(){
+        _cfRetries++;
+        if (window.renderPost || _cfRetries > 20) {
+          clearInterval(_cfInterval);
+          if (window._initCommunityFeed) window._initCommunityFeed();
+        }
+      }, 200);
     });
   } else {
     initFeed();
