@@ -1309,17 +1309,17 @@ async function handleUserPosts(request, env, corsH) {
       ).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
-    /* Clips de un usuario — posts con video — ANTES del genérico userId */
+    /* Clips de un usuario — posts con video */
     if (action === 'clips' && userId) {
       const { results } = await env.DB.prepare(
         "SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 AND (image_url LIKE '%.mp4%' OR image_url LIKE '%.webm%') ORDER BY created_at DESC LIMIT 50"
       ).bind(userId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
-    /* Posts guardados por el usuario */
+    /* Posts guardados — userId = dueño del perfil (visitante o propio) */
     if (action === 'saved') {
-      if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
-      const targetId = userId || session.id;
+      const targetId = userId || (session ? session.id : null);
+      if (!targetId) return apiJson({ error: 'user_id required' }, 400, corsH);
       const { results } = await env.DB.prepare(
         'SELECT p.id,p.user_id,p.user_name,p.user_avatar,p.body,p.image_url,p.like_count,p.comment_count,p.repost_of_id,p.repost_body,p.repost_user_name,p.repost_user_id,p.repost_image_url,p.repost_avatar,p.created_at FROM user_posts p INNER JOIN post_saves s ON s.post_id=p.id WHERE s.user_id=? AND p.hidden=0 ORDER BY s.saved_at DESC LIMIT 50'
       ).bind(targetId).all();
@@ -1330,14 +1330,6 @@ async function handleUserPosts(request, env, corsH) {
       const { results } = await env.DB.prepare(
         'SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
       ).bind(userId).all();
-      return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
-    }
-    /* Admin: posts reportados */
-      if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
-      const targetId = userId || session.id;
-      const { results } = await env.DB.prepare(
-        'SELECT p.id,p.user_id,p.user_name,p.user_avatar,p.body,p.image_url,p.like_count,p.comment_count,p.repost_of_id,p.repost_body,p.repost_user_name,p.repost_user_id,p.repost_image_url,p.repost_avatar,p.created_at FROM user_posts p INNER JOIN post_saves s ON s.post_id=p.id WHERE s.user_id=? AND p.hidden=0 ORDER BY s.saved_at DESC LIMIT 50'
-      ).bind(targetId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
     /* Admin: posts reportados */
