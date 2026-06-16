@@ -1264,6 +1264,13 @@ async function handleUserPosts(request, env, corsH) {
   try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN image_url TEXT DEFAULT ''").run(); } catch(e){}
   try { await env.DB.prepare('ALTER TABLE user_posts ADD COLUMN like_count INTEGER DEFAULT 0').run(); } catch(e){}
   try { await env.DB.prepare('ALTER TABLE user_posts ADD COLUMN comment_count INTEGER DEFAULT 0').run(); } catch(e){}
+  /* Tabla de posts guardados */
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS post_saves (
+    post_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(post_id, user_id)
+  )`).run();
   try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN repost_of_id INTEGER DEFAULT NULL").run(); } catch(e){}
   try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN repost_body TEXT DEFAULT ''").run(); } catch(e){}
   try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN repost_user_name TEXT DEFAULT ''").run(); } catch(e){}
@@ -1307,6 +1314,22 @@ async function handleUserPosts(request, env, corsH) {
       const { results } = await env.DB.prepare(
         'SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
       ).bind(userId).all();
+      return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
+    }
+    /* Clips de un usuario — posts con video */
+    if (action === 'clips' && userId) {
+      const { results } = await env.DB.prepare(
+        "SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 AND (image_url LIKE '%.mp4%' OR image_url LIKE '%.webm%') ORDER BY created_at DESC LIMIT 50"
+      ).bind(userId).all();
+      return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
+    }
+    /* Posts guardados por el usuario */
+    if (action === 'saved') {
+      if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+      const targetId = userId || session.id;
+      const { results } = await env.DB.prepare(
+        'SELECT p.id,p.user_id,p.user_name,p.user_avatar,p.body,p.image_url,p.like_count,p.comment_count,p.repost_of_id,p.repost_body,p.repost_user_name,p.repost_user_id,p.repost_image_url,p.repost_avatar,p.created_at FROM user_posts p INNER JOIN post_saves s ON s.post_id=p.id WHERE s.user_id=? AND p.hidden=0 ORDER BY s.saved_at DESC LIMIT 50'
+      ).bind(targetId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
     /* Admin: posts reportados */
@@ -1382,6 +1405,19 @@ async function handleUserPosts(request, env, corsH) {
       const avatarUrl = await getUserAvatar(session.id, session.picture, env);
       const newPost = { id: newPostId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl, body: text, image_url: image_url, like_count: 0, comment_count: 0, created_at: new Date().toISOString() };
       return apiJson({ ok: true, id: newPostId, post: newPost }, 200, corsH);
+    }
+
+    /* Guardar / dejar de guardar post */
+    if (action === 'save' || action === 'unsave') {
+      if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+      const postId = parseInt(body.post_id);
+      if (!postId) return apiJson({ error: 'post_id required' }, 400, corsH);
+      if (action === 'save') {
+        try { await env.DB.prepare('INSERT OR IGNORE INTO post_saves (post_id,user_id) VALUES (?,?)').bind(postId, session.id).run(); } catch(e){}
+      } else {
+        await env.DB.prepare('DELETE FROM post_saves WHERE post_id=? AND user_id=?').bind(postId, session.id).run();
+      }
+      return apiJson({ ok: true }, 200, corsH);
     }
 
     /* Repostear */
