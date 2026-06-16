@@ -1399,6 +1399,110 @@ async function votePoll(postId, idx, poll, container) {
     observer.observe(sentinel);
   }
 
+  /* ── CSS para la sección Siguiendo y community feed ── */
+  (function(){
+    var s = document.createElement('style');
+    s.textContent = [
+      '#following-strip::-webkit-scrollbar{display:none;}',
+      '.fw-avatar-card{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0.35rem;cursor:pointer;width:58px;}',
+      '.fw-avatar-ring{width:52px;height:52px;border-radius:50%;padding:2px;background:linear-gradient(135deg,var(--fire-orange),var(--fire-red));flex-shrink:0;}',
+      '.fw-avatar-ring.has-post{background:linear-gradient(135deg,var(--fire-orange),var(--fire-yellow));}',
+      '.fw-avatar-inner{width:100%;height:100%;border-radius:50%;background:var(--surface-2);overflow:hidden;border:2px solid var(--bg);}',
+      '.fw-avatar-inner img{width:100%;height:100%;object-fit:cover;display:block;}',
+      '.fw-avatar-name{font-size:0.58rem;color:var(--text-dim);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;font-family:var(--font-b);}',
+      '.cf-divider{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;margin-bottom:0.25rem;}',
+      '.cf-divider-line{flex:1;height:1px;background:var(--border);}',
+      '.cf-divider-label{font-size:0.6rem;color:var(--text-muted);letter-spacing:0.1em;font-family:var(--font-d);white-space:nowrap;}',
+    ].join('');
+    document.head.appendChild(s);
+  })();
+
+  /* ── Feed mezclado: D1 posts + Jekyll ── */
+  window._initCommunityFeed = async function() {
+    var cc = document.getElementById('community-feed-container');
+    if (!cc) return;
+
+    /* Solo cargar si hay usuario logueado o igual mostramos posts públicos */
+    try {
+      var r = await fetch('/api/posts', {credentials:'include'});
+      var d = await r.json();
+      var posts = (d.posts||[]).filter(function(p){ return !p.hidden; });
+      if (!posts.length) { cc.innerHTML = ''; return; }
+
+      /* Separador visual antes del contenido Jekyll */
+      var divider = '<div class="cf-divider"><div class="cf-divider-line"></div><div class="cf-divider-label">&#128101; COMMUNITY POSTS</div><div class="cf-divider-line"></div></div>';
+
+      cc.innerHTML = divider + posts.map(window.renderPost||function(){ return ''; }).join('');
+      if (window._activateLazyGifs) window._activateLazyGifs(cc);
+      if (window.loadAllLikes) window.loadAllLikes();
+      if (window.loadAllCommentCounts) window.loadAllCommentCounts();
+    } catch(e) {
+      /* Si falla no romper el feed */
+      var cc2 = document.getElementById('community-feed-container');
+      if (cc2) cc2.innerHTML = '';
+    }
+  };
+
+  /* ── Sección Siguiendo — avatares horizontales con últimos posts ── */
+  window._initFollowingStrip = async function() {
+    if (!window.currentUser) return;
+    var section = document.getElementById('following-section');
+    var strip   = document.getElementById('following-strip');
+    if (!section || !strip) return;
+
+    try {
+      /* Traer los que sigo */
+      var r = await fetch('/api/user-follows?user_id='+encodeURIComponent(window.currentUser.id)+'&type=following', {credentials:'include'});
+      var d = await r.json();
+      var following = d.users || d.following || [];
+      if (!following.length) { section.style.display='none'; return; }
+
+      section.style.display = 'block';
+
+      /* Traer sus posts recientes para saber quién publicó algo */
+      var r2 = await fetch('/api/user-follows/feed', {credentials:'include'});
+      var d2 = await r2.json();
+      var feedPosts = d2.posts || [];
+      var recentPosters = new Set(feedPosts.map(function(p){ return p.user_id; }));
+
+      strip.innerHTML = following.map(function(u){
+        var uid   = u.user_id || u.id || '';
+        var name  = u.display_name || u.username || u.name || 'User';
+        var av    = u.avatar_url || u.picture || '';
+        var avHtml = av
+          ? '<img src="'+av+'" alt="">'
+          : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.1rem;color:var(--text-dim);">'+name.charAt(0).toUpperCase()+'</div>';
+        var hasPost = recentPosters.has(uid);
+        return '<div class="fw-avatar-card" data-profile-uid="'+uid+'" data-profile-name="'+name+'">'
+          + '<div class="fw-avatar-ring'+(hasPost?' has-post':'')+'">'
+            + '<div class="fw-avatar-inner">'+avHtml+'</div>'
+          + '</div>'
+          + '<div class="fw-avatar-name">'+name.split(' ')[0]+'</div>'
+        + '</div>';
+      }).join('');
+
+      /* Click en avatar → perfil */
+      strip.querySelectorAll('.fw-avatar-card[data-profile-uid]').forEach(function(card){
+        card.addEventListener('click', function(){
+          var uid  = card.getAttribute('data-profile-uid');
+          var name = card.getAttribute('data-profile-name');
+          if (window.openMiniProfile) window.openMiniProfile(uid, name);
+        });
+      });
+
+      /* Botón "Ver todo" → pill Following */
+      var seeAll = document.getElementById('following-see-all');
+      if (seeAll) seeAll.addEventListener('click', function(){
+        var pill = document.getElementById('following-pill');
+        if (pill) pill.click();
+      });
+
+    } catch(e) {
+      var sec2 = document.getElementById('following-section');
+      if (sec2) sec2.style.display = 'none';
+    }
+  };
+
   function initFeed() {
     fetch('/assets/data/posts.json')
       .then(function(r){ return r.json(); })
@@ -1417,9 +1521,18 @@ async function votePoll(postId, idx, poll, container) {
       });
   }
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initFeed);
+    document.addEventListener('DOMContentLoaded', function(){
+      initFeed();
+      /* Community feed y Following strip se inician después de que auth esté listo */
+      setTimeout(function(){
+        if (window._initCommunityFeed) window._initCommunityFeed();
+      }, 800);
+    });
   } else {
     initFeed();
+    setTimeout(function(){
+      if (window._initCommunityFeed) window._initCommunityFeed();
+    }, 800);
   }
 })();
 
@@ -2851,6 +2964,11 @@ async function votePoll(postId, idx, poll, container) {
         var c = document.getElementById('my-collections-container');
         if (c && typeof window.renderMyCollections === 'function') window.renderMyCollections(c);
       }, 700);
+      // Cargar sección Siguiendo y community feed al autenticarse
+      setTimeout(function(){
+        if (window._initFollowingStrip) window._initFollowingStrip();
+        if (window._initCommunityFeed) window._initCommunityFeed();
+      }, 900);
     }
 
     HottAuth.onChange(async s => {
@@ -7440,6 +7558,14 @@ async function votePoll(postId, idx, poll, container) {
               if(d2.post && window.renderPost){
                 var newCard = window.renderPost(d2.post);
                 container.insertAdjacentHTML('afterbegin', newCard);
+                /* También insertar en el community feed del home */
+                var _cc = document.getElementById('community-feed-container');
+                if (_cc) {
+                  var _div = _cc.querySelector('.cf-divider');
+                  if (_div) _div.insertAdjacentHTML('afterend', newCard);
+                  else _cc.insertAdjacentHTML('afterbegin', newCard);
+                  if (window._activateLazyGifs) window._activateLazyGifs(_cc);
+                }
                 /* Actualizar likes del nuevo post */
                 setTimeout(function(){ if(window.loadAllLikes) window.loadAllLikes(container); },100);
               } else {
