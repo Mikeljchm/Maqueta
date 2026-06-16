@@ -96,7 +96,6 @@ layout: none
       </header>
       <div class="cat-pills" id="cat-pills">
           <button class="cat-pill active" data-cat="all">All</button>
-          <button class="cat-pill" id="following-pill" data-cat="following" style="display:none;">&#10024; Following</button>
           <button class="cat-pill" data-cat="trending">&#128293; Trending</button>
           <button class="cat-pill" data-cat="wrestling">Wrestling</button>
           <button class="cat-pill" data-cat="military">Military</button>
@@ -124,10 +123,21 @@ layout: none
         <div id="following-section" style="display:none;">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1rem 0.4rem;">
             <div style="font-family:var(--font-d);font-size:0.75rem;letter-spacing:0.1em;color:var(--fire-orange);">&#10024; SIGUIENDO</div>
-            <button id="following-see-all" style="background:none;border:none;color:var(--text-dim);font-size:0.65rem;cursor:pointer;font-family:var(--font-b);">Ver todo</button>
+            <button id="following-see-all" style="background:linear-gradient(135deg,var(--fire-orange),var(--fire-red));color:#fff;border:none;border-radius:20px;padding:0.25rem 0.85rem;font-family:var(--font-d);font-size:0.65rem;letter-spacing:0.06em;cursor:pointer;">VER FEED</button>
           </div>
           <div id="following-strip" style="display:flex;overflow-x:auto;gap:0.6rem;padding:0 1rem 0.75rem;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
           <div style="height:1px;background:var(--border);margin:0 0 0.5rem;"></div>
+        </div>
+        <!-- FOLLOWING FEED — visible al tocar VER FEED -->
+        <div id="following-feed-section" style="display:none;">
+          <div style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 1rem 0.5rem;border-bottom:1px solid var(--border);">
+            <button id="following-feed-back" style="background:none;border:none;color:var(--text-dim);cursor:pointer;padding:0;display:flex;align-items:center;gap:0.35rem;font-family:var(--font-b);font-size:0.75rem;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+              Volver
+            </button>
+            <div style="font-family:var(--font-d);font-size:0.82rem;letter-spacing:0.08em;color:var(--fire-orange);">&#10024; SIGUIENDO</div>
+          </div>
+          <div id="following-feed-container" style="padding:0;"></div>
         </div>
         <!-- POSTS D1 DE USUARIOS — mezclados en el feed -->
         <div id="community-feed-section">
