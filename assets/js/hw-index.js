@@ -1647,7 +1647,8 @@ async function votePoll(postId, idx, poll, container) {
     }
 
     function _ptrOnStart(e) {
-      if (_ptrGetScroll() > 4) return;
+      /* Solo activar si estamos exactamente en el tope */
+      if (_ptrGetScroll() > 0) return;
       var touch = e.touches ? e.touches[0] : e;
       _ptrStart   = touch.clientY;
       _ptrActive  = true;
@@ -1656,10 +1657,15 @@ async function votePoll(postId, idx, poll, container) {
 
     function _ptrOnMove(e) {
       if (!_ptrActive) return;
-      if (_ptrGetScroll() > 4) { _ptrActive = false; _ptrHide(); return; }
+      /* Cancelar si el usuario scrolleó mientras arrastraba */
+      if (_ptrGetScroll() > 0) { _ptrActive = false; _ptrHide(); return; }
       var touch = e.touches ? e.touches[0] : e;
-      _ptrDist = Math.max(0, touch.clientY - _ptrStart);
-      if (_ptrDist < 6) return;
+      var dy = touch.clientY - _ptrStart;
+      /* Solo activar si el gesto es claramente hacia ABAJO (no lateral ni arriba) */
+      if (dy < 0) { _ptrActive = false; return; }
+      _ptrDist = dy;
+      /* Ignorar movimientos pequeños — evita activación accidental */
+      if (_ptrDist < 18) return;
       var pull = Math.min(MAX_PULL, _ptrDist * 0.45);
       _ptrEl.style.height = pull + 'px';
       var icon  = document.getElementById('ptr-icon');
