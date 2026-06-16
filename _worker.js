@@ -1487,7 +1487,8 @@ async function handleUpload(request, env, corsH) {
     : contentType.includes('mp4') && contentType.includes('audio') ? 'm4a'
     : contentType.includes('gif') ? 'gif'
     : 'webp';
-  const filename = session.id.replace(/[^a-zA-Z0-9]/g,'').slice(0,16) + '_' + Date.now() + '.' + ext;
+  const rnd = Math.random().toString(36).slice(2,7);
+  const filename = session.id.replace(/[^a-zA-Z0-9]/g,'').slice(0,16) + '_' + Date.now() + '_' + rnd + '.' + ext;
   const storageUrl = 'https://ny.storage.bunnycdn.com/hottwrestling/user-posts/' + filename;
 
   const res = await fetch(storageUrl, {
