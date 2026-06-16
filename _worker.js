@@ -1336,6 +1336,14 @@ async function handleUserPosts(request, env, corsH) {
       ).bind(userId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
+    /* IDs de posts guardados — para poblar SAVED_POSTS en el frontend */
+    if (action === 'saved-ids') {
+      if (!session) return apiJson({ ids: [] }, 200, corsH);
+      const { results: ids } = await env.DB.prepare(
+        'SELECT post_id FROM post_saves WHERE user_id=?'
+      ).bind(session.id).all();
+      return apiJson({ ids: ids.map(function(r){ return String(r.post_id); }) }, 200, corsH);
+    }
     /* Posts guardados — userId = dueño del perfil (visitante o propio) */
     if (action === 'saved') {
       const targetId = userId || (session ? session.id : null);
