@@ -1275,6 +1275,8 @@ async function votePoll(postId, idx, poll, container) {
   }
 
   function renderBatch() {
+    /* NUNCA renderizar Jekyll posts en modo following */
+    if (activeFilter === 'following') return;
     var posts = getFilteredPosts();
     var container = document.getElementById('feed-container');
     if (!container) return;
@@ -1326,23 +1328,22 @@ async function votePoll(postId, idx, poll, container) {
 
   window.setFeedFilter = function(cat) {
     activeFilter = cat || 'all';
-    var allView  = document.getElementById('all-feed-view');
-    var fwView   = document.getElementById('following-feed-view');
-    /* Actualizar pills */
+    var allView = document.getElementById('all-feed-view');
+    var fwView  = document.getElementById('following-feed-view');
+    /* Pills */
     document.querySelectorAll('.cat-pill[data-cat]').forEach(function(p){
       p.classList.toggle('active', p.getAttribute('data-cat') === cat);
     });
     if (cat === 'following') {
-      /* Mostrar solo el feed de siguiendo */
       if (allView) allView.style.display = 'none';
       if (fwView)  fwView.style.display  = 'block';
+      /* Resetear cache para forzar recarga fresca */
+      window._resetFollowingFeed();
       window._loadFollowingFeed();
     } else {
-      /* All — mostrar el feed normal */
       if (allView) allView.style.display = 'block';
       if (fwView)  fwView.style.display  = 'none';
     }
-    activeFilter = cat || 'all';
   };
 
   /* Renderizar una lista custom de posts (para Trending) */
@@ -1539,20 +1540,20 @@ async function votePoll(postId, idx, poll, container) {
   });
 
   /* ── Following feed — abre la vista de posts de seguidos ── */
-  /* Cargar feed de siguiendo */
+  /* Cargar feed de siguiendo — solo posts de usuarios que el usuario sigue */
   window._loadFollowingFeed = function() {
+    if (!window.currentUser) return;
     var fc = document.getElementById('following-feed-container');
     if (!fc) return;
-    /* Si ya tiene contenido no recargar */
-    if (fc.dataset.loaded === '1') return;
-    fc.dataset.loaded = '1';
     fc.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-dim);font-size:0.82rem;">Cargando...</div>';
     fetch('/api/user-follows/feed', {credentials:'include'})
       .then(function(r){ return r.json(); })
       .then(function(d){
+        /* Verificar que seguimos en modo following antes de renderizar */
+        if (activeFilter !== 'following') return;
         var posts = d.posts || [];
         if (!posts.length) {
-          fc.innerHTML = '<div style="padding:2.5rem;text-align:center;color:var(--text-dim);font-size:0.85rem;">Aún no hay posts.<br><span style="font-size:0.75rem;color:var(--text-muted);">Sigue a más usuarios para ver su contenido aquí.</span></div>';
+          fc.innerHTML = '<div style="padding:2.5rem;text-align:center;color:var(--text-dim);font-size:0.85rem;">No hay posts aún.<br><span style="font-size:0.72rem;color:var(--text-muted);">Sigue a usuarios para ver su contenido aquí.</span></div>';
           return;
         }
         fc.innerHTML = posts.map(window.renderPost||function(){ return ''; }).join('');
@@ -1562,13 +1563,11 @@ async function votePoll(postId, idx, poll, container) {
       })
       .catch(function(){
         fc.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-dim);">Error cargando feed.</div>';
-        delete fc.dataset.loaded;
       });
   };
-  /* Resetear following feed al cambiar de tab */
   window._resetFollowingFeed = function() {
     var fc = document.getElementById('following-feed-container');
-    if (fc) { fc.innerHTML = ''; delete fc.dataset.loaded; }
+    if (fc) fc.innerHTML = '';
   };
 
   function initFeed() {
@@ -3036,11 +3035,7 @@ async function votePoll(postId, idx, poll, container) {
         var c = document.getElementById('my-collections-container');
         if (c && typeof window.renderMyCollections === 'function') window.renderMyCollections(c);
       }, 700);
-      // Cargar sección Siguiendo y community feed al autenticarse
-      setTimeout(function(){
-        if (window._initFollowingStrip) window._initFollowingStrip();
-        if (window._initCommunityFeed) window._initCommunityFeed();
-      }, 900);
+
     }
 
     HottAuth.onChange(async s => {
