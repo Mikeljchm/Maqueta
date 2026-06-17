@@ -114,39 +114,35 @@ layout: none
   })();
   </script>
   <script>
-  /* ── DEBUG TEMPORAL — verificar las APIs de datos reales ── */
-  (function(){
-    var results = [];
-    function render() {
-      var box = document.getElementById('__hw_api_box__');
-      if (!box) {
-        box = document.createElement('div');
-        box.id = '__hw_api_box__';
-        box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:999999;background:#1a5c1a;color:#fff;font-family:monospace;font-size:10px;padding:6px;max-height:45vh;overflow-y:auto;white-space:pre-wrap;';
-        document.documentElement.appendChild(box);
-      }
-      box.textContent = 'API CHECK:\n' + results.join('\n---\n');
+  /* ── DEBUG TEMPORAL — inspeccionar el DOM real después de 3s ── */
+  setTimeout(function(){
+    var box = document.createElement('div');
+    box.id = '__hw_dom_box__';
+    box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:999999;background:#5c1a5c;color:#fff;font-family:monospace;font-size:10px;padding:6px;max-height:50vh;overflow-y:auto;white-space:pre-wrap;';
+    function info(id) {
+      var el = document.getElementById(id);
+      if (!el) return id + ': NO EXISTE EN EL DOM';
+      var cs = window.getComputedStyle(el);
+      return id + ': children=' + el.children.length
+        + ' innerHTML.length=' + el.innerHTML.length
+        + ' display=' + cs.display
+        + ' visibility=' + cs.visibility
+        + ' height=' + cs.height
+        + ' opacity=' + cs.opacity;
     }
-    function check(label, url, opts) {
-      fetch(url, opts || {})
-        .then(function(r){
-          results.push(label + ' [' + r.status + ']');
-          render();
-          return r.text();
-        })
-        .then(function(text){
-          var preview = text.slice(0, 200);
-          results[results.length-1] += '\n  body: ' + preview;
-          render();
-        })
-        .catch(function(e){
-          results.push(label + ' ERROR: ' + e.message);
-          render();
-        });
-    }
-    check('posts.json', '/assets/data/posts.json');
-    check('/api/posts', '/api/posts?limit=12&offset=0', {credentials:'include'});
-  })();
+    var lines = [
+      info('feed-container'),
+      info('community-feed-container'),
+      info('feed-sentinel'),
+      info('all-feed-view'),
+      info('page-home'),
+      'window.renderPost=' + (typeof window.renderPost),
+      'window.ALL_POSTS.length=' + (window.ALL_POSTS ? window.ALL_POSTS.length : 'undefined'),
+      'window.currentUser=' + (window.currentUser ? window.currentUser.name : 'null')
+    ];
+    box.textContent = 'DOM CHECK (3s):\n' + lines.join('\n');
+    document.documentElement.appendChild(box);
+  }, 3000);
   </script>
 </head>
 <body>
