@@ -200,10 +200,25 @@
         document.querySelectorAll('img[data-uid="' + userId + '"]').forEach(function(img) {
           img.src = d.avatar_url;
         });
-        /* Recargar feed si ya estaba renderizado — para que aparezca la foto */
+        /* Recargar feed si ya estaba renderizado — para que aparezca la foto.
+           Si el feed todavía no renderizó nada (race condition: fetchUserProfile
+           resuelve antes que el feed termine su primera carga), reintentamos
+           unos segundos para no dejar avatares viejos pegados permanentemente. */
         var pc = document.getElementById('posts-feed-container');
         if (pc && pc.children.length && typeof window.loadPostsFeed === 'function') {
           window.loadPostsFeed(pc, userId);
+        } else if (typeof window.loadPostsFeed === 'function') {
+          var _avRetries = 0;
+          var _avRetryTimer = setInterval(function() {
+            _avRetries++;
+            var pc2 = document.getElementById('posts-feed-container');
+            if (pc2 && pc2.children.length) {
+              clearInterval(_avRetryTimer);
+              window.loadPostsFeed(pc2, userId);
+            } else if (_avRetries > 15) {
+              clearInterval(_avRetryTimer);
+            }
+          }, 400);
         }
       }
       if (d.banner_url) {
