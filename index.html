@@ -114,35 +114,19 @@ layout: none
   })();
   </script>
   <script>
-  /* ── DEBUG TEMPORAL — inspeccionar el DOM real después de 3s ── */
-  setTimeout(function(){
-    var box = document.createElement('div');
-    box.id = '__hw_dom_box__';
-    box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:999999;background:#5c1a5c;color:#fff;font-family:monospace;font-size:10px;padding:6px;max-height:50vh;overflow-y:auto;white-space:pre-wrap;';
-    function info(id) {
-      var el = document.getElementById(id);
-      if (!el) return id + ': NO EXISTE EN EL DOM';
-      var cs = window.getComputedStyle(el);
-      return id + ': children=' + el.children.length
-        + ' innerHTML.length=' + el.innerHTML.length
-        + ' display=' + cs.display
-        + ' visibility=' + cs.visibility
-        + ' height=' + cs.height
-        + ' opacity=' + cs.opacity;
+  /* ── DEBUG TEMPORAL — caja de log en vivo, alimentada desde hw-feed.js ── */
+  window.__hwLog = [];
+  window.__hwLogPush = function(msg) {
+    window.__hwLog.push(new Date().toISOString().slice(11,19) + ' ' + msg);
+    var box = document.getElementById('__hw_live_box__');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = '__hw_live_box__';
+      box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:999999;background:#222;color:#0f0;font-family:monospace;font-size:10px;padding:6px;max-height:50vh;overflow-y:auto;white-space:pre-wrap;';
+      document.documentElement.appendChild(box);
     }
-    var lines = [
-      info('feed-container'),
-      info('community-feed-container'),
-      info('feed-sentinel'),
-      info('all-feed-view'),
-      info('page-home'),
-      'window.renderPost=' + (typeof window.renderPost),
-      'window.ALL_POSTS.length=' + (window.ALL_POSTS ? window.ALL_POSTS.length : 'undefined'),
-      'window.currentUser=' + (window.currentUser ? window.currentUser.name : 'null')
-    ];
-    box.textContent = 'DOM CHECK (3s):\n' + lines.join('\n');
-    document.documentElement.appendChild(box);
-  }, 3000);
+    box.textContent = 'LIVE LOG:\n' + window.__hwLog.join('\n');
+  };
   </script>
 </head>
 <body>
