@@ -1028,7 +1028,16 @@
       }).catch(function(){});
       if(adultToggle) adultToggle.checked=true;
       var pc=document.getElementById('posts-feed-container');
-      if(pc && typeof window.loadPostsFeed==='function') window.loadPostsFeed(pc, user.id);
+      /* Evitar recargar (y re-descargar imágenes) si los posts ya están
+         cargados y no pasó mucho tiempo. Solo recarga si está vacío
+         o si pasaron más de 60s desde la última carga (por si hay posts nuevos). */
+      var _now = Date.now();
+      var _lastLoad = pc ? parseInt(pc.getAttribute('data-loaded-at')||'0', 10) : 0;
+      var _shouldReload = pc && (!pc.children.length || (_now - _lastLoad) > 60000);
+      if(pc && _shouldReload && typeof window.loadPostsFeed==='function') {
+        window.loadPostsFeed(pc, user.id);
+        pc.setAttribute('data-loaded-at', String(_now));
+      }
     } else {
       /* Solo mostrar signin si HottAuth ya confirmó que no hay sesión */
       var authDone = typeof HottAuth==='undefined' || HottAuth._session===null;
