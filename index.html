@@ -4,6 +4,34 @@ layout: none
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+  /* ── DEBUG TEMPORAL — capturador visual de errores JS ──
+     Muestra cualquier error de JavaScript como caja roja en pantalla.
+     QUITAR después de encontrar el bug. */
+  (function(){
+    var errors = [];
+    function showErrors() {
+      var box = document.getElementById('__hw_debug_box__');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = '__hw_debug_box__';
+        box.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#b00020;color:#fff;font-family:monospace;font-size:11px;padding:8px;max-height:50vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;';
+        document.documentElement.appendChild(box);
+      }
+      box.textContent = errors.map(function(e,i){ return '#'+(i+1)+' '+e; }).join('\n\n---\n\n');
+    }
+    window.addEventListener('error', function(e){
+      var msg = (e.message||'Error') + '\n  at ' + (e.filename||'?') + ':' + (e.lineno||'?') + ':' + (e.colno||'?');
+      errors.push(msg);
+      showErrors();
+    });
+    window.addEventListener('unhandledrejection', function(e){
+      errors.push('Promise rejection: ' + (e.reason && e.reason.message || e.reason));
+      showErrors();
+    });
+  })();
+  </script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#FF4500">
