@@ -578,9 +578,53 @@ layout: none
   <script src="/assets/js/hw-auth.js?v=1"></script>
   <script src="/assets/js/hw-feed.js?v=1"></script>
   <script src="/assets/js/hw-admin.js?v=1"></script>
-  <script src="/assets/js/hw-app.js?v=1"></script>
-  <script src="/assets/js/hw-community.js?v=1"></script>
-  <script src="/assets/js/hw-index.js?v=20260617e"></script>
+  <script src="/assets/js/hw-index.js?v=20260617f"></script>
+
+  <script>
+  /* ── LAZY LOADING — hw-app.js (Profile+Audio) y hw-community.js (Threads) ──
+     Cargan solo cuando el usuario toca esas secciones, no de entrada.
+     Esto reduce ~284 KB del peso inicial del sitio (de ~516 KB a ~232 KB). */
+  (function(){
+    var _loaded = {};
+    function loadModuleOnce(src, cacheKey, pageId) {
+      if (_loaded[cacheKey]) return;
+      _loaded[cacheKey] = true;
+      var pg = document.getElementById(pageId);
+      if (pg) pg.classList.add('hw-module-loading');
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = function(){ if (pg) pg.classList.remove('hw-module-loading'); };
+      s.onerror = function(){ if (pg) pg.classList.remove('hw-module-loading'); };
+      document.body.appendChild(s);
+    }
+    function attachLazyTrigger(page, src, cacheKey) {
+      document.querySelectorAll('.nav-item[data-page="' + page + '"]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          loadModuleOnce(src, cacheKey, 'page-' + page);
+        });
+      });
+      document.querySelectorAll('.menu-item[data-nav="' + page + '"]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          loadModuleOnce(src, cacheKey, 'page-' + page);
+        });
+      });
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      attachLazyTrigger('more',  '/assets/js/hw-app.js?v=1',       'app');
+      attachLazyTrigger('audio', '/assets/js/hw-app.js?v=1',       'app');
+      attachLazyTrigger('bulge', '/assets/js/hw-community.js?v=1', 'community');
+    });
+  })();
+  </script>
+  <style>
+    .hw-module-loading{position:relative;}
+    .hw-module-loading::after{
+      content:'';position:fixed;top:0;left:0;right:0;height:2px;z-index:9998;
+      background:linear-gradient(90deg,var(--fire-orange),var(--fire-yellow));
+      animation:hwLoadBar 0.9s ease-in-out infinite;
+    }
+    @keyframes hwLoadBar{0%{opacity:0.3;}50%{opacity:1;}100%{opacity:0.3;}}
+  </style>
 
 
   <!-- EDIT MODAL -->
