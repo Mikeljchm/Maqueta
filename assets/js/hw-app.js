@@ -1196,23 +1196,43 @@
       URL.revokeObjectURL(objURL);
       _imgNatW = imgEl.naturalWidth;
       _imgNatH = imgEl.naturalHeight;
-      var vpr = vp.getBoundingClientRect();
-      _vpW = vpr.width; _vpH = vpr.height;
-      /* Escala mínima: imagen cubre el área de recorte */
-      var cropW = type === 'avatar' ? _vpW * 0.84 : _vpW * 0.92;
-      var cropH = type === 'avatar' ? _vpW * 0.84 : _vpH * 0.40;
-      _minScale = Math.max(cropW / _imgNatW, cropH / _imgNatH);
-      _scale = _minScale;
-      /* Centrar */
-      _tx = 0; _ty = 0;
-      /* Tamaño base del img element = naturalSize (scale se aplica via transform) */
-      imgEl.style.width  = _imgNatW + 'px';
-      imgEl.style.height = _imgNatH + 'px';
-      _applyTransform();
+      /* Esperar un frame: el modal recién pasó de display:none a flex,
+         y getBoundingClientRect() puede devolver 0x0 si se lee en el
+         mismo frame (causa de la pantalla negra en Android). */
+      requestAnimationFrame(function() {
+        var vpr = vp.getBoundingClientRect();
+        _vpW = vpr.width; _vpH = vpr.height;
+        if (!_vpW || !_vpH) {
+          /* Fallback de emergencia — reintentar un frame más */
+          requestAnimationFrame(function() {
+            var vpr2 = vp.getBoundingClientRect();
+            _vpW = vpr2.width || window.innerWidth;
+            _vpH = vpr2.height || window.innerHeight * 0.7;
+            _finishCropSetup(type);
+          });
+          return;
+        }
+        _finishCropSetup(type);
+      });
     };
     imgEl.src = objURL;
   }
   window._openCropModal = _openCropModal;
+
+  function _finishCropSetup(type) {
+    var imgEl = document.getElementById('hw-crop-img');
+    /* Escala mínima: imagen cubre el área de recorte */
+    var cropW = type === 'avatar' ? _vpW * 0.84 : _vpW * 0.92;
+    var cropH = type === 'avatar' ? _vpW * 0.84 : _vpH * 0.40;
+    _minScale = Math.max(cropW / _imgNatW, cropH / _imgNatH);
+    _scale = _minScale;
+    /* Centrar */
+    _tx = 0; _ty = 0;
+    /* Tamaño base del img element = naturalSize (scale se aplica via transform) */
+    imgEl.style.width  = _imgNatW + 'px';
+    imgEl.style.height = _imgNatH + 'px';
+    _applyTransform();
+  }
 
   function _closeCropModal() {
     var modal = document.getElementById('hw-crop-modal');
