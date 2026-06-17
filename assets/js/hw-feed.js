@@ -896,15 +896,34 @@ async function votePoll(postId, idx, poll, container) {
       if (nav) nav.style.display = 'flex';
     });
 
+    /* Guardar/restaurar posición de scroll de cada página al navegar entre ellas.
+       Cada .page tiene su propio overflow-y:auto, así que el scroll vive ahí mismo;
+       solo hace falta guardarlo antes de salir y restaurarlo al volver. */
+    var _hwScrollPositions = {};
+    function _hwSaveCurrentScroll() {
+      var activePage = document.querySelector('.page.active');
+      if (activePage && activePage.id) {
+        _hwScrollPositions[activePage.id] = activePage.scrollTop;
+      }
+    }
+    function _hwRestoreScroll(pageId) {
+      var pg = document.getElementById(pageId);
+      if (pg && _hwScrollPositions[pageId] !== undefined) {
+        pg.scrollTop = _hwScrollPositions[pageId];
+      }
+    }
+
     /* NAV — outside initApp so it always works */
     document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.page;
+        _hwSaveCurrentScroll();
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         const pg = document.getElementById('page-' + id);
         if (pg) pg.classList.add('active');
+        _hwRestoreScroll('page-' + id);
         // Show strip only on home, hide on all other sections
         var strip = document.getElementById('top-strip');
         var fab = document.getElementById('new-post-fab');
@@ -915,27 +934,20 @@ async function votePoll(postId, idx, poll, container) {
           if (strip) strip.style.display = 'none';
           if (fab) fab.style.display = 'none';
         }
-        /* Reset home feed when going back to home */
-        if (id === 'home') {
-          currentCat = 'all';
-          visibleCount = POSTS_PER_PAGE;
-          document.querySelectorAll('.cat-pill[data-cat]').forEach(b => b.classList.remove('active'));
-          const allPill = document.querySelector('.cat-pill[data-cat="all"]');
-          if (allPill) allPill.classList.add('active');
-          renderFeed();
-        }
       });
     });
 
     document.querySelectorAll('.menu-item[data-nav]').forEach(item => {
       item.addEventListener('click', () => {
         const id = item.dataset.nav;
+        _hwSaveCurrentScroll();
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         const navBtn = document.querySelector('.nav-item[data-page="'+id+'"]');
         if (navBtn) navBtn.classList.add('active');
         const pg = document.getElementById('page-' + id);
         if (pg) pg.classList.add('active');
+        _hwRestoreScroll('page-' + id);
         var strip = document.getElementById('top-strip');
         if (strip) strip.style.display = 'none';
       });
