@@ -437,8 +437,10 @@ layout: none
           </button>
         </div>
 
-        <!-- SIGN IN CARD -->
-        <div class="prof-signin-card" id="prof-signin-card">
+        <!-- SIGN IN CARD — oculto por defecto; hw-app.js lo muestra solo si confirma que no hay sesión.
+             Antes estaba visible por defecto y se veía superpuesto con datos reales mientras
+             hw-app.js (lazy) terminaba de cargar. -->
+        <div class="prof-signin-card" id="prof-signin-card" style="display:none;">
           <div class="prof-signin-icon"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--fire-orange)" stroke-width="1.2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
           <div class="prof-signin-title">JOIN HOTT WRESTLING</div>
           <div class="prof-signin-sub">Save posts, create collections &amp; unlock adult content</div>
@@ -576,7 +578,7 @@ layout: none
 
   <script src="/assets/js/hw-social.js?v=1"></script>
   <script src="/assets/js/hw-auth.js?v=1"></script>
-  <script src="/assets/js/hw-feed.js?v=1"></script>
+  <script src="/assets/js/hw-feed.js?v=2"></script>
   <script src="/assets/js/hw-admin.js?v=1"></script>
   <script src="/assets/js/hw-index.js?v=20260617f"></script>
 
@@ -612,7 +614,7 @@ layout: none
     document.addEventListener('DOMContentLoaded', function(){
       attachLazyTrigger('more',  '/assets/js/hw-app.js?v=1',       'app');
       attachLazyTrigger('audio', '/assets/js/hw-app.js?v=1',       'app');
-      attachLazyTrigger('bulge', '/assets/js/hw-community.js?v=1', 'community');
+      attachLazyTrigger('bulge', '/assets/js/hw-community.js?v=2', 'community');
     });
   })();
   </script>
