@@ -76,6 +76,43 @@ layout: none
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Anton&family=Righteous&family=Dancing+Script:wght@600;700&family=Oswald:wght@400;600;700&family=Russo+One&family=Pacifico&family=Lobster&family=Black+Han+Sans&family=Permanent+Marker&family=Alfa+Slab+One&family=Bungee&family=Monoton&family=Creepster&family=Teko:wght@500;600;700&family=Exo+2:wght@700;800;900&family=Rajdhani:wght@600;700&family=Audiowide&&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/hw-index.css?v=3">
+  <script>
+  /* ── DEBUG TEMPORAL — verificar qué tamaño tiene cada script realmente descargado ── */
+  (function(){
+    var files = ['hw-social.js','hw-auth.js','hw-feed.js','hw-admin.js','hw-app.js','hw-community.js','hw-index.js'];
+    var results = [];
+    var pending = files.length;
+    function render() {
+      var box = document.getElementById('__hw_size_box__');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = '__hw_size_box__';
+        box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:999999;background:#003366;color:#fff;font-family:monospace;font-size:10px;padding:6px;max-height:40vh;overflow-y:auto;white-space:pre-wrap;';
+        document.documentElement.appendChild(box);
+      }
+      box.textContent = 'SCRIPT SIZES (esperado vs real):\n' + results.join('\n');
+    }
+    var expected = {
+      'hw-social.js': 52890, 'hw-auth.js': 15754, 'hw-feed.js': 101964,
+      'hw-admin.js': 74463, 'hw-app.js': 142875, 'hw-community.js': 140711, 'hw-index.js': 490
+    };
+    files.forEach(function(f){
+      fetch('/assets/js/' + f + '?_check=' + Date.now())
+        .then(function(r){ return r.text(); })
+        .then(function(text){
+          var realSize = new TextEncoder().encode(text).length;
+          var exp = expected[f];
+          var match = realSize === exp ? 'OK' : 'MISMATCH!';
+          results.push(f + ': esperado=' + exp + ' real=' + realSize + ' [' + match + ']');
+          render();
+        })
+        .catch(function(e){
+          results.push(f + ': ERROR AL DESCARGAR - ' + e.message);
+          render();
+        });
+    });
+  })();
+  </script>
 </head>
 <body>
 
