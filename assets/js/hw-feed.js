@@ -491,10 +491,8 @@ async function votePoll(postId, idx, poll, container) {
   // Intersection Observer para infinite scroll
   function initObserver() {
     var sentinel = document.getElementById('feed-sentinel');
-    if (!sentinel) { if(window.__hwLogPush) window.__hwLogPush('initObserver ABORT: sentinel no existe'); return; }
-    if(window.__hwLogPush) window.__hwLogPush('initObserver registrado sobre feed-sentinel');
+    if (!sentinel) return;
     var observer = new IntersectionObserver(function(entries) {
-      if(window.__hwLogPush) window.__hwLogPush('Jekyll observer dispar\u00f3: isIntersecting=' + entries[0].isIntersecting + ' LOADING=' + LOADING + ' LOADED=' + LOADED + ' total=' + getFilteredPosts().length);
       if (entries[0].isIntersecting && !LOADING && !_cfLoading && LOADED < getFilteredPosts().length) {
         LOADING = true;
         var loader = document.getElementById('feed-loader');
@@ -534,9 +532,8 @@ async function votePoll(postId, idx, poll, container) {
   var _cfObserver = null;
 
   function _cfRenderPosts(posts, append) {
-    if(window.__hwLogPush) window.__hwLogPush('_cfRenderPosts llamada con ' + posts.length + ' posts, append=' + append + ', renderPost type=' + typeof window.renderPost);
     var cc = document.getElementById('community-feed-container');
-    if (!cc) { if(window.__hwLogPush) window.__hwLogPush('_cfRenderPosts ABORT: cc no existe'); return; }
+    if (!cc) return;
     if (!append) {
       /* Primera carga — poner separador + posts */
       var divider = '<div class="cf-divider"><div class="cf-divider-line"></div><div class="cf-divider-label">&#128101; COMMUNITY POSTS</div><div class="cf-divider-line"></div></div>';
@@ -549,23 +546,15 @@ async function votePoll(postId, idx, poll, container) {
       while (div.firstChild) frag.appendChild(div.firstChild);
     });
     cc.appendChild(frag);
-    if(window.__hwLogPush) window.__hwLogPush('_cfRenderPosts terminó, cc.children.length=' + cc.children.length);
     if (window._activateLazyGifs) window._activateLazyGifs(cc);
     if (window.loadAllLikes) window.loadAllLikes();
     if (window.loadAllCommentCounts) window.loadAllCommentCounts();
   }
 
   async function _cfLoadPage() {
-    if(window.__hwLogPush) window.__hwLogPush('_cfLoadPage() llamada, offset=' + _cfOffset + ' hasMore=' + _cfHasMore + ' loading=' + _cfLoading);
     var _aw = document.getElementById('all-feed-view');
-    if (_aw && _aw.style.display === 'none') {
-      if(window.__hwLogPush) window.__hwLogPush('_cfLoadPage ABORTADA: all-feed-view display=none');
-      return;
-    }
-    if (_cfLoading || !_cfHasMore) {
-      if(window.__hwLogPush) window.__hwLogPush('_cfLoadPage ABORTADA: loading=' + _cfLoading + ' hasMore=' + _cfHasMore);
-      return;
-    }
+    if (_aw && _aw.style.display === 'none') return;
+    if (_cfLoading || !_cfHasMore) return;
     _cfLoading = true;
     /* Mostrar spinner en el sentinel del community feed */
     var sentinel = document.getElementById('cf-sentinel');
@@ -574,31 +563,27 @@ async function votePoll(postId, idx, poll, container) {
       var r = await fetch('/api/posts?limit='+_cfLimit+'&offset='+_cfOffset, {credentials:'include'});
       var d = await r.json();
       var posts = d.posts || [];
-      if(window.__hwLogPush) window.__hwLogPush('_cfLoadPage fetch OK, posts.length=' + posts.length);
       _cfHasMore = d.has_more || false;
       if (posts.length) {
         _cfRenderPosts(posts, _cfOffset > 0);
         _cfOffset += posts.length;
-        if(window.__hwLogPush) window.__hwLogPush('_cfRenderPosts ejecutado con ' + posts.length + ' posts');
       }
       if (sentinel) sentinel.innerHTML = '';
       /* Ocultar sentinel si no hay más */
       /* Cuando community feed termina, el observer dispara Jekyll automáticamente */
     } catch(e) {
-      if(window.__hwLogPush) window.__hwLogPush('_cfLoadPage EXCEPCION: ' + e.message);
       if (sentinel) sentinel.innerHTML = '';
     }
     _cfLoading = false;
   }
 
   window._initCommunityFeed = function() {
-    if(window.__hwLogPush) window.__hwLogPush('_initCommunityFeed() ejecutando');
     _cfOffset = 0; _cfHasMore = true; _cfLoading = false;
     var cc = document.getElementById('community-feed-container');
-    if (!cc) { if(window.__hwLogPush) window.__hwLogPush('_initCommunityFeed ABORT: cc no existe'); return; }
+    if (!cc) return;
     cc.innerHTML = '';
     var sentinel = document.getElementById('feed-sentinel');
-    if (!sentinel) { if(window.__hwLogPush) window.__hwLogPush('_initCommunityFeed ABORT: sentinel no existe'); return; }
+    if (!sentinel) return;
     sentinel.style.display = '';
     sentinel.innerHTML = '';
     if (_cfObserver) _cfObserver.disconnect();
@@ -730,10 +715,8 @@ async function votePoll(postId, idx, poll, container) {
       var _cfRetries = 0;
       var _cfInterval = setInterval(function(){
         _cfRetries++;
-        if(window.__hwLogPush) window.__hwLogPush('retry #' + _cfRetries + ', renderPost=' + typeof window.renderPost);
         if (window.renderPost || _cfRetries > 20) {
           clearInterval(_cfInterval);
-          if(window.__hwLogPush) window.__hwLogPush('Llamando _initCommunityFeed desde retry loop');
           if (window._initCommunityFeed) window._initCommunityFeed();
         }
       }, 200);
@@ -741,7 +724,6 @@ async function votePoll(postId, idx, poll, container) {
   } else {
     initFeed();
     setTimeout(function(){
-      if(window.__hwLogPush) window.__hwLogPush('Llamando _initCommunityFeed desde else (readyState ya complete)');
       if (window._initCommunityFeed) window._initCommunityFeed();
     }, 800);
   }
@@ -1982,6 +1964,8 @@ async function votePoll(postId, idx, poll, container) {
   }
   var REPORTED_POSTS = new Set();
   try { REPORTED_POSTS = new Set(JSON.parse(localStorage.getItem('hw_reported_posts')||'[]')); } catch(e){}
+  var LIKED_POSTS = new Set();
+  try { LIKED_POSTS = new Set(JSON.parse(localStorage.getItem('hw_post_likes')||'[]')); } catch(e){}
 
   function renderPost(p) {
     var isAdmin = document.body.classList.contains('is-admin');
