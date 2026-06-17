@@ -369,164 +369,10 @@
     });
   }
 
-  function renderPost(p) {
-    var isAdmin = document.body.classList.contains('is-admin');
-    /* isOwn = false si es un repost de contenido ajeno (para poder reportarlo) */
-    var _isRepostOfOther = p.repost_of_id && p.repost_user_id && window.currentUser && p.repost_user_id !== window.currentUser.id;
-    var isOwn   = window.currentUser && window.currentUser.id === p.user_id && !window._viewingProfileOf && !_isRepostOfOther;
-    var reported = REPORTED_POSTS.has(String(p.id));
-    var _avUrlP = (window._resolveAvatar||function(u,a){return a||'';})(p.user_id, p.user_avatar);
-    var avatar = _avUrlP
-      ? '<img src="'+_avUrlP+'" loading="lazy" alt="">'
-      : '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+  /* renderPost fue movida a hw-feed.js (debe existir SIEMPRE para Home,
+     no solo cuando se visita Threads/Bulge). window.renderPost ya está
+     expuesta globalmente por hw-feed.js — no se redefine aquí. */
 
-    /* ── Recopilar URLs de medios ── */
-    var mediaUrls = [];
-    if (p.image_url) {
-      try {
-        var parsed = JSON.parse(p.image_url);
-        if (Array.isArray(parsed)) mediaUrls = parsed;
-        else mediaUrls = [p.image_url];
-      } catch(e) { mediaUrls = [p.image_url]; }
-    }
-    /* También soportar campo images array */
-    if (!mediaUrls.length && Array.isArray(p.images)) mediaUrls = p.images.filter(Boolean);
-
-    /* ── Layout de medios estilo Tumblr ── */
-    var mediaHtml = '';
-    if (mediaUrls.length === 1) {
-      var u0 = mediaUrls[0];
-      var lo0 = u0.toLowerCase().split('?')[0];
-      var isV0 = lo0.endsWith('.mp4')||lo0.endsWith('.webm');
-      var enc0 = encodeURIComponent(JSON.stringify(mediaUrls));
-      mediaHtml = '<div class="pc-media-wrap" data-tv-urls="'+enc0+'" data-tv-idx="0">'
-        + (isV0
-          ? '<video class="pc-media-single" src="'+u0+'" muted playsinline controls controlslist="nodownload"></video>'
-          : (lo0.endsWith('.gif')
-            ? '<img class="pc-media-single" data-lazygif="'+u0+'" alt="">'
-            : '<img class="pc-media-single" src="'+u0+'" loading="lazy" alt="">'))
-        + '</div>';
-    } else if (mediaUrls.length === 2) {
-      var enc2 = encodeURIComponent(JSON.stringify(mediaUrls));
-      mediaHtml = '<div class="pc-media-wrap pc-media-2col" data-tv-urls="'+enc2+'">';
-      mediaUrls.forEach(function(u,i){
-        var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
-        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'
-          +(isV?'<video src="'+u+'" muted playsinline></video>':(lo.endsWith('.gif')?'<img data-lazygif="'+u+'" alt="">':'<img src="'+u+'" loading="lazy" alt="">'))
-          +'</div>';
-      });
-      mediaHtml += '</div>';
-    } else if (mediaUrls.length >= 3) {
-      var enc3 = encodeURIComponent(JSON.stringify(mediaUrls));
-      mediaHtml = '<div class="pc-media-wrap" data-tv-urls="'+enc3+'">';
-      /* 2 arriba */
-      mediaHtml += '<div class="pc-media-2col">';
-      [0,1].forEach(function(i){
-        var u=mediaUrls[i]; var lo=u.toLowerCase().split('?')[0]; var isV=lo.endsWith('.mp4')||lo.endsWith('.webm');
-        mediaHtml += '<div class="pc-media-cell" data-tv-idx="'+i+'">'
-          +(isV?'<video src="'+u+'" muted playsinline></video>':(lo.endsWith('.gif')?'<img data-lazygif="'+u+'" alt="">':'<img src="'+u+'" loading="lazy" alt="">'))
-          +'</div>';
-      });
-      mediaHtml += '</div>';
-      /* 1 abajo completa con +N si hay más */
-      var u2 = mediaUrls[2]; var lo2=u2.toLowerCase().split('?')[0]; var isV2=lo2.endsWith('.mp4')||lo2.endsWith('.webm');
-      var extra = mediaUrls.length > 3
-        ? '<div class="pc-media-more">+' + (mediaUrls.length-3) + '</div>' : '';
-      mediaHtml += '<div class="pc-media-cell pc-media-full" data-tv-idx="2">'
-        +(isV2?'<video src="'+u2+'" muted playsinline></video>':(lo2.endsWith('.gif')?'<img data-lazygif="'+u2+'" alt="">':'<img src="'+u2+'" loading="lazy" alt="">'))
-        +extra+'</div>';
-      mediaHtml += '</div>';
-    }
-
-    /* ── Repost embed (si es un repost) ── */
-    var repostHtml = '';
-    if (p.repost_of_id != null && p.repost_of_id !== '') {
-      var rpAvSrc = p.repost_avatar || '';
-      var rpAvHtml = rpAvSrc
-        ? '<img src="'+rpAvSrc+'" alt="">'
-        : '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="var(--text-dim)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
-      var rpLo = (p.repost_image_url||'').toLowerCase().split('?')[0];
-      var rpIsV = rpLo.endsWith('.mp4')||rpLo.endsWith('.webm');
-      var rpMedia = p.repost_image_url
-        ? '<div class="pc-repost-media">'+(rpIsV
-            ? '<video src="'+p.repost_image_url+'" muted playsinline controls controlslist="nodownload"></video>'
-            : '<img src="'+p.repost_image_url+'" loading="lazy" alt="">')+'</div>'
-        : '';
-      var rpBody = (p.repost_body||'').trim();
-      repostHtml = '<div class="pc-repost-header">'
-        + '<div class="pc-repost-icon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>'
-        + escH(p.user_name||'')+'<span style="opacity:0.6;"> reposted</span></div>'
-        + '<div class="pc-repost-embed">'
-          + '<div class="pc-repost-embed-header">'
-            + '<div class="pc-repost-av">'+rpAvHtml+'</div>'
-            + '<div class="pc-repost-name" data-profile-uid="'+escH(p.repost_user_id||'')+'" data-profile-name="'+escH(p.repost_user_name||'')+'" style="cursor:pointer;">'+escH(p.repost_user_name||'')+'</div>'
-          + '</div>'
-          + rpMedia
-          + (rpBody ? '<div class="pc-repost-body">'+escH(rpBody)+'</div>' : '')
-        + '</div>';
-    }
-
-    /* ── Tags/body ── */
-    var bodyTxt = (p.body||'').trim();
-    if (bodyTxt === ' ') bodyTxt = '';
-    var tagsHtml = '';
-    if (bodyTxt) {
-      var short = bodyTxt.length > 120 ? bodyTxt.slice(0,120) : bodyTxt;
-      var tagged = short.replace(/#(\w+)/g,'<span class="pc-tag">#$1</span>');
-      tagsHtml = '<div class="pc-tags">'
-        + tagged
-        + (bodyTxt.length > 120 ? '<button class="pc-more-btn" data-post-id="'+p.id+'">Ver más</button>' : '')
-        + '</div>';
-    }
-
-    /* ── HTML del card ── */
-    var html = '<div class="post-card" data-post-id="'+p.id+'" data-post-uid="'+escH(p.user_id||'')+'">'
-      /* Header: avatar + nombre + fecha */
-      + '<div class="pc-header">'
-        + '<div class="pc-av" data-profile-uid="'+escH(p.user_id||'')+'" data-profile-name="'+escH(p.user_name||'')+'" style="cursor:pointer;">'+avatar+'</div>'
-        + '<div class="pc-meta">'
-          + '<div class="pc-name" data-profile-uid="'+escH(p.user_id||'')+'" data-profile-name="'+escH(p.user_name||'')+'" style="cursor:pointer;">'+escH(p.user_name||'')+'</div>'
-          + '<div class="pc-date">'+timeAgo(p.created_at)+'</div>'
-        + '</div>'
-        + '<button class="pc-menu-btn" data-post-id="'+p.id+'">&#8943;</button>'
-      + '</div>'
-      /* Repost embed (va antes del media propio) */
-      + repostHtml
-      /* Medios */
-      + mediaHtml
-      /* Tags */
-      + tagsHtml
-      /* Acciones */
-      + '<div class="pc-actions">'
-        + '<button class="pc-act-btn post-comment-btn" data-post-id="'+p.id+'">'
-          + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
-          + '<span class="pc-act-count" id="cc-'+p.id+'"></span>'
-        + '</button>'
-        + '<button class="pc-act-btn post-like-btn'+(LIKED_POSTS.has(String(p.id))?' liked':'')+'" data-post-id="'+p.id+'" data-like-count="'+(p.like_count||0)+'">'
-          + '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
-          + '<span class="pc-act-count plc">'+(p.like_count||'')+'</span>'
-        + '</button>'
-        + '<button class="pc-act-btn pc-save-btn" data-post-id="'+p.id+'" title="Save to collection"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>'
-        + '<button class="pc-act-btn pc-repost-btn" data-post-id="'+p.id+'" title="Repost">'
-          + '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
-        + '</button>'
-        + '<button class="pc-act-btn pc-share-btn" data-post-id="'+p.id+'" title="Share">'
-          + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>'
-        + '</button>'
-        + (!isOwn ? '<button class="pc-act-btn post-report-btn'+(reported?' reported':'')+'" data-post-id="'+p.id+'">'
-          + '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
-          + '</button>' : '')
-      + '</div>';
-
-    if (isAdmin) {
-      html += '<div class="post-admin-bar">'
-        + '<button class="adm-del-btn" data-uid="'+escH(p.user_id||'')+'" onclick="window._adminDeletePost('+p.id+',this)" title="Delete">&#128465; Delete</button>'
-        + '</div>';
-    }
-
-    html += '</div>';
-    return html;
-  }
 
   window.loadPostsFeed = async function(container, userId) {
     if (!container) return;
@@ -549,7 +395,7 @@
       if (!posts.length) {
         container.innerHTML = newBtnHtml + '<div class="posts-empty">No posts yet. Be the first!</div>';
       } else {
-        container.innerHTML = newBtnHtml + posts.map(renderPost).join('');
+        container.innerHTML = newBtnHtml + posts.map(window.renderPost).join('');
         _activateLazyGifs(container);
       }
 
@@ -1311,8 +1157,9 @@
     overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.classList.remove('open'); });
   })();
 
-  /* Exponer renderPost, _activateLazyGifs y loadPostsFeed para uso cross-IIFE */
-  window.renderPost = renderPost;
+  /* Exponer _activateLazyGifs y loadPostsFeed para uso cross-IIFE.
+     renderPost YA está expuesta globalmente por hw-feed.js — no reasignar aquí
+     (la variable local 'renderPost' fue removida de este archivo). */
   window._activateLazyGifs = _activateLazyGifs;
   window.loadPostsFeed = window.loadPostsFeed;
 
