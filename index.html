@@ -4,46 +4,6 @@ layout: none
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script>
-  /* ── DEBUG TEMPORAL — rastrear feed-container a través del tiempo ── */
-  window.__hwLog = [];
-  window.__hwLogPush = function(msg) {
-    window.__hwLog.push(new Date().toISOString().slice(11,19) + ' ' + msg);
-    var box = document.getElementById('__hw_live_box__');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = '__hw_live_box__';
-      box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:999999;background:#222;color:#0f0;font-family:monospace;font-size:10px;padding:6px;max-height:40vh;overflow-y:auto;white-space:pre-wrap;';
-      document.documentElement.appendChild(box);
-    }
-    box.textContent = 'LIVE LOG:\n' + window.__hwLog.slice(-25).join('\n');
-  };
-  /* Vigilar feed-container con MutationObserver para detectar CUALQUIER cambio, incluyendo limpiezas */
-  document.addEventListener('DOMContentLoaded', function(){
-    var tries = 0;
-    var iv = setInterval(function(){
-      tries++;
-      var fc = document.getElementById('feed-container');
-      if (fc || tries > 50) {
-        clearInterval(iv);
-        if (!fc) return;
-        var mo = new MutationObserver(function(mutations){
-          mutations.forEach(function(m){
-            if (m.removedNodes.length > 0) {
-              window.__hwLogPush('feed-container: ' + m.removedNodes.length + ' nodo(s) REMOVIDOS. children ahora=' + fc.children.length);
-            }
-            if (m.addedNodes.length > 0) {
-              window.__hwLogPush('feed-container: ' + m.addedNodes.length + ' nodo(s) AGREGADOS. children ahora=' + fc.children.length);
-            }
-          });
-        });
-        mo.observe(fc, {childList: true});
-        window.__hwLogPush('MutationObserver activo sobre feed-container, children inicial=' + fc.children.length);
-      }
-    }, 100);
-  });
-  </script>
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#FF4500">
@@ -620,7 +580,7 @@ layout: none
   <script src="/assets/js/hw-critical.js?v=1"></script>
   <script src="/assets/js/hw-social.js?v=2"></script>
   <script src="/assets/js/hw-auth.js?v=2"></script>
-  <script src="/assets/js/hw-feed.js?v=5"></script>
+  <script src="/assets/js/hw-feed.js?v=6"></script>
   <script src="/assets/js/hw-admin.js?v=2"></script>
   <script src="/assets/js/hw-app.js?v=3"></script>
   <script src="/assets/js/hw-community.js?v=5"></script>
