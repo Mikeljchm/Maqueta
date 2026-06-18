@@ -581,7 +581,7 @@ layout: none
   <script src="/assets/js/hw-critical.js?v=1"></script>
   <script src="/assets/js/hw-social.js?v=2"></script>
   <script src="/assets/js/hw-auth.js?v=2"></script>
-  <script src="/assets/js/hw-feed.js?v=10"></script>
+  <script src="/assets/js/hw-feed.js?v=11"></script>
   <script src="/assets/js/hw-admin.js?v=2"></script>
   <script src="/assets/js/hw-app.js?v=5"></script>
   <script src="/assets/js/hw-index.js?v=20260617g"></script>
@@ -837,66 +837,6 @@ layout: none
 /* Edit Profile handled by hw-index.js */
 </script>
 
-<div id="hw-debug-box" style="position:fixed;bottom:80px;left:8px;right:8px;background:rgba(0,0,0,0.92);color:#0f0;font-family:monospace;font-size:11px;padding:8px;border-radius:8px;z-index:99999;max-height:220px;overflow-y:auto;display:none;"></div>
-<script>
-(function(){
-  var box = document.getElementById('hw-debug-box');
-  var logs = [];
-  function log(msg){
-    logs.push((new Date()).toISOString().slice(11,19)+' '+msg);
-    if(logs.length > 30) logs.shift();
-    box.innerHTML = logs.join('<br>');
-    box.style.display = 'block';
-  }
-  window._hwLog = log;
-
-  /* Interceptar _openHWViewer para loggear cada intento */
-  var _origOpen = window._openHWViewer;
-  window._openHWViewer = function(urls, idx, postId, cb){
-    log('_openHWViewer llamado: '+JSON.stringify(urls).slice(0,60));
-    log('HWViewer existe: '+(!!window.HWViewer));
-    log('_scriptEl activo: '+(!!window._hwScriptEl));
-    if(_origOpen) _origOpen(urls, idx, postId, cb);
-    else log('ERROR: _origOpen no existe!');
-  };
-
-  /* Monitorear cuándo hw-community.js carga */
-  var _origLoad = window._loadCommunity;
-  if(_origLoad){
-    window._loadCommunity = function(cb){
-      log('_loadCommunity llamado, HWViewer ya existe: '+(!!window.HWViewer));
-      _origLoad(cb);
-    };
-  } else {
-    log('ADVERTENCIA: _loadCommunity no definido aún');
-  }
-
-  /* Botón para cerrar el debug */
-  var btn = document.createElement('button');
-  btn.textContent = 'X';
-  btn.style.cssText = 'position:fixed;bottom:300px;right:8px;z-index:100000;background:#f00;color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-weight:bold;display:none;';
-  btn.id = 'hw-debug-close';
-  btn.onclick = function(){ box.style.display='none'; btn.style.display='none'; };
-  document.body.appendChild(btn);
-
-  /* Mostrar botón X cuando el debug box aparece */
-  var obs = new MutationObserver(function(){
-    if(box.style.display !== 'none') btn.style.display='block';
-  });
-  obs.observe(box, {attributes:true, attributeFilter:['style']});
-
-  /* Loggear cuando HWViewer aparece en window */
-  var checkHW = setInterval(function(){
-    if(window.HWViewer){
-      log('✅ HWViewer disponible en window');
-      clearInterval(checkHW);
-    }
-  }, 300);
-  setTimeout(function(){ clearInterval(checkHW); }, 15000);
-
-  log('Debug iniciado. Tocá una foto para ver qué pasa.');
-})();
-</script>
 </body>
 </html>
 
