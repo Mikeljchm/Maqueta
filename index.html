@@ -581,7 +581,7 @@ layout: none
   <script src="/assets/js/hw-critical.js?v=1"></script>
   <script src="/assets/js/hw-social.js?v=2"></script>
   <script src="/assets/js/hw-auth.js?v=2"></script>
-  <script src="/assets/js/hw-feed.js?v=9"></script>
+  <script src="/assets/js/hw-feed.js?v=10"></script>
   <script src="/assets/js/hw-admin.js?v=2"></script>
   <script src="/assets/js/hw-app.js?v=5"></script>
   <script src="/assets/js/hw-index.js?v=20260617g"></script>
@@ -591,22 +591,35 @@ layout: none
      hw-community.js ya no tiene CSS (todo vive en hw-threads.css,
      que siempre carga) — solo lógica/datos, así que es seguro
      cargarlo a demanda sin flash de estilos sin aplicar.
-     Triggers: Threads (entrada principal), Wrestlers (usa loadBattles
-     wrapping para agregar botón de comentar), Profile (usa
-     loadPostsFeed para las fotos del perfil) — cualquiera de los
-     tres dispara la misma única carga. */
+     Triggers: Threads, Wrestlers, Profile — cualquiera dispara la
+     misma única carga. _loadCommunity se expone a window para que
+     hw-feed.js y los layouts de Studs/Wrestlers puedan forzar la
+     carga antes de abrir el HWViewer. */
   (function(){
     var _loaded = false;
-    function loadCommunityOnce() {
-      if (_loaded) return;
+    var _callbacks = [];
+    function loadCommunityOnce(cb) {
+      if(cb) _callbacks.push(cb);
+      if (_loaded) { var fn; while((fn=_callbacks.shift())) fn(); return; }
+      if(document.querySelector('script[src*="hw-community.js"]')) return;
       _loaded = true;
       var s = document.createElement('script');
       s.src = '/assets/js/hw-community.js?v=9';
+      s.onload = function(){ var fn; while((fn=_callbacks.shift())) fn(); };
       document.body.appendChild(s);
     }
+    window._loadCommunity = loadCommunityOnce;
+
+    /* Helper global: carga hw-community.js si no está listo y abre HWViewer */
+    window._openHWViewer = function(urls, idx, postId, likeCallback){
+      loadCommunityOnce(function(){
+        if(window.HWViewer) window.HWViewer.open(urls, idx||0, postId||null, likeCallback||null);
+      });
+    };
+
     function attachTrigger(selector) {
       document.querySelectorAll(selector).forEach(function(el){
-        el.addEventListener('click', loadCommunityOnce);
+        el.addEventListener('click', function(){ loadCommunityOnce(); });
       });
     }
     document.addEventListener('DOMContentLoaded', function(){
