@@ -583,8 +583,41 @@ layout: none
   <script src="/assets/js/hw-feed.js?v=8"></script>
   <script src="/assets/js/hw-admin.js?v=2"></script>
   <script src="/assets/js/hw-app.js?v=3"></script>
-  <script src="/assets/js/hw-community.js?v=6"></script>
   <script src="/assets/js/hw-index.js?v=20260617g"></script>
+
+  <script>
+  /* ── LAZY LOADING — hw-community.js (Threads/DMCA/HWViewer) ──
+     hw-community.js ya no tiene CSS (todo vive en hw-threads.css,
+     que siempre carga) — solo lógica/datos, así que es seguro
+     cargarlo a demanda sin flash de estilos sin aplicar.
+     Triggers: Threads (entrada principal), Wrestlers (usa loadBattles
+     wrapping para agregar botón de comentar), Profile (usa
+     loadPostsFeed para las fotos del perfil) — cualquiera de los
+     tres dispara la misma única carga. */
+  (function(){
+    var _loaded = false;
+    function loadCommunityOnce() {
+      if (_loaded) return;
+      _loaded = true;
+      var s = document.createElement('script');
+      s.src = '/assets/js/hw-community.js?v=6';
+      document.body.appendChild(s);
+    }
+    function attachTrigger(selector) {
+      document.querySelectorAll(selector).forEach(function(el){
+        el.addEventListener('click', loadCommunityOnce);
+      });
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      attachTrigger('.nav-item[data-page="bulge"]');
+      attachTrigger('.menu-item[data-nav="bulge"]');
+      attachTrigger('.nav-item[data-page="wrestlers"]');
+      attachTrigger('.menu-item[data-nav="wrestlers"]');
+      attachTrigger('.nav-item[data-page="more"]');
+      attachTrigger('.menu-item[data-nav="more"]');
+    });
+  })();
+  </script>
 
 
   <!-- EDIT MODAL -->
