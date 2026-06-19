@@ -138,7 +138,12 @@ function containsLink(text) {
    iframe que mande el cliente directo; siempre re-derivar desde el link original
    pegado por el usuario, para evitar que alguien inyecte un src arbitrario. */
 function detectEmbedServer(url) {
-  url = String(url||'').trim().slice(0, 500);
+  url = String(url||'').trim().slice(0, 2000);
+  if (url.indexOf('<iframe') !== -1) {
+    var srcMatch = url.match(/src\s*=\s*["']([^"']+)["']/i);
+    url = srcMatch ? srcMatch[1] : url;
+  }
+  url = url.slice(0, 500);
   if (!url) return null;
   var yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
   if (yt) return { type: 'youtube', src: 'https://www.youtube.com/embed/'+yt[1]+'?enablejsapi=1&playsinline=1&rel=0' };
@@ -146,7 +151,7 @@ function detectEmbedServer(url) {
   if (tw) return { type: 'twitter', src: 'https://platform.twitter.com/embed/Tweet.html?id='+tw[1]+'&dnt=true' };
   var tu = url.match(/([a-zA-Z0-9-]+)\.tumblr\.com\/post\/(\d+)/);
   if (tu) return { type: 'tumblr', src: 'https://embed.tumblr.com/embed/post/'+tu[1]+'/'+tu[2] };
-  var tv = url.match(/thisvid\.com\/(?:videos\/[^\/]*-)?(\d+)/);
+  var tv = url.match(/thisvid\.com\/(?:embed\/|videos\/[^\/]*-)?(\d+)/);
   if (tv) return { type: 'thisvid', src: 'https://thisvid.com/embed/'+tv[1]+'/' };
   var rg = url.match(/redgifs\.com\/(?:watch|ifr)\/([A-Za-z0-9]+)/);
   if (rg) return { type: 'redgifs', src: 'https://www.redgifs.com/ifr/'+rg[1] };
