@@ -180,7 +180,7 @@
       background: #1a1a1a;
       border: none;
       border-radius: 0;
-      margin: 0 0 22px 0;
+      margin: 0 0 30px 0;
       overflow: hidden;
       opacity: 1;
       position: relative;
@@ -226,9 +226,9 @@
     .card-read-more:active { color:var(--fire-orange); }
 
     /* CARD ACTIONS */
-    .card-actions { display:flex; align-items:center; padding:0.5rem 0.5rem 0.9rem; border-top:1px solid rgba(255,255,255,0.05); margin-top:0.5rem; gap:0.25rem; }
-    .card-act-btn { flex:1; background:none; border:none; display:flex; align-items:center; justify-content:center; gap:0.45rem; padding:0.55rem 0; color:#C0C0C0; font-size:0.85rem; font-family:var(--font-b); cursor:pointer; border-radius:18px; transition:transform 0.3s var(--ease-bounce), background 0.2s var(--ease); }
-    .card-act-btn:active { background:rgba(255,255,255,0.06); transform:scale(0.86); }
+    .card-actions { display:flex; align-items:center; padding:0.5rem 0.6rem 1rem; border-top:1px solid rgba(255,255,255,0.07); margin-top:0.5rem; gap:0; }
+    .card-act-btn { flex:1; background:rgba(255,255,255,0.045); border:none; display:flex; align-items:center; justify-content:center; gap:0.45rem; padding:0.6rem 0; margin:0 0.15rem; color:#C0C0C0; font-size:0.85rem; font-family:var(--font-b); cursor:pointer; border-radius:18px; transition:transform 0.3s var(--ease-bounce), background 0.2s var(--ease); }
+    .card-act-btn:active { background:rgba(255,255,255,0.11); transform:scale(0.86); }
     .card-act-btn svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:all 0.2s; }
     .like-btn:active { color:#ff3b5c; }
     .like-btn.liked { color:#ff3b5c; }
@@ -568,15 +568,16 @@ body.po-open { overflow:hidden; }
 .po-media-multi .card-media-wrap { display:block; }
 .po-media-multi .card-first-photo { max-height:none; }
 
-.po-body { padding:1.4rem 1.1rem 0.4rem; background:var(--bg); border-radius:22px 22px 0 0; margin-top:-18px; position:relative; z-index:2; }
+.po-body { padding:1.5rem 1.1rem 0.4rem; background:var(--surface); border-radius:24px 24px 0 0; margin-top:-22px; position:relative; z-index:2; box-shadow:0 -10px 28px rgba(0,0,0,0.55); }
+.po-body::before { content:''; position:absolute; top:0.55rem; left:50%; transform:translateX(-50%); width:36px; height:4px; border-radius:2px; background:rgba(255,255,255,0.18); }
 .po-title { font-family:var(--font-d); font-size:1.5rem; letter-spacing:0.03em; color:var(--text); margin-bottom:0.5rem; }
 .po-meta { display:flex; align-items:center; gap:0.5rem; font-size:0.68rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em; font-family:var(--font-b); margin-bottom:0.75rem; }
 .po-meta .po-cat { color:var(--fire-orange); }
 .po-desc { font-size:0.92rem; line-height:1.85; color:var(--text-dim); font-family:var(--font-b); white-space:pre-wrap; }
 
-.po-actions { padding-left:0.6rem; padding-right:0.6rem; }
+.po-actions { padding-left:0.6rem; padding-right:0.6rem; background:var(--surface); }
 
-.po-related { padding:1rem 1.1rem calc(2rem + var(--safe-bottom)); border-top:1px solid var(--border); margin-top:0.6rem; }
+.po-related { padding:1rem 1.1rem calc(2rem + var(--safe-bottom)); border-top:1px solid var(--border); margin-top:0.6rem; background:var(--surface); }
 .po-related-title { font-family:var(--font-d); font-size:0.95rem; letter-spacing:0.06em; color:var(--text-dim); margin-bottom:0.7rem; text-transform:uppercase; }
 .po-related-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0.4rem; }
 .po-related-thumb { aspect-ratio:1; border-radius:14px; overflow:hidden; background:var(--surface-2); cursor:pointer; }
