@@ -555,3 +555,46 @@
     .lr-comment-input:focus { border-color:rgba(255,69,0,0.3); }
     .lr-comment-input::placeholder { color:var(--text-muted); }
     .lr-comment-send { background:none; border:none; color:var(--fire-orange); font-family:var(--font-d); font-size:0.78rem; letter-spacing:0.06em; cursor:pointer; flex-shrink:0; }
+
+/* ── POST OVERLAY (Tumblr-style) — feed Home, capa intermedia entre la
+   card y el HWViewer. Sin nav, sin header de la app, solo X + gesto
+   swipe-down para cerrar. Construido en hw-feed.js (_openPostOverlay). */
+body.po-open { overflow:hidden; }
+
+.post-overlay {
+  position:fixed; inset:0; z-index:8000;
+  background:var(--bg);
+  opacity:0; transform:scale(0.97);
+  transition:opacity 0.32s var(--ease), transform 0.38s var(--ease-bounce);
+  pointer-events:none;
+}
+.post-overlay.visible { opacity:1; transform:scale(1); pointer-events:auto; }
+
+.po-close {
+  position:fixed; top:calc(env(safe-area-inset-top,0px) + 0.7rem); left:0.85rem; z-index:8010;
+  width:38px; height:38px; border-radius:50%; border:none;
+  background:rgba(20,20,20,0.55); backdrop-filter:blur(14px);
+  color:var(--text); display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:transform 0.2s var(--ease);
+}
+.po-close:active { transform:scale(0.88); }
+
+.po-scroll { width:100%; height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+
+.po-media { width:100%; background:#000; }
+.po-media .card-media-wrap { min-height:auto; }
+.po-media .card-first-photo { width:100%; height:auto; max-height:80vh; object-fit:contain; background:#000; }
+
+.po-body { padding:1.1rem 1.1rem 0.4rem; }
+.po-title { font-family:var(--font-d); font-size:1.5rem; letter-spacing:0.03em; color:var(--text); margin-bottom:0.5rem; }
+.po-meta { display:flex; align-items:center; gap:0.5rem; font-size:0.68rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em; font-family:var(--font-b); margin-bottom:0.75rem; }
+.po-meta .po-cat { color:var(--fire-orange); }
+.po-desc { font-size:0.92rem; line-height:1.85; color:var(--text-dim); font-family:var(--font-b); white-space:pre-wrap; }
+
+.po-actions { padding-left:0.6rem; padding-right:0.6rem; }
+
+.po-related { padding:1rem 1.1rem calc(2rem + var(--safe-bottom)); border-top:1px solid var(--border); margin-top:0.6rem; }
+.po-related-title { font-family:var(--font-d); font-size:0.95rem; letter-spacing:0.06em; color:var(--text-dim); margin-bottom:0.7rem; text-transform:uppercase; }
+.po-related-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0.4rem; }
+.po-related-thumb { aspect-ratio:1; border-radius:10px; overflow:hidden; background:var(--surface-2); cursor:pointer; }
+.po-related-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
