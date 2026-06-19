@@ -3,5 +3,5 @@ layout: none
 permalink: /assets/data/posts.json
 ---
 [{% for post in site.posts %}{% unless forloop.first %},{% endunless %}
-{"url":"{{ post.url }}","title":{{ post.title | jsonify }},"category":"{{ post.category }}","date":"{{ post.date | date: '%Y-%m-%d' }}","adult":{{ post.adult | default: false }},"poster":{{ post.poster | default: "" | jsonify }},"description":{{ post.description | default: "" | jsonify }},"path":{{ post.path | jsonify }},"images":{{ post.images | default: "" | jsonify }},"image":{{ post.image | default: "" | jsonify }},"videos":{{ post.videos | default: "" | jsonify }},"links":{{ post.links | default: "" | jsonify }},"featured":{{ post.featured | default: false }}}{% endfor %}
+{"url":"{{ post.url }}","title":{{ post.title | jsonify }},"category":"{{ post.category }}","date":"{{ post.date | date: '%Y-%m-%d' }}","adult":{{ post.adult | default: false }},"poster":{{ post.poster | default: "" | jsonify }},"description":{{ post.description | default: "" | jsonify }},"path":{{ post.path | jsonify }},"images":{{ post.images | default: "" | jsonify }},"image":{{ post.image | default: "" | jsonify }},"videos":{{ post.videos | default: "" | jsonify }},"links":{{ post.links | default: "" | jsonify }},"featured":{{ post.featured | default: false }},"embed_url":{{ post.embed_url | default: "" | jsonify }}}{% endfor %}
 ]
