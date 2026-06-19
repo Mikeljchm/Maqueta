@@ -134,6 +134,25 @@ function containsLink(text) {
   return /https?:\/\/|www\.|\.(com|net|org|io|co|xyz|tv|me|gg|ly|link|app|site|web|info|biz|us|uk|ru|de|br|mx)(\/|\s|$)/i.test(stripped);
 }
 
+/* Espejo server-side de detectEmbed (hw-embeds.js) — NUNCA confiar en un src de
+   iframe que mande el cliente directo; siempre re-derivar desde el link original
+   pegado por el usuario, para evitar que alguien inyecte un src arbitrario. */
+function detectEmbedServer(url) {
+  url = String(url||'').trim().slice(0, 500);
+  if (!url) return null;
+  var yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  if (yt) return { type: 'youtube', src: 'https://www.youtube.com/embed/'+yt[1]+'?enablejsapi=1&playsinline=1&rel=0' };
+  var tw = url.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/);
+  if (tw) return { type: 'twitter', src: 'https://platform.twitter.com/embed/Tweet.html?id='+tw[1]+'&dnt=true' };
+  var tu = url.match(/([a-zA-Z0-9-]+)\.tumblr\.com\/post\/(\d+)/);
+  if (tu) return { type: 'tumblr', src: 'https://embed.tumblr.com/embed/post/'+tu[1]+'/'+tu[2] };
+  var tv = url.match(/thisvid\.com\/(?:videos\/[^\/]*-)?(\d+)/);
+  if (tv) return { type: 'thisvid', src: 'https://thisvid.com/embed/'+tv[1]+'/' };
+  var rg = url.match(/redgifs\.com\/(?:watch|ifr)\/([A-Za-z0-9]+)/);
+  if (rg) return { type: 'redgifs', src: 'https://www.redgifs.com/ifr/'+rg[1] };
+  return null;
+}
+
 async function handleComments(request, env, corsH) {
   const url = new URL(request.url);
   const post_id = url.searchParams.get('post_id');
@@ -1338,7 +1357,7 @@ async function handleUserPosts(request, env, corsH) {
       const limit  = Math.min(parseInt(url.searchParams.get('limit')  || '12'), 50);
       const offset = Math.max(parseInt(url.searchParams.get('offset') || '0'),  0);
       const { results } = await env.DB.prepare(
-        'SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,report_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
+        'SELECT id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,like_count,comment_count,report_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
       ).bind(limit, offset).all();
       /* Total para que el frontend sepa si hay más */
       const { results: countRes } = await env.DB.prepare(
@@ -1373,14 +1392,14 @@ async function handleUserPosts(request, env, corsH) {
       const targetId = userId || (session ? session.id : null);
       if (!targetId) return apiJson({ error: 'user_id required' }, 400, corsH);
       const { results } = await env.DB.prepare(
-        'SELECT p.id,p.user_id,p.user_name,p.user_avatar,p.body,p.image_url,p.like_count,p.comment_count,p.repost_of_id,p.repost_body,p.repost_user_name,p.repost_user_id,p.repost_image_url,p.repost_avatar,p.created_at FROM user_posts p INNER JOIN post_saves s ON s.post_id=p.id WHERE s.user_id=? AND p.hidden=0 ORDER BY s.saved_at DESC LIMIT 50'
+        'SELECT p.id,p.user_id,p.user_name,p.user_avatar,p.body,p.image_url,p.embed_url,p.embed_type,p.like_count,p.comment_count,p.repost_of_id,p.repost_body,p.repost_user_name,p.repost_user_id,p.repost_image_url,p.repost_avatar,p.created_at FROM user_posts p INNER JOIN post_saves s ON s.post_id=p.id WHERE s.user_id=? AND p.hidden=0 ORDER BY s.saved_at DESC LIMIT 50'
       ).bind(targetId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
     /* Posts de un usuario específico */
     if (userId) {
       const { results } = await env.DB.prepare(
-        'SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
+        'SELECT id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
       ).bind(userId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
@@ -1446,16 +1465,17 @@ async function handleUserPosts(request, env, corsH) {
 
       const text = (body.body||'').trim();
       const image_url = (body.image_url || '').trim().slice(0, 5000);
-      if (!text && !image_url) return apiJson({ error: 'Empty post' }, 400, corsH);
+      const embed = detectEmbedServer(body.embed_url || '');
+      if (!text && !image_url && !embed) return apiJson({ error: 'Empty post' }, 400, corsH);
       if (text.length > 500) return apiJson({ error: 'Max 500 characters.' }, 400, corsH);
       if (containsLink(text)) return apiJson({ error: 'Links are not allowed in posts.' }, 400, corsH);
       const result = await env.DB.prepare(
-        'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url) VALUES (?,?,?,?,?)'
-      ).bind(session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), text, image_url).run();
+        'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url,embed_url,embed_type) VALUES (?,?,?,?,?,?,?)'
+      ).bind(session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), text, image_url, embed?embed.src:'', embed?embed.type:'').run();
       await addPoints(env, session.id, 1);
       const newPostId = result.meta.last_row_id;
       const avatarUrl = await getUserAvatar(session.id, session.picture, env);
-      const newPost = { id: newPostId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl, body: text, image_url: image_url, like_count: 0, comment_count: 0, created_at: new Date().toISOString() };
+      const newPost = { id: newPostId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl, body: text, image_url: image_url, embed_url: embed?embed.src:'', embed_type: embed?embed.type:'', like_count: 0, comment_count: 0, created_at: new Date().toISOString() };
       return apiJson({ ok: true, id: newPostId, post: newPost }, 200, corsH);
     }
 
@@ -1823,11 +1843,11 @@ async function handleCommunityPosts(request, env, corsH) {
     /* Pinned solo en primera página */
     const pinnedArr = postsOffset === 0
       ? (await env.DB.prepare(
-          'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=1 AND hidden=0 AND hidden_by_creator=0'
+          'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=1 AND hidden=0 AND hidden_by_creator=0'
         ).bind(tid).all()).results
       : [];
     const { results: rawPosts } = await env.DB.prepare(
-      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
+      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
     ).bind(tid, postsLimit + 1, postsOffset).all();
     const posts_has_more = rawPosts.length > postsLimit;
     const posts = rawPosts.slice(0, postsLimit);
@@ -1849,8 +1869,9 @@ async function handleCommunityPosts(request, env, corsH) {
       const { results: banned } = await env.DB.prepare('SELECT user_id FROM thread_banned_users WHERE thread_id=? AND user_id=?').bind(tid,session.id).all();
       if (banned.length) return apiJson({ error: 'You have been removed from this thread.' }, 403, corsH);
       const mediaUrls = (body.media_urls||'').trim().slice(0,2000);
+      const embedT = detectEmbedServer(body.embed_url || '');
       const result = await env.DB.prepare(
-        'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,audio_url) VALUES (?,?,?,?,?,?,?,?)'      ).bind(tid,session.id,session.name||session.email,await getUserAvatar(session.id,session.picture,env),text,imgUrl,mediaUrls,audioUrl).run();
+        'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,audio_url,embed_url,embed_type) VALUES (?,?,?,?,?,?,?,?,?,?)'      ).bind(tid,session.id,session.name||session.email,await getUserAvatar(session.id,session.picture,env),text,imgUrl,mediaUrls,audioUrl,embedT?embedT.src:'',embedT?embedT.type:'').run();
       await env.DB.prepare('UPDATE threads SET post_count=post_count+1,last_activity=CURRENT_TIMESTAMP,is_active=1 WHERE id=?').bind(tid).run();
       const since = new Date(Date.now()-86400000).toISOString();
       const { results: rc } = await env.DB.prepare(
