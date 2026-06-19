@@ -156,6 +156,17 @@
 .prof-act-row:active{transform:scale(0.97);background:var(--surface-3);}
 #prof-name-edit-btn{transition:transform 0.25s var(--ease-bounce),background 0.2s;}
 #prof-name-edit-btn:active{transform:scale(0.94);background:rgba(255,255,255,0.06);}
+
+/* Perfil de visitante (openMiniProfile en hw-social.js) */
+.uprof-tabs{display:flex;gap:0.2rem;padding:0.22rem;background:var(--surface-2);border-radius:14px;}
+.uprof-tab{flex:1;padding:0.5rem 0.25rem;background:none;border:none;color:var(--text-dim);font-family:var(--font-b);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;border-radius:11px;transition:background 0.3s var(--ease-bounce),color 0.25s var(--ease),transform 0.25s var(--ease-bounce);}
+.uprof-tab.active{color:#fff;background:var(--fire-orange);}
+.uprof-tab:active{transform:scale(0.94);}
+#uprof-back{transition:transform 0.25s var(--ease-bounce);}
+#uprof-back:active{transform:scale(0.86);}
+#uprof-av{box-shadow:0 4px 18px rgba(0,0,0,0.5);}
+#uprof-fb{transition:transform 0.25s var(--ease-bounce);}
+#uprof-fb:active{transform:scale(0.95);}
 .prof-act-icon{width:36px;height:36px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .prof-act-icon svg{stroke:var(--text-dim);}
 .prof-act-text{flex:1;}
