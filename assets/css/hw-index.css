@@ -584,6 +584,8 @@ body.po-open { overflow:hidden; }
 .po-media { width:100%; background:#000; }
 .po-media .card-media-wrap { min-height:auto; }
 .po-media .card-first-photo { width:100%; height:auto; max-height:80vh; object-fit:contain; background:#000; }
+.po-media-multi .card-media-wrap { display:block; }
+.po-media-multi .card-first-photo { max-height:none; }
 
 .po-body { padding:1.1rem 1.1rem 0.4rem; }
 .po-title { font-family:var(--font-d); font-size:1.5rem; letter-spacing:0.03em; color:var(--text); margin-bottom:0.5rem; }
