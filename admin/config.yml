@@ -73,6 +73,11 @@ collections:
           label: Video URL
           name: url
           widget: string
+      - label: Embed (YouTube / X / Tumblr / ThisVid / redgifs)
+        name: embed_url
+        widget: string
+        required: false
+        hint: "Pega el link o el codigo <iframe> completo que te de el sitio"
       - label: Description
         name: description
         widget: text
