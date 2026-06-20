@@ -148,6 +148,8 @@ var EMBED_PLATFORMS = [
     embed: function(id){ return 'https://www.redgifs.com/ifr/'+id; } },
   { type: 'thisvid', match: /thisvid\.com\/(?:embed\/|videos\/[^\/]*-)?(\d+)/,
     embed: function(id){ return 'https://thisvid.com/embed/'+id+'/'; } },
+  { type: 'boyfriendtv', match: /boyfriendtv\.com\/(?:embed\/|videos\/)(\d+)/,
+    embed: function(id){ return 'https://www.boyfriendtv.com/embed/'+id+'/'; } },
   { type: 'pornhub', match: /pornhub\.com\/(?:view_video\.php\?viewkey=|embed\/)([a-zA-Z0-9]+)/,
     embed: function(id){ return 'https://www.pornhub.com/embed/'+id; } },
   { type: 'xhamster', match: /xhamster\d?\.com\/(?:videos\/[^\/]*-(\d+)|embed\/(\d+))/,
