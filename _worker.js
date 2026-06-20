@@ -212,7 +212,7 @@ async function detectEmbedServer(url) {
 async function fetchTumblrEmbed(postUrl, m) {
   try {
     var cleanUrl = 'https://' + m[1] + '.tumblr.com/post/' + m[2];
-    var resp = await fetch('https://www.tumblr.com/oembed/1.0?url=' + encodeURIComponent(cleanUrl));
+    var resp = await fetch('https://www.tumblr.com/oembed?url=' + encodeURIComponent(cleanUrl));
     if (!resp.ok) return null;
     var data = await resp.json();
     var html = data && data.html ? data.html : '';
