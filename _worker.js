@@ -137,6 +137,37 @@ function containsLink(text) {
 /* Espejo server-side de detectEmbed (hw-embeds.js) — NUNCA confiar en un src de
    iframe que mande el cliente directo; siempre re-derivar desde el link original
    pegado por el usuario, para evitar que alguien inyecte un src arbitrario. */
+var EMBED_PLATFORMS = [
+  { type: 'youtube', match: /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/,
+    embed: function(id){ return 'https://www.youtube.com/embed/'+id+'?enablejsapi=1&playsinline=1&rel=0'; } },
+  { type: 'twitter', match: /(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/,
+    embed: function(id){ return 'https://platform.twitter.com/embed/Tweet.html?id='+id+'&dnt=true'; } },
+  { type: 'tumblr', match: /([a-zA-Z0-9-]+)\.tumblr\.com\/post\/(\d+)/,
+    embed: function(id, m){ return 'https://embed.tumblr.com/embed/post/'+m[1]+'/'+m[2]; } },
+  { type: 'redgifs', match: /redgifs\.com\/(?:watch|ifr)\/([A-Za-z0-9]+)/,
+    embed: function(id){ return 'https://www.redgifs.com/ifr/'+id; } },
+  { type: 'thisvid', match: /thisvid\.com\/(?:embed\/|videos\/[^\/]*-)?(\d+)/,
+    embed: function(id){ return 'https://thisvid.com/embed/'+id+'/'; } },
+  { type: 'pornhub', match: /pornhub\.com\/(?:view_video\.php\?viewkey=|embed\/)([a-zA-Z0-9]+)/,
+    embed: function(id){ return 'https://www.pornhub.com/embed/'+id; } },
+  { type: 'xhamster', match: /xhamster\d?\.com\/(?:videos\/[^\/]*-(\d+)|embed\/(\d+))/,
+    embed: function(id, m){ return 'https://xhamster.com/embed/'+(m[1]||m[2]); } },
+  { type: 'xvideos', match: /xvideos\.com\/(?:video\.?([a-zA-Z0-9]+)|embedframe\/([a-zA-Z0-9]+))/,
+    embed: function(id, m){ return 'https://www.xvideos.com/embedframe/'+(m[1]||m[2]); } },
+  { type: 'xnxx', match: /xnxx\.com\/(?:video-([a-zA-Z0-9]+)|embed\/([a-zA-Z0-9]+))/,
+    embed: function(id, m){ return 'https://www.xnxx.com/embed/'+(m[1]||m[2]); } },
+  { type: 'redtube', match: /redtube\.com\/(?:(\d+)|embed\/(\d+))/,
+    embed: function(id, m){ return 'https://embed.redtube.com/?id='+(m[1]||m[2]); } },
+  { type: 'youporn', match: /youporn\.com\/(?:watch\/(\d+)|embed\/(\d+))/,
+    embed: function(id, m){ return 'https://www.youporn.com/embed/'+(m[1]||m[2]); } },
+  { type: 'tube8', match: /tube8\.com\/[^\/]+\/[^\/]+\/(\d+)|tube8\.com\/embed\/(\d+)/,
+    embed: function(id, m){ return 'https://www.tube8.com/embed/'+(m[1]||m[2]); } },
+  { type: 'spankbang', match: /spankbang\.com\/([a-zA-Z0-9]+)\/(?:video|embed)/,
+    embed: function(id){ return 'https://spankbang.com/'+id+'/embed/'; } },
+  { type: 'eporner', match: /eporner\.com\/(?:video-([a-zA-Z0-9]+)|embed\/([a-zA-Z0-9]+))/,
+    embed: function(id, m){ return 'https://www.eporner.com/embed/'+(m[1]||m[2]); } }
+];
+
 function detectEmbedServer(url) {
   url = String(url||'').trim().slice(0, 2000);
   if (url.indexOf('<iframe') !== -1) {
@@ -145,18 +176,14 @@ function detectEmbedServer(url) {
   }
   url = url.slice(0, 500);
   if (!url) return null;
-  var yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
-  if (yt) return { type: 'youtube', src: 'https://www.youtube.com/embed/'+yt[1]+'?enablejsapi=1&playsinline=1&rel=0' };
-  var tw = url.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/);
-  if (tw) return { type: 'twitter', src: 'https://platform.twitter.com/embed/Tweet.html?id='+tw[1]+'&dnt=true' };
-  var tu = url.match(/([a-zA-Z0-9-]+)\.tumblr\.com\/post\/(\d+)/);
-  if (tu) return { type: 'tumblr', src: 'https://embed.tumblr.com/embed/post/'+tu[1]+'/'+tu[2] };
-  var tv = url.match(/thisvid\.com\/(?:embed\/|videos\/[^\/]*-)?(\d+)/);
-  if (tv) return { type: 'thisvid', src: 'https://thisvid.com/embed/'+tv[1]+'/' };
-  var rg = url.match(/redgifs\.com\/(?:watch|ifr)\/([A-Za-z0-9]+)/);
-  if (rg) return { type: 'redgifs', src: 'https://www.redgifs.com/ifr/'+rg[1] };
-  var ph = url.match(/pornhub\.com\/(?:view_video\.php\?viewkey=|embed\/)([a-zA-Z0-9]+)/);
-  if (ph) return { type: 'pornhub', src: 'https://www.pornhub.com/embed/'+ph[1] };
+  for (var i = 0; i < EMBED_PLATFORMS.length; i++) {
+    var p = EMBED_PLATFORMS[i];
+    var m = url.match(p.match);
+    if (m) {
+      var id = m[1] || m[2];
+      return { type: p.type, src: p.embed(id, m) };
+    }
+  }
   return null;
 }
 
