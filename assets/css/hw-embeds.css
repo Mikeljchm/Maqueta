@@ -34,3 +34,5 @@
 .clip-overlay-body { padding-bottom:2rem; padding-top:calc(env(safe-area-inset-top,0px) + 3rem); }
 .clip-thumb .embed-placeholder { position:absolute; inset:0; border-radius:0; aspect-ratio:auto; }
 .clip-thumb-tapcatcher { position:absolute; inset:0; z-index:5; cursor:pointer; }
+.tumblr-post { width:100%; position:relative; min-height:200px; }
+.tumblr-post iframe { width:100% !important; max-width:100% !important; }
