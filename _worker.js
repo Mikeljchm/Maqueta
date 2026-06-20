@@ -1541,6 +1541,10 @@ async function handleUserPosts(request, env, corsH) {
       const text = (body.body||'').trim();
       const image_url = (body.image_url || '').trim().slice(0, 5000);
       const embed = await detectEmbedServer(body.embed_url || '');
+      const validAspects = ['16/9','9/16','1/1','4/5'];
+      if (embed && body.embed_aspect && validAspects.indexOf(body.embed_aspect) !== -1 && ['youtube','youtube-shorts','twitter','tumblr'].indexOf(embed.type) === -1) {
+        embed.type = embed.type + ':' + body.embed_aspect.replace('/', '-');
+      }
       if (!text && !image_url && !embed) return apiJson({ error: 'Empty post' }, 400, corsH);
       if (text.length > 500) return apiJson({ error: 'Max 500 characters.' }, 400, corsH);
       if (containsLink(text)) return apiJson({ error: 'Links are not allowed in posts.' }, 400, corsH);
@@ -1945,6 +1949,10 @@ async function handleCommunityPosts(request, env, corsH) {
       if (banned.length) return apiJson({ error: 'You have been removed from this thread.' }, 403, corsH);
       const mediaUrls = (body.media_urls||'').trim().slice(0,2000);
       const embedT = await detectEmbedServer(body.embed_url || '');
+      const validAspectsT = ['16/9','9/16','1/1','4/5'];
+      if (embedT && body.embed_aspect && validAspectsT.indexOf(body.embed_aspect) !== -1 && ['youtube','youtube-shorts','twitter','tumblr'].indexOf(embedT.type) === -1) {
+        embedT.type = embedT.type + ':' + body.embed_aspect.replace('/', '-');
+      }
       const result = await env.DB.prepare(
         'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,audio_url,embed_url,embed_type) VALUES (?,?,?,?,?,?,?,?,?,?)'      ).bind(tid,session.id,session.name||session.email,await getUserAvatar(session.id,session.picture,env),text,imgUrl,mediaUrls,audioUrl,embedT?embedT.src:'',embedT?embedT.type:'').run();
       await env.DB.prepare('UPDATE threads SET post_count=post_count+1,last_activity=CURRENT_TIMESTAMP,is_active=1 WHERE id=?').bind(tid).run();
