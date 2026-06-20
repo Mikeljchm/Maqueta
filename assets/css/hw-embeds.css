@@ -23,3 +23,12 @@
 .yt-progress { flex:1; height:4px; border-radius:2px; background:rgba(255,255,255,0.25); position:relative; cursor:pointer; }
 .yt-progress-fill { position:absolute; left:0; top:0; height:100%; width:0%; border-radius:2px; background:var(--fire-orange); transition:width 0.2s linear; }
 .yt-time { color:#fff; font-size:0.68rem; font-family:var(--font-b); flex-shrink:0; min-width:34px; text-align:right; }
+
+/* ── CLIPS GRID (Reels-style, perfil propio y visitante) ── */
+.clips-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:0.35rem; padding:0.5rem; }
+.clip-thumb { position:relative; aspect-ratio:9/16; border-radius:10px; overflow:hidden; background:var(--surface-2); cursor:pointer; transition:transform 0.25s var(--ease-bounce); }
+.clip-thumb:active { transform:scale(0.95); }
+.clip-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.clip-thumb-fallback { width:100%; height:100%; background:linear-gradient(135deg,var(--surface-3),var(--surface-2)); }
+.clip-thumb-play { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.clip-overlay-body { padding-bottom:2rem; }
