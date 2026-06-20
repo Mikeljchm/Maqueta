@@ -36,3 +36,5 @@
 .clip-thumb-tapcatcher { position:absolute; inset:0; z-index:5; cursor:pointer; }
 .tumblr-post { width:100%; position:relative; min-height:200px; }
 .tumblr-post iframe { width:100% !important; max-width:100% !important; }
+.aspect-pick-btn { background:var(--surface-2); border:1px solid var(--border); color:var(--text-dim); font-size:0.68rem; padding:0.3rem 0.6rem; border-radius:8px; cursor:pointer; }
+.aspect-pick-btn.active { background:var(--fire-orange); color:#fff; border-color:var(--fire-orange); }
