@@ -169,7 +169,19 @@ var EMBED_PLATFORMS = [
   { type: 'spankbang', match: /spankbang\.com\/([a-zA-Z0-9]+)\/(?:video|embed)/,
     embed: function(id){ return 'https://spankbang.com/'+id+'/embed/'; } },
   { type: 'eporner', match: /eporner\.com\/(?:video-([a-zA-Z0-9]+)|embed\/([a-zA-Z0-9]+))/,
-    embed: function(id, m){ return 'https://www.eporner.com/embed/'+(m[1]||m[2]); } }
+    embed: function(id, m){ return 'https://www.eporner.com/embed/'+(m[1]||m[2]); } },
+  { type: 'gayporntube', match: /gayporntube\.com\/embed\/(\d+)/,
+    embed: function(id){ return 'https://www.gayporntube.com/embed/'+id; } },
+  { type: 'videosgay', match: /videosgay\.me\/e\/([A-Za-z0-9]+)/,
+    embed: function(id){ return 'https://videosgay.me/e/'+id; } },
+  { type: '74k', match: /74k\.io\/e\/([A-Za-z0-9]+)/,
+    embed: function(id){ return 'https://74k.io/e/'+id; } },
+  { type: 'mymusclevideo', match: /mymusclevideo\.com\/embed\/(\d+)/,
+    embed: function(id){ return 'https://mymusclevideo.com/embed/'+id+'/'; } },
+  { type: 'onlygayvideo', match: /onlygayvideo\.com\/embed\/(\d+)/,
+    embed: function(id){ return 'https://www.onlygayvideo.com/embed/'+id; } },
+  { type: 'thegay', match: /thegay\.com\/embed\/(\d+)/,
+    embed: function(id){ return 'https://thegay.com/embed/'+id; } }
 ];
 
 function detectEmbedServer(url) {
