@@ -184,7 +184,7 @@ var EMBED_PLATFORMS = [
     embed: function(id){ return 'https://thegay.com/embed/'+id; } }
 ];
 
-function detectEmbedServer(url) {
+async function detectEmbedServer(url) {
   url = String(url||'').trim().slice(0, 2000);
   if (url.indexOf('<iframe') !== -1) {
     var srcMatch = url.match(/src\s*=\s*["']([^"']+)["']/i);
@@ -199,10 +199,33 @@ function detectEmbedServer(url) {
       var id = m[1] || m[2];
       var type = p.type;
       if (type === 'youtube' && /youtube\.com\/shorts\//.test(url)) type = 'youtube-shorts';
+      if (type === 'tumblr') return await fetchTumblrEmbed(url, m);
       return { type: type, src: p.embed(id, m) };
     }
   }
   return null;
+}
+
+/* Tumblr no se puede armar a mano como los demas — su embed real necesita
+   un token (data-did) que solo entrega su propia API de oEmbed en el
+   momento. Pedimos eso aca y guardamos {href, did} como JSON en embed_url. */
+async function fetchTumblrEmbed(postUrl, m) {
+  try {
+    var cleanUrl = 'https://' + m[1] + '.tumblr.com/post/' + m[2];
+    var resp = await fetch('https://www.tumblr.com/oembed/1.0?url=' + encodeURIComponent(cleanUrl));
+    if (!resp.ok) return null;
+    var data = await resp.json();
+    var html = data && data.html ? data.html : '';
+    var hrefMatch = html.match(/data-href\s*=\s*["']([^"']+)["']/i);
+    var didMatch = html.match(/data-did\s*=\s*["']([^"']+)["']/i);
+    if (!hrefMatch) return null;
+    return {
+      type: 'tumblr',
+      src: JSON.stringify({ href: hrefMatch[1], did: didMatch ? didMatch[1] : '' })
+    };
+  } catch (e) {
+    return null;
+  }
 }
 
 async function handleComments(request, env, corsH) {
@@ -1517,7 +1540,7 @@ async function handleUserPosts(request, env, corsH) {
 
       const text = (body.body||'').trim();
       const image_url = (body.image_url || '').trim().slice(0, 5000);
-      const embed = detectEmbedServer(body.embed_url || '');
+      const embed = await detectEmbedServer(body.embed_url || '');
       if (!text && !image_url && !embed) return apiJson({ error: 'Empty post' }, 400, corsH);
       if (text.length > 500) return apiJson({ error: 'Max 500 characters.' }, 400, corsH);
       if (containsLink(text)) return apiJson({ error: 'Links are not allowed in posts.' }, 400, corsH);
@@ -1921,7 +1944,7 @@ async function handleCommunityPosts(request, env, corsH) {
       const { results: banned } = await env.DB.prepare('SELECT user_id FROM thread_banned_users WHERE thread_id=? AND user_id=?').bind(tid,session.id).all();
       if (banned.length) return apiJson({ error: 'You have been removed from this thread.' }, 403, corsH);
       const mediaUrls = (body.media_urls||'').trim().slice(0,2000);
-      const embedT = detectEmbedServer(body.embed_url || '');
+      const embedT = await detectEmbedServer(body.embed_url || '');
       const result = await env.DB.prepare(
         'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,audio_url,embed_url,embed_type) VALUES (?,?,?,?,?,?,?,?,?,?)'      ).bind(tid,session.id,session.name||session.email,await getUserAvatar(session.id,session.picture,env),text,imgUrl,mediaUrls,audioUrl,embedT?embedT.src:'',embedT?embedT.type:'').run();
       await env.DB.prepare('UPDATE threads SET post_count=post_count+1,last_activity=CURRENT_TIMESTAMP,is_active=1 WHERE id=?').bind(tid).run();
