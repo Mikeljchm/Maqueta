@@ -155,6 +155,8 @@ function detectEmbedServer(url) {
   if (tv) return { type: 'thisvid', src: 'https://thisvid.com/embed/'+tv[1]+'/' };
   var rg = url.match(/redgifs\.com\/(?:watch|ifr)\/([A-Za-z0-9]+)/);
   if (rg) return { type: 'redgifs', src: 'https://www.redgifs.com/ifr/'+rg[1] };
+  var ph = url.match(/pornhub\.com\/(?:view_video\.php\?viewkey=|embed\/)([a-zA-Z0-9]+)/);
+  if (ph) return { type: 'pornhub', src: 'https://www.pornhub.com/embed/'+ph[1] };
   return null;
 }
 
