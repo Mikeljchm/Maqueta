@@ -183,7 +183,9 @@ function detectEmbedServer(url) {
     var m = url.match(p.match);
     if (m) {
       var id = m[1] || m[2];
-      return { type: p.type, src: p.embed(id, m) };
+      var type = p.type;
+      if (type === 'youtube' && /youtube\.com\/shorts\//.test(url)) type = 'youtube-shorts';
+      return { type: type, src: p.embed(id, m) };
     }
   }
   return null;
