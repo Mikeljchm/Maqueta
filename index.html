@@ -585,7 +585,7 @@ layout: none
   <script src="/assets/js/hw-auth.js?v=2"></script>
   <script src="/assets/js/hw-embeds.js?v=25"></script>
   <script src="/assets/js/hw-feed.js?v=22"></script>
-  <script src="/assets/js/hw-admin.js?v=2"></script>
+  <script src="/assets/js/hw-admin.js?v=3"></script>
   <script src="/assets/js/hw-app.js?v=8"></script>
   <script src="/assets/js/hw-index.js?v=20260617g"></script>
 
@@ -829,6 +829,10 @@ layout: none
       </button>
       <div style="font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;">Notifications</div>
       <button id="notif-read-all" style="background:none;border:none;color:var(--text-dim);font-size:0.68rem;font-family:var(--font-b);cursor:pointer;padding:0.2rem 0.4rem;">Mark all read</button>
+    </div>
+    <div id="notif-tabs" style="display:flex;gap:0.5rem;padding:0.6rem 1rem 0;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;">
+      <button class="notif-tab active" data-notif-tab="all" style="background:none;border:none;color:var(--text);font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.04em;padding:0 0 0.6rem;cursor:pointer;border-bottom:2px solid var(--fire-orange);">All</button>
+      <button class="notif-tab" data-notif-tab="mention" style="background:none;border:none;color:var(--text-dim);font-family:var(--font-d);font-size:0.72rem;letter-spacing:0.04em;padding:0 0 0.6rem;cursor:pointer;border-bottom:2px solid transparent;">Mentions</button>
     </div>
     <div id="notif-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0.5rem 0;"></div>
   </div>
