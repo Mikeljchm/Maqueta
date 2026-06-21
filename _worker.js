@@ -316,7 +316,7 @@ async function handleComments(request, env, corsH) {
       'INSERT INTO comments (post_id, user_id, user_name, user_avatar, body, parent_id) VALUES (?, ?, ?, ?, ?, ?)'
     ).bind(post_id, session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), body.trim(), parent_id || null).run();
     await addPoints(env, session.id, 2);
-    await notifyMentions(env, body, session.id, session.name||session.email);
+    await notifyMentions(env, body, session.id, session.name||session.email, post_id);
     return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
   }
 
@@ -1221,7 +1221,7 @@ async function addPoints(env, userId, amount) {
    - Ignora usuarios suspendidos.
    - Tope de 20 mentions distintas por texto (anti-spam).
    - Nunca rompe el flujo principal: todos los errores se tragan. */
-async function notifyMentions(env, text, actorId, actorName) {
+async function notifyMentions(env, text, actorId, actorName, linkPostId) {
   try {
     if (!text) return;
     const re = /(?:^|[^a-zA-Z0-9_])@([a-zA-Z0-9_]{3,30})\b/g;
@@ -1243,9 +1243,11 @@ async function notifyMentions(env, text, actorId, actorName) {
       read        INTEGER NOT NULL DEFAULT 0,
       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
     )`).run();
+    try { await env.DB.prepare("ALTER TABLE notifications ADD COLUMN link_post_id TEXT DEFAULT NULL").run(); } catch(eMig) {}
 
     const snippet = text.trim().slice(0, 80);
     const fromName = actorName || 'Someone';
+    const linkVal = linkPostId != null ? String(linkPostId) : null;
 
     for (const uname of usernames) {
       const { results } = await env.DB.prepare(
@@ -1255,8 +1257,8 @@ async function notifyMentions(env, text, actorId, actorName) {
       if (!targetId || targetId === actorId) continue;
       try {
         await env.DB.prepare(
-          'INSERT INTO notifications (user_id, type, title, message) VALUES (?,?,?,?)'
-        ).bind(targetId, 'mention', fromName + ' mentioned you', snippet).run();
+          'INSERT INTO notifications (user_id, type, title, message, link_post_id) VALUES (?,?,?,?,?)'
+        ).bind(targetId, 'mention', fromName + ' mentioned you', snippet, linkVal).run();
       } catch(e2) {}
     }
   } catch(e) {}
@@ -1679,7 +1681,7 @@ async function handleUserPosts(request, env, corsH) {
         'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url,embed_url,embed_type) VALUES (?,?,?,?,?,?,?)'
       ).bind(session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), text, image_url, embed?embed.src:'', embed?embed.type:'').run();
       await addPoints(env, session.id, 1);
-      await notifyMentions(env, text, session.id, session.name||session.email);
+      await notifyMentions(env, text, session.id, session.name||session.email, result.meta.last_row_id);
       const newPostId = result.meta.last_row_id;
       const avatarUrl = await getUserAvatar(session.id, session.picture, env);
       const newPost = { id: newPostId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl, body: text, image_url: image_url, embed_url: embed?embed.src:'', embed_type: embed?embed.type:'', like_count: 0, comment_count: 0, created_at: new Date().toISOString() };
@@ -1724,7 +1726,7 @@ async function handleUserPosts(request, env, corsH) {
       ).run();
       const newId = result.meta.last_row_id;
       await addPoints(env, session.id, 1);
-      await notifyMentions(env, caption, session.id, session.name||session.email);
+      await notifyMentions(env, caption, session.id, session.name||session.email, newId);
       const newPost = {
         id: newId, user_id: session.id, user_name: await getUserDisplayName(session.id, session.name||session.email, env), user_avatar: avatarUrl,
         body: caption, image_url: '', like_count: 0, comment_count: 0, created_at: new Date().toISOString(),
@@ -2091,7 +2093,7 @@ async function handleCommunityPosts(request, env, corsH) {
       ).bind(tid,since).all();
       await env.DB.prepare('UPDATE threads SET trending_score=? WHERE id=?').bind(calcTrendingScore(rc[0]?.cnt||0,rc[0]?.users||0),tid).run();
       await addPoints(env, session.id, 1);
-      await notifyMentions(env, text, session.id, session.name||session.email);
+      await notifyMentions(env, text, session.id, session.name||session.email, 'communitypost_' + result.meta.last_row_id);
       return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
     }
 
@@ -2147,6 +2149,7 @@ async function handleNotifications(request, env, corsH) {
       read        INTEGER NOT NULL DEFAULT 0,
       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
     )`).run();
+    try { await env.DB.prepare("ALTER TABLE notifications ADD COLUMN link_post_id TEXT DEFAULT NULL").run(); } catch(eMig) {}
   } catch(e) {}
 
   /* Limpiar notificaciones con prefijo 'message ' del bug inicial */
@@ -2194,7 +2197,7 @@ async function handleNotifications(request, env, corsH) {
     const limit  = Math.min(parseInt(url.searchParams.get('limit') || '30'), 50);
     const offset = Math.max(parseInt(url.searchParams.get('offset') || '0'), 0);
     const { results } = await env.DB.prepare(
-      'SELECT id,type,title,message,read,created_at FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT ? OFFSET ?'
+      'SELECT id,type,title,message,read,created_at,link_post_id FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT ? OFFSET ?'
     ).bind(session.id, limit, offset).all();
     /* Contar no leídas */
     const { results: unread } = await env.DB.prepare(
