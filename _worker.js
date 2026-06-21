@@ -316,7 +316,15 @@ async function handleComments(request, env, corsH) {
       'INSERT INTO comments (post_id, user_id, user_name, user_avatar, body, parent_id) VALUES (?, ?, ?, ?, ?, ?)'
     ).bind(post_id, session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), body.trim(), parent_id || null).run();
     await addPoints(env, session.id, 2);
-    await notifyMentions(env, body, session.id, session.name||session.email, post_id);
+    let commentLink = 'home_' + post_id;
+    if (String(post_id).indexOf('communitypost_') === 0) {
+      const threadPostId = String(post_id).slice('communitypost_'.length);
+      try {
+        const { results: tpRows } = await env.DB.prepare('SELECT thread_id FROM thread_posts WHERE id=?').bind(threadPostId).all();
+        commentLink = tpRows[0] ? ('thread_' + tpRows[0].thread_id + '_' + threadPostId) : null;
+      } catch(eLink) { commentLink = null; }
+    }
+    await notifyMentions(env, body, session.id, session.name||session.email, commentLink);
     return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
   }
 
@@ -1681,7 +1689,7 @@ async function handleUserPosts(request, env, corsH) {
         'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url,embed_url,embed_type) VALUES (?,?,?,?,?,?,?)'
       ).bind(session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), text, image_url, embed?embed.src:'', embed?embed.type:'').run();
       await addPoints(env, session.id, 1);
-      await notifyMentions(env, text, session.id, session.name||session.email, result.meta.last_row_id);
+      await notifyMentions(env, text, session.id, session.name||session.email, 'home_' + result.meta.last_row_id);
       const newPostId = result.meta.last_row_id;
       const avatarUrl = await getUserAvatar(session.id, session.picture, env);
       const newPost = { id: newPostId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl, body: text, image_url: image_url, embed_url: embed?embed.src:'', embed_type: embed?embed.type:'', like_count: 0, comment_count: 0, created_at: new Date().toISOString() };
@@ -1726,7 +1734,7 @@ async function handleUserPosts(request, env, corsH) {
       ).run();
       const newId = result.meta.last_row_id;
       await addPoints(env, session.id, 1);
-      await notifyMentions(env, caption, session.id, session.name||session.email, newId);
+      await notifyMentions(env, caption, session.id, session.name||session.email, 'home_' + newId);
       const newPost = {
         id: newId, user_id: session.id, user_name: await getUserDisplayName(session.id, session.name||session.email, env), user_avatar: avatarUrl,
         body: caption, image_url: '', like_count: 0, comment_count: 0, created_at: new Date().toISOString(),
@@ -2093,7 +2101,7 @@ async function handleCommunityPosts(request, env, corsH) {
       ).bind(tid,since).all();
       await env.DB.prepare('UPDATE threads SET trending_score=? WHERE id=?').bind(calcTrendingScore(rc[0]?.cnt||0,rc[0]?.users||0),tid).run();
       await addPoints(env, session.id, 1);
-      await notifyMentions(env, text, session.id, session.name||session.email, 'communitypost_' + result.meta.last_row_id);
+      await notifyMentions(env, text, session.id, session.name||session.email, 'thread_' + tid + '_' + result.meta.last_row_id);
       return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
     }
 
