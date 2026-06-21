@@ -187,7 +187,9 @@ var EMBED_PLATFORMS = [
   { type: 'mygaytube', match: /mygaytube\.com\/embed\/(\d+)/,
     embed: function(id){ return 'https://mygaytube.com/embed/'+id; } },
   { type: 'justthegays', match: /justthegays\.tv\/(?:embed|video)\/([a-zA-Z0-9-]+)/,
-    embed: function(id){ return 'https://justthegays.tv/embed/'+id; } }
+    embed: function(id){ return 'https://justthegays.tv/embed/'+id; } },
+  { type: 'gayforit', match: /gayforit\.eu\/playvideo\.php\?vkey=([a-zA-Z0-9-]+)/,
+    embed: function(id){ return 'https://www.gayforit.eu/playvideo.php?vkey='+id; } }
 ];
 
 async function detectEmbedServer(url) {
