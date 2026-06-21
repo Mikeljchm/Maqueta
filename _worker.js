@@ -939,6 +939,62 @@ async function handleReactions(request, env, corsH) {
 }
 
 
+async function handleUserLookup(request, env, corsH) {
+  /* Misma tabla que handleProfile — se asegura de que exista por si este endpoint
+     se llama antes que cualquier otro que ya la haya creado/migrado. */
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_profiles (
+    user_id TEXT PRIMARY KEY,
+    username TEXT UNIQUE,
+    display_name TEXT DEFAULT '',
+    bio TEXT DEFAULT '',
+    avatar_url TEXT DEFAULT '',
+    banner_url TEXT DEFAULT '',
+    age INTEGER DEFAULT NULL,
+    age_public INTEGER DEFAULT 0,
+    birth_date TEXT DEFAULT '',
+    city TEXT DEFAULT '',
+    country TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  const lookupMigs = ['avatar_url TEXT DEFAULT \'\'','suspended INTEGER DEFAULT 0'];
+  for (const col of lookupMigs) {
+    try { await env.DB.prepare(`ALTER TABLE user_profiles ADD COLUMN ${col}`).run(); } catch(e) {}
+  }
+
+  const session = getSession(request);
+  if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
+
+  if (request.method !== 'GET') return apiJson({ error: 'Method not allowed' }, 405, corsH);
+
+  const url = new URL(request.url);
+  const exact  = (url.searchParams.get('username') || '').replace(/[^a-zA-Z0-9_]/g,'').toLowerCase().slice(0,30);
+  const prefix = (url.searchParams.get('q') || '').replace(/[^a-zA-Z0-9_]/g,'').toLowerCase().slice(0,30);
+
+  /* Match exacto: usado para resolver @mention -> user_id (clic en mention, notificacion al crear post/comment) */
+  if (exact) {
+    const { results } = await env.DB.prepare(
+      'SELECT user_id, username, display_name, avatar_url FROM user_profiles WHERE username=? AND (suspended IS NULL OR suspended!=1)'
+    ).bind(exact).all();
+    if (!results.length) return apiJson({ found: false }, 404, corsH);
+    const r = results[0];
+    return apiJson({ found: true, user_id: r.user_id, username: r.username, display_name: r.display_name||'', avatar_url: r.avatar_url||'' }, 200, corsH);
+  }
+
+  /* Match por prefijo: usado para el autocomplete del composer al escribir @ */
+  if (prefix) {
+    let limit = parseInt(url.searchParams.get('limit'), 10);
+    if (!limit || limit < 1) limit = 8;
+    if (limit > 20) limit = 20;
+    const { results } = await env.DB.prepare(
+      'SELECT user_id, username, display_name, avatar_url FROM user_profiles WHERE username LIKE ? AND username IS NOT NULL AND (suspended IS NULL OR suspended!=1) ORDER BY username ASC LIMIT ?'
+    ).bind(prefix + '%', limit).all();
+    return apiJson({ users: results.map(function(r){ return { user_id: r.user_id, username: r.username, display_name: r.display_name||'', avatar_url: r.avatar_url||'' }; }) }, 200, corsH);
+  }
+
+  return apiJson({ error: 'Missing username or q parameter' }, 400, corsH);
+}
+
+
 async function handleProfile(request, env, corsH) {
   /* Ensure table exists with ALL columns */
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_profiles (
@@ -2522,6 +2578,7 @@ export default {
         return apiJson({ ok: true, age }, 200, corsH);
       }
       if (path === '/api/profile') return handleProfile(request, env, corsH);
+      if (path === '/api/user-lookup') return handleUserLookup(request, env, corsH);
       if (path === '/api/debug-profiles') {
         const { results } = await env.DB.prepare('SELECT user_id, display_name, username, bio FROM user_profiles LIMIT 20').all();
         return apiJson({ rows: results }, 200, corsH);
