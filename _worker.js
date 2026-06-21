@@ -154,9 +154,9 @@ var EMBED_PLATFORMS = [
     embed: function(id, m){ return 'https://www.boyfriendtv.com/embed/'+m[1]+'/'+m[2]+'/'+m[3]+'/'+m[4]+'/'; } },
   { type: 'pornhub', match: /pornhub\.com\/(?:view_video\.php\?viewkey=|embed\/)([a-zA-Z0-9]+)/,
     embed: function(id){ return 'https://www.pornhub.com/embed/'+id; } },
-  { type: 'xhamster', match: /xhamster\d?\.com\/(?:videos\/[^\/]*-(\d+)|embed\/(\d+))/,
+  { type: 'xhamster', match: /(?:[a-z]+\.)?xhamster\d?\.(?:com|es)\/(?:videos\/[^\/]*-([a-zA-Z0-9]+)|embed\/([a-zA-Z0-9]+))/,
     embed: function(id, m){ return 'https://xhamster.com/embed/'+(m[1]||m[2]); } },
-  { type: 'xvideos', match: /xvideos\.com\/(?:video\.?([a-zA-Z0-9]+)|embedframe\/([a-zA-Z0-9]+))/,
+  { type: 'xvideos', match: /xvideos\.(?:com|es)\/(?:video\.?([a-zA-Z0-9]+)|embedframe\/([a-zA-Z0-9]+))/,
     embed: function(id, m){ return 'https://www.xvideos.com/embedframe/'+(m[1]||m[2]); } },
   { type: 'xnxx', match: /xnxx\.com\/(?:video-([a-zA-Z0-9]+)|embed\/([a-zA-Z0-9]+))/,
     embed: function(id, m){ return 'https://www.xnxx.com/embed/'+(m[1]||m[2]); } },
@@ -181,7 +181,13 @@ var EMBED_PLATFORMS = [
   { type: 'onlygayvideo', match: /onlygayvideo\.com\/embed\/(\d+)/,
     embed: function(id){ return 'https://www.onlygayvideo.com/embed/'+id; } },
   { type: 'thegay', match: /thegay\.com\/embed\/(\d+)/,
-    embed: function(id){ return 'https://thegay.com/embed/'+id; } }
+    embed: function(id){ return 'https://thegay.com/embed/'+id; } },
+  { type: 'txnhh', match: /txnhh\.com\/embedframe\/([a-zA-Z0-9]+)/,
+    embed: function(id){ return 'https://www.txnhh.com/embedframe/'+id; } },
+  { type: 'mygaytube', match: /mygaytube\.com\/embed\/(\d+)/,
+    embed: function(id){ return 'https://mygaytube.com/embed/'+id; } },
+  { type: 'justthegays', match: /justthegays\.tv\/embed\/([a-zA-Z0-9-]+)/,
+    embed: function(id){ return 'https://justthegays.tv/embed/'+id; } }
 ];
 
 async function detectEmbedServer(url) {
