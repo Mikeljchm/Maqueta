@@ -186,12 +186,16 @@ var EMBED_PLATFORMS = [
     embed: function(id){ return 'https://www.txnhh.com/embedframe/'+id; } },
   { type: 'mygaytube', match: /mygaytube\.com\/embed\/(\d+)/,
     embed: function(id){ return 'https://mygaytube.com/embed/'+id; } },
-  { type: 'justthegays', match: /justthegays\.tv\/embed\/([a-zA-Z0-9-]+)/,
+  { type: 'justthegays', match: /justthegays\.tv\/(?:embed|video)\/([a-zA-Z0-9-]+)/,
     embed: function(id){ return 'https://justthegays.tv/embed/'+id; } }
 ];
 
 async function detectEmbedServer(url) {
   url = String(url||'').trim().slice(0, 2000);
+  if (url.indexOf('<script') !== -1 && url.indexOf('data-url') !== -1) {
+    var dataUrlMatch = url.match(/data-url\s*=\s*["']([^"']+)["']/i);
+    if (dataUrlMatch) url = dataUrlMatch[1];
+  }
   if (url.indexOf('<iframe') !== -1) {
     var srcMatch = url.match(/src\s*=\s*["']([^"']+)["']/i);
     url = srcMatch ? srcMatch[1] : url;
