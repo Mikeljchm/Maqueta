@@ -217,7 +217,7 @@
 #hw-crop-modal.avatar #hw-crop-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:84%;aspect-ratio:1/1;border:2px solid rgba(255,255,255,0.7);border-radius:50%;pointer-events:none;}
 #hw-crop-modal.banner #hw-crop-mask{position:absolute;inset:0;pointer-events:none;}
 #hw-crop-modal.banner #hw-crop-mask::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,0.55);-webkit-mask:polygon(0 0,100% 0,100% 100%,0 100%) exclude,polygon(4% 30%,96% 30%,96% 70%,4% 70%);}
-#hw-crop-modal.banner #hw-crop-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:92%;height:40%;border:2px solid rgba(255,255,255,0.7);border-radius:8px;pointer-events:none;}
+#hw-crop-modal.banner #hw-crop-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:92%;aspect-ratio:800/534;border:2px solid rgba(255,255,255,0.7);border-radius:8px;pointer-events:none;}
 
 /* ── Activity (act) (extraído de hw-app.js) ── */
 .act-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:300;opacity:0;pointer-events:none;transition:opacity 0.25s;}
