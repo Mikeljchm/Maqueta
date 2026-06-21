@@ -273,10 +273,21 @@ async function handleComments(request, env, corsH) {
       return apiJson({ comments: enrichedReplies }, 200, corsH);
     }
 
-    /* Top-level comments con reply_count */
+    /* Top-level comments con reply_count, paginados (forum-style: pagina numerada, no scroll infinito) */
+    let cLimit = parseInt(url.searchParams.get('limit'), 10);
+    if (!cLimit || cLimit < 1) cLimit = 50;
+    if (cLimit > 50) cLimit = 50;
+    let cOffset = parseInt(url.searchParams.get('offset'), 10);
+    if (!cOffset || cOffset < 0) cOffset = 0;
+
     const { results } = await env.DB.prepare(
-      'SELECT id, user_id, user_name, user_avatar, body, created_at FROM comments WHERE post_id=? AND (parent_id IS NULL OR parent_id=0) ORDER BY created_at ASC LIMIT 50'
+      'SELECT id, user_id, user_name, user_avatar, body, created_at FROM comments WHERE post_id=? AND (parent_id IS NULL OR parent_id=0) ORDER BY created_at ASC LIMIT ? OFFSET ?'
+    ).bind(post_id, cLimit, cOffset).all();
+
+    const { results: totalRows } = await env.DB.prepare(
+      'SELECT COUNT(*) as cnt FROM comments WHERE post_id=? AND (parent_id IS NULL OR parent_id=0)'
     ).bind(post_id).all();
+    const totalTopLevel = (totalRows[0] && totalRows[0].cnt) || 0;
 
     /* Contar replies para cada top-level */
     const ids = results.map(function(r){ return r.id; });
@@ -290,7 +301,7 @@ async function handleComments(request, env, corsH) {
     }
     results.forEach(function(r){ r.reply_count = replyCounts[r.id] || 0; });
     const enrichedComments = await enrichAvatars(results, env);
-    return apiJson({ comments: enrichedComments }, 200, corsH);
+    return apiJson({ comments: enrichedComments, total: totalTopLevel, limit: cLimit, offset: cOffset }, 200, corsH);
   }
 
   if (request.method === 'POST') {
