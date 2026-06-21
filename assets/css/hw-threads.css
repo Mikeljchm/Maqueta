@@ -51,7 +51,7 @@
 .comm-detail-back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
 .comm-detail-name{font-family:var(--font-d);font-size:0.95rem;letter-spacing:0.06em;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .comm-detail-post-btn{background:var(--fire-orange);color:#fff;border:none;border-radius:20px;padding:0.35rem 0.85rem;font-family:var(--font-d);font-size:0.7rem;letter-spacing:0.06em;cursor:pointer;flex-shrink:0;}
-.comm-detail-cover{height:90px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;}
+.comm-detail-cover{height:180px;background:linear-gradient(135deg,#1a0505,#2d0a00,#1a0505);position:relative;flex-shrink:0;}
 .comm-detail-cover-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 130%,rgba(255,69,0,0.42) 0%,transparent 65%);pointer-events:none;}
 .comm-detail-info{padding:0.85rem 1rem 0.65rem;border-bottom:1px solid var(--border);flex-shrink:0;}
 .comm-detail-title{font-family:var(--font-d);font-size:1.2rem;letter-spacing:0.05em;margin-bottom:0.25rem;}
