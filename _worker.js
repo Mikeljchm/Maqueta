@@ -2854,7 +2854,7 @@ async function handleUserFollows(request, env, corsH) {
     const ids = following.map(r => r.following_id);
     const ph  = ids.map(() => '?').join(',');
     const { results } = await env.DB.prepare(
-      'SELECT id,user_id,user_name,user_avatar,body,image_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE hidden=0 AND user_id IN ('+ph+') ORDER BY created_at DESC LIMIT 50'
+      'SELECT id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE hidden=0 AND user_id IN ('+ph+') ORDER BY created_at DESC LIMIT 50'
     ).bind(...ids).all();
     return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
   }
