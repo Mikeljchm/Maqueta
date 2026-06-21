@@ -305,6 +305,7 @@ async function handleComments(request, env, corsH) {
       'INSERT INTO comments (post_id, user_id, user_name, user_avatar, body, parent_id) VALUES (?, ?, ?, ?, ?, ?)'
     ).bind(post_id, session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), body.trim(), parent_id || null).run();
     await addPoints(env, session.id, 2);
+    await notifyMentions(env, body, session.id, session.name||session.email);
     return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
   }
 
@@ -1203,6 +1204,53 @@ async function addPoints(env, userId, amount) {
   } catch(e) {}
 }
 
+/* Detecta @mentions en texto libre (posts, reposts, comentarios) y crea una
+   notificacion tipo 'mention' para cada usuario real mencionado.
+   - Ignora auto-menciones.
+   - Ignora usuarios suspendidos.
+   - Tope de 20 mentions distintas por texto (anti-spam).
+   - Nunca rompe el flujo principal: todos los errores se tragan. */
+async function notifyMentions(env, text, actorId, actorName) {
+  try {
+    if (!text) return;
+    const re = /(?:^|[^a-zA-Z0-9_])@([a-zA-Z0-9_]{3,30})\b/g;
+    const seen = new Set();
+    const usernames = [];
+    let m;
+    while ((m = re.exec(text)) !== null && usernames.length < 20) {
+      const u = m[1].toLowerCase();
+      if (!seen.has(u)) { seen.add(u); usernames.push(u); }
+    }
+    if (!usernames.length) return;
+
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS notifications (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id     TEXT NOT NULL,
+      type        TEXT NOT NULL DEFAULT 'admin',
+      title       TEXT NOT NULL DEFAULT '',
+      message     TEXT NOT NULL,
+      read        INTEGER NOT NULL DEFAULT 0,
+      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`).run();
+
+    const snippet = text.trim().slice(0, 80);
+    const fromName = actorName || 'Someone';
+
+    for (const uname of usernames) {
+      const { results } = await env.DB.prepare(
+        'SELECT user_id FROM user_profiles WHERE username=? AND (suspended IS NULL OR suspended!=1)'
+      ).bind(uname).all();
+      const targetId = results[0]?.user_id;
+      if (!targetId || targetId === actorId) continue;
+      try {
+        await env.DB.prepare(
+          'INSERT INTO notifications (user_id, type, title, message) VALUES (?,?,?,?)'
+        ).bind(targetId, 'mention', fromName + ' mentioned you', snippet).run();
+      } catch(e2) {}
+    }
+  } catch(e) {}
+}
+
 async function handlePoints(request, env, corsH) {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_points (
     user_id TEXT PRIMARY KEY,
@@ -1620,6 +1668,7 @@ async function handleUserPosts(request, env, corsH) {
         'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url,embed_url,embed_type) VALUES (?,?,?,?,?,?,?)'
       ).bind(session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), text, image_url, embed?embed.src:'', embed?embed.type:'').run();
       await addPoints(env, session.id, 1);
+      await notifyMentions(env, text, session.id, session.name||session.email);
       const newPostId = result.meta.last_row_id;
       const avatarUrl = await getUserAvatar(session.id, session.picture, env);
       const newPost = { id: newPostId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl, body: text, image_url: image_url, embed_url: embed?embed.src:'', embed_type: embed?embed.type:'', like_count: 0, comment_count: 0, created_at: new Date().toISOString() };
@@ -1664,6 +1713,7 @@ async function handleUserPosts(request, env, corsH) {
       ).run();
       const newId = result.meta.last_row_id;
       await addPoints(env, session.id, 1);
+      await notifyMentions(env, caption, session.id, session.name||session.email);
       const newPost = {
         id: newId, user_id: session.id, user_name: await getUserDisplayName(session.id, session.name||session.email, env), user_avatar: avatarUrl,
         body: caption, image_url: '', like_count: 0, comment_count: 0, created_at: new Date().toISOString(),
@@ -2030,6 +2080,7 @@ async function handleCommunityPosts(request, env, corsH) {
       ).bind(tid,since).all();
       await env.DB.prepare('UPDATE threads SET trending_score=? WHERE id=?').bind(calcTrendingScore(rc[0]?.cnt||0,rc[0]?.users||0),tid).run();
       await addPoints(env, session.id, 1);
+      await notifyMentions(env, text, session.id, session.name||session.email);
       return apiJson({ ok: true, id: result.meta.last_row_id }, 200, corsH);
     }
 
