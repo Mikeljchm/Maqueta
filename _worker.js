@@ -148,6 +148,8 @@ var EMBED_PLATFORMS = [
     embed: function(id){ return 'https://www.redgifs.com/ifr/'+id; } },
   { type: 'thisvid', match: /thisvid\.com\/(?:embed\/|videos\/[^\/]*-)?(\d+)/,
     embed: function(id){ return 'https://thisvid.com/embed/'+id+'/'; } },
+  { type: 'eporner', match: /eporner\.com\/embed\/([a-zA-Z0-9]+)/,
+    embed: function(id){ return 'https://www.eporner.com/embed/'+id+'/'; } },
   { type: 'gayporntube', match: /gayporntube\.com\/embed\/(\d+)/,
     embed: function(id){ return 'https://www.gayporntube.com/embed/'+id; } },
   { type: 'boyfriendtv', match: /boyfriendtv\.com\/embed\/(\d+)\/(\d+)\/(\d+)\/(\d+)/,
