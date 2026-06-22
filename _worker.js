@@ -197,7 +197,7 @@ var EMBED_PLATFORMS = [
 /* Saca la imagen og:image de la pagina del embed para usarla como portada.
    Falla en silencio (devuelve "") si el sitio bloquea el fetch, tarda mucho,
    o no tiene la etiqueta — nunca debe romper la creacion del post. */
-async function extractOgImage(url) {
+async function extractEmbedMeta(url) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(function(){ controller.abort(); }, 4000);
@@ -206,13 +206,18 @@ async function extractOgImage(url) {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36' }
     });
     clearTimeout(timeoutId);
-    if (!resp.ok) return '';
+    if (!resp.ok) return { thumbnail: '', title: '' };
     const html = (await resp.text()).slice(0, 200000);
-    const m = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-           || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
-           || html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
-    return m ? m[1] : '';
-  } catch(e) { return ''; }
+    const imgM = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+              || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
+              || html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+    const titleM = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
+                || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i)
+                || html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    let title = titleM ? titleM[1] : '';
+    title = title.replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#0?39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim().slice(0, 200);
+    return { thumbnail: imgM ? imgM[1] : '', title: title };
+  } catch(e) { return { thumbnail: '', title: '' }; }
 }
 
 async function detectEmbedServer(url) {
@@ -235,13 +240,17 @@ async function detectEmbedServer(url) {
       var type = p.type;
       if (type === 'youtube' && /youtube\.com\/shorts\//.test(url)) type = 'youtube-shorts';
       if (type === 'tumblr') return await fetchTumblrEmbed(url, m);
-      var thumbnail = '';
+      var thumbnail = '', title = '';
       if (type === 'youtube' || type === 'youtube-shorts') {
         thumbnail = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg';
+        var ytMeta = await extractEmbedMeta(url);
+        title = ytMeta.title;
       } else {
-        thumbnail = ''; /* scraping de og:image descartado - no servia para los sitios reales usados, solo agregaba latencia */
+        var meta = await extractEmbedMeta(url);
+        thumbnail = meta.thumbnail;
+        title = meta.title;
       }
-      return { type: type, src: p.embed(id, m), thumbnail: thumbnail };
+      return { type: type, src: p.embed(id, m), thumbnail: thumbnail, title: title };
     }
   }
   return null;
@@ -1573,6 +1582,7 @@ async function handleUserPosts(request, env, corsH) {
   try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN repost_image_url TEXT DEFAULT ''").run(); } catch(e){}
   try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN repost_avatar TEXT DEFAULT ''").run(); } catch(e){}
   try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN embed_thumbnail_url TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN embed_title TEXT DEFAULT ''").run(); } catch(e){}
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS post_reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     post_id INTEGER NOT NULL,
@@ -1603,7 +1613,7 @@ async function handleUserPosts(request, env, corsH) {
       const limit  = Math.min(parseInt(url.searchParams.get('limit')  || '12'), 50);
       const offset = Math.max(parseInt(url.searchParams.get('offset') || '0'),  0);
       const { results } = await env.DB.prepare(
-        'SELECT id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,like_count,comment_count,report_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
+        'SELECT id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,embed_title,like_count,comment_count,report_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE hidden=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
       ).bind(limit, offset).all();
       /* Total para que el frontend sepa si hay más */
       const { results: countRes } = await env.DB.prepare(
@@ -1621,7 +1631,7 @@ async function handleUserPosts(request, env, corsH) {
     /* Clips de un usuario — posts con video */
     if (action === 'clips' && userId) {
       const { results } = await env.DB.prepare(
-        "SELECT id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 AND (image_url LIKE '%.mp4%' OR image_url LIKE '%.webm%' OR (embed_url IS NOT NULL AND embed_url != '')) ORDER BY created_at DESC LIMIT 50"
+        "SELECT id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,embed_title,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 AND (image_url LIKE '%.mp4%' OR image_url LIKE '%.webm%' OR (embed_url IS NOT NULL AND embed_url != '')) ORDER BY created_at DESC LIMIT 50"
       ).bind(userId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
@@ -1638,14 +1648,14 @@ async function handleUserPosts(request, env, corsH) {
       const targetId = userId || (session ? session.id : null);
       if (!targetId) return apiJson({ error: 'user_id required' }, 400, corsH);
       const { results } = await env.DB.prepare(
-        'SELECT p.id,p.user_id,p.user_name,p.user_avatar,p.body,p.image_url,p.embed_url,p.embed_type,p.embed_thumbnail_url,p.like_count,p.comment_count,p.repost_of_id,p.repost_body,p.repost_user_name,p.repost_user_id,p.repost_image_url,p.repost_avatar,p.created_at FROM user_posts p INNER JOIN post_saves s ON s.post_id=p.id WHERE s.user_id=? AND p.hidden=0 ORDER BY s.saved_at DESC LIMIT 50'
+        'SELECT p.id,p.user_id,p.user_name,p.user_avatar,p.body,p.image_url,p.embed_url,p.embed_type,p.embed_thumbnail_url,p.embed_title,p.like_count,p.comment_count,p.repost_of_id,p.repost_body,p.repost_user_name,p.repost_user_id,p.repost_image_url,p.repost_avatar,p.created_at FROM user_posts p INNER JOIN post_saves s ON s.post_id=p.id WHERE s.user_id=? AND p.hidden=0 ORDER BY s.saved_at DESC LIMIT 50'
       ).bind(targetId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
     /* Posts de un usuario específico */
     if (userId) {
       const { results } = await env.DB.prepare(
-        'SELECT id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
+        'SELECT id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,embed_title,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE user_id=? AND hidden=0 ORDER BY created_at DESC LIMIT 50'
       ).bind(userId).all();
       return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
     }
@@ -1720,13 +1730,13 @@ async function handleUserPosts(request, env, corsH) {
       if (text.length > 500) return apiJson({ error: 'Max 500 characters.' }, 400, corsH);
       if (containsLink(text)) return apiJson({ error: 'Links are not allowed in posts.' }, 400, corsH);
       const result = await env.DB.prepare(
-        'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url) VALUES (?,?,?,?,?,?,?,?)'
-      ).bind(session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), text, image_url, embed?embed.src:'', embed?embed.type:'', embed?(embed.thumbnail||''):'').run();
+        'INSERT INTO user_posts (user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,embed_title) VALUES (?,?,?,?,?,?,?,?,?)'
+      ).bind(session.id, await getUserDisplayName(session.id, session.name||session.email, env), await getUserAvatar(session.id, session.picture, env), text, image_url, embed?embed.src:'', embed?embed.type:'', embed?(embed.thumbnail||''):'', embed?(embed.title||''):'').run();
       await addPoints(env, session.id, 1);
       await notifyMentions(env, text, session.id, session.name||session.email, 'home_' + result.meta.last_row_id);
       const newPostId = result.meta.last_row_id;
       const avatarUrl = await getUserAvatar(session.id, session.picture, env);
-      const newPost = { id: newPostId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl, body: text, image_url: image_url, embed_url: embed?embed.src:'', embed_type: embed?embed.type:'', embed_thumbnail_url: embed?(embed.thumbnail||''):'', like_count: 0, comment_count: 0, created_at: new Date().toISOString() };
+      const newPost = { id: newPostId, user_id: session.id, user_name: session.name||session.email, user_avatar: avatarUrl, body: text, image_url: image_url, embed_url: embed?embed.src:'', embed_type: embed?embed.type:'', embed_thumbnail_url: embed?(embed.thumbnail||''):'', embed_title: embed?(embed.title||''):'', like_count: 0, comment_count: 0, created_at: new Date().toISOString() };
       return apiJson({ ok: true, id: newPostId, post: newPost }, 200, corsH);
     }
 
@@ -1941,6 +1951,7 @@ async function handleCommunities(request, env, corsH) {
   await initThreadTables(env);
   try { await env.DB.prepare('ALTER TABLE thread_posts ADD COLUMN audio_url TEXT DEFAULT \'\'').run(); } catch(e){}
   try { await env.DB.prepare("ALTER TABLE thread_posts ADD COLUMN embed_thumbnail_url TEXT DEFAULT ''").run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE thread_posts ADD COLUMN embed_title TEXT DEFAULT ''").run(); } catch(e){}
   const url = new URL(request.url);
   const session = getSession(request);
   const isAdmin = (function(){
@@ -2096,11 +2107,11 @@ async function handleCommunityPosts(request, env, corsH) {
     /* Pinned solo en primera página */
     const pinnedArr = postsOffset === 0
       ? (await env.DB.prepare(
-          'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=1 AND hidden=0 AND hidden_by_creator=0'
+          'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,embed_title,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=1 AND hidden=0 AND hidden_by_creator=0'
         ).bind(tid).all()).results
       : [];
     const { results: rawPosts } = await env.DB.prepare(
-      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
+      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,embed_title,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
     ).bind(tid, postsLimit + 1, postsOffset).all();
     const posts_has_more = rawPosts.length > postsLimit;
     const posts = rawPosts.slice(0, postsLimit);
@@ -2128,7 +2139,7 @@ async function handleCommunityPosts(request, env, corsH) {
         embedT.type = embedT.type + ':' + body.embed_aspect.replace('/', '-');
       }
       const result = await env.DB.prepare(
-        'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,audio_url,embed_url,embed_type,embed_thumbnail_url) VALUES (?,?,?,?,?,?,?,?,?,?,?)'      ).bind(tid,session.id,session.name||session.email,await getUserAvatar(session.id,session.picture,env),text,imgUrl,mediaUrls,audioUrl,embedT?embedT.src:'',embedT?embedT.type:'',embedT?(embedT.thumbnail||''):'').run();
+        'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,audio_url,embed_url,embed_type,embed_thumbnail_url,embed_title) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)'      ).bind(tid,session.id,session.name||session.email,await getUserAvatar(session.id,session.picture,env),text,imgUrl,mediaUrls,audioUrl,embedT?embedT.src:'',embedT?embedT.type:'',embedT?(embedT.thumbnail||''):'',embedT?(embedT.title||''):'').run();
       await env.DB.prepare('UPDATE threads SET post_count=post_count+1,last_activity=CURRENT_TIMESTAMP,is_active=1 WHERE id=?').bind(tid).run();
       const since = new Date(Date.now()-86400000).toISOString();
       const { results: rc } = await env.DB.prepare(
@@ -2889,7 +2900,7 @@ async function handleUserFollows(request, env, corsH) {
     const ids = following.map(r => r.following_id);
     const ph  = ids.map(() => '?').join(',');
     const { results } = await env.DB.prepare(
-      'SELECT id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE hidden=0 AND user_id IN ('+ph+') ORDER BY created_at DESC LIMIT 50'
+      'SELECT id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,embed_title,like_count,comment_count,repost_of_id,repost_body,repost_user_name,repost_user_id,repost_image_url,repost_avatar,created_at FROM user_posts WHERE hidden=0 AND user_id IN ('+ph+') ORDER BY created_at DESC LIMIT 50'
     ).bind(...ids).all();
     return apiJson({ posts: await enrichAvatars(results, env) }, 200, corsH);
   }
