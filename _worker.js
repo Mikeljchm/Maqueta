@@ -220,6 +220,88 @@ async function extractEmbedMeta(url) {
   } catch(e) { return { thumbnail: '', title: '' }; }
 }
 
+/* Frases comunes que los sitios de tube muestran cuando un video especifico
+   ya no existe (borrado, baneado, o link viejo). Es una lista creciente:
+   si encontras un sitio que usa una frase distinta, se puede sumar aca. */
+const DEAD_VIDEO_PHRASES = [
+  'video not found', 'video has been removed', 'video unavailable',
+  'video is no longer available', 'no longer available', 'page not found',
+  '404 not found', 'this video does not exist', 'video was deleted',
+  'content unavailable', 'video removed', 'has been deleted',
+  'video does not exist', 'invalid video', 'video expired',
+  'sorry, this video', 'oops! that page', "this content isn't available",
+  'this content is not available', 'removed by the uploader',
+  'el video no existe', 'video no encontrado', 'video eliminado'
+];
+
+/* Detector robusto de embeds muertos/rotos. Combina varias senales
+   independientes en vez de confiar en una sola, asi un sitio que se
+   comporte raro en UNA senal no genera un falso positivo por si solo.
+   Devuelve { status: 'alive'|'suspicious'|'dead'|'unknown', score, currentTitle, reasons }. */
+async function checkEmbedAlive(embedUrl, storedTitle) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(function(){ controller.abort(); }, 6000);
+    const resp = await fetch(embedUrl, {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36' }
+    });
+    clearTimeout(timeoutId);
+
+    if (resp.status === 404 || resp.status === 410) {
+      return { status: 'dead', score: 10, currentTitle: '', reasons: { httpStatus: resp.status } };
+    }
+    if (resp.status >= 400) {
+      return { status: 'suspicious', score: 2, currentTitle: '', reasons: { httpStatus: resp.status } };
+    }
+
+    const html = (await resp.text()).slice(0, 300000);
+    const htmlLower = html.toLowerCase();
+
+    const matchedPhrase = DEAD_VIDEO_PHRASES.find(function(p){ return htmlLower.indexOf(p) !== -1; });
+    const hasDeadPhrase = !!matchedPhrase;
+
+    const titleM = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
+                || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i)
+                || html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    let currentTitle = titleM ? titleM[1] : '';
+    currentTitle = currentTitle.replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#0?39;/g,"'").trim().slice(0, 200);
+
+    let redirectedToRoot = false;
+    try {
+      const finalPath = new URL(resp.url).pathname;
+      redirectedToRoot = finalPath === '/' || finalPath === '';
+    } catch(eUrl) {}
+
+    const titleMissing = !currentTitle;
+    let titleChangedALot = false;
+    if (storedTitle && currentTitle) {
+      const a = storedTitle.toLowerCase().trim();
+      const b = currentTitle.toLowerCase().trim();
+      titleChangedALot = a !== b && a.slice(0, 15) !== b.slice(0, 15) && b.indexOf(a.slice(0, 15)) === -1;
+    }
+
+    const hasVideoMarkup = /<video[\s>]/i.test(html) || /\.m3u8|\.mp4|videoPlayer|jwplayer|video-player/i.test(html);
+
+    let score = 0;
+    if (hasDeadPhrase) score += 4;
+    if (redirectedToRoot) score += 3;
+    if (titleMissing) score += 1;
+    if (titleChangedALot) score += 2;
+    if (!hasVideoMarkup) score += 1;
+
+    let status = 'alive';
+    if (score >= 4) status = 'dead';
+    else if (score >= 2) status = 'suspicious';
+
+    return { status: status, score: score, currentTitle: currentTitle,
+      reasons: { hasDeadPhrase: hasDeadPhrase, matchedPhrase: matchedPhrase || null, redirectedToRoot: redirectedToRoot, titleMissing: titleMissing, titleChangedALot: titleChangedALot, hasVideoMarkup: hasVideoMarkup } };
+  } catch(e) {
+    return { status: 'unknown', score: 0, currentTitle: '', reasons: { error: String(e && e.message || e) } };
+  }
+}
+
 async function detectEmbedServer(url) {
   url = String(url||'').trim().slice(0, 2000);
   if (url.indexOf('<script') !== -1 && url.indexOf('data-url') !== -1) {
@@ -2485,6 +2567,48 @@ export default {
           if (!pid) return apiJson({error:'id required'},400,corsH);
           await env.DB.prepare('UPDATE thread_posts SET hidden=1 WHERE id=?').bind(pid).run();
           return apiJson({ok:true},200,corsH);
+        }
+
+        /* GET /api/admin/check-embeds?source=home|thread&offset=0&limit=8
+           Revisa en lotes los posts con embed_url, marca embed_status (alive/suspicious/dead/unknown)
+           y embed_checked_at. El cliente lo llama en loop: primero recorre 'home', cuando se acaba
+           (has_more=false con source=home) pasa a 'thread'. */
+        if (path === '/api/admin/check-embeds' && request.method === 'GET') {
+          try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN embed_status TEXT DEFAULT 'unchecked'").run(); } catch(eMig1) {}
+          try { await env.DB.prepare("ALTER TABLE user_posts ADD COLUMN embed_checked_at TEXT DEFAULT ''").run(); } catch(eMig2) {}
+          try { await env.DB.prepare("ALTER TABLE thread_posts ADD COLUMN embed_status TEXT DEFAULT 'unchecked'").run(); } catch(eMig3) {}
+          try { await env.DB.prepare("ALTER TABLE thread_posts ADD COLUMN embed_checked_at TEXT DEFAULT ''").run(); } catch(eMig4) {}
+
+          const source = url.searchParams.get('source') === 'thread' ? 'thread' : 'home';
+          let limit = parseInt(url.searchParams.get('limit'), 10);
+          if (!limit || limit < 1) limit = 8;
+          if (limit > 20) limit = 20;
+          let offset = parseInt(url.searchParams.get('offset'), 10);
+          if (!offset || offset < 0) offset = 0;
+
+          const table = source === 'thread' ? 'thread_posts' : 'user_posts';
+          const { results: batch } = await env.DB.prepare(
+            `SELECT id, embed_url, embed_title FROM ${table} WHERE embed_url IS NOT NULL AND embed_url != '' ORDER BY id ASC LIMIT ? OFFSET ?`
+          ).bind(limit, offset).all();
+
+          const checkedAt = new Date().toISOString();
+          const results = [];
+          for (const row of batch) {
+            const r = await checkEmbedAlive(row.embed_url, row.embed_title || '');
+            try {
+              await env.DB.prepare(`UPDATE ${table} SET embed_status=?, embed_checked_at=? WHERE id=?`)
+                .bind(r.status, checkedAt, row.id).run();
+            } catch(eUpd) {}
+            results.push({ id: row.id, source: source, embed_url: row.embed_url, stored_title: row.embed_title || '', status: r.status, score: r.score, current_title: r.currentTitle, reasons: r.reasons });
+          }
+
+          const { results: totalRows } = await env.DB.prepare(
+            `SELECT COUNT(*) as cnt FROM ${table} WHERE embed_url IS NOT NULL AND embed_url != ''`
+          ).all();
+          const total = (totalRows[0] && totalRows[0].cnt) || 0;
+          const hasMore = offset + batch.length < total;
+
+          return apiJson({ source: source, checked: results.length, results: results, has_more: hasMore, next_offset: offset + batch.length, total: total }, 200, corsH);
         }
 
         /* DELETE /api/admin/avatar?user_id=X — borrar foto de perfil */
