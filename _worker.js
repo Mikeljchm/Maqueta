@@ -237,7 +237,7 @@ async function detectEmbedServer(url) {
       if (type === 'youtube' || type === 'youtube-shorts') {
         thumbnail = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg';
       } else {
-        thumbnail = await extractOgImage(url);
+        thumbnail = ''; /* scraping de og:image descartado - no servia para los sitios reales usados, solo agregaba latencia */
       }
       return { type: type, src: p.embed(id, m), thumbnail: thumbnail };
     }
