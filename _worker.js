@@ -1938,6 +1938,7 @@ function calcTrendingScore(posts, users) {
 async function handleCommunities(request, env, corsH) {
   await initThreadTables(env);
   try { await env.DB.prepare('ALTER TABLE thread_posts ADD COLUMN audio_url TEXT DEFAULT \'\'').run(); } catch(e){}
+  try { await env.DB.prepare("ALTER TABLE thread_posts ADD COLUMN embed_thumbnail_url TEXT DEFAULT ''").run(); } catch(e){}
   const url = new URL(request.url);
   const session = getSession(request);
   const isAdmin = (function(){
@@ -2093,11 +2094,11 @@ async function handleCommunityPosts(request, env, corsH) {
     /* Pinned solo en primera página */
     const pinnedArr = postsOffset === 0
       ? (await env.DB.prepare(
-          'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=1 AND hidden=0 AND hidden_by_creator=0'
+          'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=1 AND hidden=0 AND hidden_by_creator=0'
         ).bind(tid).all()).results
       : [];
     const { results: rawPosts } = await env.DB.prepare(
-      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
+      'SELECT id,thread_id,user_id,user_name,user_avatar,body,image_url,embed_url,embed_type,embed_thumbnail_url,media_urls,audio_url,like_count,comment_count,is_pinned,created_at FROM thread_posts WHERE thread_id=? AND is_pinned=0 AND hidden=0 AND hidden_by_creator=0 ORDER BY created_at DESC LIMIT ? OFFSET ?'
     ).bind(tid, postsLimit + 1, postsOffset).all();
     const posts_has_more = rawPosts.length > postsLimit;
     const posts = rawPosts.slice(0, postsLimit);
@@ -2125,7 +2126,7 @@ async function handleCommunityPosts(request, env, corsH) {
         embedT.type = embedT.type + ':' + body.embed_aspect.replace('/', '-');
       }
       const result = await env.DB.prepare(
-        'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,audio_url,embed_url,embed_type) VALUES (?,?,?,?,?,?,?,?,?,?)'      ).bind(tid,session.id,session.name||session.email,await getUserAvatar(session.id,session.picture,env),text,imgUrl,mediaUrls,audioUrl,embedT?embedT.src:'',embedT?embedT.type:'').run();
+        'INSERT INTO thread_posts (thread_id,user_id,user_name,user_avatar,body,image_url,media_urls,audio_url,embed_url,embed_type,embed_thumbnail_url) VALUES (?,?,?,?,?,?,?,?,?,?,?)'      ).bind(tid,session.id,session.name||session.email,await getUserAvatar(session.id,session.picture,env),text,imgUrl,mediaUrls,audioUrl,embedT?embedT.src:'',embedT?embedT.type:'',embedT?(embedT.thumbnail||''):'').run();
       await env.DB.prepare('UPDATE threads SET post_count=post_count+1,last_activity=CURRENT_TIMESTAMP,is_active=1 WHERE id=?').bind(tid).run();
       const since = new Date(Date.now()-86400000).toISOString();
       const { results: rc } = await env.DB.prepare(
