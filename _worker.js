@@ -864,11 +864,15 @@ async function handleCollections(request, env, corsH) {
         await addPoints(env, uid, 1);
         return apiJson({ ok: true, saved: true }, 200, corsH);
       } catch(e) {
-        // Already saved — remove it (toggle)
-        await env.DB.prepare(
-          'DELETE FROM collection_items WHERE collection_id=? AND user_id=? AND post_id=?'
-        ).bind(col_id, uid, post_id).run();
-        return apiJson({ ok: true, saved: false }, 200, corsH);
+        if (e && e.message && /UNIQUE constraint/i.test(e.message)) {
+          // Ya estaba guardado — esto SI es el toggle esperado (sacarlo)
+          await env.DB.prepare(
+            'DELETE FROM collection_items WHERE collection_id=? AND user_id=? AND post_id=?'
+          ).bind(col_id, uid, post_id).run();
+          return apiJson({ ok: true, saved: false }, 200, corsH);
+        }
+        // Cualquier otro error es real: no lo escondemos como si fuera un toggle exitoso
+        return apiJson({ ok: false, error: 'save_failed', detail: String(e && e.message || e) }, 500, corsH);
       }
     }
 
