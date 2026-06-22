@@ -2587,8 +2587,9 @@ export default {
           if (!offset || offset < 0) offset = 0;
 
           const table = source === 'thread' ? 'thread_posts' : 'user_posts';
+          const selectFields = source === 'thread' ? 'id, thread_id, embed_url, embed_title' : 'id, embed_url, embed_title';
           const { results: batch } = await env.DB.prepare(
-            `SELECT id, embed_url, embed_title FROM ${table} WHERE embed_url IS NOT NULL AND embed_url != '' ORDER BY id ASC LIMIT ? OFFSET ?`
+            `SELECT ${selectFields} FROM ${table} WHERE embed_url IS NOT NULL AND embed_url != '' ORDER BY id ASC LIMIT ? OFFSET ?`
           ).bind(limit, offset).all();
 
           const checkedAt = new Date().toISOString();
@@ -2599,7 +2600,7 @@ export default {
               await env.DB.prepare(`UPDATE ${table} SET embed_status=?, embed_checked_at=? WHERE id=?`)
                 .bind(r.status, checkedAt, row.id).run();
             } catch(eUpd) {}
-            results.push({ id: row.id, source: source, embed_url: row.embed_url, stored_title: row.embed_title || '', status: r.status, score: r.score, current_title: r.currentTitle, reasons: r.reasons });
+            results.push({ id: row.id, thread_id: row.thread_id || null, source: source, embed_url: row.embed_url, stored_title: row.embed_title || '', status: r.status, score: r.score, current_title: r.currentTitle, reasons: r.reasons });
           }
 
           const { results: totalRows } = await env.DB.prepare(
