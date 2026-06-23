@@ -71,9 +71,8 @@ layout: none
       <header class="top-bar" id="top-bar">
         <a class="top-logo" href="/">HOTT <span>WRESTLING</span></a>
         <div class="top-actions">
-          <a href="/api/auth/login" class="admin-login-btn" id="admin-login-btn">Admin</a>
           <button class="top-btn is-admin-only" id="adm-panel-btn" style="display:none;" title="Admin Panel" onclick="if(window._openAdminPanel)window._openAdminPanel()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
-          <a href="/api/auth/logout" class="admin-logout-btn" id="admin-logout-btn">Exit Admin</a>
+          <a href="/auth/google/logout" class="admin-logout-btn" id="admin-logout-btn">Exit Admin</a>
           <button class="pwa-btn" id="pwa-install-btn" onclick="if(window.deferredPrompt){window.deferredPrompt.prompt();window.deferredPrompt.userChoice.then(function(){window.deferredPrompt=null;document.getElementById('pwa-install-btn').classList.remove('visible');})}">
             <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
             App
