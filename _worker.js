@@ -1230,7 +1230,23 @@ async function handleProfile(request, env, corsH) {
     const { results } = await env.DB.prepare(
       'SELECT username, display_name, bio, avatar_url, banner_url, age, age_public, birth_date, city, country, name_color, name_font, age_verified, age_verified_at FROM user_profiles WHERE user_id=?'
     ).bind(targetId).all();
-    return apiJson({ username: results[0]?.username||null, display_name: results[0]?.display_name||'', bio: results[0]?.bio||'', avatar_url: results[0]?.avatar_url||'', banner_url: results[0]?.banner_url||'', age: results[0]?.age||null, age_public: results[0]?.age_public||0, birth_date: results[0]?.birth_date||'', city: results[0]?.city||'', country: results[0]?.country||'', name_color: results[0]?.name_color||'', name_font: results[0]?.name_font||'', age_verified: results[0]?.age_verified||0, age_verified_at: results[0]?.age_verified_at||'' }, 200, corsH);
+    const isOwnProfile = session && session.id === targetId;
+    let hasPassword = null;
+    if (isOwnProfile) {
+      try {
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS local_accounts (
+          user_id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )`).run();
+        const acct = await env.DB.prepare('SELECT user_id FROM local_accounts WHERE user_id=?').bind(targetId).first();
+        hasPassword = !!acct;
+      } catch(e) { hasPassword = null; }
+    }
+    const respBody = { username: results[0]?.username||null, display_name: results[0]?.display_name||'', bio: results[0]?.bio||'', avatar_url: results[0]?.avatar_url||'', banner_url: results[0]?.banner_url||'', age: results[0]?.age||null, age_public: results[0]?.age_public||0, birth_date: results[0]?.birth_date||'', city: results[0]?.city||'', country: results[0]?.country||'', name_color: results[0]?.name_color||'', name_font: results[0]?.name_font||'', age_verified: results[0]?.age_verified||0, age_verified_at: results[0]?.age_verified_at||'' };
+    if (isOwnProfile) respBody.has_password = hasPassword;
+    return apiJson(respBody, 200, corsH);
   }
 
   if (!session) return apiJson({ error: 'Not authenticated' }, 401, corsH);
@@ -2974,6 +2990,41 @@ export default {
       respHeaders.set('Content-Type', 'application/json');
       respHeaders.append('Set-Cookie', makeCookie(token, COOKIE_MAX_AGE));
       return new Response(JSON.stringify({ ok: true, user_id: account.user_id, name: name }), { status: 200, headers: respHeaders });
+    }
+
+    // ── AGREGAR/CAMBIAR CONTRASEÑA DE RESPALDO A LA CUENTA YA EXISTENTE ──
+    // Para usuarios que entraron con Google y quieren tener tambien email+contrasena
+    // como camino alternativo, sin perder su cuenta/posts/seguidores actuales.
+    if (path === '/auth/local/set-password' && request.method === 'POST') {
+      const session = getSession(request);
+      if (!session) return apiJson({ error: 'Not authenticated' }, 401, {});
+
+      try {
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS local_accounts (
+          user_id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )`).run();
+      } catch(e) {}
+
+      let body;
+      try { body = await request.json(); } catch(e) { return apiJson({ error: 'Invalid request body' }, 400, {}); }
+      const password = body.password || '';
+      if (password.length < 8) return apiJson({ error: 'Password must be at least 8 characters.' }, 400, {});
+      if (!session.email) return apiJson({ error: 'Your account has no email on file.' }, 400, {});
+
+      const passwordHash = await hashPassword(password);
+      const existing = await env.DB.prepare('SELECT user_id FROM local_accounts WHERE user_id=?').bind(session.id).first();
+
+      if (existing) {
+        await env.DB.prepare('UPDATE local_accounts SET password_hash=? WHERE user_id=?').bind(passwordHash, session.id).run();
+      } else {
+        const emailTaken = await env.DB.prepare('SELECT user_id FROM local_accounts WHERE email=? AND user_id!=?').bind(session.email, session.id).first();
+        if (emailTaken) return apiJson({ error: 'This email is already used by a different account.' }, 409, {});
+        await env.DB.prepare('INSERT INTO local_accounts (user_id, email, password_hash) VALUES (?,?,?)').bind(session.id, session.email, passwordHash).run();
+      }
+      return apiJson({ ok: true }, 200, {});
     }
 
     // ── CALLBACK ──
