@@ -2953,9 +2953,13 @@ export default {
     // ── LOGOUT ──
     if (path === '/auth/google/logout') {
       const redirect = url.searchParams.get('redirect') || url.origin + '/';
+      const respHeaders = new Headers();
+      respHeaders.set('Location', redirect);
+      respHeaders.append('Set-Cookie', makeCookie('', 0));
+      respHeaders.append('Set-Cookie', 'hw_admin=; Max-Age=0; Path=/; Secure; SameSite=Lax');
       return new Response(null, {
         status: 302,
-        headers: { Location: redirect, 'Set-Cookie': makeCookie('', 0) }
+        headers: respHeaders
       });
     }
 
