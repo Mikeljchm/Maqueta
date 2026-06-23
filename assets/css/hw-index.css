@@ -72,6 +72,42 @@
       #new-post-fab { right:auto !important; left:14px !important; bottom:5rem !important; }
       .tg-float { right:auto !important; left:14px !important; bottom:1.5rem !important; }
       .ce-fab { right:auto !important; left:14px !important; bottom:9rem !important; }
+
+      /* THREADS/COMMUNITIES — las categorias pasan de pildoras con scroll
+         horizontal a una lista fija al costado, permanentemente visible.
+         Se hace con CSS Grid (grid-template-areas), que reubica visualmente
+         los elementos SIN necesidad de moverlos en el HTML — el orden real
+         del DOM no cambia, solo donde se ven. */
+      #page-bulge {
+        max-width:960px; margin:0 auto;
+        display:grid;
+        grid-template-columns:200px minmax(0,1fr);
+        grid-template-areas:
+          "title   title"
+          "catside search"
+          "catside tabs"
+          "catside tags"
+          "catside feed";
+        gap:0 1.75rem;
+      }
+      #page-bulge > * { max-width:none !important; margin:0 !important; }
+      #page-bulge .page-title-bar { grid-area:title; }
+      #page-bulge .comm-cat-pills {
+        grid-area:catside; flex-direction:column; align-items:stretch;
+        overflow:visible; padding:0.5rem 0 0; gap:0.4rem;
+        position:sticky; top:1rem; align-self:start;
+      }
+      #page-bulge .comm-cat-pill { text-align:left; padding:0.5rem 0.9rem; }
+      #page-bulge .comm-search-bar { grid-area:search; margin:0.6rem 0; }
+      #page-bulge .thread-sort-tabs { grid-area:tabs; }
+      #page-bulge .thread-tags-row { grid-area:tags; }
+      #page-bulge #comm-feed {
+        grid-area:feed;
+        display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:0.85rem; align-content:start;
+      }
+      #page-bulge .comm-card { margin:0; }
+      #page-bulge .comm-loading { grid-column:1 / -1; }
     }
     body {
       font-family: var(--font-b);
