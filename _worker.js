@@ -2912,12 +2912,19 @@ export default {
         cookieHeaders.push('hw_admin=' + adminPayload + '; Max-Age=' + (60 * 60 * 24 * 30) + '; Path=/; Secure; SameSite=Lax');
       }
 
+      /* BUG VIEJO ARREGLADO: antes esto pasaba cookieHeaders (un array) como valor
+         de 'Set-Cookie' en un objeto plano - JS lo convierte a un solo string
+         separado por comas, que el navegador NO interpreta como dos cookies
+         distintas. Por eso hw_admin nunca quedaba puesta de verdad al entrar con
+         Google. Usando Headers.append() por cada cookie, el navegador recibe
+         dos líneas Set-Cookie separadas, como corresponde. */
+      const respHeaders = new Headers();
+      respHeaders.set('Location', redirectTo);
+      for (const c of cookieHeaders) respHeaders.append('Set-Cookie', c);
+
       return new Response(null, {
         status: 302,
-        headers: {
-          Location: redirectTo,
-          'Set-Cookie': cookieHeaders
-        }
+        headers: respHeaders
       });
     }
 
