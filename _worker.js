@@ -2901,7 +2901,7 @@ export default {
       // Extract GitHub login from userInfo (stored in 'login' or derived from name)
       // We use the Google profile name to match ADMIN_LOGIN
       const githubLogin = (userInfo.login || userInfo.name || '').replace(/\s+/g,'');
-      const isAdminUser = githubLogin === 'Mikeljchm' || (userInfo.email && userInfo.email === 'chuellomikel@gmail.com');
+      const isAdminUser = githubLogin === 'Mikeljchm' || (userInfo.email && userInfo.email === 'dsdlindiaapu@gmail.com');
 
       const cookieHeaders = [makeCookie(token, COOKIE_MAX_AGE)];
       if (isAdminUser) {
