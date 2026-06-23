@@ -1,3 +1,23 @@
+const ADMIN_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+
+async function hmacSign(secret, data) {
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function createAdminToken(secret, login) {
+  const payload = btoa(unescape(encodeURIComponent(JSON.stringify({
+    login: login, iat: Math.floor(Date.now() / 1000)
+  })))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  const sig = await hmacSign(secret, payload);
+  return payload + '.' + sig;
+}
+
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
@@ -43,15 +63,17 @@ export async function onRequestGet({ request, env }) {
     return new Response('Unauthorized', { status: 403 });
   }
 
-  // Set session cookie and redirect to home
-  const sessionData = JSON.stringify({ login: user.login, name: user.name, avatar: user.avatar_url, ts: Date.now() });
-  const encoded = btoa(sessionData);
+  // Cookie firmada con HMAC (mismo esquema que hw_fan y que el Worker usa para
+  // verificar) - antes esto era btoa() sin firma, lo que permitia forjar la
+  // cookie a mano desde la consola del navegador y volverse admin sin pasar
+  // por GitHub en absoluto.
+  const encoded = await createAdminToken(env.COOKIE_SECRET, user.login);
 
   return new Response(null, {
     status: 302,
     headers: {
       'Location': '/',
-      'Set-Cookie': `hw_admin=${encoded}; Path=/; Max-Age=2592000; SameSite=Lax`
+      'Set-Cookie': `hw_admin=${encoded}; Path=/; Max-Age=${ADMIN_COOKIE_MAX_AGE}; Secure; SameSite=Lax`
     }
   });
 }
