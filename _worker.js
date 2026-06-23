@@ -43,6 +43,48 @@ async function verifySessionToken(secret, token) {
   } catch { return null; }
 }
 
+const ADMIN_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+
+/* Mismo esquema HMAC que createSessionToken/verifySessionToken, pero para
+   la cookie de admin (hw_admin). Antes esta cookie no tenia firma alguna -
+   cualquiera podia armarla a mano en la consola del navegador y volverse
+   admin del sitio. Ahora va firmada igual que la de usuario. */
+async function createAdminToken(secret, login) {
+  const payload = btoa(unescape(encodeURIComponent(JSON.stringify({
+    login: login, iat: Math.floor(Date.now() / 1000)
+  })))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  const sig = await hmacSign(secret, payload);
+  return payload + '.' + sig;
+}
+
+async function verifyAdminToken(secret, token) {
+  try {
+    const dot = token.lastIndexOf('.');
+    if (dot < 0) return null;
+    const payload = token.slice(0, dot);
+    const sig = token.slice(dot + 1);
+    const expected = await hmacSign(secret, payload);
+    if (expected !== sig) return null;
+    const data = JSON.parse(decodeURIComponent(escape(atob(
+      payload.replace(/-/g,'+').replace(/_/g,'/')
+    ))));
+    if (Math.floor(Date.now()/1000) - data.iat > ADMIN_COOKIE_MAX_AGE) return null;
+    if (data.login !== 'Mikeljchm') return null;
+    return data;
+  } catch { return null; }
+}
+
+/* Lee y verifica AMBAS cookies una sola vez por request, dejando el resultado
+   ya validado pegado al objeto request. getSession() y los chequeos de admin
+   en el resto del archivo leen esto en vez de decodificar/confiar a ciegas. */
+async function verifyRequestAuth(request, env) {
+  const cookieHeader = request.headers.get('Cookie') || '';
+  const fanMatch = cookieHeader.match(/hw_fan=([^;]+)/);
+  request._verifiedFanSession = fanMatch ? await verifySessionToken(env.COOKIE_SECRET, fanMatch[1]) : null;
+  const adminMatch = cookieHeader.match(/hw_admin=([^;]+)/);
+  request._verifiedAdminLogin = adminMatch ? (await verifyAdminToken(env.COOKIE_SECRET, adminMatch[1]) ? 'Mikeljchm' : null) : null;
+}
+
 function parseCookies(header) {
   const c = {};
   if (!header) return c;
@@ -67,15 +109,7 @@ function jsonRes(data, extra) {
 
 
 function getSession(request) {
-  const cookies = request.headers.get('Cookie') || '';
-  const match = cookies.match(/hw_fan=([^;]+)/);
-  if (!match) return null;
-  try {
-    const [payload] = match[1].split('.');
-    return JSON.parse(decodeURIComponent(escape(atob(
-      payload.replace(/-/g,'+').replace(/_/g,'/')
-    ))));
-  } catch { return null; }
+  return request._verifiedFanSession || null;
 }
 
 /* Obtiene el avatar del usuario: D1 primero, fallback a Google picture */
@@ -521,11 +555,7 @@ async function handleSave(request, env, corsH) {
   const headers = { ...corsH, 'Content-Type': 'application/json' };
 
   try {
-    const cookie = request.headers.get('Cookie') || '';
-    const match = cookie.match(/hw_admin=([^;]+)/);
-    if (!match) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-    const session = JSON.parse(atob(match[1]));
-    if (session.login !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+    if (request._verifiedAdminLogin !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
 
     const { filePath, title, description, category, poster, date, adult, featured, draft, images, videos, links, cover, banner, bio } = await request.json();
     const GITHUB_TOKEN = env.GITHUB_TOKEN;
@@ -615,11 +645,7 @@ async function handleCreate(request, env, corsH) {
   const headers = { ...corsH, 'Content-Type': 'application/json' };
 
   try {
-    const cookie = request.headers.get('Cookie') || '';
-    const match = cookie.match(/hw_admin=([^;]+)/);
-    if (!match) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-    const session = JSON.parse(atob(match[1]));
-    if (session.login !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+    if (request._verifiedAdminLogin !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
 
     const { title, description, category, poster, date, adult, featured, draft, images, videos, links } = await request.json();
 
@@ -701,11 +727,7 @@ async function handleDelete(request, env, corsH) {
   const headers = { ...corsH, 'Content-Type': 'application/json' };
 
   try {
-    const cookie = request.headers.get('Cookie') || '';
-    const match = cookie.match(/hw_admin=([^;]+)/);
-    if (!match) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-    const session = JSON.parse(atob(match[1]));
-    if (session.login !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+    if (request._verifiedAdminLogin !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
 
     const { filePath } = await request.json();
     const GITHUB_TOKEN = env.GITHUB_TOKEN;
@@ -742,11 +764,7 @@ async function handleCreateProfile(request, env, corsH) {
   const headers = { ...corsH, 'Content-Type': 'application/json' };
 
   try {
-    const cookie = request.headers.get('Cookie') || '';
-    const match = cookie.match(/hw_admin=([^;]+)/);
-    if (!match) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-    const session = JSON.parse(atob(match[1]));
-    if (session.login !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+    if (request._verifiedAdminLogin !== 'Mikeljchm') return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
 
     const { title, description, category, cover, banner, bio, adult, images, videos, links, collection } = await request.json();
 
@@ -854,8 +872,7 @@ async function handlePolls(request, env, corsH) {
     const session = getSession(request);
     const body = await request.json();
     // Admin puede crear/actualizar encuesta
-    const adminCookie = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
-    if (body.action === 'create' && adminCookie) {
+    if (body.action === 'create' && request._verifiedAdminLogin === 'Mikeljchm') {
       const { question, options } = body;
       if (!question || !options || options.length < 2) return apiJson({ error: 'Invalid poll' }, 400, corsH);
       const { results: existing } = await env.DB.prepare('SELECT id FROM polls WHERE post_id = ?').bind(post_id).all();
@@ -1448,10 +1465,7 @@ async function handleConfessions(request, env, corsH) {
 
   const url    = new URL(request.url);
   const isAdmin = (function(){
-    const cookies = request.headers.get('Cookie') || '';
-    const m = cookies.match(/hw_admin=([^;]+)/);
-    if (!m) return false;
-    try { const s = JSON.parse(atob(m[1])); return s && s.login === 'Mikeljchm'; } catch(e){ return false; }
+    return request._verifiedAdminLogin === 'Mikeljchm';
   })();
 
   if (request.method === 'GET') {
@@ -1543,11 +1557,7 @@ async function handleBattles(request, env, corsH) {
     UNIQUE(post_id, user_id)
   )`).run();
 
-  const isAdmin = (function(){
-    const m = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
-    if (!m) return false;
-    try { const s = JSON.parse(atob(m[1])); return s && s.login === 'Mikeljchm'; } catch(e){ return false; }
-  })();
+  const isAdmin = request._verifiedAdminLogin === 'Mikeljchm';
 
   if (request.method === 'GET') {
     const { results: battles } = await env.DB.prepare(
@@ -1680,11 +1690,7 @@ async function handleUserPosts(request, env, corsH) {
 
   const session = getSession(request);
   const url = new URL(request.url);
-  const isAdmin = (function(){
-    const m = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
-    if (!m) return false;
-    try { const s = JSON.parse(atob(m[1])); return s && s.login === 'Mikeljchm'; } catch(e){ return false; }
-  })();
+  const isAdmin = request._verifiedAdminLogin === 'Mikeljchm';
 
   if (request.method === 'GET') {
     const action = url.searchParams.get('action');
@@ -2036,11 +2042,7 @@ async function handleCommunities(request, env, corsH) {
   try { await env.DB.prepare("ALTER TABLE thread_posts ADD COLUMN embed_title TEXT DEFAULT ''").run(); } catch(e){}
   const url = new URL(request.url);
   const session = getSession(request);
-  const isAdmin = (function(){
-    const m=(request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
-    if(!m) return false;
-    try{ const s=JSON.parse(atob(m[1])); return s&&s.login==='Mikeljchm'; }catch(e){ return false; }
-  })();
+  const isAdmin = request._verifiedAdminLogin === 'Mikeljchm';
 
   if (request.method === 'GET') {
     const sort     = url.searchParams.get('sort') || 'trending';
@@ -2175,11 +2177,7 @@ async function handleCommunityPosts(request, env, corsH) {
   await initThreadTables(env);
   const url     = new URL(request.url);
   const session = getSession(request);
-  const isAdmin = (function(){
-    const m=(request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
-    if(!m) return false;
-    try{ const s=JSON.parse(atob(m[1])); return s&&s.login==='Mikeljchm'; }catch(e){ return false; }
-  })();
+  const isAdmin = request._verifiedAdminLogin === 'Mikeljchm';
 
   if (request.method === 'GET') {
     const tid = parseInt(url.searchParams.get('community_id')||url.searchParams.get('thread_id')||'0');
@@ -2321,11 +2319,7 @@ async function handleNotifications(request, env, corsH) {
 
   const url     = new URL(request.url);
   const session = getSession(request);
-  const isAdmin = (function(){
-    const m = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
-    if (!m) return false;
-    try { const s = JSON.parse(atob(m[1])); return s && s.login === 'Mikeljchm'; } catch(e) { return false; }
-  })();
+  const isAdmin = request._verifiedAdminLogin === 'Mikeljchm';
 
   /* GET /api/notifications — traer notificaciones del usuario */
   if (request.method === 'GET') {
@@ -2400,6 +2394,7 @@ async function checkRateLimit(env, key, limit, windowSecs) {
 
 export default {
   async fetch(request, env, ctx) {
+    await verifyRequestAuth(request, env);
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -2420,8 +2415,7 @@ export default {
       /* Rate limiting disabled — re-enable when on Workers Paid plan */
       /* ── Admin endpoints ── */
       if (path.startsWith('/api/admin')) {
-        const adminCk = (request.headers.get('Cookie')||'').match(/hw_admin=([^;]+)/);
-        if (!adminCk) return new Response('Unauthorized',{status:401,headers:corsH});
+        if (request._verifiedAdminLogin !== 'Mikeljchm') return new Response('Unauthorized',{status:401,headers:corsH});
 
         /* DELETE /api/admin/thread?id=X */
         if (path === '/api/admin/thread' && request.method === 'DELETE') {
@@ -2911,8 +2905,10 @@ export default {
 
       const cookieHeaders = [makeCookie(token, COOKIE_MAX_AGE)];
       if (isAdminUser) {
-        // hw_admin cookie readable by JS (no HttpOnly) — used by frontend to show admin UI
-        const adminPayload = btoa(JSON.stringify({ login: 'Mikeljchm', ts: Date.now() }));
+        // hw_admin cookie readable by JS (no HttpOnly) — usada por el frontend para mostrar
+        // los botones de admin, pero AHORA firmada con HMAC: el servidor nunca confia en el
+        // valor crudo, solo en lo que verifyAdminToken() valida via verifyRequestAuth().
+        const adminPayload = await createAdminToken(env.COOKIE_SECRET, 'Mikeljchm');
         cookieHeaders.push('hw_admin=' + adminPayload + '; Max-Age=' + (60 * 60 * 24 * 30) + '; Path=/; Secure; SameSite=Lax');
       }
 
