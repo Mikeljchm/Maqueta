@@ -274,7 +274,7 @@ async function checkEmbedAlive(embedUrl, storedTitle) {
       redirectedToRoot = finalPath === '/' || finalPath === '';
     } catch(eUrl) {}
 
-    const titleMissing = !currentTitle;
+    const titleMissing = !currentTitle && !!storedTitle;
     let titleChangedALot = false;
     if (storedTitle && currentTitle) {
       const a = storedTitle.toLowerCase().trim();
@@ -287,7 +287,7 @@ async function checkEmbedAlive(embedUrl, storedTitle) {
     let score = 0;
     if (hasDeadPhrase) score += 4;
     if (redirectedToRoot) score += 3;
-    if (titleMissing) score += 1;
+    if (titleMissing) score += 2;
     if (titleChangedALot) score += 2;
     if (!hasVideoMarkup) score += 1;
 
