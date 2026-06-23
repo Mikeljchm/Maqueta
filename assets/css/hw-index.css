@@ -25,6 +25,43 @@
 
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html { background:#000; height:100%; }
+    #app { max-width:480px; margin:0 auto; }
+
+    /* ============================================================
+       ESCRITORIO — antes de esto, #app quedaba siempre fijo a 480px
+       sin importar el ancho real de la pantalla (estilo en linea
+       removido de index.html). De aca en adelante: nav lateral fija
+       en vez de barra inferior, y el contenido usa el espacio real
+       en vez de quedar como un celular flotando en el medio.
+       ============================================================ */
+    @media (min-width:900px) {
+      #app {
+        max-width:none; margin:0;
+        padding-left:240px;
+      }
+      #top-strip { left:240px; }
+      .bottom-nav {
+        position:fixed; left:0; top:0; right:auto; bottom:0;
+        width:240px; height:100vh;
+        flex-direction:column; align-items:stretch; justify-content:flex-start;
+        gap:0.3rem; padding:1.6rem 0.9rem; padding-bottom:1.6rem;
+        border-top:none; border-right:0.5px solid rgba(255,255,255,0.12);
+        transform:none !important;
+      }
+      .bottom-nav.hidden { transform:none; }
+      .nav-item {
+        flex-direction:row; justify-content:flex-start; align-items:center;
+        gap:0.85rem; width:100%; padding:0.7rem 0.9rem; min-width:0;
+      }
+      .nav-item svg { width:22px; height:22px; flex-shrink:0; }
+      .nav-item span:not(.nav-dot) {
+        font-size:0.8rem; text-transform:none; letter-spacing:0.01em; font-weight:600;
+      }
+      .page { padding-bottom:1.5rem; }
+      /* El contenido de cada pagina no se estira sin limite en monitores anchos */
+      .page > * { max-width:720px; margin-left:auto; margin-right:auto; }
+      #top-strip > * { max-width:720px; margin-left:auto; margin-right:auto; }
+    }
     body {
       font-family: var(--font-b);
       background: #000;
