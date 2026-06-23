@@ -123,6 +123,13 @@
       #comm-detail-page #comm-posts-inner {
         max-width:720px; margin-left:auto; margin-right:auto;
       }
+
+      /* PROFILE — las grillas de Clips/Collections/Coleccion-abierta tenian
+         un numero fijo de columnas pensado para celular; con mas ancho
+         disponible, suman columnas en vez de solo ensanchar cada una. */
+      .clips-grid { grid-template-columns:repeat(4,1fr); }
+      .my-cols-grid { grid-template-columns:repeat(3,1fr); }
+      .cv-grid { grid-template-columns:repeat(4,1fr); }
     }
     body {
       font-family: var(--font-b);
