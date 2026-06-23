@@ -133,6 +133,43 @@ async function getUserAvatar(userId, fallback, env) {
   return fallback || '';
 }
 
+/* Hash de contraseñas con PBKDF2 (nativo del Web Crypto API de Workers,
+   sin librerias externas). Formato guardado: "saltHex:hashHex". */
+async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']
+  );
+  const hashBuffer = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+    keyMaterial, 256
+  );
+  const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+  const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2,'0')).join('');
+  return saltHex + ':' + hashHex;
+}
+
+async function verifyPassword(password, stored) {
+  try {
+    const [saltHex, hashHex] = stored.split(':');
+    if (!saltHex || !hashHex) return false;
+    const salt = new Uint8Array(saltHex.match(/.{2}/g).map(b => parseInt(b, 16)));
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']
+    );
+    const hashBuffer = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, 256
+    );
+    const newHashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+    return newHashHex === hashHex;
+  } catch(e) { return false; }
+}
+
+function isValidEmail(email) {
+  return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 200;
+}
+
 /* Enriquece un array de rows con el avatar actualizado desde user_profiles.
    Resuelve el problema de avatares viejos/vacíos en posts y comentarios. */
 async function enrichAvatars(rows, env) {
@@ -2831,7 +2868,7 @@ export default {
       return new Response('Not found', { status: 404 });
     }
 
-    if (!path.startsWith('/auth/google/')) {
+    if (!path.startsWith('/auth/google/') && !path.startsWith('/auth/local/')) {
       // Todo lo demás va al sitio estático
       return env.ASSETS.fetch(request);
     }
@@ -2860,6 +2897,83 @@ export default {
         prompt: 'select_account'
       });
       return Response.redirect(GOOGLE_AUTH_URL + '?' + params.toString(), 302);
+    }
+
+    // ── REGISTRO Y LOGIN CON EMAIL + CONTRASEÑA ──
+    // Viven directo en el Worker (no como Pages Function) para no repetir
+    // el problema de rutas inalcanzables que tuvimos con /api/auth/*.
+    if (path === '/auth/local/register' && request.method === 'POST') {
+      try {
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS local_accounts (
+          user_id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )`).run();
+      } catch(e) {}
+
+      let body;
+      try { body = await request.json(); } catch(e) { return apiJson({ error: 'Invalid request body' }, 400, {}); }
+      const email = (body.email || '').trim().toLowerCase();
+      const password = body.password || '';
+      const name = (body.name || '').trim().slice(0, 60) || email.split('@')[0];
+
+      if (!isValidEmail(email)) return apiJson({ error: 'Enter a valid email address.' }, 400, {});
+      if (password.length < 8) return apiJson({ error: 'Password must be at least 8 characters.' }, 400, {});
+
+      const existing = await env.DB.prepare('SELECT user_id FROM local_accounts WHERE email=?').bind(email).first();
+      if (existing) return apiJson({ error: 'An account with this email already exists.' }, 409, {});
+
+      const userId = 'local_' + crypto.randomUUID().replace(/-/g, '');
+      const passwordHash = await hashPassword(password);
+
+      await env.DB.prepare(
+        'INSERT INTO local_accounts (user_id, email, password_hash) VALUES (?,?,?)'
+      ).bind(userId, email, passwordHash).run();
+
+      try {
+        await env.DB.prepare(
+          'INSERT OR IGNORE INTO user_profiles (user_id, display_name, bio, avatar_url, banner_url) VALUES (?,?,?,?,?)'
+        ).bind(userId, name, '', '', '').run();
+      } catch(e) {}
+
+      const token = await createSessionToken(env.COOKIE_SECRET, { sub: userId, email: email, name: name, picture: '' });
+      const respHeaders = new Headers();
+      respHeaders.set('Content-Type', 'application/json');
+      respHeaders.append('Set-Cookie', makeCookie(token, COOKIE_MAX_AGE));
+      return new Response(JSON.stringify({ ok: true, user_id: userId, name: name }), { status: 200, headers: respHeaders });
+    }
+
+    if (path === '/auth/local/login' && request.method === 'POST') {
+      try {
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS local_accounts (
+          user_id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )`).run();
+      } catch(e) {}
+
+      let body;
+      try { body = await request.json(); } catch(e) { return apiJson({ error: 'Invalid request body' }, 400, {}); }
+      const email = (body.email || '').trim().toLowerCase();
+      const password = body.password || '';
+
+      if (!isValidEmail(email) || !password) return apiJson({ error: 'Invalid email or password.' }, 400, {});
+
+      const account = await env.DB.prepare('SELECT user_id, password_hash FROM local_accounts WHERE email=?').bind(email).first();
+      if (!account) return apiJson({ error: 'Invalid email or password.' }, 401, {});
+
+      const validPassword = await verifyPassword(password, account.password_hash);
+      if (!validPassword) return apiJson({ error: 'Invalid email or password.' }, 401, {});
+
+      const name = await getUserDisplayName(account.user_id, email.split('@')[0], env);
+      const picture = await getUserAvatar(account.user_id, '', env);
+      const token = await createSessionToken(env.COOKIE_SECRET, { sub: account.user_id, email: email, name: name, picture: picture });
+      const respHeaders = new Headers();
+      respHeaders.set('Content-Type', 'application/json');
+      respHeaders.append('Set-Cookie', makeCookie(token, COOKIE_MAX_AGE));
+      return new Response(JSON.stringify({ ok: true, user_id: account.user_id, name: name }), { status: 200, headers: respHeaders });
     }
 
     // ── CALLBACK ──
