@@ -108,6 +108,21 @@
       }
       #page-bulge .comm-card { margin:0; }
       #page-bulge .comm-loading { grid-column:1 / -1; }
+
+      /* El panel de un thread abierto (#comm-detail-page) vive AFUERA del
+         grid, como overlay independiente (position:fixed) con su propio
+         max-width:480px y centrado al viewport completo - el mismo patron
+         del bug original del dia, en un elemento distinto que no vimos
+         antes. Se corre para alinear con el contenido en vez de quedar
+         flotando angosto en el medio de toda la pantalla. */
+      #comm-detail-page {
+        left:240px !important; transform:none !important;
+        max-width:none !important; width:calc(100% - 240px) !important;
+      }
+      #comm-detail-page .comm-detail-info,
+      #comm-detail-page #comm-posts-inner {
+        max-width:720px; margin-left:auto; margin-right:auto;
+      }
     }
     body {
       font-family: var(--font-b);
