@@ -61,6 +61,17 @@
       /* El contenido de cada pagina no se estira sin limite en monitores anchos */
       .page > * { max-width:720px; margin-left:auto; margin-right:auto; }
       #top-strip > * { max-width:720px; margin-left:auto; margin-right:auto; }
+
+      /* Los botones flotantes (postear admin, Telegram) quedaban anclados al
+         borde derecho del VIEWPORT con right:, lejos del contenido real una
+         vez que el contenido vive dentro de la sidebar+columna central. Se
+         anclan del lado izquierdo (la franja de la sidebar) en su lugar, sin
+         mover nada en el HTML — evita que la animacion de ocultar la nav
+         (que usa transform) los arrastre por accidente si quedaran anidados
+         adentro de .bottom-nav. */
+      #new-post-fab { right:auto !important; left:14px !important; bottom:5rem !important; }
+      .tg-float { right:auto !important; left:14px !important; bottom:1.5rem !important; }
+      .ce-fab { right:auto !important; left:14px !important; bottom:9rem !important; }
     }
     body {
       font-family: var(--font-b);
