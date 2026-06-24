@@ -47,7 +47,7 @@ layout: none
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Anton&family=Righteous&family=Dancing+Script:wght@600;700&family=Oswald:wght@400;600;700&family=Russo+One&family=Pacifico&family=Lobster&family=Black+Han+Sans&family=Permanent+Marker&family=Alfa+Slab+One&family=Bungee&family=Monoton&family=Creepster&family=Teko:wght@500;600;700&family=Exo+2:wght@700;800;900&family=Rajdhani:wght@600;700&family=Audiowide&&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/hw-index.css?v=15">
+  <link rel="stylesheet" href="/assets/css/hw-index.css?v=16">
   <link rel="stylesheet" href="/assets/css/hw-embeds.css?v=10">
   <link rel="stylesheet" href="/assets/css/hw-threads.css?v=3">
   <link rel="stylesheet" href="/assets/css/hw-app.css?v=3">
@@ -356,7 +356,7 @@ layout: none
       <div class="page" id="page-more">
 
         <!-- BANNER full-bleed con menú flotante encima — estilo Tumblr -->
-        <div style="position:relative;flex-shrink:0;">
+        <div id="prof-banner-wrap" style="position:relative;flex-shrink:0;">
           <div class="prof-hero" style="cursor:pointer;height:260px;">
             <div class="prof-hero-glow"></div>
             <div class="prof-hero-pattern"></div>
@@ -399,7 +399,7 @@ layout: none
             </div>
           </div>
           <!-- AVATAR solapado: 65% dentro del banner, estilo Tumblr -->
-          <div style="position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);z-index:5;">
+          <div id="prof-avatar-overlay" style="position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);z-index:5;">
             <div class="prof-avatar-wrap" id="user-avatar-wrap" style="width:84px;height:84px;border:3px solid var(--bg);">
               <div class="user-avatar-placeholder"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
               <div class="prof-avatar-cam"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
@@ -407,10 +407,10 @@ layout: none
           </div>
         </div>
         <!-- Espaciado para compensar el avatar solapado -->
-        <div style="height:28px;"></div>
+        <div id="prof-avatar-spacer" style="height:28px;"></div>
 
         <!-- NOMBRE + BADGE + BIO — centrado, solo display -->
-        <div style="text-align:center;padding:0 1rem 0;">
+        <div id="prof-info-block" style="text-align:center;padding:0 1rem 0;">
           <div class="prof-fullname" id="user-display-name" style="font-size:2.2rem;transition:all 0.2s;">Sign in to get started</div>
           <div class="prof-username-wrap" id="prof-username-wrap" style="display:none;justify-content:center;">
             <span class="prof-username" id="prof-username-display">@username</span>
@@ -488,10 +488,10 @@ layout: none
           </div>
         </div>
 
-        <div style="padding:1.5rem 1rem 0.75rem;text-align:center;color:var(--text-muted);font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;">
+        <div id="prof-footer-copyright" style="padding:1.5rem 1rem 0.75rem;text-align:center;color:var(--text-muted);font-size:0.5rem;letter-spacing:0.2em;text-transform:uppercase;">
           &copy; 2026 HOTT WRESTLING &middot; 18+ ONLY
         </div>
-        <div style="padding:0 1rem 3rem;text-align:center;color:var(--text-muted);font-size:0.55rem;line-height:1.5;max-width:480px;margin:0 auto;">
+        <div id="prof-footer-legal" style="padding:0 1rem 3rem;text-align:center;color:var(--text-muted);font-size:0.55rem;line-height:1.5;max-width:480px;margin:0 auto;">
           18 U.S.C. &sect; 2257 Record-Keeping Requirements Compliance Statement: All models, actors, actresses and other persons that appear in any visual depiction of actual sexually explicit conduct appearing on this website were 18 years of age or older at the time of the creation of such depictions. Records required by 18 U.S.C. &sect; 2257 are kept by the content producer. For user-generated content, the user who uploaded the content is the primary producer and bears sole responsibility for compliance.
           &bull; <a href="/terms.html" style="color:var(--text-muted)">Terms</a>
           &bull; <a href="/privacy.html" style="color:var(--text-muted)">Privacy</a>
