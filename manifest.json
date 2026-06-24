@@ -99,5 +99,14 @@
   ],
   "prefer_related_applications": false,
   "related_applications": [],
-  "id": "hottwrestling"
+  "id": "hottwrestling",
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "save"
+    }
+  }
 }
