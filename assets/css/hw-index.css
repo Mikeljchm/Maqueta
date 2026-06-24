@@ -130,6 +130,55 @@
       .clips-grid { grid-template-columns:repeat(4,1fr); }
       .my-cols-grid { grid-template-columns:repeat(3,1fr); }
       .cv-grid { grid-template-columns:repeat(4,1fr); }
+
+      /* PROFILE — de bloque centrado tipo celular a 2 columnas estilo
+         Instagram/X desktop: info fija a la izquierda (avatar, nombre, bio,
+         stats), tabs+contenido a la derecha. El banner sigue ocupando todo
+         el ancho arriba de las dos columnas. */
+      #page-more {
+        max-width:960px; margin:0 auto !important;
+        display:grid;
+        grid-template-columns:280px minmax(0,1fr);
+        grid-template-areas:
+          "banner banner"
+          "info   tabs"
+          "info   content"
+          "footer footer";
+        gap:0 2rem;
+        align-items:start;
+      }
+      #page-more > * { max-width:none !important; margin:0 !important; }
+
+      #prof-banner-wrap { grid-area:banner; }
+      #prof-avatar-spacer { display:none; }
+      /* El avatar deja de estar centrado sobre el banner y pasa a quedar
+         arriba de la columna de info, para que se sientan conectados */
+      #prof-avatar-overlay { left:24px !important; transform:none !important; }
+
+      #prof-info-block {
+        grid-area:info; text-align:left !important; padding-top:3.5rem;
+      }
+      #prof-info-block .prof-username-wrap,
+      #prof-info-block .prof-badge,
+      #prof-info-block .prof-bio-area {
+        justify-content:flex-start !important; text-align:left !important;
+      }
+
+      #prof-ig-stats {
+        grid-area:info; justify-content:flex-start !important;
+        flex-direction:column; align-items:flex-start; gap:0.5rem;
+        margin-top:1.2rem !important;
+      }
+      #prof-ig-stats .prof-ig-stat { flex-direction:row; gap:0.4rem; align-items:center; }
+
+      #prof-signin-card { grid-area:info; margin-top:1rem !important; }
+
+      #prof-tabs { grid-area:tabs; }
+      .prof-tab-pane { grid-area:content; }
+
+      #prof-footer-copyright, #prof-footer-legal {
+        grid-area:footer; max-width:720px !important; margin:1.5rem auto 0 !important;
+      }
     }
     body {
       font-family: var(--font-b);
