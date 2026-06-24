@@ -406,6 +406,20 @@ async function detectEmbedServer(url) {
       return { type: type, src: p.embed(id, m), thumbnail: thumbnail, title: title };
     }
   }
+
+  /* RESPALDO GENERICO: la URL no es de ninguno de los 19 proveedores
+     conocidos, pero es una URL http(s) valida. Se intenta igual via
+     iframe en el cliente - y SIEMPRE se muestra ahi un boton "Ver en
+     [sitio]" como respaldo, porque no hay forma confiable de detectar
+     desde JS si el sitio bloqueo el embed (X-Frame-Options/CSP no
+     disparan un evento de error legible para un iframe cross-origin). */
+  if (/^https?:\/\/[^\s/]+\.[^\s/]{2,}/i.test(url)) {
+    var genericMeta = await extractEmbedMeta(url);
+    var hostname = '';
+    try { hostname = new URL(url).hostname.replace(/^www\./, ''); } catch(eHost) {}
+    return { type: 'generic', src: url, thumbnail: genericMeta.thumbnail, title: genericMeta.title, hostname: hostname };
+  }
+
   return null;
 }
 
