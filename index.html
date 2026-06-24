@@ -47,7 +47,7 @@ layout: none
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Anton&family=Righteous&family=Dancing+Script:wght@600;700&family=Oswald:wght@400;600;700&family=Russo+One&family=Pacifico&family=Lobster&family=Black+Han+Sans&family=Permanent+Marker&family=Alfa+Slab+One&family=Bungee&family=Monoton&family=Creepster&family=Teko:wght@500;600;700&family=Exo+2:wght@700;800;900&family=Rajdhani:wght@600;700&family=Audiowide&&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/hw-index.css?v=16">
+  <link rel="stylesheet" href="/assets/css/hw-index.css?v=17">
   <link rel="stylesheet" href="/assets/css/hw-embeds.css?v=10">
   <link rel="stylesheet" href="/assets/css/hw-threads.css?v=3">
   <link rel="stylesheet" href="/assets/css/hw-app.css?v=3">
@@ -103,6 +103,9 @@ layout: none
     </div><!-- end top-strip -->
 
     <button id="new-post-fab" onclick="openNewPost()" title="New Post">&#43;</button>
+    <button id="save-link-fab" onclick="window.currentUser ? (window._openSaveLinkModal && window._openSaveLinkModal()) : openAuthModal()" title="Save a Link">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07l-1.41 1.41"/><path d="M14 11a5 5 0 0 0-7.07 0l-2.83 2.83a5 5 0 0 0 7.07 7.07l1.41-1.41"/></svg>
+    </button>
 
     <div class="pages">
 
@@ -585,7 +588,7 @@ layout: none
   <script src="/assets/js/hw-embeds.js?v=28"></script>
   <script src="/assets/js/hw-feed.js?v=26"></script>
   <script src="/assets/js/hw-admin.js?v=6"></script>
-  <script src="/assets/js/hw-app.js?v=16"></script>
+  <script src="/assets/js/hw-app.js?v=17"></script>
   <script src="/assets/js/hw-index.js?v=20260617g"></script>
 
   <script>
