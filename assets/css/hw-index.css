@@ -72,6 +72,7 @@
       #new-post-fab { right:auto !important; left:14px !important; bottom:5rem !important; }
       .tg-float { right:auto !important; left:14px !important; bottom:1.5rem !important; }
       .ce-fab { right:auto !important; left:14px !important; bottom:9rem !important; }
+      #save-link-fab { right:auto !important; left:14px !important; bottom:13rem !important; }
 
       /* THREADS/COMMUNITIES — las categorias pasan de pildoras con scroll
          horizontal a una lista fija al costado, permanentemente visible.
@@ -263,6 +264,13 @@
     #new-post-fab{display:none;position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 4rem);right:1rem;width:48px;height:48px;background:linear-gradient(135deg,var(--fire-red),var(--fire-orange));border-radius:50%;border:none;color:#fff;font-size:1.5rem;cursor:pointer;z-index:101;box-shadow:0 4px 20px rgba(255,69,0,0.4);align-items:center;justify-content:center;transition:transform 0.2s var(--ease);}
     #new-post-fab:active{transform:scale(0.9);}
     body.is-admin #new-post-fab{display:flex;}
+
+    /* Boton "Save a Link" - visible para CUALQUIER usuario (a diferencia
+       de #new-post-fab que es solo admin), parte de la mecanica tipo
+       MyVidster: guardar un video de otra pagina con un toque. */
+    #save-link-fab{display:flex;position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 4rem);right:1rem;width:48px;height:48px;background:linear-gradient(135deg,#1a8fd1,#0d6fb8);border-radius:50%;border:none;color:#fff;cursor:pointer;z-index:101;box-shadow:0 4px 20px rgba(13,111,184,0.4);align-items:center;justify-content:center;transition:transform 0.2s var(--ease);}
+    #save-link-fab:active{transform:scale(0.9);}
+    body.is-admin #save-link-fab{bottom:calc(var(--nav-h) + var(--safe-bottom) + 12rem);}
 
     /* PAGES */
     .pages { flex:1; overflow:hidden; position:relative; }
