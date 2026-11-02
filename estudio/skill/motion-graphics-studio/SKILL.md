@@ -37,6 +37,23 @@ Herramientas opcionales probadas o recomendadas (instalar solo si hacen falta):
 - Real-ESRGAN (subir resolución) y RIFE (cuadros intermedios): renderizar Blender pequeño y a pocos fps, y luego escalar e interpolar.
 - HDRIs y texturas de Poly Haven (`api.polyhaven.com` responde): realismo en Blender.
 
+## 1b. Material visual: imágenes y videos libres (comprobado el 2 de noviembre de 2026)
+
+**Regla de oro de Mikel: NUNCA material con marca de agua.** Se ve barato. Si una fuente solo da la versión con marca, se descarta.
+
+Imágenes:
+- **Canva IA (el conector de Canva de Mikel)**: `mcp__Canva__generate-image` (prompt en español, `aspectRatio` LANDSCAPE_16_9 o PORTRAIT_9_16) y luego `get-generate-image-job` hasta SUCCESS. Calidad alta, pero gasta los créditos de IA de su Canva y aquí solo llega una miniatura (≈200 px). Para el video: Mikel la baja de Canva y la manda, o se usa dentro de un diseño de Canva. Siempre incluye el enlace "Open generated image". Ideal para objetos y ambientes simbólicos (rosa marchita, anillo, carta, cuarto vacío).
+- **Wikimedia Commons**: API `commons.wikimedia.org/w/api.php?action=query&list=search&srnamespace=6&srsearch=...`. Exige cabecera `User-Agent` propia (sin ella da 429). Revisa la licencia de cada archivo y da crédito al autor. Sirve para lugares reales, juzgados y contexto de época.
+- Generador local SD-Turbo (Hugging Face): posible, 20–60 s por imagen en CPU, calidad media. Solo para fondos y texturas.
+
+Videos (sin marca de agua):
+- **Mixkit** (licencia gratuita, sin registro): busca en `https://mixkit.co/free-stock-video/<tema>/` y saca los enlaces `https://assets.mixkit.co/videos/<id>/<id>-720.mp4` del HTML. El 720p baja desde aquí; el 1080p da 403 (Mikel puede bajarlo desde el navegador). Probado: lluvia, 48 s, limpio.
+- **Pexels** y **Pixabay**: sin marca de agua y licencia libre, pero su API pide una clave gratuita (dan 401/400 sin ella). Si Mikel crea las claves, guárdalas como secretos del entorno (`PEXELS_API_KEY`, `PIXABAY_API_KEY`).
+- **Internet Archive** (`archive.org/advancedsearch.php?...&output=json`): metraje antiguo (noticieros de los años 40–60, películas caseras). Muchos son de dominio público, pero **verifica la licencia de cada uno**. Bueno para atmósfera vintage en true crime.
+- **Coverr**: responde, gratis.
+- Calidad mínima: 1080p para planos principales. El 720p sirve para fondos desenfocados, texturas o superposiciones (o escálalo con Real-ESRGAN).
+- **yt-dlp** (`pip install yt-dlp`, `--js-runtimes node`): lee la información de YouTube, pero la descarga da 403 desde la nube. Para referencias, Mikel baja el video y lo manda. Solo como referencia de estilo, nunca como material del video.
+
 ## 2. Red y máquina (comprobado el 2 de noviembre de 2026)
 
 - La red está más abierta que antes: responden npm, pip, apt, git (GitHub), **Hugging Face**, `api.polyhaven.com`, `download.pytorch.org` y sitios web normales. Las páginas de *releases* de GitHub dan 403. Antes de depender de un servicio, compruébalo con `curl -s -o /dev/null -w '%{http_code}'`.
