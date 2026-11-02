@@ -26,3 +26,9 @@ Las imágenes se vuelven a sacar con `hyperframes capture` y `shot.js`.
 
 ## liquido/ — prueba de líquido en Blender
 `liquido.py`: `blender -b --factory-startup --python liquido.py -- 48` (cuadros) y después se unen con ffmpeg.
+
+## its-my-party/ — lyric video de "It's My Party", vertical (2:15)
+Concepto "La fiesta que se derrite": fiesta rosa de los 60 que se convierte en tormenta azul.
+`timing.json` es la sincronización final. `build_party.py` genera `party-video/index.html`.
+Fuentes: Pacifico y Abril Fatface (`npm install @fontsource/pacifico @fontsource/abril-fatface`), Permanent Marker y Bebas Neue.
+**No incluye la canción.**
