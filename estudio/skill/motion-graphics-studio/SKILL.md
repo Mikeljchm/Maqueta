@@ -1,6 +1,6 @@
 ---
 name: "motion-graphics-studio"
-description: "Úsala cuando Mikel pida videos de motion graphics, lyric videos, comerciales, intros, animaciones, escenas 3D en Blender o videos para su canal de YouTube de true crime: prepara el estudio (HyperFrames, Blender, Whisper, voz, fuentes) y sigue su flujo de trabajo."
+description: "Úsala cuando Mikel pida videos de motion graphics, logos animados, lyric videos, comerciales, intros, animaciones, escenas 3D en Blender o videos para su canal de YouTube de true crime: prepara el estudio (HyperFrames, Blender, Whisper, voz, fuentes) y sigue su flujo de trabajo."
 ---
 
 # Estudio de motion graphics de Mikel (Scenika Studio)
