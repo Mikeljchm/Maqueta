@@ -114,7 +114,19 @@ Videos (sin marca de agua):
 - Antes del primer episodio: construir el **kit del canal** (intro, tarjeta de capítulo, cartelera de evidencias con hilo rojo, línea de tiempo, mapa, rótulos, "Las notas de Vera", pantalla final). Luego un piloto de 8–10 min.
 - Visuales: 70 % atmosférico y barato (zoom lento, mapas, documentos, línea de tiempo, clips de Mikel) y 30 % momentos de motion graphics.
 - Estilo ya probado: vino y rojo carmesí, serif cursiva más sans, corazón de neón que se parte, Polaroids, sellos, notas rojas firmadas "— V.".
-- Reglas: nada de morbo gráfico ni fotos reales de las personas del caso. Datos de fuentes públicas o judiciales; "presuntamente" si el caso no está cerrado. Mikel verifica los datos. YouTube desmonetiza el contenido en serie sin aporte propio: la voz y la opinión de Mikel son la clave.
+- Reglas: nada de morbo gráfico. Datos de fuentes públicas o judiciales; "presuntamente" si el caso no está cerrado. Mikel verifica los datos. YouTube desmonetiza el contenido en serie sin aporte propio: la voz y la opinión de Mikel son la clave.
+
+### Fotos reales de los casos (Mikel decidió usarlas, 2 de noviembre de 2026)
+Buscar con WebSearch/WebFetch en artículos, archivos y registros públicos, descargar y montar en el video, **en este orden de preferencia**:
+1. **Libres o de dominio público**: Wikimedia Commons, obras de gobiernos (las del gobierno federal de EE. UU. son de dominio público), documentos judiciales públicos y fichas policiales publicadas oficialmente. Comprueba la licencia de cada una.
+2. **Fotos de prensa (con derechos)**: solo como **uso justo con comentario**, nunca como relleno decorativo. Reglas:
+   - Que ilustren algo concreto que Mikel está narrando o analizando, no fondos largos.
+   - **Transformarlas**: recorte, tamaño menor que la pantalla, dentro del estilo del canal (Polaroid, cartelera de evidencias, marco, anotaciones de Vera) y en pantalla pocos segundos.
+   - Crédito visible pequeño ("Foto: AP / Los Angeles Times") y fuente en la descripción.
+   - **Evita las agencias que reclaman más agresivamente** (Getty, AP, Reuters, fotos con su logo o marca) cuando haya alternativa.
+3. **Nunca**: fotos del cuerpo de las víctimas, de escenas del crimen con sangre, ni de menores. Nunca material con marca de agua.
+- Por cada episodio, guarda **`fuentes.csv`** (archivo, URL, dueño, licencia, minuto donde se usa). Sirve para la descripción y para defenderse si llega un reclamo.
+- Recuérdale a Mikel una sola vez por episodio que las fotos de prensa pueden traer reclamos de derechos (3 avisos = canal eliminado). La decisión es suya.
 
 ## 9. Guardar y entregar
 
