@@ -37,3 +37,9 @@ Fuentes: Pacifico y Abril Fatface (`npm install @fontsource/pacifico @fontsource
 Concepto "Más y más": cada "more" duplica un muro de 144 palabras MORE.
 Los "gimme gimme more" van pegados a la cuadrícula del ritmo (113 BPM, bloques de 4.24 s desde 54.9 s), porque Whisper se confunde con la repetición.
 Hay un coro extra en 190.6–207.5 s que no estaba en la letra original. **No incluye la canción.**
+
+## laboratorio/ — experimentos
+- `bolos/fisica.py`: letras MIKEL derribadas por una bola (cuerpos rígidos, rampa fuera de cuadro).
+- `agua/agua.py` (simulación + guarda .blend) y `render.py` (renderiza desde el .blend): MIKEL de agua con Mantaflow.
+- `visualizador/`: análisis FFT + canvas audio-reactivo (el clip de Sawadika no se incluye).
+- `personaje/`: Bolita con voz Kokoro y boca sincronizada por volumen.
