@@ -48,7 +48,8 @@ Imágenes:
 
 Videos (sin marca de agua):
 - **Mixkit** (licencia gratuita, sin registro): busca en `https://mixkit.co/free-stock-video/<tema>/` y saca los enlaces `https://assets.mixkit.co/videos/<id>/<id>-720.mp4` del HTML. El 720p baja desde aquí; el 1080p da 403 (Mikel puede bajarlo desde el navegador). Probado: lluvia, 48 s, limpio.
-- **Pexels** y **Pixabay**: sin marca de agua y licencia libre, pero su API pide una clave gratuita (dan 401/400 sin ella). Si Mikel crea las claves, guárdalas como secretos del entorno (`PEXELS_API_KEY`, `PIXABAY_API_KEY`).
+- **Pixabay (PRINCIPAL, probado)**: clave en la variable de entorno `PIXABAY_API_KEY` (nunca la escribas en el repo). Videos: `https://pixabay.com/api/videos/?key=$PIXABAY_API_KEY&q=...&per_page=20&safesearch=true` devuelve `videos.large/medium/small/tiny` (hasta 3840x2160). Fotos: `https://pixabay.com/api/?key=...&q=...&image_type=photo` (`largeImageURL` ≈1280 px). Las descargas necesitan `User-Agent` (sin él da 403). Sin marca de agua, uso comercial libre. Ojo: hay contenido hecho con IA (estilo anime o demasiado perfecto); escoge material real para true crime.
+- **Pexels**: Mikel no pudo sacar la clave (dice que las APIs están "pasadas"). Pixabay basta.
 - **Internet Archive** (`archive.org/advancedsearch.php?...&output=json`): metraje antiguo (noticieros de los años 40–60, películas caseras). Muchos son de dominio público, pero **verifica la licencia de cada uno**. Bueno para atmósfera vintage en true crime.
 - **Coverr**: responde, gratis.
 - Calidad mínima: 1080p para planos principales. El 720p sirve para fondos desenfocados, texturas o superposiciones (o escálalo con Real-ESRGAN).
