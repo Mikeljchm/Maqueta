@@ -32,3 +32,8 @@ Concepto "La fiesta que se derrite": fiesta rosa de los 60 que se convierte en t
 `timing.json` es la sincronización final. `build_party.py` genera `party-video/index.html`.
 Fuentes: Pacifico y Abril Fatface (`npm install @fontsource/pacifico @fontsource/abril-fatface`), Permanent Marker y Bebas Neue.
 **No incluye la canción.**
+
+## gimme-more/ — lyric video de "Gimme More", vertical (4:09)
+Concepto "Más y más": cada "more" duplica un muro de 144 palabras MORE.
+Los "gimme gimme more" van pegados a la cuadrícula del ritmo (113 BPM, bloques de 4.24 s desde 54.9 s), porque Whisper se confunde con la repetición.
+Hay un coro extra en 190.6–207.5 s que no estaba en la letra original. **No incluye la canción.**
