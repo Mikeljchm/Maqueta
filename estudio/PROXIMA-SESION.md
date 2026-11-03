@@ -26,7 +26,7 @@ https://claude.ai/artifact/7ARwCxGduPhpEbcoMyxe4v (privada; publicar el mismo ar
 - Cambiar el nombre del canal en los dos guiones.
 - Hora exacta de la llamada a Emy Guzmán (el guion dice "justo después" de las 09:36).
 - "Tres análisis forenses" en el arranque frente a las cuatro conclusiones de la parte 2.
-- Fuente de las fotos de la casa (para el crédito).
+- Fotos de la casa: crédito "Foto: La Tercera" (latercera.com). Lo de la hora de Emy y los "tres o cuatro análisis" no es prioritario según Mikel.
 
 ## Técnicas que funcionaron
 - Módulos con datos: `template.tpl` + `build.py datos.json` → index.html. Nunca dos HTML raíz en el mismo proyecto.
