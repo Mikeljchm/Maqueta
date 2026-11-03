@@ -1,0 +1,14 @@
+{"dur":11,
+ "tomas":[[0,250,-500,0.21],[0.2,200,-420,0.25,1.8,"sine.inOut"],[2.0,14,-4,17,2.6,"power3.inOut"],[5.2,-0.3,1.9,210,2.2,"power3.inOut"],[7.6,0.1,2.0,230,3.4,"none"]],
+ "etiquetas":[
+  {"texto":"CHILE","p":[330,-1450],"clase":"big","ver":[0.05,0.9]},
+  {"texto":"REGIÓN DE LOS LAGOS","lugar":"Puerto Varas","ver":[0.05,1.2],"marca":"dot"},
+  {"texto":"LAGO LLANQUIHUE","p":[24,-9],"clase":"lake","ver":[6,60]},
+  {"texto":"PUERTO MONTT","lugar":"Puerto Montt","ver":[6,60],"marca":"dot"},
+  {"texto":"FRUTILLAR","lugar":"Frutillar","ver":[6,60],"marca":"dot"},
+  {"texto":"LLANQUIHUE","lugar":"Llanquihue","ver":[6,60],"marca":"dot"},
+  {"texto":"VOLCÁN OSORNO","lugar":"Volcán Osorno","ver":[6,60],"marca":"tri"},
+  {"texto":"VOLCÁN CALBUCO","lugar":"Volcán Calbuco","ver":[6,60],"marca":"tri"},
+  {"texto":"PUERTO VARAS","lugar":"Puerto Varas","ver":[6,900],"marca":"dot"},
+  {"texto":"CAMINO A ENSENADA →","p":[1.6,0.9],"ver":[120,900]}],
+ "objetivo":"Parque Stocker","ruta":[6.0,1.8],"marca":7.7,"tarjeta":["Parque Stocker","PUERTO VARAS · SUR DE CHILE",8.1]}
