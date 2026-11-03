@@ -1,0 +1,12 @@
+A=Charon
+B=Algenib
+C=Enceladus
+D=Kore
+E=Gacrux
+F=Sulafat
+G=Algieba (3.1)
+H=Iapetus (3.1)
+I=Schedar (3.1)
+J=Achernar (3.1)
+K=Vindemiatrix (3.1)
+L=Despina (3.1)

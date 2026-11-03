@@ -1,0 +1,7 @@
+# AUDIO PROFILE: Narrador de documental de crímenes reales
+## THE SCENE: Estudio de grabación a oscuras. Documental de true crime para televisión.
+### DIRECTOR'S NOTES
+Estilo: grave, pausado, íntimo, con suspenso contenido. Nunca exagerado.
+Acento: español latinoamericano neutro. Nada de acento de España (sin ceceo, sin "vosotros").
+Ritmo: pausas largas después de cada punto. Baja la voz en la última frase.
+#### TRANSCRIPT
