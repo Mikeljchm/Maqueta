@@ -33,3 +33,20 @@
 
 ## Referencias de estilo
 - Discovery ID (recreaciones, rótulos fuertes, golpes y destellos) + documental de Netflix (2.5D, silencios, archivo, ritmo pausado). Mikel decidió no mandar clips (gastan mucho contexto). Netflix para contar, Discovery ID para golpear: 80 % calma y 20 % impacto.
+
+## La plantilla-guía: de guion + audio a episodio
+El episodio de Viviana Haeger es el **piloto de la plantilla**: todo lo que se construya para él queda reutilizable.
+
+Carpeta por episodio: `episodios/<nn-caso>/` con `guion.txt`, `audio.mp3`, `escaleta.md`, `planos.json`, `fuentes.csv` y `render/`.
+
+1. **Transcribir** el audio (Whisper, tiempo por palabra).
+2. **Escaleta y planos**: bloques del guion → módulos con sus datos (`planos.json`).
+3. **Hoja de planos** (página HTML con miniaturas) → aprobación de Mikel.
+4. **Material**: fotos reales (prensa como uso justo), mapas y archivo → `fuentes.csv`.
+5. **Render por capítulos**: cada módulo se alimenta con datos (nombre, fecha, foto, texto), sin tocar el código.
+6. **Mezcla única** (voz, tema, fondos y efectos) → unión → entrega.
+
+Módulos con datos: tablero, ficha de persona, capítulo, glitch, hora de la muerte, mapa, registro de llamadas, corte de la casa (a medida por caso), cita, documento, contadores, foto 2.5D, comentario del narrador y cierre.
+
+## Criterio sobre sospechosos absueltos (decisión de Mikel)
+Se cuenta la historia tal cual fue: si alguien fue sospechoso, detenido o procesado, se muestra como sospechoso, y el veredicto se cuenta también. Las sospechas van atribuidas a quien las tuvo (fiscalía, familia, policía) y no se agregan acusaciones que no estén en el expediente ni en la prensa.
