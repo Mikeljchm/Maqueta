@@ -1,0 +1,71 @@
+<!doctype html><html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/><script src="assets/gsap.min.js"></script><style>
+@font-face{font-family:DM;src:url(assets/dm-serif-display-latin-400-normal.woff2)}@font-face{font-family:IT;src:url(assets/inter-tight-latin-500-normal.woff2);font-weight:500}@font-face{font-family:MO;src:url(assets/ibm-plex-mono-latin-500-normal.woff2)}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1920px;height:1080px;overflow:hidden;background:#040203}#root{position:relative;width:1920px;height:1080px;overflow:hidden;background:#040203}.full{position:absolute;inset:0}
+#cam{position:absolute;inset:0}
+#room{background:radial-gradient(ellipse 55% 60% at 50% 45%,rgba(130,160,200,.42),rgba(40,50,70,.18) 45%,rgba(0,0,0,0) 75%),#060506}
+#tv{position:absolute;left:560px;top:170px;width:800px;height:620px;border-radius:46px;background:linear-gradient(180deg,#2a2422,#120e0d);box-shadow:0 0 220px 40px rgba(120,150,200,.22),0 40px 80px rgba(0,0,0,.8),inset 0 0 0 6px #3a322f}
+#scr{position:absolute;left:50px;top:46px;width:580px;height:440px;border-radius:38px/30px;overflow:hidden;background:#0b0f14}
+#knobs{position:absolute;right:40px;top:80px;width:90px}
+#knobs i{display:block;width:60px;height:60px;margin:0 auto 34px;border-radius:50%;background:#1b1615;box-shadow:inset 0 0 0 5px #3a322f}
+#legs{position:absolute;left:700px;top:780px;width:520px;height:120px}
+#legs:before,#legs:after{content:"";position:absolute;top:0;width:14px;height:110px;background:#1a1413}
+#legs:before{left:60px;transform:rotate(14deg)}#legs:after{right:60px;transform:rotate(-14deg)}
+#news{position:absolute;inset:0;background:linear-gradient(180deg,#1b2a3d,#0d1520)}
+#sketch{position:absolute;left:160px;top:34px;width:260px;height:300px;background:#e8e3d8;border:4px solid #fff}
+#sketch svg{width:100%;height:100%}
+#sk{position:absolute;left:160px;top:338px;width:260px;text-align:center;font:500 16px IT;letter-spacing:.14em;color:#dbe6f2}
+#bar{position:absolute;left:0;right:0;bottom:24px;height:74px;background:#c4182c;display:flex;align-items:center;padding-left:18px;font:500 24px IT;color:#fff;letter-spacing:.02em}
+#bar b{background:#fff;color:#c4182c;padding:4px 8px;margin-right:14px;font-weight:500;font-size:18px;letter-spacing:.12em}
+#static{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0}
+#scan{position:absolute;inset:0;background:repeating-linear-gradient(180deg,rgba(0,0,0,.28) 0 2px,rgba(0,0,0,0) 2px 4px);pointer-events:none}
+#glass{position:absolute;inset:0;background:radial-gradient(ellipse 80% 70% at 35% 25%,rgba(255,255,255,.14),rgba(255,255,255,0) 50%),radial-gradient(ellipse 100% 100% at 50% 50%,rgba(0,0,0,0) 60%,rgba(0,0,0,.6) 100%)}
+#off{position:absolute;left:0;right:0;top:50%;height:4px;margin-top:-2px;background:#fff;box-shadow:0 0 30px 8px rgba(200,220,255,.8);opacity:0}
+.hd{position:absolute;bottom:0;background:#000;border-radius:50% 50% 0 0}
+#lab{position:absolute;left:70px;top:60px;font:500 30px IT;letter-spacing:.3em;color:#b9a79f;opacity:0}
+#lab2{position:absolute;left:70px;top:110px;font:400 64px DM;color:#efe4da;opacity:0}
+#grain{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:.1;mix-blend-mode:overlay}#vig{background:radial-gradient(ellipse 85% 85% at 50% 50%,rgba(0,0,0,0) 45%,rgba(0,0,0,.85) 100%)}#black{background:#000;opacity:1}
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1920" data-height="1080">
+ <div id="scene" class="clip full" data-start="0" data-duration="12" data-track-index="0">
+  <div id="cam"><div id="room" class="full"></div>
+   <div id="tv"><div id="scr"><div id="news">
+     <div id="sketch"><svg viewBox="0 0 260 300"><g fill="none" stroke="#3a3530" stroke-width="2.5" stroke-linecap="round" opacity=".85">
+      <path d="M130 40 C80 40 70 90 74 130 C78 175 100 210 130 214 C160 210 182 175 186 130 C190 90 180 40 130 40 Z"/>
+      <path d="M82 70 C95 45 165 45 178 70" stroke-width="5" opacity=".5"/><path d="M110 214 L106 240 C70 250 40 262 26 300 M150 214 L154 240 C190 250 220 262 234 300"/>
+      </g>
+      <rect x="0" y="0" width="260" height="300" fill="url(#hatch)" opacity=".25"/>
+      <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><line x1="0" y1="0" x2="0" y2="6" stroke="#6a625a" stroke-width="1"/></pattern></defs></svg></div>
+     <div id="sk">RETRATO HABLADO · ILUSTRACIÓN</div>
+     <div id="bar"><b>EN VIVO</b>Caso Haeger: el hombre de la llamada</div>
+    </div><canvas id="static" width="290" height="220"></canvas><div id="scan"></div><div id="off"></div><div id="glass"></div></div>
+    <div id="knobs"><i></i><i></i></div></div>
+   <div id="legs"></div>
+   <div class="hd" style="left:250px;width:420px;height:300px"></div><div class="hd" style="left:1320px;width:380px;height:260px"></div><div class="hd" style="left:840px;width:300px;height:180px;opacity:.9"></div>
+  </div>
+  <div id="lab">CÁRCEL DE ALTO BONITO · INVIERNO 2015</div><div id="lab2">La televisión de la sección de mujeres</div>
+  <div id="vig" class="full"></div><canvas id="grain" width="960" height="540"></canvas><div id="black" class="full"></div>
+ </div>
+ <audio id="mix" src="assets/mix.wav" data-start="0" data-duration="12" data-track-index="1" data-volume="1"></audio>
+</div>
+<script>window.__timelines=window.__timelines||{};const tl=gsap.timeline({paused:true});const $=s=>document.querySelector(s);
+// cabezas en contraluz: circulo + hombros
+document.querySelectorAll('.hd').forEach(h=>{h.style.borderRadius='48% 48% 0 0 / 60% 60% 0 0'});
+tl.fromTo('#black',{opacity:1},{opacity:0,duration:0.8,immediateRender:false},0.1);
+tl.fromTo('#cam',{scale:1.0},{scale:1.5,transformOrigin:'960px 420px',duration:9.0,ease:'sine.inOut',immediateRender:false},0.5);
+tl.fromTo(['#lab','#lab2'],{opacity:0},{opacity:1,duration:0.8,stagger:0.3,immediateRender:false},0.8);
+tl.to(['#lab','#lab2'],{opacity:0,duration:0.6},4.6);
+tl.fromTo('#static',{opacity:1},{opacity:0,duration:0.05,immediateRender:false},1.6);
+tl.fromTo('#sketch',{opacity:0,scale:0.9},{opacity:1,scale:1,duration:0.5,immediateRender:false},2.0);
+tl.fromTo('#static',{opacity:0},{opacity:0.8,duration:0.05,immediateRender:false},10.0);
+tl.fromTo('#news',{scaleY:1,scaleX:1},{scaleY:0.006,scaleX:1,duration:0.18,ease:'power3.in',immediateRender:false},10.45);
+tl.fromTo('#off',{opacity:0},{opacity:1,duration:0.02,immediateRender:false},10.6);
+tl.fromTo('#off',{opacity:1,scaleX:1},{opacity:0,scaleX:0.02,duration:0.35,ease:'power3.in',immediateRender:false},10.62);
+tl.to('#static',{opacity:0,duration:0.02},10.6); tl.to('#room',{opacity:0.2,duration:0.3},10.6);
+tl.fromTo('#black',{opacity:0},{opacity:1,duration:0.5,immediateRender:false},11.45);
+const sc=$('#static').getContext('2d'); const si=sc.createImageData(290,220);
+function stat(t){const fr=Math.floor(t*30);let s=fr*7919+13;const d=si.data;for(let i=0;i<d.length;i+=4){s=(s*16807)%2147483647;const v=s&255;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;}sc.putImageData(si,0,0);}
+// parpadeo de la luz del televisor en la sala
+function flick(t){const f=0.75+0.15*Math.sin(t*17.3)+0.1*Math.sin(t*41.7); $('#room').style.filter='brightness('+f.toFixed(3)+')';}
+const gc=document.querySelector("#grain").getContext("2d");const gi=gc.createImageData(960,540);function grain(t){const fr=Math.floor(t*24);let s=(fr*9301+49297)%233280+1;const dd=gi.data;for(let i=0;i<dd.length;i+=4){s=(s*16807)%2147483647;const v=s&255;dd[i]=dd[i+1]=dd[i+2]=v;dd[i+3]=255;}gc.putImageData(gi,0,0);}
+const clock={t:0};tl.fromTo(clock,{t:0},{t:12,duration:12,ease:'none',immediateRender:false,onUpdate:()=>{const t=tl.time();grain(t);stat(t);flick(t)}},0);
+window.__timelines["main"]=tl;tl.seek(0);</script></body></html>

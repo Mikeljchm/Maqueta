@@ -1,0 +1,30 @@
+<!doctype html><html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/><script src="assets/gsap.min.js"></script><style>
+@font-face{font-family:DM;src:url(assets/dm-serif-display-latin-400-normal.woff2)}@font-face{font-family:IT;src:url(assets/inter-tight-latin-500-normal.woff2);font-weight:500}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1920px;height:1080px;overflow:hidden;background:#000}#root{position:relative;width:1920px;height:1080px;overflow:hidden;background:#000}.full{position:absolute;inset:0}
+#bgv{position:absolute;left:0;top:0;width:1920px;height:1080px;object-fit:cover}
+#lab{position:absolute;left:70px;top:60px;font:500 30px IT;letter-spacing:.3em;color:#efe4da;background:rgba(0,0,0,.45);padding:12px 20px;opacity:0}
+#lab b{color:#ff4a5e;font-weight:500}
+#q{position:absolute;right:140px;top:360px;text-align:right;font:400 170px/1 DM;color:#efe4da;text-shadow:0 8px 40px #000;opacity:0}
+#qs{position:absolute;right:140px;top:560px;text-align:right;font:500 32px IT;letter-spacing:.18em;color:#e7b3b3;opacity:0}
+#grain{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:.1;mix-blend-mode:overlay}#vig{background:radial-gradient(ellipse 85% 85% at 50% 50%,rgba(0,0,0,0) 50%,rgba(0,0,0,.8) 100%)}#black{background:#000;opacity:1}
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+ <video id="bgv" class="clip" src="assets/recre_bg.mp4" data-start="0" data-duration="10" data-track-index="0" muted></video>
+ <div id="ov" class="clip full" data-start="0" data-duration="10" data-track-index="2">
+  <div id="lab"><b>RECREACIÓN</b> · SEGÚN LA VERSIÓN DE JOSÉ PÉREZ</div>
+  <div id="q">«Usted sabe.»</div><div id="qs">SU RESPUESTA, SEGÚN SU RELATO</div>
+  <div id="vig" class="full"></div><canvas id="grain" width="960" height="540"></canvas><div id="black" class="full"></div>
+ </div>
+ <audio id="mix" src="assets/mix.wav" data-start="0" data-duration="10" data-track-index="1" data-volume="1"></audio>
+</div>
+<script>window.__timelines=window.__timelines||{};const tl=gsap.timeline({paused:true});
+tl.fromTo('#black',{opacity:1},{opacity:0,duration:0.6,immediateRender:false},0.05);
+tl.fromTo('#lab',{opacity:0,x:-20},{opacity:1,x:0,duration:0.6,immediateRender:false},0.5);
+tl.fromTo('#black',{opacity:0},{opacity:1,duration:0.06,immediateRender:false},3.94);
+tl.fromTo('#black',{opacity:1},{opacity:0,duration:0.4,immediateRender:false},4.0);
+tl.fromTo('#q',{opacity:0,y:20,filter:'blur(10px)'},{opacity:1,y:0,filter:'blur(0px)',duration:0.8,ease:'power2.out',immediateRender:false},6.6);
+tl.fromTo('#qs',{opacity:0},{opacity:1,duration:0.6,immediateRender:false},7.2);
+tl.fromTo('#black',{opacity:0},{opacity:1,duration:0.5,immediateRender:false},9.45);
+const gc=document.querySelector("#grain").getContext("2d");const gi=gc.createImageData(960,540);function grain(t){const fr=Math.floor(t*24);let s=(fr*9301+49297)%233280+1;const dd=gi.data;for(let i=0;i<dd.length;i+=4){s=(s*16807)%2147483647;const v=s&255;dd[i]=dd[i+1]=dd[i+2]=v;dd[i+3]=255;}gc.putImageData(gi,0,0);}
+const clock={t:0};tl.fromTo(clock,{t:0},{t:10,duration:10,ease:'none',immediateRender:false,onUpdate:()=>grain(tl.time())},0);
+window.__timelines["main"]=tl;tl.seek(0);</script></body></html>
