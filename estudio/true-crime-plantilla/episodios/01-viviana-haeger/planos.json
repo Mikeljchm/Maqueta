@@ -1,0 +1,867 @@
+{
+ "episodio": "01-viviana-haeger",
+ "audio": "audio.mp3 (ElevenReader 1.0, 34:02)",
+ "intro_cerradura_antes_del_bloque": 5,
+ "planos": [
+  {
+   "id": 1,
+   "capitulo": "0 · Arranque en frío",
+   "inicio": 0.0,
+   "anclaje": "Martes diez de agosto",
+   "bloque": "La llamada del 10/08/2010, 18:55",
+   "visual": "Fecha y hora en máquina de escribir; onda de audio «llamada a la PDI»; casa de noche (foto 2.5D); entretecho oscuro (recreación)",
+   "sonido": "Ambiente de noche, tono de teléfono, golpe en «hay un cuerpo»",
+   "fin": 23.06
+  },
+  {
+   "id": 2,
+   "capitulo": "0 · Arranque en frío",
+   "inicio": 23.06,
+   "anclaje": "La casa está en Parque",
+   "bloque": "Seis semanas de búsqueda",
+   "visual": "Montaje rápido: carteles «SECUESTRADA», buzos en el lago, cordillera, soldados (archivo y Pixabay)",
+   "sonido": "Riser de montaje",
+   "fin": 56.82
+  },
+  {
+   "id": 3,
+   "capitulo": "0 · Arranque en frío",
+   "inicio": 56.82,
+   "anclaje": "Esa mujer llevaba",
+   "bloque": "42 días · el que llama es su esposo",
+   "visual": "Contador 42 días; cartel con la foto de Viviana",
+   "sonido": "Golpe",
+   "fin": 64.38
+  },
+  {
+   "id": 4,
+   "capitulo": "0 · Arranque en frío",
+   "inicio": 64.38,
+   "anclaje": "Esa noche nadie sabe",
+   "bloque": "Gancho: 7 años, 3 análisis, 2 detenidos, 1 juicio",
+   "visual": "Contadores que caen uno tras otro (3 análisis, como dice la voz)",
+   "sonido": "Golpe por cifra",
+   "fin": 94.84
+  },
+  {
+   "id": 5,
+   "capitulo": "1 · La Suiza de Sudamérica",
+   "inicio": 94.84,
+   "anclaje": "Puerto Varas está a orillas",
+   "bloque": "INTRO CERRADURA y luego Puerto Varas",
+   "visual": "La intro va antes de esta frase, solo música. Después, mapa Chile → Los Lagos → Puerto Varas; dron del lago y los volcanes",
+   "sonido": "Intro; ambiente de lago y viento",
+   "fin": 119.68
+  },
+  {
+   "id": 6,
+   "capitulo": "1 · La Suiza de Sudamérica",
+   "inicio": 119.68,
+   "anclaje": "Ahí vivía María Viviana",
+   "bloque": "Viviana",
+   "visual": "Ficha de persona: foto de prensa, 42 años, contadora auditora",
+   "sonido": "Pad íntimo",
+   "fin": 144.84
+  },
+  {
+   "id": 7,
+   "capitulo": "1 · La Suiza de Sudamérica",
+   "inicio": 144.84,
+   "anclaje": "Llegar hasta esas hijas",
+   "bloque": "El hijo perdido y la mujer del paradero",
+   "visual": "Recreación con siluetas: paradero con lluvia, camioneta (nada de las hijas)",
+   "sonido": "Piano",
+   "fin": 176.6
+  },
+  {
+   "id": 8,
+   "capitulo": "1 · La Suiza de Sudamérica",
+   "inicio": 176.6,
+   "anclaje": "Su esposo era Jaime",
+   "bloque": "Jaime y la parcela 16",
+   "visual": "Ficha de Jaime; mapa Parque Stocker (8 km); foto de la casa (La Tercera)",
+   "sonido": "—",
+   "fin": 205.88
+  },
+  {
+   "id": 9,
+   "capitulo": "1 · La Suiza de Sudamérica",
+   "inicio": 205.88,
+   "anclaje": "La casa había ido mejorando",
+   "bloque": "La estufa, el entretecho y el maestro Heri",
+   "visual": "Corte de la casa en 3D: estufa, tubería, entretecho. Heri solo como silueta (su cara se guarda para la revelación)",
+   "sonido": "—",
+   "fin": 229.92
+  },
+  {
+   "id": 10,
+   "capitulo": "2 · La última mañana",
+   "inicio": 229.92,
+   "anclaje": "El martes veintinueve de junio",
+   "bloque": "29/06/2010",
+   "visual": "Tarjeta de capítulo; Chile eliminado del Mundial (texto)",
+   "sonido": "—",
+   "fin": 254.16
+  },
+  {
+   "id": 11,
+   "capitulo": "2 · La última mañana",
+   "inicio": 254.16,
+   "anclaje": "Esa mañana, Jaime llamó",
+   "bloque": "La llamada para despedirse",
+   "visual": "Registro de llamadas: Jaime → Viviana (< 1 min); dos versiones: «para despedirse» y «nunca lo hacía»",
+   "sonido": "—",
+   "fin": 266.44
+  },
+  {
+   "id": 12,
+   "capitulo": "2 · La última mañana",
+   "inicio": 266.44,
+   "anclaje": "Lo que sigue se sabe",
+   "bloque": "Las llamadas de Viviana",
+   "visual": "Registro de llamadas: 8:36 colegio, 9:27 estudio fotográfico, 9:36 Margarita, Emy (12 min), 9:50 estufas, 10:07 Emy (fijo)",
+   "sonido": "Tic de reloj por llamada",
+   "fin": 314.44
+  },
+  {
+   "id": 13,
+   "capitulo": "2 · La última mañana",
+   "inicio": 314.44,
+   "anclaje": "A las diez y media",
+   "bloque": "10:30 sin señal",
+   "visual": "Última señal",
+   "sonido": "Tono muerto",
+   "fin": 324.06
+  },
+  {
+   "id": 14,
+   "capitulo": "2 · La última mañana",
+   "inicio": 324.06,
+   "anclaje": "Mientras tanto, Jaime trabajaba",
+   "bloque": "La llamada en el BBVA",
+   "visual": "Cita con onda de audio: «si quieres volver a ver a tu mujer con vida» (19 s)",
+   "sonido": "Silencio antes de la frase",
+   "fin": 346.38
+  },
+  {
+   "id": 15,
+   "capitulo": "2 · La última mañana",
+   "inicio": 346.38,
+   "anclaje": "Jaime cortó.",
+   "bloque": "No llamó a Viviana",
+   "visual": "Comentario del narrador: «no llamó para comprobar»",
+   "sonido": "—",
+   "fin": 365.6
+  },
+  {
+   "id": 16,
+   "capitulo": "2 · La última mañana",
+   "inicio": 365.6,
+   "anclaje": "Hacia las dos de la tarde",
+   "bloque": "La hija camina 1,3 km",
+   "visual": "Ruta en el mapa; camino con bosque (Pixabay); cartera vaciada sobre la cama (recreación, sin mostrar a la hija)",
+   "sonido": "Pasos, viento",
+   "fin": 395.66
+  },
+  {
+   "id": 17,
+   "capitulo": "2 · La última mañana",
+   "inicio": 395.66,
+   "anclaje": "Vivian llamó otra vez",
+   "bloque": "Jaime une las llamadas",
+   "visual": "Mapa: carretera → PDI Puerto Varas → casa de Mónica",
+   "sonido": "—",
+   "fin": 415.56
+  },
+  {
+   "id": 18,
+   "capitulo": "2 · La última mañana",
+   "inicio": 415.56,
+   "anclaje": "Con la amenaza telefónica",
+   "bloque": "Se abre como secuestro",
+   "visual": "Tablero de corcho: amenaza, cartera, dormitorio, «SECUESTRO»",
+   "sonido": "—",
+   "fin": 428.54
+  },
+  {
+   "id": 19,
+   "capitulo": "3 · La búsqueda",
+   "inicio": 428.54,
+   "anclaje": "La llamada se convirtió",
+   "bloque": "El cibercafé y la mujer que nadie vio",
+   "visual": "Documento con luz rasante; retrato hablado (si es público); cita «no cuelgue, le van a hablar»",
+   "sonido": "—",
+   "fin": 459.94
+  },
+  {
+   "id": 20,
+   "capitulo": "3 · La búsqueda",
+   "inicio": 459.94,
+   "anclaje": "Y después, nada.",
+   "bloque": "Nadie pide rescate",
+   "visual": "Contadores en cero: rescate, cifra, prueba de vida",
+   "sonido": "Silencio",
+   "fin": 480.0
+  },
+  {
+   "id": 21,
+   "capitulo": "3 · La búsqueda",
+   "inicio": 480.0,
+   "anclaje": "La Policía de Investigaciones armó",
+   "bloque": "Los detectives viven en la casa",
+   "visual": "Corte de la casa con los detectives junto al teléfono",
+   "sonido": "—",
+   "fin": 502.26
+  },
+  {
+   "id": 22,
+   "capitulo": "3 · La búsqueda",
+   "inicio": 502.26,
+   "anclaje": "Hubo un momento de ese primer día",
+   "bloque": "El entretecho sin linterna",
+   "visual": "Corte de la casa: el haz de luz que no llega; cita «se revisó, se lo doy firmado»; «no aparecía en los planos»",
+   "sonido": "Golpe seco",
+   "fin": 536.34
+  },
+  {
+   "id": 23,
+   "capitulo": "3 · La búsqueda",
+   "inicio": 536.34,
+   "anclaje": "Afuera, la búsqueda creció",
+   "bloque": "Lago, cerros, Santiago, videntes",
+   "visual": "Mapa con marcadores; buzos; 200 personas (contador); señal falsa en Santiago",
+   "sonido": "—",
+   "fin": 577.14
+  },
+  {
+   "id": 24,
+   "capitulo": "3 · La búsqueda",
+   "inicio": 577.14,
+   "anclaje": "Desde el cinco de julio",
+   "bloque": "La campaña de Jaime",
+   "visual": "Carteles; contador 5 millones; monasterio carmelita",
+   "sonido": "—",
+   "fin": 606.28
+  },
+  {
+   "id": 25,
+   "capitulo": "3 · La búsqueda",
+   "inicio": 606.28,
+   "anclaje": "Al otro lado de la reja",
+   "bloque": "«Un show»",
+   "visual": "Cita de la familia Haeger",
+   "sonido": "—",
+   "fin": 622.94
+  },
+  {
+   "id": 26,
+   "capitulo": "3 · La búsqueda",
+   "inicio": 622.94,
+   "anclaje": "En medio de todo, la policía",
+   "bloque": "La carta sin huellas",
+   "visual": "Documento UV: carta recreada con sello «SIN HUELLAS»",
+   "sonido": "—",
+   "fin": 654.74
+  },
+  {
+   "id": 27,
+   "capitulo": "3 · La búsqueda",
+   "inicio": 654.74,
+   "anclaje": "La investigación escarbó",
+   "bloque": "Infidelidades",
+   "visual": "Comentario del narrador; cita «no le había parecido relevante»",
+   "sonido": "—",
+   "fin": 680.82
+  },
+  {
+   "id": 28,
+   "capitulo": "4 · Día 42",
+   "inicio": 680.82,
+   "anclaje": "Pasaron cuatro semanas",
+   "bloque": "El día 42",
+   "visual": "Contador de semanas 4 → 5 → 6 → día 42",
+   "sonido": "—",
+   "fin": 693.22
+  },
+  {
+   "id": 29,
+   "capitulo": "4 · Día 42",
+   "inicio": 693.22,
+   "anclaje": "Carabineros trabajaba con dos perros",
+   "bloque": "Tomás y Candela",
+   "visual": "Siluetas de perros; preguntas de Jaime; «100 %»",
+   "sonido": "—",
+   "fin": 720.3
+  },
+  {
+   "id": 30,
+   "capitulo": "4 · Día 42",
+   "inicio": 720.3,
+   "anclaje": "Después pidió una prueba",
+   "bloque": "La prueba de la diamina",
+   "visual": "Contadores: 7 min y 14 min",
+   "sonido": "—",
+   "fin": 737.1
+  },
+  {
+   "id": 31,
+   "capitulo": "4 · Día 42",
+   "inicio": 737.1,
+   "anclaje": "En un descanso",
+   "bloque": "«Los muertos hablan»",
+   "visual": "Cita",
+   "sonido": "Golpe suave",
+   "fin": 754.36
+  },
+  {
+   "id": 32,
+   "capitulo": "4 · Día 42",
+   "inicio": 754.36,
+   "anclaje": "A la hora de almuerzo",
+   "bloque": "El croquis",
+   "visual": "Dos versiones: los carabineros frente a Jaime",
+   "sonido": "—",
+   "fin": 785.96
+  },
+  {
+   "id": 33,
+   "capitulo": "4 · Día 42",
+   "inicio": 785.96,
+   "anclaje": "En la casa estaba también",
+   "bloque": "El mal olor",
+   "visual": "Ventanas abiertas con frío (recreación)",
+   "sonido": "Viento",
+   "fin": 799.7
+  },
+  {
+   "id": 34,
+   "capitulo": "4 · Día 42",
+   "inicio": 799.7,
+   "anclaje": "A las cinco y media",
+   "bloque": "17:30 → 18:55",
+   "visual": "Hora; corte de la casa: el recorrido de 2 m por el entretecho",
+   "sonido": "Riser largo",
+   "fin": 829.34
+  },
+  {
+   "id": 35,
+   "capitulo": "4 · Día 42",
+   "inicio": 829.34,
+   "anclaje": "Era Viviana.",
+   "bloque": "«Era Viviana.»",
+   "visual": "Negro y silencio total (2–3 s)",
+   "sonido": "Silencio",
+   "fin": 830.54
+  },
+  {
+   "id": 36,
+   "capitulo": "4 · Día 42",
+   "inicio": 830.54,
+   "anclaje": "En la parcela de al lado, un periodista",
+   "bloque": "La reja y la madre",
+   "visual": "Fotos de prensa de la familia adulta",
+   "sonido": "Ambiente",
+   "fin": 859.66
+  },
+  {
+   "id": 37,
+   "capitulo": "4 · Día 42",
+   "inicio": 859.66,
+   "anclaje": "Viviana estaba vestida",
+   "bloque": "Parka, botas y llaves",
+   "visual": "Bolsas de evidencia; 1,58 m / 48 kg; corte de la casa: puertecita cerrada desde afuera",
+   "sonido": "Clic de pestillo",
+   "fin": 888.24
+  },
+  {
+   "id": 38,
+   "capitulo": "4 · Día 42",
+   "inicio": 888.24,
+   "anclaje": "Esa noche llegaron el fiscal",
+   "bloque": "«El policía más abatido»",
+   "visual": "Cocina de noche (foto 2.5D); cita del periodista de Paula",
+   "sonido": "—",
+   "fin": 912.12
+  },
+  {
+   "id": 39,
+   "capitulo": "4 · Día 42",
+   "inicio": 912.12,
+   "anclaje": "Al día siguiente, Delia",
+   "bloque": "Delia culpa a Jaime",
+   "visual": "Fichas enfrentadas",
+   "sonido": "—",
+   "fin": 919.82
+  },
+  {
+   "id": 40,
+   "capitulo": "5 · El matrimonio",
+   "inicio": 919.82,
+   "anclaje": "Para entender por qué",
+   "bloque": "Advertencia: todos tomaron partido",
+   "visual": "Dos versiones: familia y amiga frente a Jaime",
+   "sonido": "—",
+   "fin": 940.98
+  },
+  {
+   "id": 41,
+   "capitulo": "5 · El matrimonio",
+   "inicio": 940.98,
+   "anclaje": "Se conocieron a través",
+   "bloque": "«Muy señorito»",
+   "visual": "Cita de Magaly",
+   "sonido": "—",
+   "fin": 966.08
+  },
+  {
+   "id": 42,
+   "capitulo": "5 · El matrimonio",
+   "inicio": 966.08,
+   "anclaje": "Margarita Soto, la amiga",
+   "bloque": "El nacimiento de Susan",
+   "visual": "Cita de Margarita (sin fotos de las hijas)",
+   "sonido": "—",
+   "fin": 992.72
+  },
+  {
+   "id": 43,
+   "capitulo": "5 · El matrimonio",
+   "inicio": 992.72,
+   "anclaje": "Jaime contó su propia versión",
+   "bloque": "«Se habían empatado»",
+   "visual": "Cita de Jaime",
+   "sonido": "—",
+   "fin": 1021.5
+  },
+  {
+   "id": 44,
+   "capitulo": "5 · El matrimonio",
+   "inicio": 1021.5,
+   "anclaje": "Los cercanos de Viviana",
+   "bloque": "Trato frío",
+   "visual": "Tablero: el juego de mesa, la cena con velas, el taxista; «nunca supo de agresión física»",
+   "sonido": "—",
+   "fin": 1062.5
+  },
+  {
+   "id": 45,
+   "capitulo": "5 · El matrimonio",
+   "inicio": 1062.5,
+   "anclaje": "Había también antecedentes económicos",
+   "bloque": "Bienes y seguro",
+   "visual": "Cadena: 2001 traspaso → seguro → oct. 2010 posesión efectiva → dic. 2010 intento de cobro",
+   "sonido": "—",
+   "fin": 1093.6
+  },
+  {
+   "id": 46,
+   "capitulo": "5 · El matrimonio",
+   "inicio": 1093.6,
+   "anclaje": "Los psicólogos de la policía",
+   "bloque": "Frío no es delito",
+   "visual": "Comentario del narrador",
+   "sonido": "—",
+   "fin": 1124.16
+  },
+  {
+   "id": 47,
+   "capitulo": "6 · De qué murió Viviana",
+   "inicio": 1124.16,
+   "anclaje": "Quedaba la pregunta más básica",
+   "bloque": "Primera autopsia (Temuco)",
+   "visual": "Análisis forense 1: causa indeterminada",
+   "sonido": "—",
+   "fin": 1154.72
+  },
+  {
+   "id": 48,
+   "capitulo": "6 · De qué murió Viviana",
+   "inicio": 1154.72,
+   "anclaje": "En la propiedad se encontró",
+   "bloque": "El herbicida",
+   "visual": "Análisis forense 2: intoxicación → tesis del suicidio",
+   "sonido": "—",
+   "fin": 1185.24
+  },
+  {
+   "id": 49,
+   "capitulo": "6 · De qué murió Viviana",
+   "inicio": 1185.24,
+   "anclaje": "La familia de Viviana no la aceptó",
+   "bloque": "«Nadie se pone botas y parka»",
+   "visual": "Cita de Margarita; querella de diciembre 2010",
+   "sonido": "—",
+   "fin": 1208.4
+  },
+  {
+   "id": 50,
+   "capitulo": "6 · De qué murió Viviana",
+   "inicio": 1208.4,
+   "anclaje": "Mientras tanto, la lista de errores",
+   "bloque": "Errores",
+   "visual": "Bolsa de evidencia: blusa perdida; pasto verde en la bota; contador 6 sancionados",
+   "sonido": "—",
+   "fin": 1246.64
+  },
+  {
+   "id": 51,
+   "capitulo": "6 · De qué murió Viviana",
+   "inicio": 1246.64,
+   "anclaje": "En diciembre de dos mil once",
+   "bloque": "Exhumación",
+   "visual": "Análisis forense 3: muñecas atadas, moretón; indeterminada",
+   "sonido": "—",
+   "fin": 1280.92
+  },
+  {
+   "id": 52,
+   "capitulo": "6 · De qué murió Viviana",
+   "inicio": 1280.92,
+   "anclaje": "El caso entró en una zona gris",
+   "bloque": "Coronado y Vivian Bustos",
+   "visual": "Línea de tiempo 2012 → 2015",
+   "sonido": "—",
+   "fin": 1300.94
+  },
+  {
+   "id": 53,
+   "capitulo": "6 · De qué murió Viviana",
+   "inicio": 1300.94,
+   "anclaje": "Su informe llegó en junio",
+   "bloque": "Homicidio",
+   "visual": "Análisis forense 4: asfixia con participación de otra persona",
+   "sonido": "Golpe",
+   "fin": 1328.26
+  },
+  {
+   "id": 54,
+   "capitulo": "6 · De qué murió Viviana",
+   "inicio": 1328.26,
+   "anclaje": "Un homicidio dentro de una casa",
+   "bloque": "Las miradas vuelven",
+   "visual": "Tablero: el esposo en el centro",
+   "sonido": "—",
+   "fin": 1348.06
+  },
+  {
+   "id": 55,
+   "capitulo": "7 · El televisor de la cárcel",
+   "inicio": 1348.06,
+   "anclaje": "Un día del invierno",
+   "bloque": "Alto Bonito",
+   "visual": "Televisor de la cárcel con el retrato hablado",
+   "sonido": "Ruido de TV",
+   "fin": 1372.64
+  },
+  {
+   "id": 56,
+   "capitulo": "7 · El televisor de la cárcel",
+   "inicio": 1372.64,
+   "anclaje": "Lo escuchó una joven",
+   "bloque": "El rumor",
+   "visual": "Cadena: Clara Ruiz → la joven → La Vieja María → Coronado → fiscalía (3 meses)",
+   "sonido": "—",
+   "fin": 1391.0
+  },
+  {
+   "id": 57,
+   "capitulo": "7 · El televisor de la cárcel",
+   "inicio": 1391.0,
+   "anclaje": "El exmarido de Clara Ruiz",
+   "bloque": "José Heriberto Pérez Mancilla",
+   "visual": "Ficha de Pérez (foto de prensa); «el hombre de Jaime Anguita»",
+   "sonido": "—",
+   "fin": 1423.02
+  },
+  {
+   "id": 58,
+   "capitulo": "7 · El televisor de la cárcel",
+   "inicio": 1423.02,
+   "anclaje": "Usted ya lo conocía",
+   "bloque": "Era el maestro Heri",
+   "visual": "La silueta de Heri se convierte en Pérez; corte de la casa: la tubería de su estufa",
+   "sonido": "Golpe y glitch",
+   "fin": 1442.96
+  },
+  {
+   "id": 59,
+   "capitulo": "7 · El televisor de la cárcel",
+   "inicio": 1442.96,
+   "anclaje": "Según la fiscalía, en mayo",
+   "bloque": "Llamadas de mayo",
+   "visual": "Registro de llamadas: Pérez → Jaime (2)",
+   "sonido": "—",
+   "fin": 1456.7
+  },
+  {
+   "id": 60,
+   "capitulo": "7 · El televisor de la cárcel",
+   "inicio": 1456.7,
+   "anclaje": "El siete de diciembre",
+   "bloque": "La confesión",
+   "visual": "Glitch; cita «Jaime Anguita le pagó»",
+   "sonido": "Golpe",
+   "fin": 1469.94
+  },
+  {
+   "id": 61,
+   "capitulo": "7 · El televisor de la cárcel",
+   "inicio": 1469.94,
+   "anclaje": "En la madrugada siguiente",
+   "bloque": "Detención y formalización",
+   "visual": "Hora 04:30; fichas: parricidio y homicidio calificado",
+   "sonido": "—",
+   "fin": 1493.02
+  },
+  {
+   "id": 62,
+   "capitulo": "8 · «Usted sabe»",
+   "inicio": 1493.02,
+   "anclaje": "Lo que sigue es la versión",
+   "bloque": "La versión de Pérez",
+   "visual": "Aviso en pantalla: «versión del confeso»",
+   "sonido": "—",
+   "fin": 1504.72
+  },
+  {
+   "id": 63,
+   "capitulo": "8 · «Usted sabe»",
+   "inicio": 1504.72,
+   "anclaje": "Según Pérez, en junio",
+   "bloque": "Los 5 millones",
+   "visual": "Contador; dato: la operación fue gratuita",
+   "sonido": "—",
+   "fin": 1522.34
+  },
+  {
+   "id": 64,
+   "capitulo": "8 · «Usted sabe»",
+   "inicio": 1522.34,
+   "anclaje": "Siempre según su relato",
+   "bloque": "La puerta y la sierra",
+   "visual": "Recreación con siluetas en la puerta y el dormitorio; cita «usted sabe»",
+   "sonido": "Silencio",
+   "fin": 1549.64
+  },
+  {
+   "id": 65,
+   "capitulo": "8 · «Usted sabe»",
+   "inicio": 1549.64,
+   "anclaje": "Esas dos palabras",
+   "bloque": "El libro de Fluxá",
+   "visual": "Texto con el título (sin portada)",
+   "sonido": "—",
+   "fin": 1558.92
+  },
+  {
+   "id": 66,
+   "capitulo": "8 · «Usted sabe»",
+   "inicio": 1558.92,
+   "anclaje": "Pérez contó que escondió",
+   "bloque": "La mochila y el cibercafé",
+   "visual": "Bolsas de evidencia: anillo, bisutería, cámaras; cámara de video 10.000 y de fotos 5.000",
+   "sonido": "—",
+   "fin": 1582.04
+  },
+  {
+   "id": 67,
+   "capitulo": "8 · «Usted sabe»",
+   "inicio": 1582.04,
+   "anclaje": "El anillo de oro",
+   "bloque": "El anillo perdido",
+   "visual": "Cadena: hija → conocido → prima → cerro",
+   "sonido": "—",
+   "fin": 1610.54
+  },
+  {
+   "id": 68,
+   "capitulo": "8 · «Usted sabe»",
+   "inicio": 1610.54,
+   "anclaje": "Pérez dijo que de los cinco",
+   "bloque": "2 de 5 millones",
+   "visual": "Contador; camas, televisor, lavadora",
+   "sonido": "—",
+   "fin": 1618.78
+  },
+  {
+   "id": 69,
+   "capitulo": "8 · «Usted sabe»",
+   "inicio": 1618.78,
+   "anclaje": "Para la fiscalía, la historia encajaba",
+   "bloque": "La acusación",
+   "visual": "Tablero de la fiscalía",
+   "sonido": "—",
+   "fin": 1649.92
+  },
+  {
+   "id": 70,
+   "capitulo": "8 · «Usted sabe»",
+   "inicio": 1649.92,
+   "anclaje": "La defensa de Jaime",
+   "bloque": "¿Un montaje?",
+   "visual": "Dos versiones: fiscalía frente a defensa",
+   "sonido": "—",
+   "fin": 1682.46
+  },
+  {
+   "id": 71,
+   "capitulo": "8 · «Usted sabe»",
+   "inicio": 1682.46,
+   "anclaje": "Las hijas tomaron partido",
+   "bloque": "Las hijas",
+   "visual": "Solo texto, sin fotos",
+   "sonido": "—",
+   "fin": 1704.34
+  },
+  {
+   "id": 72,
+   "capitulo": "9 · El juicio",
+   "inicio": 1704.34,
+   "anclaje": "Jaime Anguita pasó casi dos años",
+   "bloque": "Prisión preventiva",
+   "visual": "Contador",
+   "sonido": "—",
+   "fin": 1720.22
+  },
+  {
+   "id": 73,
+   "capitulo": "9 · El juicio",
+   "inicio": 1720.22,
+   "anclaje": "El juicio empezó",
+   "bloque": "Puerto Montt, 2017",
+   "visual": "Contadores: 82 testigos, 39 peritos, 49 pruebas; 40 años",
+   "sonido": "—",
+   "fin": 1745.94
+  },
+  {
+   "id": 74,
+   "capitulo": "9 · El juicio",
+   "inicio": 1745.94,
+   "anclaje": "El fiscal contó en la sala",
+   "bloque": "«Deje de buscar»",
+   "visual": "Cita del fiscal",
+   "sonido": "—",
+   "fin": 1766.0
+  },
+  {
+   "id": 75,
+   "capitulo": "9 · El juicio",
+   "inicio": 1766.0,
+   "anclaje": "Pero también declaró",
+   "bloque": "El testigo del cibercafé",
+   "visual": "Retrato hablado con «NO RECONOCE»",
+   "sonido": "—",
+   "fin": 1779.76
+  },
+  {
+   "id": 76,
+   "capitulo": "9 · El juicio",
+   "inicio": 1779.76,
+   "anclaje": "El último día del juicio",
+   "bloque": "«Soy absolutamente inocente»",
+   "visual": "Cita de Jaime",
+   "sonido": "—",
+   "fin": 1787.32
+  },
+  {
+   "id": 77,
+   "capitulo": "9 · El juicio",
+   "inicio": 1787.32,
+   "anclaje": "El jueves veintiocho",
+   "bloque": "Veredicto: Jaime",
+   "visual": "Veredicto: ABSUELTO (unánime); «solo alcanzaban para llamar la atención»",
+   "sonido": "Golpe",
+   "fin": 1831.46
+  },
+  {
+   "id": 78,
+   "capitulo": "9 · El juicio",
+   "inicio": 1831.46,
+   "anclaje": "José Heriberto Pérez Mancilla fue declarado",
+   "bloque": "Veredicto: Pérez",
+   "visual": "Veredicto: CULPABLE de robo con homicidio, único responsable",
+   "sonido": "Golpe",
+   "fin": 1854.96
+  },
+  {
+   "id": 79,
+   "capitulo": "9 · El juicio",
+   "inicio": 1854.96,
+   "anclaje": "Ese mismo día",
+   "bloque": "657 días",
+   "visual": "Contador 657; salida del tribunal",
+   "sonido": "—",
+   "fin": 1880.12
+  },
+  {
+   "id": 80,
+   "capitulo": "9 · El juicio",
+   "inicio": 1880.12,
+   "anclaje": "El dieciséis de octubre",
+   "bloque": "10 años y un día",
+   "visual": "Línea de tiempo: condena y Corte de Apelaciones",
+   "sonido": "—",
+   "fin": 1903.86
+  },
+  {
+   "id": 81,
+   "capitulo": "10 · Epílogo",
+   "inicio": 1903.86,
+   "anclaje": "La historia no terminó",
+   "bloque": "Demanda y serie",
+   "visual": "Línea de tiempo: 2019, 2022, 2025; cita de las hijas",
+   "sonido": "—",
+   "fin": 1940.44
+  },
+  {
+   "id": 82,
+   "capitulo": "10 · Epílogo",
+   "inicio": 1940.44,
+   "anclaje": "En abril de dos mil veintitrés",
+   "bloque": "Libertad condicional",
+   "visual": "Cita de Pérez: «ellos saben la verdad»",
+   "sonido": "—",
+   "fin": 1958.68
+  },
+  {
+   "id": 83,
+   "capitulo": "10 · Epílogo",
+   "inicio": 1958.68,
+   "anclaje": "La justicia respondió",
+   "bloque": "Lo que se sabe y lo que no",
+   "visual": "Tablero: respuestas y preguntas abiertas (la carta, la mujer, el anillo)",
+   "sonido": "—",
+   "fin": 1991.58
+  },
+  {
+   "id": 84,
+   "capitulo": "10 · Epílogo",
+   "inicio": 1991.58,
+   "anclaje": "Durante cuarenta y dos días",
+   "bloque": "A pocos metros",
+   "visual": "Corte de la casa: plano final del entretecho",
+   "sonido": "Tema musical",
+   "fin": 2014.8
+  },
+  {
+   "id": 85,
+   "capitulo": "10 · Epílogo",
+   "inicio": 2014.8,
+   "anclaje": "A veces la relación",
+   "bloque": "Cierre",
+   "visual": "Frase final en pantalla",
+   "sonido": "Tema musical",
+   "fin": 2025.18
+  },
+  {
+   "id": 86,
+   "capitulo": "10 · Epílogo",
+   "inicio": 2025.18,
+   "anclaje": "Esto fue Bajo Sospecha",
+   "bloque": "Pantalla final",
+   "visual": "Logo, suscripción y próximo caso",
+   "sonido": "Tema musical",
+   "fin": 2039.2
+  }
+ ]
+}
