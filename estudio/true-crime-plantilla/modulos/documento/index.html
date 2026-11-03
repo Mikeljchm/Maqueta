@@ -1,0 +1,49 @@
+<!doctype html><html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/><script src="assets/gsap.min.js"></script><style>@font-face{font-family:DM;src:url(assets/dm-serif-display-latin-400-normal.woff2)}@font-face{font-family:IT;src:url(assets/inter-tight-latin-500-normal.woff2);font-weight:500}@font-face{font-family:IT;src:url(assets/inter-tight-latin-300-normal.woff2);font-weight:300}@font-face{font-family:PM;src:url(assets/permanent-marker-latin-400-normal.woff2)}@font-face{font-family:MO;src:url(assets/ibm-plex-mono-latin-500-normal.woff2)}*{margin:0;padding:0;box-sizing:border-box}html,body{width:1920px;height:1080px;overflow:hidden;background:#070304}#root{position:relative;width:1920px;height:1080px;overflow:hidden;background:#070304}.full{position:absolute;inset:0}#grain{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:.09;mix-blend-mode:overlay}#vig{background:radial-gradient(ellipse 85% 85% at 50% 50%,rgba(0,0,0,0) 50%,rgba(0,0,0,.8) 100%)}#black{background:#000;opacity:1}
+#desk{background:radial-gradient(ellipse 70% 80% at 45% 40%,#241713 0%,#100907 60%,#050303 100%)}
+#cam{position:absolute;inset:0}
+#paper{position:absolute;left:800px;top:90px;width:800px;height:1000px;background:#e9e2d0;box-shadow:0 30px 70px rgba(0,0,0,.75);filter:url(#crumple)}
+#lines{position:absolute;left:0;top:0;width:800px;height:1000px}
+#rake{position:absolute;left:800px;top:90px;width:800px;height:1000px;background:linear-gradient(105deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.0) 35%,rgba(255,236,200,.35) 50%,rgba(0,0,0,0) 65%,rgba(0,0,0,.55) 100%);background-size:300% 100%;mix-blend-mode:overlay;opacity:0}
+#uv{background:radial-gradient(circle 260px at var(--x) var(--y),rgba(120,80,255,.55),rgba(60,20,160,.25) 60%,rgba(10,0,40,.7) 100%);mix-blend-mode:multiply;opacity:0;--x:700px;--y:400px}
+#tit{position:absolute;left:80px;top:70px;opacity:0}#tit .t{font:400 86px/1 DM;color:#efe4da}#tit .s{font:500 28px IT;letter-spacing:.3em;color:#b9a79f;margin-top:12px}
+#cnt{position:absolute;right:90px;top:90px;font:500 46px MO;color:#c9b8ff;text-align:right;opacity:0}
+#stamp{position:absolute;left:940px;top:560px;font:400 96px/1 PM;color:#c4182c;border:8px solid #c4182c;padding:14px 30px 6px;opacity:0;mix-blend-mode:multiply}
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="11" data-width="1920" data-height="1080">
+ <div id="scene" class="clip full" data-start="0" data-duration="11" data-track-index="0">
+  <svg width="0" height="0" style="position:absolute"><filter id="crumple"><feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="14"/></filter></svg>
+  <div id="desk" class="full"></div>
+  <div id="cam"><div id="paper"><canvas id="lines" width="800" height="1000"></canvas></div><div id="rake"></div><div id="stamp">SIN HUELLAS</div></div>
+  <div id="uv" class="full"></div>
+  <div id="tit"><div class="t">La carta anónima</div><div class="s">RECREACIÓN · SIN FIRMA</div></div>
+  <div id="cnt">HUELLAS<br><span id="hn">—</span></div>
+  <div id="vig" class="full"></div><canvas id="grain" width="960" height="540"></canvas><div id="black" class="full"></div>
+ </div><audio id="mix" src="assets/mix.wav" data-start="0" data-duration="11" data-track-index="1" data-volume="1"></audio></div>
+<script>
+window.__timelines=window.__timelines||{}; const tl=gsap.timeline({paused:true}); const $=s=>document.querySelector(s);
+// escritura ilegible (no inventamos el texto real de la carta)
+const c=$('#lines').getContext('2d'); let sd=91; const r=()=>{sd=(sd*16807)%2147483647;return sd/2147483647};
+c.strokeStyle='rgba(28,30,60,.85)'; c.lineWidth=3.2; c.lineCap='round';
+for(let row=0;row<17;row++){let y=120+row*48, x=70+r()*30; const end=row==16?420:700-r()*90;
+ while(x<end){const w=30+r()*70; c.beginPath(); c.moveTo(x,y); let xx=x;
+  while(xx<x+w){const nx=xx+6+r()*8; c.quadraticCurveTo(xx+3,y-12-r()*14,nx,y+(r()-.5)*6); xx=nx;} c.stroke(); x+=w+14+r()*14;}}
+gsap.set('#paper',{rotation:-3}); gsap.set('#stamp',{rotation:-11});
+tl.fromTo('#black',{opacity:1},{opacity:0,duration:0.6,immediateRender:false},0.1);
+tl.fromTo('#cam',{scale:1.12,y:-40},{scale:1.0,y:0,duration:3.0,ease:'power2.out',immediateRender:false},0);
+tl.fromTo('#tit',{opacity:0,x:-20},{opacity:1,x:0,duration:0.6,immediateRender:false},0.6);
+tl.fromTo('#rake',{opacity:0,backgroundPosition:'100% 0'},{opacity:1,backgroundPosition:'0% 0',duration:2.6,ease:'sine.inOut',immediateRender:false},1.0);
+tl.to('#rake',{opacity:0.5,duration:0.5},3.6);
+// lampara UV forense
+tl.fromTo('#uv',{opacity:0},{opacity:1,duration:0.15,immediateRender:false},4.3);
+tl.fromTo('#cnt',{opacity:0},{opacity:1,duration:0.2,immediateRender:false},4.4);
+const uv={x:700,y:300}; const setuv=()=>{$('#uv').style.setProperty('--x',uv.x+'px');$('#uv').style.setProperty('--y',uv.y+'px')};
+tl.fromTo(uv,{x:700,y:250},{keyframes:[{x:1200,y:380},{x:760,y:620},{x:1180,y:820},{x:960,y:520}],duration:3.0,ease:'sine.inOut',onUpdate:setuv,immediateRender:false},4.4);
+const hn={v:0}; tl.fromTo(hn,{v:0},{v:1,duration:3.0,onUpdate:()=>{$('#hn').textContent=hn.v<0.98?'BUSCANDO…':'0'},immediateRender:false},4.4);
+tl.to('#cnt',{color:'#ff6b7a',duration:0.1},7.4);
+tl.to('#uv',{opacity:0,duration:0.4},7.6);
+tl.fromTo('#stamp',{opacity:0,scale:1.9},{opacity:0.92,scale:1,duration:0.16,ease:'power4.in',immediateRender:false},7.9);
+tl.fromTo('#black',{opacity:0},{opacity:1,duration:0.5,immediateRender:false},10.45);
+const gc=$("#grain").getContext("2d"); const gi=gc.createImageData(960,540);function grain(t){const fr=Math.floor(t*24); let s=(fr*9301+49297)%233280+1; const dd=gi.data;for(let i=0;i<dd.length;i+=4){s=(s*16807)%2147483647; const v=s&255; dd[i]=dd[i+1]=dd[i+2]=v; dd[i+3]=255;} gc.putImageData(gi,0,0);}
+const clock={t:0}; tl.fromTo(clock,{t:0},{t:11,duration:11,ease:'none',immediateRender:false,onUpdate:()=>grain(tl.time())},0);
+window.__timelines["main"]=tl; tl.seek(0);
+</script></body></html>

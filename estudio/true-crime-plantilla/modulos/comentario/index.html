@@ -1,0 +1,37 @@
+<!doctype html><html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/><script src="assets/gsap.min.js"></script><style>@font-face{font-family:DM;src:url(assets/dm-serif-display-latin-400-normal.woff2)}@font-face{font-family:IT;src:url(assets/inter-tight-latin-500-normal.woff2);font-weight:500}@font-face{font-family:IT;src:url(assets/inter-tight-latin-300-normal.woff2);font-weight:300}@font-face{font-family:PM;src:url(assets/permanent-marker-latin-400-normal.woff2)}@font-face{font-family:MO;src:url(assets/ibm-plex-mono-latin-500-normal.woff2)}*{margin:0;padding:0;box-sizing:border-box}html,body{width:1920px;height:1080px;overflow:hidden;background:#070304}#root{position:relative;width:1920px;height:1080px;overflow:hidden;background:#070304}.full{position:absolute;inset:0}#grain{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:.09;mix-blend-mode:overlay}#vig{background:radial-gradient(ellipse 85% 85% at 50% 50%,rgba(0,0,0,0) 50%,rgba(0,0,0,.8) 100%)}#black{background:#000;opacity:1}
+#bg{background:#0b0607}
+#ph{position:absolute;left:260px;top:110px;width:1400px;height:788px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+#ph img{position:absolute;left:0;top:0;width:1400px;height:788px;object-fit:cover}
+#bn{opacity:0}
+#slash{position:absolute;left:180px;top:610px;width:1560px;height:150px;background:#c4182c;transform-origin:0 50%;opacity:.92}
+#t1{position:absolute;left:0;right:0;top:600px;text-align:center;font:400 150px/1 PM;color:#fff;text-shadow:0 6px 0 rgba(0,0,0,.35)}
+#t2{position:absolute;left:0;right:0;top:800px;text-align:center;font:400 64px/1.15 PM;color:#efe4da;text-shadow:0 4px 14px #000}
+#flash{background:#fff;opacity:0}
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="7" data-width="1920" data-height="1080">
+ <div id="scene" class="clip full" data-start="0" data-duration="7" data-track-index="0">
+  <div id="bg" class="full"></div>
+  <div id="ph"><img id="co" src="assets/foto.jpg"><img id="bn" src="assets/foto_bn.jpg"></div>
+  <div id="slash"></div><div id="t1"></div><div id="t2"></div>
+  <div id="vig" class="full"></div><canvas id="grain" width="960" height="540"></canvas><div id="flash" class="full"></div><div id="black" class="full"></div>
+ </div><audio id="mix" src="assets/mix.wav" data-start="0" data-duration="7" data-track-index="1" data-volume="1"></audio></div>
+<script>
+const DATA={"frase":"Sí, claro.","sub":"Se revisó toda la casa… «se lo doy firmado».","freeze":1.2};
+window.__timelines=window.__timelines||{}; const tl=gsap.timeline({paused:true}); const $=s=>document.querySelector(s);
+$('#t1').textContent=DATA.frase; $('#t2').textContent=DATA.sub; const F=DATA.freeze;
+gsap.set('#slash',{scaleX:0,rotation:-3}); gsap.set(['#t1','#t2'],{opacity:0});
+tl.fromTo('#black',{opacity:1},{opacity:0,duration:0.4,immediateRender:false},0.05);
+tl.fromTo(['#co','#bn'],{scale:1.0},{scale:1.06,duration:F,ease:'none',immediateRender:false},0);
+// congelado: flash, blanco y negro, golpe
+tl.fromTo('#flash',{opacity:0},{opacity:0.85,duration:0.02,immediateRender:false},F);
+tl.fromTo('#flash',{opacity:0.85},{opacity:0,duration:0.35,immediateRender:false},F+0.02);
+tl.fromTo('#bn',{opacity:0},{opacity:1,duration:0.02,immediateRender:false},F);
+tl.fromTo('#ph',{scale:1,rotation:0},{scale:0.94,rotation:-1.5,duration:0.25,ease:'back.out(2)',immediateRender:false},F);
+tl.fromTo('#slash',{scaleX:0},{scaleX:1,duration:0.22,ease:'power3.out',immediateRender:false},F+0.25);
+tl.fromTo('#t1',{opacity:0,scale:1.4,rotation:-6},{opacity:1,scale:1,rotation:-3,duration:0.16,ease:'power4.in',immediateRender:false},F+0.35);
+tl.fromTo('#t2',{opacity:0,y:20},{opacity:1,y:0,duration:0.4,ease:'power2.out',immediateRender:false},F+1.0);
+tl.fromTo('#black',{opacity:0},{opacity:1,duration:0.4,immediateRender:false},6.55);
+const gc=$("#grain").getContext("2d"); const gi=gc.createImageData(960,540);function grain(t){const fr=Math.floor(t*24); let s=(fr*9301+49297)%233280+1; const dd=gi.data;for(let i=0;i<dd.length;i+=4){s=(s*16807)%2147483647; const v=s&255; dd[i]=dd[i+1]=dd[i+2]=v; dd[i+3]=255;} gc.putImageData(gi,0,0);}
+const clock={t:0}; tl.fromTo(clock,{t:0},{t:7,duration:7,ease:'none',immediateRender:false,onUpdate:()=>grain(tl.time())},0);
+window.__timelines["main"]=tl; tl.seek(0);
+</script></body></html>

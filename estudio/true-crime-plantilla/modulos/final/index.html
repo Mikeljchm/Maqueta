@@ -1,0 +1,37 @@
+<!doctype html><html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/><script src="assets/gsap.min.js"></script><style>@font-face{font-family:DM;src:url(assets/dm-serif-display-latin-400-normal.woff2)}@font-face{font-family:IT;src:url(assets/inter-tight-latin-500-normal.woff2);font-weight:500}@font-face{font-family:IT;src:url(assets/inter-tight-latin-300-normal.woff2);font-weight:300}@font-face{font-family:PM;src:url(assets/permanent-marker-latin-400-normal.woff2)}@font-face{font-family:MO;src:url(assets/ibm-plex-mono-latin-500-normal.woff2)}*{margin:0;padding:0;box-sizing:border-box}html,body{width:1920px;height:1080px;overflow:hidden;background:#070304}#root{position:relative;width:1920px;height:1080px;overflow:hidden;background:#070304}.full{position:absolute;inset:0}#grain{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:.09;mix-blend-mode:overlay}#vig{background:radial-gradient(ellipse 85% 85% at 50% 50%,rgba(0,0,0,0) 50%,rgba(0,0,0,.8) 100%)}#black{background:#000;opacity:1}
+#bg{background:radial-gradient(ellipse 70% 70% at 50% 40%,#2d0b14 0%,#110408 60%,#050102 100%)}
+#logo{position:absolute;left:0;right:0;top:110px;text-align:center}
+#logo .b{font:300 40px IT;letter-spacing:1.0em;padding-left:1em;color:#d9c9bd}
+#logo .s{display:inline-flex;align-items:center;font:400 150px/1 DM;color:#efe4da;margin-top:8px}
+#logo svg{width:118px;height:118px;margin:0 4px}
+#tag{position:absolute;left:0;right:0;top:330px;text-align:center;font:500 30px IT;letter-spacing:.5em;padding-left:.5em;color:#e7b3b3}
+.box{position:absolute;top:430px;width:720px;height:405px;border:3px solid rgba(239,228,218,.35);background:rgba(0,0,0,.35)}
+.box .k{position:absolute;left:0;right:0;top:-56px;text-align:center;font:500 30px IT;letter-spacing:.32em;color:#d9c9bd}
+#b1{left:150px}#b2{left:1050px}
+#sub{position:absolute;left:885px;top:850px;width:150px;height:150px;border-radius:50%;border:3px solid #e0233f}
+#subt{position:absolute;left:0;right:0;top:1015px;text-align:center;font:500 22px IT;letter-spacing:.3em;color:#e3324b}
+#src{position:absolute;left:150px;top:900px;font:300 26px IT;color:#9d8c86}
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+ <div id="scene" class="clip full" data-start="0" data-duration="15" data-track-index="0">
+  <div id="bg" class="full"></div>
+  <div id="logo"><div class="b">BAJO</div><div class="s">S<svg viewBox="0 0 176 176"><circle cx="88" cy="88" r="76" fill="none" stroke="#efe4da" stroke-width="22"/><circle cx="88" cy="70" r="22" fill="#ff2e45"/><path d="M76 82 L100 82 L108 128 L68 128 Z" fill="#ff2e45"/></svg>SPECHA</div></div>
+  <div id="tag">TODOS LO ESTÁN</div>
+  <div class="box" id="b1"><div class="k">PRÓXIMO CASO</div></div><div class="box" id="b2"><div class="k">TAMBIÉN BAJO SOSPECHA</div></div>
+  <div id="src">Fuentes en la descripción</div>
+  <div id="sub"></div><div id="subt">SUSCRÍBETE</div>
+  <div id="vig" class="full"></div><canvas id="grain" width="960" height="540"></canvas><div id="black" class="full"></div>
+ </div><audio id="mix" src="assets/mix.wav" data-start="0" data-duration="15" data-track-index="1" data-volume="1"></audio></div>
+<script>
+window.__timelines=window.__timelines||{}; const tl=gsap.timeline({paused:true}); const $=s=>document.querySelector(s);
+tl.fromTo('#black',{opacity:1},{opacity:0,duration:0.8,immediateRender:false},0.1);
+tl.fromTo('#logo',{opacity:0,y:-20},{opacity:1,y:0,duration:0.9,ease:'power3.out',immediateRender:false},0.3);
+tl.fromTo('#tag',{opacity:0},{opacity:1,duration:0.8,immediateRender:false},1.0);
+tl.fromTo('.box',{opacity:0,y:30},{opacity:1,y:0,duration:0.7,stagger:0.2,ease:'power3.out',immediateRender:false},1.2);
+tl.fromTo(['#sub','#subt','#src'],{opacity:0},{opacity:1,duration:0.6,stagger:0.15,immediateRender:false},1.6);
+tl.fromTo('#logo svg circle:nth-child(2)',{opacity:1},{opacity:0.55,duration:0.5,yoyo:true,repeat:11,ease:'sine.inOut',immediateRender:false},2.0);
+tl.fromTo('#black',{opacity:0},{opacity:1,duration:0.8,immediateRender:false},14.2);
+const gc=$("#grain").getContext("2d"); const gi=gc.createImageData(960,540);function grain(t){const fr=Math.floor(t*24); let s=(fr*9301+49297)%233280+1; const dd=gi.data;for(let i=0;i<dd.length;i+=4){s=(s*16807)%2147483647; const v=s&255; dd[i]=dd[i+1]=dd[i+2]=v; dd[i+3]=255;} gc.putImageData(gi,0,0);}
+const clock={t:0}; tl.fromTo(clock,{t:0},{t:15,duration:15,ease:'none',immediateRender:false,onUpdate:()=>grain(tl.time())},0);
+window.__timelines["main"]=tl; tl.seek(0);
+</script></body></html>
