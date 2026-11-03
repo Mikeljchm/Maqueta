@@ -22,3 +22,9 @@
 - Favoritas de la ronda 1: **C = Enceladus** y **F = Sulafat**. Ronda 2 (G a L) enviada. Correspondencia de letras y voces en `voz/mapa.txt`.
 - Contra el "efecto frasco" (la voz se degrada en audios largos): generar **por bloques de 25 a 45 s** con las mismas notas de dirección (`voz/notas.txt`) y unirlos con pausas de 0.9 s (`voz/largo.py`).
 - Las notas de dirección van con el formato `# AUDIO PROFILE / ### DIRECTOR'S NOTES / #### TRANSCRIPT`. Si no, lee las instrucciones en voz alta.
+
+## Voz elegida: ElevenReader (decisión de Mikel, 2 de noviembre de 2026)
+- Mikel graba el audio interno del teléfono en ElevenReader a **velocidad 1.0** y manda MP3 + texto. Pasará a ElevenLabs de pago (misma voz) antes de entrar al Programa de Socios de YouTube.
+- Prueba: limpia (ruido -91 dB, sin saturación, sin efecto frasco). Se había grabado a 1.3x por error.
+- **Lección:** al alargar pausas, cortar solo en silencios reales (mínimo de energía medido, no el punto medio entre palabras de Whisper) y con fundidos de 10 a 20 ms. Mikel notó cortes malos en la versión "con respiros".
+- Google Gemini TTS queda de respaldo para parches.
