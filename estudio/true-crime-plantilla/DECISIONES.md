@@ -28,3 +28,9 @@
 - Prueba: limpia (ruido -91 dB, sin saturación, sin efecto frasco). Se había grabado a 1.3x por error.
 - **Lección:** al alargar pausas, cortar solo en silencios reales (mínimo de energía medido, no el punto medio entre palabras de Whisper) y con fundidos de 10 a 20 ms. Mikel notó cortes malos en la versión "con respiros".
 - Google Gemini TTS queda de respaldo para parches.
+
+## Identidad (2 de noviembre de 2026)
+- **Narrador mordaz:** juzga con ironía y sarcasmo, nunca de frente ("Sí, claro, ¿para qué denunciar si puedes matar?"). La ironía va contra los agresores y las excusas, **nunca contra las víctimas**. Casos sin sentencia firme: ironía sobre los hechos, con "presuntamente".
+- **Contenido:** 90 % crímenes de pareja (infidelidad, obsesión, celos) y 10 % otros casos llamativos. El nombre debe abarcar las dos cosas.
+- **Orden:** nombre → varias opciones de logo → color (el color sale del logo). Vino/carmesí y negro/ámbar siguen en la mesa.
+- **Música:** YouTube Audio Library como base (la descarga Mikel). Pixabay Music con cuidado (tiene reclamos de Content ID de terceros). Epidemic Sound cuando el canal monetice.
