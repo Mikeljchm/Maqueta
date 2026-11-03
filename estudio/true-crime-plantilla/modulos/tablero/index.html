@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/>
+<script src="assets/gsap.min.js"></script>
+<style>
+@font-face{font-family:SE;src:url(assets/special-elite-latin-400-normal.woff2)}
+@font-face{font-family:PM;src:url(assets/permanent-marker-latin-400-normal.woff2)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#0c0806}
+#root{position:relative;width:1920px;height:1080px;overflow:hidden;background:#0c0806}
+.full{position:absolute;inset:0}
+#persp{position:absolute;inset:0;perspective:2400px;perspective-origin:50% 45%}
+#tilt{position:absolute;inset:0;transform-style:preserve-3d}
+#world{position:absolute;left:0;top:0;width:4200px;height:2400px;transform-origin:0 0;
+  background:url(assets/cork.jpg);background-size:1100px auto;box-shadow:inset 0 0 220px rgba(0,0,0,.75)}
+.item{position:absolute;box-shadow:0 18px 30px rgba(0,0,0,.55),0 4px 8px rgba(0,0,0,.4)}
+.pol{background:#f3efe6;width:560px;height:660px;padding:30px 30px 0}
+.pol img{display:block;width:500px;height:467px;object-fit:cover;filter:contrast(1.05) sepia(.15)}
+.pol .cap{font:66px/1.2 PM;color:#1f1a17;text-align:center;margin-top:34px}
+.card{background:#efe6d2;width:820px;height:480px;padding:40px 46px;
+  background-image:repeating-linear-gradient(180deg,transparent 0 63px,rgba(60,90,160,.22) 63px 65px);background-position:0 92px}
+.card .nm{font:84px/1.1 SE;color:#191512;border-bottom:4px solid #b3261e;padding-bottom:16px}
+.card .ln{font:54px/1.4 SE;color:#2b2420;margin-top:18px}
+.card .st{display:inline-block;margin-top:18px;font:48px/1.2 SE;color:#b3261e;border:5px solid #b3261e;padding:6px 16px;transform:rotate(-3deg)}
+.sticky{background:#f2d04a;width:500px;height:500px;padding:56px 30px;font:80px/1.18 PM;color:#2a1d10;text-align:center;
+  background-image:linear-gradient(170deg,rgba(255,255,255,.18),rgba(0,0,0,.08))}
+.f{background:#e9e1cf;width:700px;height:420px;padding:44px 40px;text-align:center}
+.f .q{font:88px/1.12 PM;color:#b3261e}
+.f .s{font:46px/1.3 SE;color:#2b2420;margin-top:18px}
+.pin{position:absolute;width:54px;height:54px;margin:-27px 0 0 -27px;z-index:5}
+#strings{position:absolute;left:0;top:0;width:3200px;height:1800px;overflow:visible;z-index:4;pointer-events:none}
+#lamp{background:radial-gradient(ellipse 55% 60% at 50% 45%,rgba(255,200,140,.20),rgba(0,0,0,0) 60%);mix-blend-mode:screen}
+#vig{background:radial-gradient(ellipse 75% 75% at 50% 48%,rgba(0,0,0,0) 45%,rgba(0,0,0,.82) 100%)}
+#grain{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:.08;mix-blend-mode:overlay}
+#black{background:#000;opacity:1}
+</style></head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1920" data-height="1080">
+ <div id="scene" class="clip full" data-start="0" data-duration="12" data-track-index="0">
+  <div id="persp"><div id="tilt"><div id="world"><div id="layer" style="position:absolute;left:500px;top:300px;width:3200px;height:1800px">
+    <div class="item pol" id="A" style="left:560px;top:330px"><img src="assets/lago.jpg"><div class="cap">PUERTO VARAS</div></div>
+    <div class="item card" id="B" style="left:1280px;top:300px"><div class="nm">VIVIANA HAEGER</div><div class="ln">42 años · contadora</div><div class="st">DESAPARECIDA 29·06·2010</div></div>
+    <div class="item pol" id="D" style="left:1180px;top:900px"><img src="assets/casa.jpg"><div class="cap">PARCELA 16</div></div>
+    <div class="item f" id="F" style="left:1700px;top:1300px"><div class="q">¿NADIE LO VIO?</div><div class="s">el entretecho</div></div>
+    <div class="item card" id="C" style="left:2140px;top:520px"><div class="nm">JAIME ANGUITA</div><div class="ln">52 años · ingeniero</div><div class="ln" style="position:relative">el <span id="esp">esposo</span>
+      <svg id="circ" viewBox="0 0 300 130" style="position:absolute;left:60px;top:-26px;width:340px;height:150px;overflow:visible"><path pathLength="1" d="M150 10 C 270 8, 300 60, 250 105 C 190 140, 60 130, 25 95 C -5 60, 40 12, 160 14" fill="none" stroke="#c8202f" stroke-width="7" stroke-linecap="round" stroke-dasharray="1" stroke-dashoffset="1"/></svg></div></div>
+    <div class="item sticky" id="E" style="left:2420px;top:1080px">LLAMADA<br>DE 19<br>SEGUNDOS</div>
+    <svg id="strings" viewBox="0 0 3200 1800">
+      <defs><filter id="ss"><feDropShadow dx="0" dy="10" stdDeviation="5" flood-opacity=".5"/></filter></defs>
+      <g fill="none" stroke="#c4162c" stroke-width="7" stroke-linecap="round" filter="url(#ss)">
+        <path id="sAB" pathLength="1" d="M840 345 Q 1265 430 1690 315"/>
+        <path id="sBD" pathLength="1" d="M1690 315 Q 1560 640 1460 915"/>
+        <path id="sBC" pathLength="1" d="M1690 315 Q 2120 520 2550 535" stroke-dasharray="1" stroke-dashoffset="1"/>
+        <path id="sCE" pathLength="1" d="M2550 535 Q 2650 840 2670 1095" stroke-dasharray="1" stroke-dashoffset="1"/>
+        <path id="sDF" pathLength="1" d="M1460 915 Q 1720 1180 2050 1315" stroke-dasharray="1" stroke-dashoffset="1"/>
+      </g>
+    </svg>
+    <div id="pins"></div>
+  </div></div></div></div>
+  <div id="lamp" class="full"></div>
+  <div id="vig" class="full"></div>
+  <canvas id="grain" width="960" height="540"></canvas>
+  <div id="black" class="full"></div>
+ </div>
+ <audio id="mix" src="assets/mix.wav" data-start="0" data-duration="12" data-track-index="1" data-volume="1"></audio>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+const tl=gsap.timeline({paused:true}); const $=s=>document.querySelector(s);
+const PINS={A:[840,345],B:[1690,315],C:[2550,535],D:[1460,915],E:[2670,1095],F:[2050,1315]};
+const pinSVG='<svg viewBox="0 0 54 54"><ellipse cx="31" cy="34" rx="18" ry="10" fill="rgba(0,0,0,.45)"/><circle cx="27" cy="25" r="19" fill="#c3182d"/><circle cx="27" cy="25" r="19" fill="url(#pg)"/><circle cx="21" cy="18" r="6" fill="rgba(255,255,255,.55)"/><defs><radialGradient id="pg" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ff6b78" stop-opacity=".6"/><stop offset="1" stop-color="#5a0510" stop-opacity=".7"/></radialGradient></defs></svg>';
+for(const k in PINS){const d=document.createElement('div');d.className='pin';d.id='pin'+k;d.style.left=PINS[k][0]+'px';d.style.top=PINS[k][1]+'px';d.innerHTML=pinSVG;$('#pins').appendChild(d);}
+gsap.set('#A',{rotation:-4}); gsap.set('#B',{rotation:2}); gsap.set('#D',{rotation:3}); gsap.set('#F',{rotation:-3});
+gsap.set('#C',{rotation:-2.5}); gsap.set('#E',{rotation:5});
+const cam=(fx,fy,s)=>({x:960-(fx+500)*s,y:540-(fy+300)*s,scale:s});
+// toma abierta
+tl.fromTo('#world',cam(1640,930,0.62),{...cam(1680,950,0.66),duration:1.8,ease:'sine.inOut',immediateRender:false},0);
+tl.fromTo('#tilt',{rotationX:7,rotationY:-5},{rotationX:4,rotationY:3,duration:12,ease:'sine.inOut',immediateRender:false},0);
+tl.fromTo('#black',{opacity:1},{opacity:0,duration:0.6,immediateRender:false},0.1);
+// entra Jaime
+gsap.set(['#C','#pinC'],{opacity:0});
+tl.fromTo('#C',{opacity:0,scale:1.18,y:-60,rotation:-9},{opacity:1,scale:1,y:0,rotation:-2.5,duration:0.32,ease:'power3.in',immediateRender:false},1.55);
+tl.fromTo('#pinC',{opacity:0,scale:2.2,y:-30},{opacity:1,scale:1,y:0,duration:0.14,ease:'power2.in',immediateRender:false},1.92);
+tl.fromTo('#C',{rotation:-2.5},{rotation:-1.5,duration:0.08,yoyo:true,repeat:1,immediateRender:false},2.06);
+// hilo Viviana → Jaime
+tl.fromTo('#sBC',{strokeDashoffset:1},{strokeDashoffset:0,duration:0.9,ease:'power2.inOut',immediateRender:false},2.35);
+// la cámara va a Jaime
+tl.fromTo('#world',cam(1680,950,0.66),{...cam(2550,760,1.12),duration:1.5,ease:'power3.inOut',immediateRender:false},3.4);
+tl.fromTo('#circ path',{strokeDashoffset:1},{strokeDashoffset:0,duration:0.7,ease:'power1.inOut',immediateRender:false},5.0);
+// entra la nota amarilla
+gsap.set(['#E','#pinE'],{opacity:0});
+tl.fromTo('#world',cam(2550,760,1.12),{...cam(2600,1000,0.92),duration:1.1,ease:'power2.inOut',immediateRender:false},5.9);
+tl.fromTo('#E',{opacity:0,scale:1.25,y:-50,rotation:14},{opacity:1,scale:1,y:0,rotation:5,duration:0.28,ease:'power3.in',immediateRender:false},6.35);
+tl.fromTo('#pinE',{opacity:0,scale:2.2,y:-30},{opacity:1,scale:1,y:0,duration:0.14,ease:'power2.in',immediateRender:false},6.66);
+tl.fromTo('#sCE',{strokeDashoffset:1},{strokeDashoffset:0,duration:0.7,ease:'power2.inOut',immediateRender:false},7.0);
+// a la casa y al entretecho
+tl.fromTo('#world',cam(2600,1000,0.92),{...cam(1820,1260,0.98),duration:1.4,ease:'power3.inOut',immediateRender:false},7.6);
+tl.fromTo('#sDF',{strokeDashoffset:1},{strokeDashoffset:0,duration:0.9,ease:'power2.inOut',immediateRender:false},8.6);
+// todo el tablero
+tl.fromTo('#world',cam(1820,1260,0.98),{...cam(1720,960,0.64),duration:1.9,ease:'power3.inOut',immediateRender:false},9.6);
+tl.fromTo('#lamp',{opacity:1},{opacity:0.6,duration:1.5,immediateRender:false},10.2);
+tl.fromTo('#black',{opacity:0},{opacity:0.0,duration:0.1,immediateRender:false},11.8);
+// grano
+const gc=$('#grain').getContext('2d'); const gi=gc.createImageData(960,540);
+function grain(t){const fr=Math.floor(t*24); let s=(fr*9301+49297)%233280+1; const d=gi.data;
+ for(let i=0;i<d.length;i+=4){s=(s*16807)%2147483647; const v=s&255; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;} gc.putImageData(gi,0,0);}
+const clock={t:0}; tl.fromTo(clock,{t:0},{t:12,duration:12,ease:'none',immediateRender:false,onUpdate:()=>grain(tl.time())},0);
+window.__timelines["main"]=tl; tl.seek(0);
+</script></body></html>

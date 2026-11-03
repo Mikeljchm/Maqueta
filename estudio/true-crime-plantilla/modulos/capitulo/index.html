@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/>
+<script src="assets/gsap.min.js"></script>
+<style>
+@font-face{font-family:DM;src:url(assets/dm-serif-display-latin-400-normal.woff2)}
+@font-face{font-family:IT;src:url(assets/inter-tight-latin-500-normal.woff2);font-weight:500}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#090405}
+#root{position:relative;width:1920px;height:1080px;overflow:hidden;background:#090405}
+.full{position:absolute;inset:0}
+#bg{background:radial-gradient(ellipse 70% 70% at 50% 50%,#3a0c16 0%,#160509 60%,#070203 100%)}
+#k{position:absolute;left:0;right:0;top:330px;text-align:center;font:500 40px IT;letter-spacing:.55em;color:#e7b3b3;padding-left:.55em}
+#t{position:absolute;left:0;right:0;top:420px;text-align:center;font:400 168px/1.15 DM;color:#efe4da;white-space:nowrap}
+#t span{display:inline-block}
+#l{position:absolute;left:760px;top:660px;width:400px;height:4px;background:#e0233f}
+#d{position:absolute;left:0;right:0;top:710px;text-align:center;font:500 38px IT;letter-spacing:.3em;color:#b9a79f}
+#grain{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:.09;mix-blend-mode:overlay}
+#vig{background:radial-gradient(ellipse 80% 80% at 50% 50%,rgba(0,0,0,0) 50%,rgba(0,0,0,.8) 100%)}
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="4.5" data-width="1920" data-height="1080">
+ <div id="scene" class="clip full" data-start="0" data-duration="4.5" data-track-index="0">
+  <div id="bg" class="full"></div>
+  <div id="k">CAPÍTULO 2</div>
+  <div id="t"></div>
+  <div id="l"></div>
+  <div id="d">10 · 08 · 2010 &nbsp;—&nbsp; DÍA 42</div>
+  <div id="vig" class="full"></div>
+  <canvas id="grain" width="960" height="540"></canvas>
+ </div>
+ <audio id="mix" src="assets/mix.wav" data-start="0" data-duration="4.5" data-track-index="1" data-volume="1"></audio>
+</div>
+<script>
+window.__timelines=window.__timelines||{}; const tl=gsap.timeline({paused:true}); const $=s=>document.querySelector(s);
+'Seis semanas después'.split('').forEach(c=>{const s=document.createElement('span');s.innerHTML=c===' '?'&nbsp;':c;$('#t').appendChild(s)});
+gsap.set('#l',{scaleX:0});
+tl.fromTo('#t span',{opacity:0,y:40,filter:'blur(10px)'},{opacity:1,y:0,filter:'blur(0px)',duration:0.7,ease:'power3.out',stagger:0.03,immediateRender:false},0.05);
+tl.fromTo('#k',{opacity:0},{opacity:1,duration:0.5,immediateRender:false},0.15);
+tl.fromTo('#l',{scaleX:0},{scaleX:1,duration:0.9,ease:'power3.inOut',immediateRender:false},0.5);
+tl.fromTo('#d',{opacity:0,y:12},{opacity:1,y:0,duration:0.6,ease:'power2.out',immediateRender:false},0.9);
+tl.fromTo('#root',{scale:1},{scale:1.04,duration:4.5,ease:'none',immediateRender:false},0);
+tl.to(['#t','#k','#l','#d'],{opacity:0,duration:0.5},3.9);
+const gc=$('#grain').getContext('2d'); const gi=gc.createImageData(960,540);
+function grain(t){const fr=Math.floor(t*24); let s=(fr*9301+49297)%233280+1; const d=gi.data;
+ for(let i=0;i<d.length;i+=4){s=(s*16807)%2147483647; const v=s&255; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;} gc.putImageData(gi,0,0);}
+const clock={t:0}; tl.fromTo(clock,{t:0},{t:4.5,duration:4.5,ease:'none',immediateRender:false,onUpdate:()=>grain(tl.time())},0);
+window.__timelines["main"]=tl; tl.seek(0);
+</script></body></html>
