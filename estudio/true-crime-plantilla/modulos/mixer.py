@@ -2,6 +2,7 @@ import subprocess, numpy as np, soundfile as sf
 SR=48000
 def load(f):
     a=np.frombuffer(subprocess.run(['ffmpeg','-loglevel','error','-i',f,'-ac','2','-ar',str(SR),'-f','f32le','-'],capture_output=True).stdout,dtype=np.float32)
+    if a.size==0: raise FileNotFoundError('audio vacio o inexistente: '+f)
     return a.reshape(-1,2).copy()
 def beep(dur,f=980,amp=0.25):
     t=np.arange(int(dur*SR))/SR; y=(np.sin(2*np.pi*f*t)+0.12*np.sin(2*np.pi*2*f*t))*amp
