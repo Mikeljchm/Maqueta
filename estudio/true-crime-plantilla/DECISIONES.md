@@ -34,3 +34,7 @@
 - **Contenido:** 90 % crímenes de pareja (infidelidad, obsesión, celos) y 10 % otros casos llamativos. El nombre debe abarcar las dos cosas.
 - **Orden:** nombre → varias opciones de logo → color (el color sale del logo). Vino/carmesí y negro/ámbar siguen en la mesa.
 - **Música:** YouTube Audio Library como base (la descarga Mikel). Pixabay Music con cuidado (tiene reclamos de Content ID de terceros). Epidemic Sound cuando el canal monetice.
+
+## Nombre: BAJO SOSPECHA (elegido por Mikel, 2 de noviembre de 2026)
+- No se encontró ningún canal ni podcast de true crime con ese nombre. Sí existe la serie de Antena 3 "Bajo sospecha" (2015–2016): al buscar el nombre aparecerá primero la serie. Revisar si el nombre de usuario @bajosospecha está libre en YouTube.
+- Seis conceptos de logo en `marca/` (logos.html + shot.js; fuentes de @fontsource en node_modules): 01 Pasional, 02 Expediente, 03 Cerradura, 04 Huella, 05 Censura, 06 Vigilancia.
