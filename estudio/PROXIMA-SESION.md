@@ -1,32 +1,35 @@
-# Traspaso: plantilla PRO de true crime (para la próxima sesión)
+# Traspaso: Bajo Sospecha (actualizado el 3 de noviembre de 2026)
 
-## Dónde quedamos (2 de noviembre de 2026)
-- Piloto **"La noche de Elm Drive"** (hermanos Menéndez) en `estudio/menendez-piloto/`. Mikel le dio **3/10**: sirvió como prueba técnica, pero no se ve profesional.
-- **Siluetas: en pausa** por decisión de Mikel. Se probaron rotoscopia (rembg 7/10; RVM ONNX mejor, pero no al nivel del clip de Pixabay del policía y el detenido), marioneta con rig (no quedó bien) y se descartó Blender por complejidad. Todo está en `estudio/siluetas/`. Lo que sí gusta: **siluetas de Pixabay sobre pantalla verde** (ej. id 276520) con fondo de luz roja.
+## Estado
+- Canal: **BAJO SOSPECHA**. Logo oficial: **Cerradura** (la O de SOSPECHA es una cerradura con luz roja). Eslogan: "TODOS LO ESTÁN". Paleta: vino, carmesí y crema. Fuentes: DM Serif Display, Inter Tight, Special Elite, IBM Plex Mono, Permanent Marker y Playfair Display (logo Pasional).
+- **Tema musical aprobado**: `estudio/true-crime-plantilla/marca/tema/tema.py` (re menor, 64 BPM, re–fa–mi–do sostenido). No va sobre la intro.
+- Voz: ElevenReader a velocidad 1.0 (Mikel graba el audio interno del teléfono y lo manda junto con el texto). Antes de monetizar pasará a ElevenLabs de pago con la misma voz.
+- Guion e investigación: el otro chat de Mikel. **Aquí solo se produce.** Los guiones del caso Haeger dicen "Relaciones Peligrosas": hay que cambiarlo a Bajo Sospecha antes de grabar.
+- Reglas, flujo y criterios: `estudio/true-crime-plantilla/MANUAL-PRODUCCION.md` y `DECISIONES.md`.
 
-## Por qué el piloto fue un 3/10 (autocrítica honesta)
-1. **Voz:** Kokoro ef_dora suena plana y con acento de España. Es lo que más resta.
-2. **Imágenes genéricas y poco relacionadas con el caso** (Alcatraz de día, fuegos artificiales, un jardín con piscina): parecen relleno.
-3. **Demasiadas pantallas negras con texto** (capítulos, contadores, periódico): se siente presentación, no documental.
-4. **Ritmo monótono:** planos largos y quietos, sin variedad de tamaño de plano ni de movimiento.
-5. **Música y sonido sintéticos y básicos**: sin un diseño de sonido real (ambientes, golpes, transiciones).
-6. **Sin material real del caso** (fotos y audio del 911) y sin mapas o lugares reales.
-7. Glitch y grano usados como adorno, no como lenguaje.
+## Kit (todo en `estudio/true-crime-plantilla/modulos/`, ver su README)
+Parte 1: intro Cerradura (`marca/animaciones/cerradura`), electro Pasional, tablero de corcho, glitch (`glitch.py`), tarjeta de capítulo, ficha de persona, última señal, mapa OSM, registro de llamadas, cita, contadores, corte de la casa, foto 2.5D (`depth25d.py`), documento UV, comentario del narrador y pantalla final.
+Parte 2: línea de tiempo, cuatro análisis forenses, veredicto, dos versiones, cadena, bolsas de evidencia, recreación con siluetas (Pixabay 279615 y 88883 con chroma key) y televisor de la cárcel.
+La mezcla de audio va en una sola pista por episodio (`mixer.py`, efectos de Mixkit; ids en los README). Los efectos no se suben al repo.
 
-## Lo que Mikel quiere
-- Calidad de **editor profesional pagado** (Discovery ID / A&E), **nada de contenido "en masa"**.
-- **Plantilla**: que cada episodio nuevo salga rápido y fácil, pero con aspecto único.
+## Página para ver los avances
+https://claude.ai/artifact/7ARwCxGduPhpEbcoMyxe4v (privada; publicar el mismo archivo para actualizarla; máximo unos 15 MB por video). Google Drive está conectado en la cuenta, pero no cargó en la sesión anterior: probarlo primero para entregar episodios completos.
 
-## Decisiones a definir al empezar (preguntar en bloque, una sola vez)
-1. **Nombre del canal** e identidad (logo, paleta, fuentes). Paleta probada: vino y rojo carmesí, serif cursiva + sans.
-2. **Voz:** la de Mikel, ElevenReader/ElevenLabs u otra. Formato y duración por episodio.
-3. **Referencias:** 2–3 canales o videos que le encanten, para extraer ritmo, encuadres y tipografía.
-4. **Política de material real:** fotos de prensa como uso justo (reglas en la skill), audio del 911 (Mikel lo descarga y lo manda), Wikimedia (bloqueada desde la nube por 429).
-5. **Música:** biblioteca con licencia (YouTube Audio Library o Pixabay Music, bajada por Mikel) en vez de generada.
+## Próximo paso: producir el episodio de Viviana Haeger
+1. Mikel manda el audio de ElevenReader (parte 1 y parte 2) con el texto corregido.
+2. Transcribir con Whisper (tiempos por palabra) → escaleta (`episodios/01-viviana-haeger/escaleta.md`) → `planos.json`.
+3. **Hoja de planos** para que Mikel apruebe antes de renderizar.
+4. Fotos reales con crédito → `fuentes.csv`. Nada de las hijas (pidieron privacidad), del cuerpo ni de personas privadas (solo íconos o siluetas). Confirmar quién aparece en cada foto antes de usarla.
+5. Render por capítulos → mezcla única → unión → entrega.
 
-## Ideas para subir el nivel
-- **Fotos animadas en 2.5D** (separar planos con profundidad y mover la cámara), documentos que entran con luz rasante, mapas reales del lugar y una cartelera de evidencias en 3D.
-- **Gramática de plano:** variar tamaño y movimiento cada 3–6 s, cortes al ritmo de la narración, respiros con ambiente.
-- **Diseño de sonido por capas:** ambiente del lugar, golpes en revelaciones, *risers*, silencio antes de los datos fuertes.
-- **Siluetas de Pixabay con pantalla verde** como recurso de recreación (lo único de siluetas que sí convenció).
-- **Plantilla en módulos:** intro de marca, arranque en frío, capítulo, mapa, ficha de persona, documento, línea de tiempo, cita, Notas de Vera y cierre. Cada episodio = guion + lista de módulos.
+## Pendientes para el chat de guiones
+- Cambiar el nombre del canal en los dos guiones.
+- Hora exacta de la llamada a Emy Guzmán (el guion dice "justo después" de las 09:36).
+- "Tres análisis forenses" en el arranque frente a las cuatro conclusiones de la parte 2.
+- Fuente de las fotos de la casa (para el crédito).
+
+## Técnicas que funcionaron
+- Módulos con datos: `template.tpl` + `build.py datos.json` → index.html. Nunca dos HTML raíz en el mismo proyecto.
+- Python 3.13: no usar `-(x)**2` en JS dentro del template; usar `Math.pow`.
+- Renders largos en segundo plano. Para la página, comprimir a ~2,5–3 Mbps si pasa de 15 MB.
+- Para usar menos cupo: trabajar en tandas de 3 módulos con una sola revisión de miniaturas.
