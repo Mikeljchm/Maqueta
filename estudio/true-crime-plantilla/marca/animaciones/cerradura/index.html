@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=1920, height=1080" />
+<script src="assets/gsap.min.js"></script>
+<style>
+@font-face{font-family:DM;src:url(assets/dm-serif-display-latin-400-normal.woff2)}
+@font-face{font-family:IT;src:url(assets/inter-tight-latin-300-normal.woff2);font-weight:300}
+@font-face{font-family:IT;src:url(assets/inter-tight-latin-500-normal.woff2);font-weight:500}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#040304}
+#root{position:relative;width:1920px;height:1080px;overflow:hidden;background:#040304}
+.full{position:absolute;inset:0}
+#cam{position:absolute;inset:0}
+#room{background:radial-gradient(ellipse 60% 60% at 28.6% 50%,#1c0a0d 0%,#0a0506 50%,#040304 100%);opacity:0}
+#spill{position:absolute;left:549.7px;top:536.5px;width:1400px;height:1400px;margin:-700px 0 0 -700px;border-radius:50%;
+  background:radial-gradient(circle,rgba(230,30,55,.30) 0%,rgba(230,30,55,.10) 22%,rgba(230,30,55,0) 50%);opacity:0;mix-blend-mode:screen}
+.box{position:absolute;top:420px;height:300px;overflow:hidden}
+.word{position:absolute;top:0;font:400 270px/300px DM;color:#efe4da;white-space:nowrap}
+#boxS{left:0;width:441.7px}
+#boxS .word{right:0}
+#boxR{left:657.7px;right:0}
+#boxR .word{left:0}
+#ring{position:absolute;left:449.7px;top:457px;width:200px;height:200px;overflow:visible}
+#bajo{position:absolute;left:0;right:0;top:332px;text-align:center;font:300 56px/1.3 IT;color:#d9c9bd;white-space:nowrap}
+#bajo span{display:inline-block;margin:0 .55em;opacity:0}
+#tag{position:absolute;left:0;right:0;top:770px;text-align:center;font:500 27px/1.4 IT;color:#e7b3b3;white-space:nowrap}
+#tag span{display:inline-block;margin:0 .3em;opacity:0}
+#tag .sp{width:.45em}
+.ln{position:absolute;top:789px;height:2px;width:170px;background:#d8263f}
+#lnL{left:578px}
+#lnR{left:1172px}
+#grain{position:absolute;left:0;top:0;width:1920px;height:1080px;opacity:.09;mix-blend-mode:overlay}
+#vig{background:radial-gradient(ellipse 85% 85% at 50% 50%,rgba(0,0,0,0) 50%,rgba(0,0,0,.8) 100%)}
+#black{background:#000;opacity:1}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+  <div id="scene" class="clip full" data-start="0" data-duration="10" data-track-index="0">
+    <div id="room" class="full"></div>
+    <div id="cam">
+      <div id="spill"></div>
+      <div class="box" id="boxS"><div class="word" id="wS">S</div></div>
+      <div class="box" id="boxR"><div class="word" id="wR">SPECHA</div></div>
+      <svg id="ring" viewBox="0 0 176 176">
+        <defs>
+          <clipPath id="kh"><circle cx="88" cy="70" r="22"/><path d="M76 82 L100 82 L108 128 L68 128 Z"/></clipPath>
+          <radialGradient id="kg" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#ffc2b0"/><stop offset=".3" stop-color="#ff2e45"/><stop offset="1" stop-color="#4a0510"/></radialGradient>
+          <filter id="bl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+          <filter id="kglow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <circle id="ringC" cx="88" cy="88" r="76" fill="none" stroke="#2a2022" stroke-width="22"/>
+        <g id="glowK" filter="url(#kglow)" opacity="0">
+          <g clip-path="url(#kh)">
+            <rect x="60" y="40" width="56" height="96" fill="url(#kg)"/>
+            <rect id="flick" x="60" y="40" width="56" height="96" fill="#ffd9cc" opacity="0"/>
+            <g id="shadow" filter="url(#bl)"><ellipse cx="0" cy="60" rx="9" ry="10" fill="#120205"/><rect x="-14" y="68" width="28" height="70" rx="12" fill="#120205"/></g>
+            <image id="eye" href="assets/eye.png" x="50" y="32" width="76" height="76" opacity="0" preserveAspectRatio="xMidYMid slice"/>
+          </g>
+        </g>
+      </svg>
+      <div id="bajo"></div>
+      <div class="ln" id="lnL"></div><div class="ln" id="lnR"></div>
+      <div id="tag"></div>
+    </div>
+    <div id="vig" class="full"></div>
+    <canvas id="grain" width="960" height="540"></canvas>
+    <div id="black" class="full"></div>
+  </div>
+  <audio id="mix" src="assets/mix.wav" data-start="0" data-duration="10" data-track-index="1" data-volume="1"></audio>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+const $=s=>document.querySelector(s);
+'BAJO'.split('').forEach(c=>{const s=document.createElement('span');s.textContent=c;$('#bajo').appendChild(s)});
+'TODOS LO ESTÁN'.split('').forEach(c=>{const s=document.createElement('span');if(c===' '){s.className='sp';s.innerHTML='&nbsp;'}else s.textContent=c;$('#tag').appendChild(s)});
+const KX=549.7, KY=536.5;
+gsap.set('#cam',{transformOrigin:KX+'px '+KY+'px'});
+gsap.set('.ln',{scaleX:0});
+gsap.set('#lnL',{transformOrigin:'100% 50%'}); gsap.set('#lnR',{transformOrigin:'0% 50%'});
+
+// --- 1. Detrás de la puerta (0 - 2.6)
+tl.fromTo('#black',{opacity:1},{opacity:0,duration:0.5,immediateRender:false},0.2);
+tl.fromTo('#cam',{scale:17,x:410,y:-60},{scale:14.5,x:410,y:-60,duration:2.6,ease:'sine.inOut',immediateRender:false},0);
+tl.fromTo('#glowK',{opacity:0},{opacity:1,duration:1.0,ease:'power2.in',immediateRender:false},0.35);
+tl.fromTo('#spill',{opacity:0},{opacity:1,duration:1.0,ease:'power2.in',immediateRender:false},0.35);
+// sombra que cruza al otro lado
+tl.fromTo('#shadow',{x:40},{x:140,duration:0.9,ease:'sine.inOut',immediateRender:false},1.55);
+// --- 2. La cámara se aleja: la cerradura era la O (2.6 - 3.6)
+tl.fromTo('#cam',{scale:14.5,x:410,y:-60},{scale:1,x:0,y:0,duration:1.05,ease:'expo.inOut',immediateRender:false},2.6);
+tl.fromTo('#ringC',{attr:{stroke:'#2a2022'}},{attr:{stroke:'#efe4da'},duration:0.6,ease:'power2.in',immediateRender:false},3.0);
+tl.fromTo('#room',{opacity:0},{opacity:1,duration:0.8,immediateRender:false},3.0);
+tl.fromTo('#wS',{x:160,opacity:0},{x:0,opacity:1,duration:0.55,ease:'power4.out',immediateRender:false},3.42);
+tl.fromTo('#wR',{x:-980},{x:0,duration:0.6,ease:'power4.out',immediateRender:false},3.40);
+gsap.set('#wR',{x:-980}); gsap.set('#wS',{x:160,opacity:0});
+// impacto 3.6
+const sh=[[9,-5],[-7,4],[5,3],[-3,-2],[1,1],[0,0]];
+sh.forEach((d,i)=>tl.to('#cam',{x:d[0],y:d[1],duration:0.045,ease:'none'},3.66+i*0.045));
+tl.fromTo('#spill',{scale:1},{scale:1.25,duration:0.12,yoyo:true,repeat:1,ease:'power2.out',immediateRender:false},3.6);
+// --- 3. BAJO, cuatro clics de cerradura (4.1 - 4.7)
+['#bajo span:nth-child(1)','#bajo span:nth-child(2)','#bajo span:nth-child(3)','#bajo span:nth-child(4)'].forEach((s,i)=>{
+  tl.fromTo(s,{opacity:0,y:-18},{opacity:1,y:0,duration:0.16,ease:'back.out(3)',immediateRender:false},4.1+i*0.17);});
+// --- 4. Eslogan (5.0 - 5.9)
+tl.fromTo('.ln',{scaleX:0},{scaleX:1,duration:0.7,ease:'power3.out',immediateRender:false},5.0);
+tl.fromTo('#tag span',{opacity:0,filter:'blur(6px)'},{opacity:1,filter:'blur(0px)',duration:0.4,stagger:{each:0.035,from:'center'},immediateRender:false},5.1);
+tl.fromTo('#cam',{scale:1},{scale:1.04,duration:2.1,ease:'sine.inOut',immediateRender:false},5.3);
+// --- 5. Remate: alguien mira (7.4 - 9.1)
+tl.to(['#bajo','#tag','.ln'],{opacity:0,duration:0.4},7.3);
+tl.fromTo('#cam',{scale:1.04,x:0,y:0},{scale:13,x:410,y:40,duration:1.3,ease:'power3.inOut',immediateRender:false},7.4);
+tl.fromTo('#eye',{opacity:0},{opacity:1,duration:0.6,ease:'power2.inOut',immediateRender:false},8.0);
+tl.fromTo('#cam',{scale:13},{scale:13.8,duration:0.4,ease:'none',immediateRender:false},8.7);
+tl.fromTo('#black',{opacity:0},{opacity:1,duration:0.02,immediateRender:false},9.1);
+
+// parpadeo de luz (TV al otro lado) + sombra que tapa la luz
+function flick(t){let f=0.5+0.22*Math.sin(t*23.0)+0.16*Math.sin(t*41.3+1.2)+0.12*Math.sin(t*7.7);
+  if(t>1.55&&t<2.45){const u=(t-1.55)/0.9; f-=0.5*Math.sin(u*Math.PI);} return Math.max(0,Math.min(1,f));}
+const gc=$('#grain').getContext('2d'); const gi=gc.createImageData(960,540);
+function grain(t){const fr=Math.floor(t*24); let s=(fr*9301+49297)%233280+1; const d=gi.data;
+  for(let i=0;i<d.length;i+=4){s=(s*16807)%2147483647; const v=s&255; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;} gc.putImageData(gi,0,0);}
+const clock={t:0};
+tl.fromTo(clock,{t:0},{t:10,duration:10,ease:'none',immediateRender:false,onUpdate:()=>{const t=tl.time(); const f=flick(t);
+  $('#flick').setAttribute('opacity',(f*0.35).toFixed(3)); $('#spill').style.filter='brightness('+(0.7+f*0.6).toFixed(3)+')'; grain(t);}},0);
+window.__timelines["main"] = tl;
+tl.seek(0);
+</script>
+</body>
+</html>
