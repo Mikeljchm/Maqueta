@@ -22,10 +22,14 @@
 - Se usa para pasar de una escena a otra, sobre todo en saltos de tiempo y cambios de capítulo. No en cada corte, para que siga golpeando.
 
 ## Sonido
-- **Tema propio del canal** (identidad): motivo corto en intro, tarjetas de capítulo y cierre, con variaciones.
+- **Tema propio del canal: APROBADO por Mikel (3 de noviembre de 2026).** Re menor, 64 BPM. Motivo de piano re–fa–mi–do sostenido (la última nota queda sin resolver), drone, latido, cello y tic de reloj. Versión completa de 57 s y firma corta de 11 s (`marca/tema/tema.py`). Va en las tarjetas de capítulo, en el cierre y como fondo; **no sobre la intro de la cerradura**, que se queda con su propio sonido. Pulirlo más adelante con un piano muestreado de verdad.
 - Fondos de suspenso (drones y pads como los de los logos) bajo la narración.
 - **Efectos literales sincronizados con la palabra:** "le disparó" → disparo, negro y zumbido de oídos; puerta, teléfono, máquina de escribir, obturador en las fotos. Con buen gusto: nada de gritos ni sonidos de violencia gráfica.
 - Silencio total en los golpes narrativos ("Era Viviana.").
 
+## Entregas
+- Piezas de menos de 15 MB: página privada de claude.ai (solo para ver; la descarga desde ahí falla).
+- Episodios: Google Drive. Está conectado en la cuenta de Mikel, pero no cargó en esta sesión: revisar en una sesión nueva.
+
 ## Referencias de estilo
-- Discovery ID (recreaciones, rótulos fuertes, golpes y destellos) + documental de Netflix (2.5D, silencios, archivo, ritmo pausado). Mikel enviará clips de referencia (1–2 min, grabación de pantalla) para analizar cortes, tipografía, color y sonido.
+- Discovery ID (recreaciones, rótulos fuertes, golpes y destellos) + documental de Netflix (2.5D, silencios, archivo, ritmo pausado). Mikel decidió no mandar clips (gastan mucho contexto). Netflix para contar, Discovery ID para golpear: 80 % calma y 20 % impacto.
