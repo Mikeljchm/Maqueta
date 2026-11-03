@@ -21,3 +21,8 @@ Demo (3 de noviembre de 2026): tablero 12 s → glitch → capítulo 4.5 s. Efec
 - **comentario/**: comentario del narrador. La imagen se congela con flash, pasa a blanco y negro, entra una banda roja y la frase sarcástica a marcador. La ironía va contra las excusas o los errores (aquí, la revisión policial), nunca contra la víctima.
 - **final/**: pantalla final de 15 s con logo, eslogan, dos espacios para los videos sugeridos de YouTube y el círculo de suscripción. Suena el tema del canal.
 - **foto25d/depth25d.py**: foto en 2.5D con profundidad estimada por IA (Depth Anything V2 Small, en CPU): parallax y zoom suaves. `python3 depth25d.py foto.jpg salida.mp4 6 90 1.10`. Después: corrección de color con ffmpeg (eq, vignette, noise). Requiere torch (CPU), transformers y opencv-python-headless.
+
+## Parte 2 (3 de noviembre de 2026)
+- **timeline/**: línea de tiempo horizontal. La cámara viaja de fecha en fecha y la línea roja avanza; las fechas clave tienen punto rojo y golpe grave. Cierra con la vista completa. Campos: título, gap, inicio, paso, eventos [fecha, texto, clave].
+- **analisis/**: tarjetas que se dan vuelta (perspectiva 3D) con conclusión y sello. Campos: título, subtítulo, inicio, paso, items {dorso, k, t, r, sello, clave}. Ojo: el guion habla de "tres análisis forenses" en el arranque y aquí van cuatro conclusiones (incluye el informe de octubre de 2010). Alinearlo con el chat de guiones.
+- **veredicto/**: dos fichas enfrentadas con sello (ABSUELTO / CULPABLE), golpe de mazo (2182 + 559) y frase al pie.
