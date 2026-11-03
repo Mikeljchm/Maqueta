@@ -1,0 +1,15 @@
+# Generados al renderizar (gsap, audio, fotos) y HTML salidos de build.py
+modulos/*/assets/
+marca/animaciones/*/assets/
+modulos/analisis/index.html
+modulos/cadena/index.html
+modulos/cita/index.html
+modulos/contadores/index.html
+modulos/evidencia/index.html
+modulos/ficha/index.html
+modulos/hora/index.html
+modulos/mapa/index.html
+modulos/registro/index.html
+modulos/timeline/index.html
+modulos/veredicto/index.html
+modulos/versiones/index.html
