@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/lib/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Montserrat"; font-weight: 800; src: url(assets/fonts/montserrat-latin-800-normal.woff2) format("woff2"); }
+      @font-face { font-family: "Montserrat"; font-weight: 900; src: url(assets/fonts/montserrat-latin-900-normal.woff2) format("woff2"); }
+      @font-face { font-family: "Inter Tight"; font-weight: 500; src: url(assets/fonts/inter-tight-latin-500-normal.woff2) format("woff2"); }
+      @font-face { font-family: "Inter Tight"; font-weight: 700; src: url(assets/fonts/inter-tight-latin-700-normal.woff2) format("woff2"); }
+      :root {
+        --ground: #0b0b0c;
+        --ink: #ffffff;
+        --red: #e3262e;
+        --logo-bg: #222023;
+        --font-display: "Montserrat", sans-serif;
+        --font-body: "Inter Tight", sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--ground); }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--ground); font-family: var(--font-body); color: var(--ink); }
+      .scene { position: absolute; inset: 0; overflow: hidden; }
+      .fill { position: absolute; inset: 0; }
+
+      /* ---------- Escena 1: recorrido ---------- */
+      #s1 { background: radial-gradient(ellipse at 50% 40%, #26262a 0%, #0b0b0c 70%); }
+      #s1 .stage { position: absolute; inset: 0; transform-origin: 66% 50%; }
+      #win { position: absolute; left: 700px; top: 110px; width: 1140px; height: 860px; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 40px 120px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.08); }
+      #win .bar { position: absolute; left: 0; right: 0; top: 0; height: 52px; background: #ececee; display: flex; align-items: center; padding-left: 22px; gap: 10px; z-index: 2; }
+      #win .dot { width: 14px; height: 14px; border-radius: 50%; background: #c9c9cc; }
+      #win .url { margin-left: 26px; height: 32px; width: 520px; border-radius: 16px; background: #fff; color: #444; font: 500 18px var(--font-body); display: flex; align-items: center; padding-left: 18px; }
+      #win .view { position: absolute; left: 0; right: 0; top: 52px; bottom: 0; overflow: hidden; }
+      #pagina { position: absolute; left: 0; top: 0; width: 1140px; display: block; }
+      .cap { position: absolute; left: 90px; top: 380px; width: 580px; z-index: 5; }
+      .cap .line { overflow: hidden; padding: 4px 0; }
+      .cap .w { display: inline-block; font: 900 76px/0.98 var(--font-display); letter-spacing: -0.02em; text-transform: uppercase; color: #fff; text-shadow: 0 6px 30px rgba(0,0,0,.55); }
+      .cap .tag { display: inline-block; background: var(--red); color: #fff; font: 700 26px var(--font-body); letter-spacing: .14em; padding: 8px 16px; margin-bottom: 14px; text-transform: uppercase; }
+      #flash { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 9; }
+
+      /* ---------- Escena 2: destacados ---------- */
+      .prod { background: #eee; }
+      .prod .ph { position: absolute; left: 0; top: -70px; width: 1920px; height: 1280px; object-fit: cover; transform-origin: 85% 75%; }
+      .prod .info { position: absolute; right: 80px; top: 70px; display: flex; gap: 0; }
+      .prod .cnt { display: inline-block; background: var(--red); color: #fff; font: 900 24px var(--font-display); letter-spacing: .08em; padding: 10px 18px; }
+      .prod .kick { display: inline-block; background: #0b0b0c; color: #fff; font: 700 24px var(--font-body); letter-spacing: .2em; padding: 10px 18px; text-transform: uppercase; }
+      .prod .name { margin-top: 12px; font: 900 64px/1 var(--font-display); color: #0b0b0c; text-transform: uppercase; letter-spacing: -0.01em; }
+      .prod .num { position: absolute; left: 80px; bottom: 60px; font: 900 150px/1 var(--font-display); color: transparent; -webkit-text-stroke: 3px #0b0b0c; }
+      .prod .num small { font-size: 50px; -webkit-text-stroke: 2px #0b0b0c; }
+      .prod .wipe { position: absolute; inset: 0; background: var(--red); transform-origin: 0 50%; }
+
+      /* ---------- Escena 3: envío el mismo día ---------- */
+      #s3 { background: #0b0b0c; }
+      #barra { position: absolute; left: 0; top: 520px; width: 1920px; height: 40px; transform-origin: 50% 50%; }
+      #s3 .big { position: absolute; left: 0; right: 0; top: 250px; text-align: center; }
+      #s3 .big .l1 { font: 900 150px/1 var(--font-display); color: #fff; letter-spacing: -0.02em; }
+      #s3 .big .l2 { font: 900 200px/1 var(--font-display); color: var(--red); letter-spacing: -0.03em; margin-top: 6px; }
+      #s3 .rule { position: absolute; left: 560px; width: 800px; top: 740px; height: 10px; background: var(--red); transform-origin: 0 50%; }
+      #s3 .sub { position: absolute; left: 0; right: 0; top: 790px; text-align: center; font: 500 40px var(--font-body); color: #d8d8d8; letter-spacing: .02em; }
+      #s3 .lines { position: absolute; inset: 0; }
+      #s3 .lines i { position: absolute; height: 4px; background: rgba(255,255,255,.22); border-radius: 2px; }
+
+      /* ---------- Escena 4: logo ---------- */
+      #s4 { background: var(--logo-bg); }
+      #logo { position: absolute; left: 410px; top: 430px; width: 1100px; transform-origin: 50% 50%; }
+      #s4 .web { position: absolute; left: 0; right: 0; top: 640px; text-align: center; font: 700 46px var(--font-body); letter-spacing: .18em; color: #fff; }
+      #s4 .cats { position: absolute; left: 0; right: 0; top: 715px; text-align: center; font: 500 30px var(--font-body); letter-spacing: .1em; color: #a9a6ad; text-transform: uppercase; }
+      #s4 .ul { position: absolute; left: 860px; width: 200px; top: 608px; height: 6px; background: var(--red); transform-origin: 50% 50%; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1920" data-height="1080">
+
+      <!-- Escena 1: recorrido por la portada (0–6 s) -->
+      <div id="s1" class="scene clip" data-start="0" data-duration="6" data-track-index="0">
+        <div class="stage">
+          <div id="win">
+            <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">untdkicks.com/es</span></div>
+            <div class="view"><img id="pagina" data-layout-allow-overflow src="assets/img/pagina.jpg" alt="" /></div>
+          </div>
+        </div>
+        <div class="cap" id="cap1">
+          <div class="line"><span class="tag w1">United Kicks</span></div>
+          <div class="line"><span class="w w2">Sneakers</span></div>
+          <div class="line"><span class="w w3">auténticos</span></div>
+        </div>
+        <div class="cap" id="cap2" data-layout-allow-overlap>
+          <div class="line"><span class="w w4">Los pares</span></div>
+          <div class="line"><span class="w w5">más</span></div>
+          <div class="line"><span class="w w6">buscados</span></div>
+        </div>
+        <div id="flash"></div>
+      </div>
+
+      <!-- Escena 2: productos destacados (6–14 s) -->
+      <div id="pr1" class="scene prod clip" data-start="6" data-duration="2" data-track-index="1">
+        <img class="ph" src="assets/img/p1.jpg" alt="" />
+        <div class="info"><span class="kick">Destacados</span><span class="cnt">01 / 04</span></div>
+      </div>
+      <div id="pr2" class="scene prod clip" data-start="8" data-duration="2" data-track-index="2">
+        <img class="ph" src="assets/img/p2.jpg" alt="" />
+        <div class="wipe"></div>
+        <div class="info"><span class="kick">Destacados</span><span class="cnt">02 / 04</span></div>
+      </div>
+      <div id="pr3" class="scene prod clip" data-start="10" data-duration="2" data-track-index="3">
+        <img class="ph" src="assets/img/p3.jpg" alt="" />
+        <div class="wipe"></div>
+        <div class="info"><span class="kick">Destacados</span><span class="cnt">03 / 04</span></div>
+      </div>
+      <div id="pr4" class="scene prod clip" data-start="12" data-duration="2" data-track-index="4">
+        <img class="ph" src="assets/img/p4.jpg" alt="" />
+        <div class="wipe"></div>
+        <div class="info"><span class="kick">Destacados</span><span class="cnt">04 / 04</span></div>
+      </div>
+
+      <!-- Escena 3: envío el mismo día (14–17 s) -->
+      <div id="s3" class="scene clip" data-start="14" data-duration="3" data-track-index="5">
+        <div class="lines">
+          <i style="left:-200px;top:180px;width:420px"></i><i style="left:-300px;top:320px;width:260px"></i>
+          <i style="left:-250px;top:880px;width:380px"></i><i style="left:-180px;top:960px;width:220px"></i>
+        </div>
+        <img id="barra" src="assets/img/barra.jpg" alt="" />
+        <div class="big">
+          <div class="l1">ENVÍO</div>
+          <div class="l2">EL MISMO DÍA</div>
+        </div>
+        <div class="rule"></div>
+        <div class="sub">Pedidos de lunes a viernes antes de las 3 PM (PST)</div>
+      </div>
+
+      <!-- Escena 4: cierre con logo (17–20 s) -->
+      <div id="s4" class="scene clip" data-start="17" data-duration="3" data-track-index="6">
+        <img id="logo" src="assets/img/logo.png" alt="United Kicks" />
+        <div class="ul"></div>
+        <div class="web">UNTDKICKS.COM</div>
+        <div class="cats">Sneakers · Ropa · Coleccionables</div>
+      </div>
+
+      <audio id="musica" class="clip" src="assets/audio/beat.wav" data-start="0" data-duration="20" data-track-index="7" data-volume="1"></audio>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // ---- Escena 1 ----
+      tl.fromTo("#s1 .stage", { scale: 1.12, opacity: 0, filter: "blur(10px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.9, ease: "power3.out" }, 0);
+      // recorrido: bajar por la portada con paradas
+      tl.to("#pagina", { y: -590, duration: 1.1, ease: "power2.inOut" }, 1.4);
+      tl.to("#pagina", { y: -1170, duration: 1.0, ease: "power2.inOut" }, 2.9);
+      tl.to("#pagina", { y: -1890, duration: 1.0, ease: "power2.inOut" }, 4.2);
+      // textos
+      tl.from("#cap1 .w1", { yPercent: 110, duration: 0.45, ease: "power3.out" }, 0.4);
+      tl.from("#cap1 .w2", { yPercent: 110, duration: 0.5, ease: "power3.out" }, 0.55);
+      tl.from("#cap1 .w3", { yPercent: 110, duration: 0.5, ease: "power3.out" }, 0.68);
+      tl.to("#cap1 .line > *", { yPercent: -115, opacity: 0, duration: 0.35, ease: "power2.in", stagger: 0.05 }, 2.55);
+      tl.from("#cap2 .w4", { yPercent: 110, duration: 0.5, ease: "power3.out" }, 3.0);
+      tl.from("#cap2 .w5", { yPercent: 110, duration: 0.5, ease: "power3.out" }, 3.13);
+      tl.from("#cap2 .w6", { yPercent: 110, duration: 0.5, ease: "power3.out" }, 3.26);
+      tl.to("#cap2 .line > *", { yPercent: -115, opacity: 0, duration: 0.3, ease: "power2.in", stagger: 0.05 }, 5.2);
+      // zoom de salida hacia los productos + destello
+      tl.to("#s1 .stage", { scale: 1.9, duration: 0.6, ease: "power3.in" }, 5.4);
+      tl.to("#flash", { opacity: 1, duration: 0.18, ease: "none" }, 5.82);
+
+      // ---- Escena 2: destacados ----
+      const prods = [["#pr1", 6], ["#pr2", 8], ["#pr3", 10], ["#pr4", 12]];
+      prods.forEach(([id, t], i) => {
+        if (i === 0) {
+          tl.fromTo(id + " .ph", { scale: 1.2, filter: "brightness(2)" }, { scale: 1.0, filter: "brightness(1)", duration: 0.7, ease: "expo.out" }, t);
+          tl.to(id + " .ph", { scale: 1.06, duration: 1.3, ease: "none" }, t + 0.7);
+        } else {
+          tl.fromTo(id + " .wipe", { scaleX: 1 }, { scaleX: 0, transformOrigin: "100% 50%", duration: 0.35, ease: "power3.inOut" }, t + 0.02);
+          tl.fromTo(id + " .ph", { scale: 1.12 }, { scale: 1.03, duration: 2.0, ease: "power2.out" }, t);
+        }
+        tl.from(id + " .kick", { y: -30, opacity: 0, duration: 0.35, ease: "power3.out" }, t + 0.25);
+        tl.from(id + " .cnt", { x: 40, opacity: 0, duration: 0.35, ease: "power3.out" }, t + 0.33);
+      });
+
+      // ---- Escena 3: envío ----
+      tl.fromTo("#barra", { scale: 2.0, opacity: 1 }, { scale: 3.0, duration: 0.7, ease: "power2.in" }, 14);
+      tl.to("#barra", { opacity: 0, duration: 0.12 }, 14.62);
+      tl.fromTo("#s3 .l1", { scale: 2.2, opacity: 0, filter: "blur(14px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.35, ease: "power4.out" }, 14.7);
+      tl.fromTo("#s3 .l2", { scale: 2.4, opacity: 0, filter: "blur(16px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power4.out" }, 14.95);
+      tl.fromTo("#s3 .big", { x: 0 }, { x: 0, keyframes: [{ x: -14, duration: 0.04 }, { x: 10, duration: 0.04 }, { x: -6, duration: 0.04 }, { x: 0, duration: 0.04 }] }, 15.05);
+      tl.from("#s3 .rule", { scaleX: 0, duration: 0.5, ease: "power3.out" }, 15.25);
+      tl.from("#s3 .sub", { y: 30, opacity: 0, duration: 0.45, ease: "power3.out" }, 15.4);
+      tl.to("#s3 .lines i", { x: 2600, duration: 0.9, ease: "power1.in", stagger: 0.12 }, 14.7);
+      tl.to("#s3 .big", { scale: 1.06, duration: 1.6, ease: "none" }, 15.4);
+
+      // ---- Escena 4: logo ----
+      tl.fromTo("#logo", { clipPath: "inset(0 100% 0 0)", scale: 1.1 }, { clipPath: "inset(0 0% 0 0)", scale: 1, duration: 0.8, ease: "power3.out" }, 17.05);
+      tl.from("#s4 .ul", { scaleX: 0, duration: 0.45, ease: "power3.out" }, 17.7);
+      tl.from("#s4 .web", { y: 30, opacity: 0, duration: 0.45, ease: "power3.out" }, 17.9);
+      tl.from("#s4 .cats", { y: 24, opacity: 0, duration: 0.45, ease: "power3.out" }, 18.1);
+      tl.to("#logo", { scale: 1.03, duration: 2.1, ease: "none" }, 17.85);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
