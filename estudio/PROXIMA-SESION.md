@@ -15,6 +15,14 @@ La mezcla de audio va en una sola pista por episodio (`mixer.py`, efectos de Mix
 ## Página para ver los avances
 https://claude.ai/artifact/7ARwCxGduPhpEbcoMyxe4v (privada; publicar el mismo archivo para actualizarla; máximo unos 15 MB por video). Google Drive está conectado en la cuenta, pero no cargó en la sesión anterior: probarlo primero para entregar episodios completos.
 
+## Avance del 3/11 (noche)
+- Audio único de 34:02 + `guion.txt` en `episodios/01-viviana-haeger/`. **El texto y el audio mandan** sobre cualquier nota anterior.
+- Intro Cerradura aprobada: va justo después de "…nadie recordaba haber oído hablar de un secuestro." (solo música).
+- Hechos: `whisper.json`, escaleta completa (86 bloques), `planos.json` y `hoja-planos.html` con miniaturas. Scripts en `herramientas/` (`planos_data.py` tiene los bloques, recursos R y la lista de FOTOS).
+- Mikel va a buscar las 15 fotos reales y las sube en un zip con los nombres de la hoja.
+- **Falta la clave `PIXABAY_API_KEY`** en el entorno: con ella, buscar clips con la API (vista previa en la hoja, `pixabay.json` {búsqueda: {id, page, thumb}}) y volver a correr `hoja2.py`. Mikel pidió clips **no genéricos**.
+- Regenerar las miniaturas: copiar gsap 3.12.5 a `assets/` de cada módulo, `build.py viviana.json` y `node shots.js`.
+
 ## Próximo paso: producir el episodio de Viviana Haeger
 1. Mikel manda el audio de ElevenReader (parte 1 y parte 2) con el texto corregido.
 2. Transcribir con Whisper (tiempos por palabra) → escaleta (`episodios/01-viviana-haeger/escaleta.md`) → `planos.json`.
