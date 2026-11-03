@@ -1,4 +1,4 @@
-# Plantilla PRO de true crime: decisiones (3 de noviembre de 2026)
+# Plantilla PRO de true crime: decisiones (2 de noviembre de 2026)
 
 ## Confirmado
 | Tema | Decisión |
