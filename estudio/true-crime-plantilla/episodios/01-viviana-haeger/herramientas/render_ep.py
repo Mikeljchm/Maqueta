@@ -7,6 +7,7 @@ W=S+'/w'; os.makedirs(W+'/clips',exist_ok=True); os.makedirs(W+'/mods',exist_ok=
 FPS=30; ONLY=set(map(int,sys.argv[1].split(','))) if len(sys.argv)>1 and sys.argv[1]!='all' else None
 K=open(S+'/.pxkey').read().strip(); UA={'User-Agent':'Mozilla/5.0'}; PX=json.load(open(S+'/pixabay.json'))
 FONT=S+'/SpecialElite.ttf'
+FIXED={'casa','comentario','documento','tv','recreacion','capitulo','final','tablero'}
 def sh(c): subprocess.run(c,check=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
 def ff(*a): sh(['ffmpeg','-v','error','-y',*a])
 def dur(f): return float(subprocess.run(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',f],capture_output=True,text=True).stdout)
@@ -48,6 +49,8 @@ def render_mod(name,data,L):
         if name=='comentario' and 'frase' in data:
             h=re.sub(r'const DATA=\{.*?\};','const DATA='+json.dumps(dict(frase=data['frase'],sub=data['sub'],freeze=1.2),ensure_ascii=False)+';',h,count=1)
         open(d+'/index.html','w').write(h)
+    if name=='timeline' and len(data.get('eventos',[1]*9))<6:
+        h=open(d+'/index.html').read().replace("scale:0.42,transformOrigin:'50% 50%',",'');open(d+'/index.html','w').write(h)
     if name=='comentario': data['_cv']=1
     mod_assets(d,dd,data)
     if name=='recreacion': shutil.copy(W+'/recre_bg.mp4',d+'/assets/recre_bg.mp4')
@@ -69,8 +72,8 @@ def clip_foto(f,L,txt,out):
     fg=im.copy(); fg.thumbnail((1920,1080)) if fg.width/fg.height>16/9 else fg.thumbnail((1920*2,1080)); fg=ImageOps.contain(im,(1920,1080))
     bg.paste(fg,((1920-fg.width)//2,(1080-fg.height)//2)); p=out+'.png'; bg.resize((3840,2160)).save(p)
     n=max(1,int(L*FPS)); ff('-loop','1','-i',p,'-vf',f"zoompan=z='1+0.10*on/{n}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={n}:s=1920x1080:fps={FPS},"+GRADE+dtxt(txt),'-frames:v',str(n),*ENC,out); os.remove(p)
-def fit(src,L,out):
-    ff('-i',src,'-vf',f'tpad=stop_mode=clone:stop_duration={L+1:.2f},trim=duration={L:.3f},setpts=PTS-STARTPTS,fps={FPS}',*ENC,out)
+def fit(src,L,out,cut=None):
+    ff(*(['-t',f'{cut:.3f}'] if cut else []),'-i',src,'-vf',f'tpad=stop_mode=clone:stop_duration={L+1:.2f},trim=duration={L:.3f},setpts=PTS-STARTPTS,fps={FPS}',*ENC,out)
 # ---------- plan
 P=json.load(open(E+'/planos.json'))['planos']; AUD=E+'/audio.mp3'; AD=dur(AUD); P[-1]['fin']=AD
 jobs=[]
@@ -96,7 +99,7 @@ print('rápidos listos',flush=True)
 for i,k,s,L,out in jobs:
     if s[0] in ('mod','cap'):
         if os.path.exists(out): continue
-        try: fit(render_mod('capitulo' if s[0]=='cap' else s[1],s[3],L),L,out); print('ok',i,k,s[1] or 'cap',flush=True)
+        try: nm='capitulo' if s[0]=='cap' else s[1]; src=render_mod(nm,s[3],L); nd=dur(src); fit(src,L,out,nd*0.9 if (nm in FIXED and L>nd) else None); print('ok',i,k,s[1] or 'cap',flush=True)
         except Exception as e: print('FALLA',i,k,s[1],str(e)[:300],flush=True); ff('-f','lavfi','-i',f'color=0x22121a:s=1920x1080:r={FPS}','-t',f'{L:.3f}',*ENC,out)
 if ONLY: sys.exit()
 intro=W+'/clips/intro.mp4'

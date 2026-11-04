@@ -14,3 +14,4 @@ modulos/timeline/index.html
 modulos/veredicto/index.html
 modulos/versiones/index.html
 episodios/*/audio.mp3
+episodios/*/render/
