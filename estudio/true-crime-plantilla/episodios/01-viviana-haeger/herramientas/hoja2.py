@@ -13,6 +13,9 @@ def tile(r):
         if v=='mapa': return '<div class="ph map">MAPA OpenStreetMap<br><small>Chile → Puerto Varas → Parque Stocker</small></div>'
         return f'<img src="hoja/{v}.jpg" loading=lazy alt="{v}"><span class=lb>{v}</span>'
     if k=='n': return '<div class="ph neg">NEGRO · SILENCIO</div>'
+    if k=='f' and os.path.exists(E+'/fotos/'+v):
+        subprocess.run(['ffmpeg','-v','error','-y','-i',E+'/fotos/'+v,'-vf','scale=480:-2','-q:v','5',E+'/hoja/f-'+v],check=True)
+        return f'<img src="hoja/f-{v}" alt="{v}"><span class=lb>FOTO {v}</span>'
     if k=='f': return f'<div class="ph foto">FOTO REAL<br><b>{v}</b><br><small>{html.escape(FOTOS[v])}</small></div>'
     c = px.get(v)
     if c: return f'<a href="{c["page"]}" target=_blank><img src="{c["thumb"]}" loading=lazy alt="clip"></a><span class=lb>Pixabay {c["id"]}</span>'
