@@ -20,7 +20,7 @@ https://claude.ai/artifact/7ARwCxGduPhpEbcoMyxe4v (privada; publicar el mismo ar
 - Intro Cerradura aprobada: va justo después de "…nadie recordaba haber oído hablar de un secuestro." (solo música).
 - Hechos: `whisper.json`, escaleta completa (86 bloques), `planos.json` y `hoja-planos.html` con miniaturas. Scripts en `herramientas/` (`planos_data.py` tiene los bloques, recursos R y la lista de FOTOS).
 - Mikel va a buscar las 15 fotos reales y las sube en un zip con los nombres de la hoja.
-- **Falta la clave `PIXABAY_API_KEY`** en el entorno: con ella, buscar clips con la API (vista previa en la hoja, `pixabay.json` {búsqueda: {id, page, thumb}}) y volver a correr `hoja2.py`. Mikel pidió clips **no genéricos**.
+- Clips de Pixabay elegidos (`pixabay.json`, vista previa en la hoja). La clave no está en el repo: en sesiones nuevas usar `PIXABAY_API_KEY` del entorno o pedírsela a Mikel. El clip del perro (210733) es de 1080 px: revisar si es vertical.
 - Regenerar las miniaturas: copiar gsap 3.12.5 a `assets/` de cada módulo, `build.py viviana.json` y `node shots.js`.
 
 ## Próximo paso: producir el episodio de Viviana Haeger
