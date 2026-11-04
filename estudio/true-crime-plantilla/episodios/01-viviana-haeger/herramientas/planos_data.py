@@ -89,8 +89,8 @@ P = [
 ]
 # id -> lista de recursos: m:módulo, f:foto real (archivo que sube Mikel), x:búsqueda en Pixabay
 R = {1:"f:01-casa-exterior-noche.jpg|x:dark attic flashlight",2:"f:02-cartel-secuestrada.jpg|x:police divers lake|x:soldiers search hills",3:"m:contadores",4:"m:contadores",
-5:"m:cerradura|x:lake volcano snow drone",6:"m:ficha|f:06-viviana.jpg",7:"x:bus stop rain woman|m:recreacion",8:"m:ficha|f:08-jaime.jpg|f:08-casa-la-tercera.jpg",
-9:"m:casa",10:"m:capitulo|x:frosty morning road school",11:"m:registro",12:"m:registro",13:"m:hora",14:"m:cita",15:"m:comentario",16:"x:forest road walking fog",
+5:"m:cerradura|x:lake volcano snow drone",6:"m:ficha|f:06-viviana.jpg",7:"x:cemetery graves fog|m:recreacion",8:"m:ficha|f:08-jaime.jpg|f:08-casa-la-tercera.jpg",
+9:"m:casa",10:"m:capitulo|x:frosty morning road school",11:"m:registro",12:"m:registro",13:"m:hora",14:"m:cita",15:"m:comentario",16:"x:country road forest trees",
 17:"m:mapa",18:"m:tablero",19:"m:documento|f:19-retrato-hablado.jpg",20:"m:contadores",21:"m:casa|f:21-detectives-pdi.jpg",22:"m:casa|m:cita",23:"x:divers searching lake|x:search party forest",
 24:"f:24-carteles-jaime.jpg|x:poster wall street|m:contadores",25:"m:cita",26:"m:documento",27:"m:comentario",28:"m:contadores",29:"x:police dog search forest",30:"m:contadores",31:"m:cita",
 32:"m:versiones",33:"x:window curtain wind cold",34:"m:hora|m:casa",35:"n:negro",36:"f:36-familia-haeger-reja.jpg",37:"m:evidencia|m:casa",38:"x:kitchen night window|m:cita",

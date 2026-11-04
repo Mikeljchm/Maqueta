@@ -18,7 +18,7 @@ Basada en `guion.txt` y en el audio (`whisper.json`). **El texto y el audio mand
 |---|---|---|---|---|
 | 5 | 01:34.8–01:59.7 | INTRO CERRADURA y luego Puerto Varas | La intro va antes de esta frase, solo música. Después, mapa Chile → Los Lagos → Puerto Varas; dron del lago y los volcanes | Intro; ambiente de lago y viento |
 | 6 | 01:59.7–02:24.8 | Viviana | Ficha de persona: foto de prensa, 42 años, contadora auditora | Pad íntimo |
-| 7 | 02:24.8–02:56.6 | El hijo perdido y la mujer del paradero | Recreación con siluetas: paradero con lluvia, camioneta (nada de las hijas) | Piano |
+| 7 | 02:24.8–02:56.6 | El hijo perdido y la mujer del paradero | Cementerio con neblina; recreación con siluetas del paradero (nada de las hijas) | Piano |
 | 8 | 02:56.6–03:25.9 | Jaime y la parcela 16 | Ficha de Jaime; mapa Parque Stocker (8 km); foto de la casa (La Tercera) | — |
 | 9 | 03:25.9–03:49.9 | La estufa, el entretecho y el maestro Heri | Corte de la casa en 3D: estufa, tubería, entretecho. Heri solo como silueta (su cara se guarda para la revelación) | — |
 
@@ -32,7 +32,7 @@ Basada en `guion.txt` y en el audio (`whisper.json`). **El texto y el audio mand
 | 13 | 05:14.4–05:24.1 | 10:30 sin señal | Última señal | Tono muerto |
 | 14 | 05:24.1–05:46.4 | La llamada en el BBVA | Cita con onda de audio: «si quieres volver a ver a tu mujer con vida» (19 s) | Silencio antes de la frase |
 | 15 | 05:46.4–06:05.6 | No llamó a Viviana | Comentario del narrador: «no llamó para comprobar» | — |
-| 16 | 06:05.6–06:35.7 | La hija camina 1,3 km | Ruta en el mapa; camino con bosque (Pixabay); cartera vaciada sobre la cama (recreación, sin mostrar a la hija) | Pasos, viento |
+| 16 | 06:05.6–06:35.7 | La hija camina 1,3 km | Ruta en el mapa; carretera con bosque a los lados (Pixabay); cartera vaciada sobre la cama (recreación, sin mostrar a la hija) | Pasos, viento |
 | 17 | 06:35.7–06:55.6 | Jaime une las llamadas | Mapa: carretera → PDI Puerto Varas → casa de Mónica | — |
 | 18 | 06:55.6–07:08.5 | Se abre como secuestro | Tablero de corcho: amenaza, cartera, dormitorio, «SECUESTRO» | — |
 

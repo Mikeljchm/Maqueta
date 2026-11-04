@@ -69,7 +69,7 @@
    "inicio": 144.84,
    "anclaje": "Llegar hasta esas hijas",
    "bloque": "El hijo perdido y la mujer del paradero",
-   "visual": "Recreación con siluetas: paradero con lluvia, camioneta (nada de las hijas)",
+   "visual": "Cementerio con neblina; recreación con siluetas del paradero (nada de las hijas)",
    "sonido": "Piano",
    "fin": 176.6
   },
@@ -159,7 +159,7 @@
    "inicio": 365.6,
    "anclaje": "Hacia las dos de la tarde",
    "bloque": "La hija camina 1,3 km",
-   "visual": "Ruta en el mapa; camino con bosque (Pixabay); cartera vaciada sobre la cama (recreación, sin mostrar a la hija)",
+   "visual": "Ruta en el mapa; carretera con bosque a los lados (Pixabay); cartera vaciada sobre la cama (recreación, sin mostrar a la hija)",
    "sonido": "Pasos, viento",
    "fin": 395.66
   },
