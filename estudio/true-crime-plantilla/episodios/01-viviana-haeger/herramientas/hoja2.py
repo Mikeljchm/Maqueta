@@ -35,4 +35,11 @@ section{{background:var(--card);border-radius:10px;padding:10px;margin:10px 0}}.
 .box{{background:#fff;color:#222;border-radius:10px;padding:12px 16px}}.box b{{font-family:ui-monospace,monospace}}
 </style></head><body><h1>Hoja de planos · Viviana Haeger</h1><p>Cada bloque muestra lo que se ve. <b style="color:#fff">Blanco = foto real que buscas tú.</b> Los módulos salen con datos de demostración: en el episodio llevan los datos de cada bloque.</p>
 <div class=box><b style="font-family:inherit">Fotos para el zip ({len(FOTOS)})</b> · usa estos nombres y anota la fuente de cada una:<ul>{fl}</ul></div>{''.join(out)}</body></html>"""
+import base64,re
+imgs={}
+def rep(m):
+    f=m.group(1); c=imgs.setdefault(f,'i%d'%len(imgs)); return f'class="im {c}" role=img'
+page=re.sub(r'<img src="(hoja/[^"]+)"[^>]*>',lambda m:'<div '+rep(m)+'></div>',page)
+css=''.join('.%s{background-image:url(data:image/jpeg;base64,%s)}'%(c,base64.b64encode(open(E+'/'+f,'rb').read()).decode()) for f,c in imgs.items())
+page=page.replace('</style>','.im{width:260px;aspect-ratio:16/9;background-size:cover;background-position:center;border-radius:6px}'+css+'</style>')
 open(E+'/hoja-planos.html','w').write(page); print('ok', len(P))
