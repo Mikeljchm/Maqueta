@@ -1,5 +1,5 @@
 import json, urllib.request, urllib.parse, subprocess, os, sys
-K="58374031-f3264b3124afc0ba6649babc6"; V=sys.argv[1]; R="raw"
+import os; K=os.environ["PIXABAY_API_KEY"]; V=sys.argv[1]; R="raw"
 Q={"police":"police car lights night","palms":"palm trees night","mansion":"mansion night","highway":"highway night driving","tv":"old television static","hall":"dark hallway night","city":"los angeles night city lights","festival":"night festival crowd","phone":"old telephone","rain":"rain window night","tape":"police tape","news":"old newspaper","cell":"prison bars","clock":"clock ticking dark"}
 BAD=("ai generated","anime","cartoon","animation","3d","render","generated","illustration","fantasy")
 H={"User-Agent":"Mozilla/5.0"}
